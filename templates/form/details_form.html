@@ -1,0 +1,88 @@
+{% extends "navbar.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom no-print">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-file-earmark-medical-fill me-2 text-primary"></i>
+            Detalhes do Registro
+        </h1>
+        <div class="no-print">
+            <button class="btn btn-success" onclick="window.print()">🖨️ Imprimir</button>
+            <a href="{{ url_for('form.forms') }}" class="btn btn-outline-secondary">← Voltar</a>
+        </div>
+
+    </div>
+
+    {% include 'partials/_flash_messages.html' %}
+
+    {% if formulario %}
+    <div class="text-center">
+        <img src="{{ url_for('static', filename='SBCD.png') }}" alt="Logo da empresa" class="logo">
+    </div>
+    <div class="card shadow-lg mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h4 class="mb-0 text-center">
+                Registro de Plantão
+            </h4>
+            </button>
+
+        </div>
+        <div class="card-body p-4">
+            <div id="print-area">
+                <div class="row mb-3 align-items-start print-area-details">
+                    <div class="col-12 col-md-4 mb-2 mb-md-0">
+                        <p class="mb-0"><strong>Responsável:</strong> {{ formulario.worker.name }}</p>
+                    </div>
+                    <div class="col-12 col-md-4 text-md-center mb-2 mb-md-0">
+                        <p class="mb-0"><strong>Setor:</strong> {{ formulario.sector }}</p>
+                    </div>
+                    <div class="col-12 col-md-4 text-md-end">
+                        <p class="mb-0"><strong>Data/Hora:</strong> {{ formulario.date_registry | format_date_time
+                            if formulario.date_registry else 'N/A' }}</p>
+                    </div>
+                </div>
+                <hr class="my-4 print-hr">
+                <div class="row">
+                    <div class="col-12">
+                        <h5 class="mb-2 text-center">Informações do Plantão:</h5>
+                        <p class="card-text text-dark bg-light p-3 rounded text-center print-observation">{{ formulario.observation }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {% if current_user.is_authenticated and 'ADMIN' in current_user.profile %}
+    <div class="card shadow-sm border-danger mt-4 no-print">
+        <div class="card-header bg-danger-subtle text-danger-emphasis py-3">
+            <h6 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Zona de Perigo</h6>
+        </div>
+        <div class="card-body text-center">
+            <p>Esta ação é irreversível e irá apagar permanentemente o registro.</p>
+            <form method="POST" action="{{ url_for('form.delet_form', form_id=formulario.id) }}"
+                onsubmit="return confirm('TEM CERTEZA ABSOLUTA que deseja deletar esta solicitação?');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash3-fill me-2"></i>Deletar Registro
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-warning" role="alert" class="no-print">
+        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Registro Não Encontrado!</h4>
+        <p>O registro que você está tentando acessar não existe ou você não tem permissão para visualizá-lo.</p>
+        <hr>
+        <p class="mb-0">Por favor, verifique o ID do registro ou <a href="{{ url_for('form.forms') }}"
+                class="alert-link">volte para a lista de registros</a>.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}

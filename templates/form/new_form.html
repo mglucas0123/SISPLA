@@ -1,0 +1,86 @@
+{% extends "navbar.html" %}
+{% block title %} Novo Registro de Plantão {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-1"><i class="bi bi-file-earmark-plus-fill me-2 text-primary"></i>Novo Registro de Plantão
+            </h1>
+            <p class="text-muted lead">Preencha os dados abaixo para registrar um novo plantão.</p>
+        </div>
+    </div>
+
+    {% include 'partials/_flash_messages.html' %}
+    <form method="POST" enctype="multipart/form-data">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light py-3">
+                <h5 class="mb-0"><i class="bi bi-journal-medical me-2 text-primary"></i>Detalhes do Registro</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="worker_id" class="form-label">Responsável</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                            <input type="text" class="form-control text-muted" id="worker_id" name="worker_id"
+                                value="{{ current_user.name }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sector" class="form-label">Setor <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-hospital"></i></span>
+                            <select class="form-select" id="sector" name="sector" required>
+                                <option value="" selected disabled>Selecione um setor...</option>
+                                <option value="Centro Cirúrgico">Centro Cirúrgico</option>
+                                <option value="Emergência">Emergência</option>
+                                <option value="Posto Cirúrgico">Posto Cirúrgico</option>
+                                <option value="Posto Clinico">Posto Clinico</option>
+                                <option value="Posto PS">Posto PS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label for="observation" class="form-label">
+                            <i class="bi bi-chat-left-text me-2"></i>Informações do Plantão <span
+                                class="text-danger">*</span></label>
+                        <textarea name="observation" id="observation" class="form-control" rows="4"
+                            placeholder="Insira aqui as informações relevantes do plantão" required></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-top d-flex justify-content-end">
+            <a href="{{ url_for('main.panel') }}" class="btn btn-outline-danger me-2 px-4">
+                <i class="bi bi-x-circle me-1"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-check2-circle me-2"></i>Registrar Plantão
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        //<-- FILTRO DATA/HORA DO REGISTRO -->
+        const dataRegistroInput = document.getElementById('data_registro_display_input');
+        if (dataRegistroInput) {
+            const now = new Date();
+            const day = ('0' + now.getDate()).slice(-2);
+            const month = ('0' + (now.getMonth() + 1)).slice(-2);
+            const year = now.getFullYear();
+            const hours = ('0' + now.getHours()).slice(-2);
+            const minutes = ('0' + now.getMinutes()).slice(-2);
+            const seconds = ('0' + now.getSeconds()).slice(-2);
+            const formattedDateTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+            dataRegistroInput.value = formattedDateTime;
+        }
+    });
+</script>
+{% endblock %}

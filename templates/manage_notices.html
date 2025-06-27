@@ -1,0 +1,65 @@
+{% extends "navbar.html" %}
+{% block title %}Gerenciar Mural de Avisos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2 mb-0"><i class="bi bi-megaphone-fill me-2"></i>Gerenciar Mural de Avisos</h1>
+        <a href="{{ url_for('main.panel') }}" class="btn btn-outline-secondary"><i
+                class="bi bi-arrow-left-circle me-1"></i>Voltar ao Painel</a>
+    </div>
+
+    {% include 'partials/_flash_messages.html' %}
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Publicar um Novo Aviso</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">Conteúdo do Aviso</label>
+                    <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Publicar Aviso</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Avisos Atuais</h5>
+        </div>
+        <div class="list-group list-group-flush">
+
+            {% for notice in notices %}
+            <div class="list-group-item p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ notice.title }}</h6>
+                    <small class="text-muted">{{ notice.date_registry | format_date_time }}</small>
+                </div>
+                <p class="mb-1">{{ notice.content }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">Publicado por: {{ notice.author.name }}</small>
+
+                    <form method="POST" action="{{ url_for('admin.delet_notice', notice_id=notice.id) }}"
+                        onsubmit="return confirm('Tem certeza que deseja deletar este aviso?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Deletar Aviso">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="list-group-item p-4 text-center text-muted">
+                <i class="bi bi-info-circle me-2"></i>Nenhum aviso publicado no momento.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

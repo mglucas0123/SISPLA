@@ -1,0 +1,292 @@
+{% extends "navbar.html" %}
+{% block title %} Painel Principal {% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 welcome-card">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="card-title mb-1">Bem-vindo(a) de volta, <span class="text-primary">{{
+                                    current_user.name }}</span>!</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row gy-4">
+        {% if current_user.is_authenticated and 'ADMIN' in current_user.profile %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card shadow-sm h-100 text-center kpi-card border-start border-primary border-4">
+                <a href="{{ url_for('admin.users') }}" class="stretched-link" aria-label="Gerenciar Usuários"></a>
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="mb-3">
+                        <i class="bi bi-people-fill display-4 text-primary"></i>
+                    </div>
+
+                    <h5 class="card-title">Gerenciar Usuários</h5>
+                    <p class="card-text small text-muted">Adicionar, editar e gerenciar todos os usuários do sistema.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_user.is_authenticated and ('CRIAR_RELATORIOS' in current_user.profile or 'ADMIN' in
+        current_user.profile) %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card shadow-sm h-100 text-center kpi-card border-start border-success border-4">
+                <a href="{{ url_for('form.new_form') }}" class="stretched-link" aria-label="Registrar Plantão"></a>
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="mb-3">
+                        <i class="bi bi-box-arrow-in-down display-5 text-success"></i>
+                    </div>
+                    <h5 class="card-title">Registrar Plantão</h5>
+                    <p class="card-text small text-muted">Registre o seu plantão aqui.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if current_user.is_authenticated and ('VER_RELATORIOS' in current_user.profile or 'ADMIN' in
+        current_user.profile) %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card shadow-sm h-100 text-center kpi-card border-start border-info border-4">
+                <a href="{{ url_for('form.forms') }}" class="stretched-link" aria-label="Relatórios de Plantão"></a>
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="mb-3">
+                        <i class="bi bi-folder-check display-5 text-info"></i>
+                    </div>
+                    <h5 class="card-title">Relatórios de Plantão</h5>
+                    <p class="card-text small text-muted">Veja todos os relatórios de plantão.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_user.is_authenticated and not current_user.profile %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                    <h5 class="card-title">Nenhuma ação disponível no momento.</h5>
+                    <p class="text-muted">Consulte o administrador do sistema se precisar de acesso a mais
+                        funcionalidades.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% if notice %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Mural de Avisos</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for notice in notice %}
+                    <div class="list-group-item p-3">
+                        <h6 class="card-title">{{ notice.title }}</h6>
+                        <p class="card-text mb-1">{{ notice.content }}</p>
+                        <p class="card-text mb-0">
+                            <small class="text-muted">
+                                Publicado por {{ notice.author.name }} em: {{ notice.date_registry | format_date_time }}
+                            </small>
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="list-group-item p-4 text-center text-muted">
+                        Nenhum aviso publicado no momento.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+
+    <!--{% if notice and notice|length > 0 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-4"><i class="bi bi-megaphone-fill me-2"></i>Mural de Avisos</h3>
+
+            <div class="timeline">
+                {% for notice in notice %}
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="bi bi-info-lg"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ notice.title }}</h5>
+                                <p class="card-text">{{ notice.content | safe }}</p>
+                                <hr>
+                                <p class="card-text mb-0 text-end">
+                                    <small class="text-muted">
+                                        Publicado por <strong>{{ notice.author.name }}</strong> em {{
+                                        notice.date_registry
+                                        | format_date_time }}
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center text-muted p-4">
+                    <i class="bi bi-info-circle me-2"></i>Nenhum aviso publicado no momento.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}-->
+
+
+
+    <!--{% if notice %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Mural de Avisos</h5>
+                </div>
+                <div class="accordion accordion-flush" id="avisosAccordion">
+                    {% for notice in notice %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-{{ notice.id }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-{{ notice.id }}" aria-expanded="false"
+                                aria-controls="collapse-{{ notice.id }}">
+                                <strong>{{ notice.title }}</strong>
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ notice.id }}" class="accordion-collapse collapse"
+                            aria-labelledby="heading-{{ notice.id }}" data-bs-parent="#avisosAccordion">
+                            <div class="accordion-body">
+                                <p>{{ notice.content | safe }}</p>
+                                <hr>
+                                <p class="card-text mb-0 text-end">
+                                    <small class="text-muted">
+                                        Publicado por <strong>{{ notice.author.name }}</strong> em {{ notice.date_registry |
+                                        format_date_time }}
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="card-body text-center text-muted p-4">
+                        <i class="bi bi-info-circle me-2"></i>Nenhum aviso publicado no momento.
+                    </div>
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}-->
+</div>
+<!--{% if popup_aviso %}
+<div class="modal fade" id="avisoModal" tabindex="-1" aria-labelledby="avisoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;">
+
+            <div class="modal-body text-center p-4 p-lg-5">
+
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                    aria-label="Fechar"></button>
+
+                <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-megaphone-fill"></i>
+                </div>
+
+                <h4 class="modal-title mb-2" id="avisoModalLabel">{{ popup_aviso.title }}</h4>
+
+                <p class="text-muted">{{ popup_aviso.content }}</p>
+
+                <hr class="my-4">
+
+                <p class="small text-muted mb-4">
+                    Publicado por <strong>{{ popup_aviso.author.name }}</strong><br>
+                    em {{ popup_aviso.date_registry | format_date_time }}
+                </p>
+
+                <div class="d-grid">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}-->
+
+{% if popup_aviso %}
+<div class="modal fade" id="avisoModal" tabindex="-1" aria-labelledby="avisoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    
+    <div class="modal-content shadow-lg border-0 border-top border-primary border-5" style="border-radius: 0.5rem;"> 
+      
+      <div class="modal-body p-4 p-lg-5">
+        
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        
+        <div class="text-center">
+            <i class="bi bi-megaphone-fill display-4 text-primary mb-3"></i>
+            
+            <h4 class="modal-title mb-3" id="avisoModalLabel">{{ popup_aviso.title }}</h4>
+            
+            <p class="text-secondary">{{ popup_aviso.content | safe }}</p>
+        </div>
+        
+        <hr class="my-4">
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+                <strong class="d-block">Publicado por:</strong>
+                <span>{{ popup_aviso.author.name }}</span>
+            </div>
+            <div class="small text-muted text-end">
+                <strong class="d-block">Data:</strong>
+                <span>{{ popup_aviso.date_registry | format_date_time }}</span>
+            </div>
+        </div>
+
+        <div class="d-grid mt-4">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var avisoModalElement = document.getElementById('avisoModal');
+        if (avisoModalElement) {
+            var avisoModal = new bootstrap.Modal(avisoModalElement);
+            avisoModal.show();
+        }
+    });
+</script>
+{% endblock %}

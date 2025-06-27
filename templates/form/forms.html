@@ -1,0 +1,184 @@
+{% extends "navbar.html" %}
+{% block title %}Registros de Plantão{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2 mb-0"><i class="bi bi-folder-symlink-fill me-2 text-info"></i>Registros Recebidos</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="row mb-3">
+        <div class="col-12">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel-fill me-2"></i>Filtros e Pesquisa</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('form.forms') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4 col-lg-3">
+                        <label for="filtro_nome" class="form-label fw-semibold small">Nome do Responsável:</label>
+                        <input type="text" name="name" id="filtro_nome" class="form-control form-control-sm" placeholder="Filtrar por nome"
+                            value="{{ request.args.get('name', '') }}">
+                    </div>
+                    <div class="col-md-4 col-lg-3">
+                        <label for="filtro_setor" class="form-label fw-semibold small">Setor:</label>
+                        <select name="sector_filtro" id="filtro_setor" class="form-select form-select-sm">
+                            <option value="">Todos os setores</option>
+                            {% for setor_opcao in ['Posto PS', 'Posto Clínico', 'Posto Cirúrgico', 'Centro
+                            Cirúrgico','Emergência'] %}
+                            <option value="{{ setor_opcao }}" {% if request.args.get('sector_filtro')==setor_opcao
+                                %}selected{% endif %}>
+                                {{ setor_opcao }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="filtro_data_inicio" class="form-label fw-semibold small">De:</label>
+                        <input type="date" name="data_inicio" id="filtro_data_inicio"
+                            class="form-control form-control-sm" value="{{ data_inicio_atual or '' }}">
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="filtro_data_fim" class="form-label fw-semibold small">Até:</label>
+                        <input type="date" name="data_fim" id="filtro_data_fim" class="form-control form-control-sm"
+                            value="{{ data_fim_atual or '' }}">
+                    </div>
+
+                    <div class="col-md-4 col-lg-3 d-flex align-items-end">
+                        <div class="w-100 d-grid gap-2 d-sm-flex">
+                            <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i
+                                    class="bi bi-search me-1"></i>Filtrar</button>
+                            <a href="{{ url_for('form.forms') }}"
+                                class="btn btn-outline-secondary btn-sm flex-grow-1"><i
+                                    class="bi bi-eraser me-1"></i>Limpar</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-list-stars me-2"></i>Lista de Registros</h5>
+            {% if forms.items is defined and forms.total is defined %}
+            <small class="text-muted">Exibindo {{ forms.items|length }} de {{ forms.total }}
+                resultados</small>
+            {% elif forms|length > 0 %}
+            <small class="text-muted">Exibindo {{ forms|length }} resultado(s)</small>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 15%;">Responsável</th>
+                            <th scope="col" class="text-center">Setor</th>
+                            <th scope="col" class="text-center">Data Registro</th>
+                            <th scope="col" class="text-center" style="width: 10%;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set forms_to_iterate = forms.items if forms.items is defined else forms %}
+                        {% for f in forms_to_iterate %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('form.details_form', form_id=f.id) }}"
+                                    class="text-decoration-none fw-medium">
+                                    {{ f.worker.name | truncate(35, False) }}
+                                </a>
+                                <br><small class="text-muted">{{ f.worker.username | truncate(35, False) }}</small>
+                            </td>
+                            <td class="text-center">
+                                {{ f.sector | default('N/A') }}
+                            </td>
+                            <td class="text-center">
+                                <small class="text-muted">{{ f.date_registry | format_date_short if
+                                    f.date_registry else 'N/A' }}</small>
+                                <br><small class="text-muted">{{ f.date_registry | format_time if
+                                    f.date_registry else 'N/A' }}</small>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ url_for('form.details_form', form_id=f.id) }}"
+                                    class="btn btn-sm btn-outline-primary border-0" title="Ver Detalhes">
+                                    <i class="bi bi-eye-fill fs-5"></i>
+                                </a>
+                                {% if 'ALTERAR_STATUS' in session.get('perfil', []) or 'ADMIN' in session.get('perfil', []) %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary border-0 ms-1"
+                                    title="Alterar Status" data-bs-toggle="modal"
+                                    data-bs-target="#alterarStatusFormModal" data-form-id="{{ f.id }}"
+                                    data-current-status="{{ f.status }}">
+                                    <i class="bi bi-pencil-square fs-5"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted fst-italic py-5">
+                                <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                                Nenhum Registro encontrado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% if forms.items is defined and (forms.has_prev or forms.has_next or forms.pages > 1)
+        %}
+        <div class="card-footer bg-light d-flex justify-content-center pt-3">
+            <nav aria-label="Navegação dos formulários">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item {% if not forms.has_prev %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('form.forms', page=forms.prev_num, **request.args) if forms.has_prev else '#' }}"
+                            aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% for page_num in forms.iter_pages(left_edge=1, right_edge=1, left_current=1,
+                    right_current=1) %}
+                    {% if page_num %}
+                    <li class="page-item {% if forms.page == page_num %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('form.forms', page=page_num, **request.args) }}">{{
+                            page_num
+                            }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not forms.has_next %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('form.forms', page=forms.next_num, **request.args) if forms.has_next else '#' }}"
+                            aria-label="Próximo">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
