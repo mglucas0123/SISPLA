@@ -31,8 +31,8 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4 col-lg-3">
                         <label for="filtro_nome" class="form-label fw-semibold small">Nome do Responsável:</label>
-                        <input type="text" name="name" id="filtro_nome" class="form-control form-control-sm" placeholder="Filtrar por nome"
-                            value="{{ request.args.get('name', '') }}">
+                        <input type="text" name="name" id="filtro_nome" class="form-control form-control-sm"
+                            placeholder="Filtrar por nome" value="{{ request.args.get('name', '') }}">
                     </div>
                     <div class="col-md-4 col-lg-3">
                         <label for="filtro_setor" class="form-label fw-semibold small">Setor:</label>
@@ -118,7 +118,8 @@
                                     class="btn btn-sm btn-outline-primary border-0" title="Ver Detalhes">
                                     <i class="bi bi-eye-fill fs-5"></i>
                                 </a>
-                                {% if 'ALTERAR_STATUS' in session.get('perfil', []) or 'ADMIN' in session.get('perfil', []) %}
+                                {% if 'ALTERAR_STATUS' in session.get('perfil', []) or 'ADMIN' in session.get('perfil',
+                                []) %}
                                 <button type="button" class="btn btn-sm btn-outline-secondary border-0 ms-1"
                                     title="Alterar Status" data-bs-toggle="modal"
                                     data-bs-target="#alterarStatusFormModal" data-form-id="{{ f.id }}"

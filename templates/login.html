@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8" />
     <title>Login - SISPLA</title>
@@ -8,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
 </head>
+
 <body class="login-page">
     <div class="container">
         <div class="row justify-content-center">
@@ -27,18 +29,21 @@
 
                         {% include 'partials/_flash_messages.html' %}
                         <form method="POST" action="{{ url_for('auth.login') }}" class="needs-validation" novalidate>
-                            
+
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="username" name="username" placeholder="Seu usuário" required autofocus />
+                                <input type="text" class="form-control" id="username" name="username"
+                                    placeholder="Seu usuário" required autofocus />
                                 <label for="username"><i class="bi bi-person me-2"></i>Usuário</label>
                             </div>
-                            
+
                             <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="password" name="password" placeholder="Sua senha" required />
+                                <input type="password" class="form-control" id="password" name="password"
+                                    placeholder="Sua senha" required />
                                 <label for="password"><i class="bi bi-lock me-2"></i>Senha</label>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</button>
+                                <button type="submit" class="btn btn-primary btn-lg"><i
+                                        class="bi bi-box-arrow-in-right me-2"></i>Entrar</button>
                             </div>
 
                         </form>
@@ -52,18 +57,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (() => {
-        'use-strict'
-        const forms = document.querySelectorAll('.needs-validation')
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-            }, false)
-        })
+            'use-strict'
+            const forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
         })()
     </script>
 </body>
+
 </html>
