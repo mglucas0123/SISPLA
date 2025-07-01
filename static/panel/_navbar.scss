@@ -1,7 +1,3 @@
-body {
-    background-color: #f8f9fa;
-}
-
 .navbar-brand-custom {
     font-weight: 600;
     font-size: 1.3rem;
@@ -95,128 +91,87 @@ body {
     box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .1) !important;
 }
 
-.kpi-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
+//FOOTER
+.footer-premium {
+    background: linear-gradient(120deg, #232a4d 0%, #181c2a 100%);
+    color: rgba(255, 255, 255, 0.82);
+    padding: 1rem 0 0.6rem 0; 
+    border-top: 3px solid #3746e8;
+    box-shadow: 0 -2px 16px rgba(55, 70, 232, 0.10);
+    margin-top: auto;
+    font-size: 0.95rem; 
 
-.kpi-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-}
-
-
-.login-page {
-    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-}
-
-.login-container {
-    display: flex;
-    background-color: #ffffff;
-    border-radius: 1rem;
-    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    max-width: 900px;
-    width: 100%;
-}
-
-.login-branding {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    color: white;
-    padding: 3rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-.login-branding .icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.8;
-}
-
-.login-form-container {
-    padding: 3rem;
-}
-
-@media (max-width: 767.98px) {
-    .login-branding {
-        display: none;
+    .footer-brand,
+    .footer-credit-text,
+    .footer-social-link {
+        color: inherit;
     }
 
-    .login-form-container {
-        padding: 2rem;
+    .footer-brand:hover {
+        color: #26d0ce;
     }
 }
 
-
-//POPUP AVISOS
-.icon-circle {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 1.5rem;
+.footer-brand {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #ffffff;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
-.icon-circle .bi {
-    font-size: 2.25rem;
+.footer-brand:hover {
+    color: #0d6efd;
 }
 
-//MURAL FIXO
-.timeline {
-    position: relative;
-    padding-left: 2rem;
-    list-style: none;
+.footer-brand i {
+    margin-right: 6px; 
 }
 
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 5px;
-    height: 100%;
-    width: 3px;
-    background-color: #e9ecef;
-    border-radius: 2px;
+.footer-credit-text {
+    font-size: 0.95rem; 
+    color: rgba(255, 255, 255, 0.6);
 }
 
-.timeline-item {
-    position: relative;
-    margin-bottom: 2rem;
-}
-
-.timeline-icon {
-    position: absolute;
-    top: 5px;
-    left: 0;
-    transform: translateX(-50%);
-
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background-color: var(--bs-primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    box-shadow: 0 0 0 4px #fff;
-}
-
-.timeline-content {
-    position: relative;
-    margin-left: 40px;
-}
-
-.timeline-content .card-title {
+.footer-credit-text strong {
     font-weight: 600;
+    color: #ffffff;
+}
+
+.footer-social-link {
+    color: #26d0ce;
+    background: rgba(38, 208, 206, 0.08);
+    font-size: 1.3rem;
+    margin-left: 0.8rem;
+    border-radius: 50%;
+    width: 2rem; 
+    height: 2rem; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(38, 208, 206, 0.08);
+    z-index: 1;
+    position: relative;
+}
+
+.footer-social-link:hover {
+    color: #fff;
+    background: linear-gradient(120deg, #3746e8 0%, #26d0ce 100%);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 4px 16px rgba(55, 70, 232, 0.18);
+}
+
+.footer-social-link:first-child {
+    margin-left: 0;
+}
+
+@media (max-width: 767px) {
+    .footer-premium .d-flex {
+        flex-direction: column;
+    }
+
+    .footer-credit-text {
+        margin-bottom: 1rem;
+    }
 }

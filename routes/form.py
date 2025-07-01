@@ -51,8 +51,10 @@ def forms():
     query = select(Form).order_by(Form.date_registry.desc())
 
     if filtro_nome:
-        query = query.join(User)
-
+        query = query.join(User).where(
+            func.lower(User.name).like(func.lower(f"%{filtro_nome}%"))
+        )
+    
     if data_inicio_str or data_fim_str:
         if data_inicio_str:
             try:

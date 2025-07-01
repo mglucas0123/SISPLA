@@ -1,0 +1,66 @@
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+    list-style: none;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 5px;
+    height: 100%;
+    width: 3px;
+    background-color: #e9ecef;
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-icon {
+    position: absolute;
+    top: 5px;
+    left: 0;
+    transform: translateX(-50%);
+
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: var(--bs-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 0 0 4px #fff;
+}
+
+.timeline-content {
+    position: relative;
+    margin-left: 40px;
+}
+
+.timeline-content .card-title {
+    font-weight: 600;
+}
+
+
+//POPUP AVISOS
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1.5rem;
+}
+
+.icon-circle .bi {
+    font-size: 2.25rem;
+}

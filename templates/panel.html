@@ -3,7 +3,6 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0 welcome-card">
@@ -18,79 +17,77 @@
             </div>
         </div>
     </div>
-
-    <div class="row gy-4">
-        {% if current_user.is_authenticated and 'ADMIN' in current_user.profile %}
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-sm h-100 text-center kpi-card border-start border-primary border-4">
-                <a href="{{ url_for('admin.users') }}" class="stretched-link" aria-label="Gerenciar Usuários"></a>
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <div class="mb-3">
-                        <i class="bi bi-people-fill display-4 text-primary"></i>
+    <div class="menu-carousel-container">
+        <button id="scroll-left" class="arrow-button d-none d-lg-flex"><i class="bi bi-chevron-left"></i></button>
+        <div class="menu-carousel">
+            <div class="menu-carousel-track">
+                {% if current_user.is_authenticated and 'ADMIN' in current_user.profile %}
+                <div class="kpi-card-wrapper">
+                    <div class="card shadow-sm h-100 text-center kpi-card border-start border-primary border-4">
+                        <a href="{{ url_for('admin.users') }}" class="stretched-link"
+                            aria-label="Gerenciar Usuários"></a>
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <div class="mb-3">
+                                <i class="bi bi-people-fill display-4 text-primary"></i>
+                            </div>
+                            <h5 class="card-title">Gerenciar Usuários</h5>
+                            <p class="card-text small text-muted">Adicionar, editar e gerenciar todos os usuários do
+                                sistema.</p>
+                        </div>
                     </div>
-
-                    <h5 class="card-title">Gerenciar Usuários</h5>
-                    <p class="card-text small text-muted">Adicionar, editar e gerenciar todos os usuários do sistema.
-                    </p>
                 </div>
-            </div>
-        </div>
-        {% endif %}
+                {% endif %}
 
-        {% if current_user.is_authenticated and ('CRIAR_RELATORIOS' in current_user.profile or 'ADMIN' in
-        current_user.profile) %}
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-sm h-100 text-center kpi-card border-start border-success border-4">
-                <a href="{{ url_for('form.new_form') }}" class="stretched-link" aria-label="Registrar Plantão"></a>
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <div class="mb-3">
-                        <i class="bi bi-box-arrow-in-down display-5 text-success"></i>
+                {% if current_user.is_authenticated and ('CRIAR_RELATORIOS' in current_user.profile or 'ADMIN' in
+                current_user.profile) %}
+                <div class="kpi-card-wrapper">
+                    <div class="card shadow-sm h-100 text-center kpi-card border-start border-success border-4">
+                        <a href="{{ url_for('form.new_form') }}" class="stretched-link"
+                            aria-label="Registrar Plantão"></a>
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <div class="mb-3">
+                                <i class="bi bi-box-arrow-in-down display-5 text-success"></i>
+                            </div>
+                            <h5 class="card-title">Registrar Plantão</h5>
+                            <p class="card-text small text-muted">Registre o seu plantão aqui.</p>
+                        </div>
                     </div>
-                    <h5 class="card-title">Registrar Plantão</h5>
-                    <p class="card-text small text-muted">Registre o seu plantão aqui.</p>
                 </div>
-            </div>
-        </div>
-        {% endif %}
-        {% if current_user.is_authenticated and ('VER_RELATORIOS' in current_user.profile or 'ADMIN' in
-        current_user.profile) %}
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-sm h-100 text-center kpi-card border-start border-info border-4">
-                <a href="{{ url_for('form.forms') }}" class="stretched-link" aria-label="Relatórios de Plantão"></a>
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <div class="mb-3">
-                        <i class="bi bi-folder-check display-5 text-info"></i>
-                    </div>
-                    <h5 class="card-title">Relatórios de Plantão</h5>
-                    <p class="card-text small text-muted">Veja todos os relatórios de plantão.</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+                {% endif %}
 
-        {% if current_user.is_authenticated and not current_user.profile %}
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body text-center p-5">
-                    <i class="bi bi-inbox display-4 text-muted mb-3"></i>
-                    <h5 class="card-title">Nenhuma ação disponível no momento.</h5>
-                    <p class="text-muted">Consulte o administrador do sistema se precisar de acesso a mais
-                        funcionalidades.</p>
+                {% if current_user.is_authenticated and ('VER_RELATORIOS' in current_user.profile or 'ADMIN' in
+                current_user.profile) %}
+                <div class="kpi-card-wrapper">
+                    <div class="card shadow-sm h-100 text-center kpi-card border-start border-info border-4">
+                        <a href="{{ url_for('form.forms') }}" class="stretched-link"
+                            aria-label="Relatórios de Plantão"></a>
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <div class="mb-3">
+                                <i class="bi bi-folder-check display-5 text-info"></i>
+                            </div>
+                            <h5 class="card-title">Relatórios de Plantão</h5>
+                            <p class="card-text small text-muted">Veja todos os relatórios de plantão.</p>
+                        </div>
+                    </div>
                 </div>
+                {% endif %}
             </div>
         </div>
-        {% endif %}
+        <button id="scroll-right" class="arrow-button d-none d-lg-flex"><i class="bi bi-chevron-right"></i></button>
     </div>
     {% if notice %}
     <div class="row mt-4">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header bg-light">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Mural de Avisos</h5>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0" id="notice-pagination"></ul>
+                    </nav>
                 </div>
-                <div class="list-group list-group-flush">
+                <div class="list-group list-group-flush" id="notice-list">
                     {% for notice in notice %}
-                    <div class="list-group-item p-3">
+                    <div class="list-group-item p-3 notice-item" style="display: none;">
                         <h6 class="card-title">{{ notice.title }}</h6>
                         <p class="card-text mb-1">{{ notice.content }}</p>
                         <p class="card-text mb-0">
@@ -109,8 +106,6 @@
         </div>
     </div>
     {% endif %}
-
-
 
     <!--{% if notice and notice|length > 0 %}
     <div class="row mt-4">
@@ -281,12 +276,101 @@
 
 {% block scripts %}
 {{ super() }}
+
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const track = document.querySelector('.menu-carousel-track');
+        const scrollLeftBtn = document.getElementById('scroll-left');
+        const scrollRightBtn = document.getElementById('scroll-right');
+        if (track && scrollLeftBtn && scrollRightBtn) {
+            const checkArrows = () => {
+                const hasOverflow = track.scrollWidth > track.clientWidth;
+                if (!hasOverflow) {
+                    scrollLeftBtn.classList.add('d-none');
+                    scrollRightBtn.classList.add('d-none');
+                } else {
+                    scrollLeftBtn.classList.remove('d-lg-flex');
+                    scrollLeftBtn.classList.add('d-lg-flex');
+                    scrollRightBtn.classList.remove('d-lg-flex');
+                    scrollRightBtn.classList.add('d-lg-flex');
+                    if (track.scrollLeft === 0) {
+                        scrollLeftBtn.style.visibility = 'hidden';
+                    } else {
+                        scrollLeftBtn.style.visibility = 'visible';
+                    }
+                    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 5) {
+                        scrollRightBtn.style.visibility = 'hidden';
+                    } else {
+                        scrollRightBtn.style.visibility = 'visible';
+                    }
+                }
+            };
+            scrollRightBtn.addEventListener('click', () => {
+                const cardWidth = track.querySelector('.kpi-card-wrapper').offsetWidth;
+                track.scrollLeft += cardWidth + 24;
+            });
+            scrollLeftBtn.addEventListener('click', () => {
+                const cardWidth = track.querySelector('.kpi-card-wrapper').offsetWidth;
+                track.scrollLeft -= cardWidth + 24;
+            });
+            window.addEventListener('resize', checkArrows);
+            track.addEventListener('scroll', checkArrows);
+            checkArrows();
+        }
+    });
     document.addEventListener('DOMContentLoaded', function () {
         var avisoModalElement = document.getElementById('avisoModal');
         if (avisoModalElement) {
             var avisoModal = new bootstrap.Modal(avisoModalElement);
             avisoModal.show();
+        }
+    });
+    //Mural de Avisos
+    document.addEventListener('DOMContentLoaded', function () {
+        const items = document.querySelectorAll('.notice-item');
+        const perPage = 3;
+        const total = items.length;
+        const pageCount = Math.ceil(total / perPage);
+        const pagination = document.getElementById('notice-pagination');
+        let currentPage = 1;
+
+        function showPage(page) {
+            currentPage = page;
+            items.forEach((item, idx) => {
+                item.style.display = (idx >= (page - 1) * perPage && idx < page * perPage) ? '' : 'none';
+            });
+            renderPagination();
+        }
+
+        function renderPagination() {
+            if (pageCount <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            let html = '';
+            html += `<li class="page-item${currentPage === 1 ? ' disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage - 1}">&laquo;</a>
+                        </li>`;
+            for (let i = 1; i <= pageCount; i++) {
+                html += `<li class="page-item${i === currentPage ? ' active' : ''}">
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>`;
+            }
+            html += `<li class="page-item${currentPage === pageCount ? ' disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage + 1}">&raquo;</a>
+                        </li>`;
+            pagination.innerHTML = html;
+            pagination.querySelectorAll('a.page-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const page = parseInt(this.getAttribute('data-page'));
+                    if (page >= 1 && page <= pageCount) showPage(page);
+                });
+            });
+        }
+
+        if (total > 0) {
+            showPage(1);
         }
     });
 </script>
