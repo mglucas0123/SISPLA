@@ -12,7 +12,6 @@
 
 <body>
     <div class="login-wrapper">
-<<<<<<< HEAD
         <div
             class="login-left d-flex flex-column justify-content-center align-items-center text-center p-4 bg-light rounded-start">
             <div class="login-branding">
@@ -51,36 +50,6 @@
                 </div>
             </form>
         </div>
-=======
-        <div class="login-left">
-        </div>
-        <div class="login-right">
-            <form class="login-form" method="POST" action="{{ url_for('auth.login') }}" class="needs-validation" novalidate>
-                {% include 'partials/_flash_messages.html' %}
-                <h3 class="text-center mb-4">Entrar</h3>
-                <div class="mb-3">
-                    <label for="username" class="form-label">Usuário</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="username" name="username"
-                            placeholder="Nome do usuário" required>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Senha</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Digite sua senha" required>
-                        <span class="input-group-text"><i class="bi bi-eye"></i></span>
-                    </div>
-                </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg">Entrar</button>
-                </div>
-            </form>
-        </div>
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>

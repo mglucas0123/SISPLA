@@ -3,10 +3,6 @@ html {
   height: 100%;
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-<<<<<<< HEAD
-=======
-  background: #ffffff;
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
 }
 
 .login-wrapper {
@@ -15,26 +11,17 @@ html {
 }
 
 .login-left {
-<<<<<<< HEAD
   flex: 1;
   background: url("hospital.jpeg") center center/cover no-repeat;
   position: relative;
-=======
-  position: relative;
-  flex: 1;
-  background: url("hospital.jpeg") center center/cover no-repeat;
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   color: #fff;
-<<<<<<< HEAD
   text-align: center;
   padding: 2rem;
   overflow: hidden;
-=======
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
 }
 
 .login-left::before {
@@ -44,11 +31,7 @@ html {
   left: 0;
   width: 100%;
   height: 100%;
-<<<<<<< HEAD
   background: rgba(19, 46, 168, 0.5);
-=======
-  background: rgba(30, 41, 59, 0.35);
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
   z-index: 1;
 }
 
@@ -61,16 +44,11 @@ html {
   height: 100%;
   pointer-events: none;
   z-index: 2;
-<<<<<<< HEAD
   background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #132ea8 100%);
-=======
-  background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #fff 100%);
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
   -webkit-clip-path: inherit;
           clip-path: inherit;
 }
 
-<<<<<<< HEAD
 .login-branding {
   position: relative;
   z-index: 3;
@@ -94,37 +72,6 @@ html {
 .login-right {
   flex: 1;
   background: linear-gradient(90deg, #132ea8 0%, #1d3ecf 100%);
-=======
-.login-left .logo {
-  font-size: 4rem;
-  font-weight: bold;
-  line-height: 1;
-  margin-bottom: 0.5em;
-}
-
-.login-left .zeus {
-  font-size: 7rem;
-  font-family: "Oswald", Arial, sans-serif;
-  font-style: italic;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.2em;
-}
-
-.login-left .os-box {
-  display: inline-block;
-  border: 4px solid #fff;
-  border-radius: 10px;
-  padding: 0.1em 0.4em;
-  font-size: 3rem;
-  font-family: "Oswald", Arial, sans-serif;
-  font-style: italic;
-  margin-left: 0.2em;
-}
-
-.login-right {
-  flex: 1;
-  background: #fff;
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,7 +80,6 @@ html {
 .login-form {
   width: 100%;
   max-width: 370px;
-<<<<<<< HEAD
   background: none;
   border-radius: 0;
   padding: 40px 28px;
@@ -213,35 +159,6 @@ html {
   filter: brightness(1.5);
 }
 
-=======
-}
-
-.form-select,
-.form-control {
-  min-height: 48px;
-}
-
-.btn-success {
-  background: #132ea8;
-  border: none;
-}
-
-.btn-success:hover {
-  background: #0e258c;
-}
-
-@media (max-width: 900px) {
-  .login-left,
-  .login-right {
-    flex: 1 1 100%;
-    -webkit-clip-path: none;
-            clip-path: none;
-  }
-  .login-wrapper {
-    flex-direction: column;
-  }
-}
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
 @media print {
   .no-print {
     display: none !important;
@@ -567,7 +484,6 @@ body {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1) !important;
 }
 
-<<<<<<< HEAD
 html, body {
   height: 100%;
   margin: 0;
@@ -619,47 +535,6 @@ body {
   color: rgba(255, 255, 255, 0.6);
 }
 
-=======
-.footer-premium {
-  background: linear-gradient(120deg, #232a4d 0%, #181c2a 100%);
-  color: rgba(255, 255, 255, 0.82);
-  padding: 1rem 0 0.6rem 0;
-  border-top: 3px solid #3746e8;
-  box-shadow: 0 -2px 16px rgba(55, 70, 232, 0.1);
-  margin-top: auto;
-  font-size: 0.95rem;
-}
-.footer-premium .footer-brand,
-.footer-premium .footer-credit-text,
-.footer-premium .footer-social-link {
-  color: inherit;
-}
-.footer-premium .footer-brand:hover {
-  color: #26d0ce;
-}
-
-.footer-brand {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #ffffff;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.footer-brand:hover {
-  color: #0d6efd;
-}
-
-.footer-brand i {
-  margin-right: 6px;
-}
-
-.footer-credit-text {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
->>>>>>> caf7a2c168b48fad7880d6627fef7bc9a9a7673d
 .footer-credit-text strong {
   font-weight: 600;
   color: #ffffff;
