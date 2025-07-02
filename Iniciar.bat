@@ -1,5 +1,5 @@
 @echo off
-TITLE Servidor do Sistema de Exames
+TITLE Servidor do Sistema de Plantão
 
 ECHO ##################################################
 ECHO # INICIANDO PROTOTIPO - SISTEMA DE EXAMES        #

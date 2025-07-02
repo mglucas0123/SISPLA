@@ -1,0 +1,87 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.menu-carousel-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.menu-carousel {
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.menu-carousel-track {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+    scroll-behavior: smooth;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none; 
+}
+.menu-carousel-track::-webkit-scrollbar {
+    display: none;
+}
+
+
+.kpi-card-wrapper {
+    flex: 0 0 calc(33.333% - 1rem);
+    min-width: 280px;
+}
+
+@media (max-width: 992px) {
+    .kpi-card-wrapper {
+        flex: 0 0 calc(50% - 1rem);
+    }
+}
+@media (max-width: 768px) {
+    .kpi-card-wrapper {
+        flex: 0 0 80%;
+    }
+}
+
+
+.arrow-button {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.arrow-button:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.1);
+}
+
+#scroll-left {
+    margin-right: 1rem;
+}
+
+#scroll-right {
+    margin-left: 1rem;
+}
+
+
+//CARDS DE OPÇÕES
+.kpi-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}

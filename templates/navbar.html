@@ -18,9 +18,36 @@
     <nav class="navbar navbar-expand-lg navbar-dark shadow-sm navbar-custom no-print">
         <div class="container-fluid">
             <a class="navbar-brand navbar-brand-custom" href="{{ url_for('main.panel') }}">
-                <i class="bi bi-clipboard2-pulse"></i> Sistema de Plantão
+                <i class="bi bi-hospital">    Central do Colaborador</i>
             </a>
             <div class="d-flex align-items-center ms-auto">
+                <div class="dropdown me-2">
+                    <button class="btn dropdown-toggle user-dropdown-button" type="button" id="acessosDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-grid-fill me-1"></i> Acessos
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" aria-labelledby="acessosDropdown">
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom"
+                                href="http://10.2.2.143:9000/hospitalar/#/login" target="_blank"
+                                rel="noopener noreferrer">
+                                <i class="bi bi-file-medical me-2"></i>Acesso Salutem
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="https://mariofreitas.lab.jalis.net.br/"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-shadows me-2"></i>Acesso Laboratório
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="http://10.2.2.30:3003/login"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-layers me-2"></i>Acesso HEXMED
+                            </a>
+                        </li>
+                    </ul>
+                </div>
                 <div class="dropdown">
                     <button class="btn dropdown-toggle user-dropdown-button" type="button" id="userDropdownGlobal"
                         data-bs-toggle="dropdown" aria-expanded="false">
@@ -86,7 +113,39 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+    <br></br>
+    <footer class="footer-premium">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
 
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <a href="{{ url_for('main.panel') }}" class="footer-brand">
+                        <i class="bi bi-hospital">    Central do Colaborador</i>
+                    </a>
+                    <span class="footer-credit-text d-block mt-2">Desenvolvido por <strong>Lucas M. Araujo</strong></span>
+                </div>
+
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="https://www.linkedin.com/in/mglucas0123/" target="_blank" rel="noopener noreferrer"
+                        class="footer-social-link" title="LinkedIn">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/mglucas0123" target="_blank" rel="noopener noreferrer"
+                        class="footer-social-link" title="GitHub">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="https://wa.me/5534996854244" target="_blank" rel="noopener noreferrer"
+                        class="footer-social-link" title="WhatsApp">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
+                    <a href="mailto:lucasiturama2013@gmail.com" class="footer-social-link" title="Email">
+                        <i class="bi bi-envelope-fill"></i>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
