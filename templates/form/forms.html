@@ -38,8 +38,8 @@
                         <label for="filtro_setor" class="form-label fw-semibold small">Setor:</label>
                         <select name="sector_filtro" id="filtro_setor" class="form-select form-select-sm">
                             <option value="">Todos os setores</option>
-                            {% for setor_opcao in ['Posto PS', 'Posto Clínico', 'Posto Cirúrgico', 'Centro
-                            Cirúrgico','Emergência'] %}
+                            {% for setor_opcao in
+                            ['Posto PS', 'Posto Clínico', 'Posto Cirúrgico', 'Centro Cirúrgico','Emergência'] %}
                             <option value="{{ setor_opcao }}" {% if request.args.get('sector_filtro')==setor_opcao
                                 %}selected{% endif %}>
                                 {{ setor_opcao }}
@@ -141,40 +141,28 @@
                 </table>
             </div>
         </div>
-        {% if forms.items is defined and (forms.has_prev or forms.has_next or forms.pages > 1)
-        %}
-        <div class="card-footer bg-light d-flex justify-content-center pt-3">
-            <nav aria-label="Navegação dos formulários">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item {% if not forms.has_prev %}disabled{% endif %}">
-                        <a class="page-link"
-                            href="{{ url_for('form.forms', page=forms.prev_num, **request.args) if forms.has_prev else '#' }}"
-                            aria-label="Anterior">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    {% for page_num in forms.iter_pages(left_edge=1, right_edge=1, left_current=1,
-                    right_current=1) %}
-                    {% if page_num %}
-                    <li class="page-item {% if forms.page == page_num %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('form.forms', page=page_num, **request.args) }}">{{
-                            page_num
-                            }}</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
-                    {% endif %}
-                    {% endfor %}
-                    <li class="page-item {% if not forms.has_next %}disabled{% endif %}">
-                        <a class="page-link"
-                            href="{{ url_for('form.forms', page=forms.next_num, **request.args) if forms.has_next else '#' }}"
-                            aria-label="Próximo">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+
+        <!-- PAGINAÇÃO DOS USUÁRIOS -->
+        {% if pagination %}
+        <nav aria-label="Navegação de usuários">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('form.forms', page=pagination.prev_num) }}">Anterior</a>
+                </li>
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('form.forms', page=p) }}">{{ p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('form.forms', page=pagination.next_num) }}">Próxima</a>
+                </li>
+            </ul>
+        </nav>
         {% endif %}
     </div>
 </div>

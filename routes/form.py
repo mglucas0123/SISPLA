@@ -79,12 +79,13 @@ def forms():
         query = query.where(
             func.lower(User.name).like(func.lower(f"%{filtro_nome}%"))
         )
-
-    all_forms = db.session.execute(query).scalars().all()
+    
+    page_get = request.args.get('page', 1, type=int)
+    pagination = db.paginate(query, page=page_get, per_page=10, error_out=False)
 
     return render_template(
         "form/forms.html", 
-        forms=all_forms, 
+        forms=pagination.items, pagination=pagination,
         data_inicio_atual=data_inicio_str, 
         data_fim_atual=data_fim_str, 
         tipo_data_atual=tipo_data

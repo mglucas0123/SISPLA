@@ -42,7 +42,7 @@
                     <h6 class="mb-1">{{ notice.title }}</h6>
                     <small class="text-muted">{{ notice.date_registry | format_date_time }}</small>
                 </div>
-                <p class="mb-1">{{ notice.content }}</p>
+                <p class="mb-1" style="white-space: pre-wrap;">{{ notice.content }}</p>
                 <div class="d-flex justify-content-between align-items-center mt-2">
                     <small class="text-muted">Publicado por: {{ notice.author.name }}</small>
 

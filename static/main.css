@@ -575,4 +575,85 @@ body {
   .footer-credit-text {
     margin-bottom: 1rem;
   }
+}
+.upload-zone {
+  border: 2px dashed #ced4da;
+  border-radius: 0.5rem;
+  padding: 2.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.upload-zone:hover, .upload-zone.is-dragover {
+  background-color: #f8f9fa;
+  border-color: #0d6efd;
+}
+
+.file-feedback {
+  display: flex;
+  align-items: center;
+  background-color: #e9f5ec;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1e7dd;
+}
+
+.file-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.file-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.file-card-icon {
+  font-size: 2.5rem;
+  color: #0d6efd;
+}
+
+.file-card-name {
+  font-weight: 600;
+  color: #212529;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-description {
+  font-size: 0.875rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-date {
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+.file-card-info {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.btn-icon {
+  --bs-btn-padding-y: .1rem;
+  --bs-btn-padding-x: .4rem;
+  --bs-btn-font-size: .75rem;
+  color: #6c757d;
+}
+
+.btn-icon:hover {
+  background-color: #e9ecef;
+}
+
+#preview-content img {
+  max-width: 100%;
+  max-height: 70vh;
+  -o-object-fit: contain;
+     object-fit: contain;
 }/*# sourceMappingURL=main.css.map */

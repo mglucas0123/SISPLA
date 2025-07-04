@@ -1,0 +1,208 @@
+{% extends "navbar.html" %}
+{% block title %}Repositório: {{ repository.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h2 mb-0"><i class="bi bi-folder2-open me-2 text-primary"></i>{{ repository.name }}</h1>
+            <p class="text-muted mb-0">{{ repository.description or 'Este repositório não tem uma descrição.' }}</p>
+        </div>
+        <a href="{{ url_for('repository.repository_list_page') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+    </div>
+
+    {% include 'partials/_flash_messages.html' %}
+
+    <div class="card shadow-sm mb-5">
+        <div class="card-body p-4">
+            <h5 class="card-title mb-3">Adicionar Novo Arquivo</h5>
+            <form id="upload-form" method="POST" action="{{ url_for('repository.upload_file', repo_id=repository.id) }}" enctype="multipart/form-data">
+                
+                <div id="upload-zone" class="upload-zone text-center">
+                    <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
+                    <p class="mb-1 mt-2">Arraste e solte o arquivo aqui</p>
+                    <p class="text-muted small">ou</p>
+                    <button type="button" id="browse-btn" class="btn btn-secondary btn-sm">Selecione o Arquivo</button>
+                    <input type="file" name="file" id="file-input" class="d-none" required>
+                </div>
+                
+                <div id="file-feedback" class="file-feedback d-none mt-3">
+                    <i class="bi bi-file-earmark-check-fill text-success"></i>
+                    <span id="file-name-feedback" class="ms-2"></span>
+                </div>
+
+                <div class="mt-3">
+                    <label for="description" class="form-label">Descrição (opcional):</label>
+                    <textarea name="description" id="description" class="form-control" rows="2" placeholder="Adicione uma breve descrição do arquivo..."></textarea>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-send-fill me-2"></i>Enviar Arquivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <h2 class="h4 mb-3">Arquivos em "{{ repository.name }}"</h2>
+    <div class="row g-3" id="file-list">
+        {% for file in files %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card file-card h-100 shadow-sm" data-file-id="{{ file.id }}" data-file-ext="{{ file.extension }}" data-file-name="{{ file.name }}">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-start mb-3 flex-grow-1" style="cursor: pointer;" onclick="previewFileFromData(this.closest('.file-card'))">
+                        <div class="file-card-icon me-3"><i class="bi"></i></div>
+                        <div class="file-card-info">
+                            <h6 class="file-card-name mb-1" title="{{ file.name }}">{{ file.name }}</h6>
+                            <p class="file-card-description mb-0" title="{{ file.description }}">{{ file.description or 'Sem descrição' }}</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <small class="file-card-date text-muted">{{ file.date_uploaded.strftime('%d/%m/%Y') }}</small>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="previewFileFromData(this.closest('.file-card'))"><i class="bi bi-eye me-2"></i>Visualizar</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="renameFileFromData(this.closest('.file-card'))"><i class="bi bi-pencil-square me-2"></i>Renomear</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('repository.download_file', file_id=file.id) }}"><i class="bi bi-download me-2"></i>Baixar</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ url_for('repository.delete_file', file_id=file.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este arquivo?');">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash3 me-2"></i>Excluir</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-secondary text-center mt-3">
+                <i class="bi bi-inbox me-2"></i>Este repositório está vazio. Comece enviando um arquivo!
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Visualizando Arquivo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-0" id="preview-content">
+        </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const browseBtn = document.getElementById('browse-btn');
+    const fileFeedback = document.getElementById('file-feedback');
+    const fileNameFeedback = document.getElementById('file-name-feedback');
+    if (uploadZone) {
+        browseBtn.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('click', (e) => {
+            if (e.target.id !== 'browse-btn') { fileInput.click(); }
+        });
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => uploadZone.classList.add('is-dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => uploadZone.classList.remove('is-dragover'), false);
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            fileInput.files = e.dataTransfer.files;
+            updateFileFeedback();
+        });
+        fileInput.addEventListener('change', updateFileFeedback);
+        function updateFileFeedback() {
+            if (fileInput.files.length > 0) {
+                fileNameFeedback.textContent = fileInput.files[0].name;
+                fileFeedback.classList.remove('d-none');
+            } else {
+                fileFeedback.classList.add('d-none');
+            }
+        }
+    }
+
+    const iconMap = {'.pdf': 'bi-file-earmark-pdf-fill','.doc': 'bi-file-earmark-word-fill','.docx': 'bi-file-earmark-word-fill','.xls': 'bi-file-earmark-excel-fill','.xlsx': 'bi-file-earmark-excel-fill','.ppt': 'bi-file-earmark-ppt-fill','.pptx': 'bi-file-earmark-ppt-fill','.zip': 'bi-file-earmark-zip-fill','.rar': 'bi-file-earmark-zip-fill','.jpg': 'bi-file-earmark-image-fill','.jpeg': 'bi-file-earmark-image-fill','.png': 'bi-file-earmark-image-fill','.gif': 'bi-file-earmark-image-fill','.svg': 'bi-file-earmark-image-fill','.txt': 'bi-file-earmark-text-fill','.csv': 'bi-file-spreadsheet-fill'};
+    const defaultIcon = 'bi-file-earmark-fill';
+    document.querySelectorAll('.file-card').forEach(card => {
+        const iconClass = iconMap[card.dataset.fileExt] || defaultIcon;
+        card.querySelector('.file-card-icon i').className = `bi ${iconClass}`;
+    });
+});
+
+function previewFileFromData(cardElement) {
+    const fileId = cardElement.dataset.fileId;
+    const extension = cardElement.dataset.fileExt;
+    const fileName = cardElement.dataset.fileName;
+    const fileUrl = `{{ url_for('repository.view_file', file_id=0) }}`.replace('0', fileId);
+
+    const previewContent = document.getElementById('preview-content');
+    const previewModalLabel = document.getElementById('previewModalLabel');
+    previewModalLabel.textContent = `Visualizando: ${fileName}`;
+    
+    let content = '';
+    const supportedImageExt = ['.jpg', '.jpeg', '.png', '.gif', '.svg'];
+
+    if (supportedImageExt.includes(extension)) {
+        content = `<img src="${fileUrl}" class="img-fluid" alt="Preview de ${fileName}">`;
+    } else if (extension === '.pdf') {
+        content = `<iframe src="${fileUrl}" style="width:100%; height:65vh;" frameborder="0"></iframe>`;
+    } else {
+        const downloadUrl = `{{ url_for('repository.download_file', file_id=0) }}`.replace('0', fileId);
+        content = `<div class="p-5 text-center"><i class="bi bi-exclamation-triangle display-1 text-warning"></i><p class="mt-4 fs-5">A pré-visualização não é suportada.</p><a href="${downloadUrl}" class="btn btn-primary mt-2"><i class="bi bi-download me-2"></i>Baixar Arquivo</a></div>`;
+    }
+    previewContent.innerHTML = content;
+    const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+    previewModal.show();
+}
+
+function renameFileFromData(cardElement) {
+    const fileId = cardElement.dataset.fileId;
+    const currentName = cardElement.dataset.fileName;
+    const newName = prompt("Digite o novo nome para o arquivo (sem a extensão):", currentName);
+
+    if (newName && newName.trim() !== '' && newName !== currentName) {
+        fetch(`{{ url_for('repository.rename_file', file_id=0) }}`.replace('0', fileId), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ new_name: newName.trim() })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Erro desconhecido') });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Arquivo renomeado com sucesso! A página será atualizada para refletir a mudança.');
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert(`Erro ao renomear: ${error.message}`);
+        });
+    }
+}
+</script>
+{% endblock %}

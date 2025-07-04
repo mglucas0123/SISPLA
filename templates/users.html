@@ -16,18 +16,20 @@
     {% endif %}
     {% endwith %}
 
+    <!-- TÍTULO DA PÁGINA E BOTÕES "NOVO USUÁRIO" E "VOLTAR PARA O PAINEL" -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2 mb-0">Gerenciar Usuários</h1>
         <div>
             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#criarUsuarioModal">
-                <i class="bi bi-plus-circle-fill me-2"></i>Novo Usuário
+                <i class="bi bi-plus-circle me-2"></i>Novo Usuário
             </button>
             <a href="{{ url_for('main.panel') }}" class="btn btn-primary ms-2">
-                <i class="bi bi-arrow-left-circle-fill me-2"></i>Voltar para o Painel
+                <i class="bi bi-arrow-left-circle me-2"></i>Voltar para o Painel
             </a>
         </div>
     </div>
 
+    <!-- SEÇÃO DOS USUÁRIOS-->
     <div class="card shadow-sm">
         <div class="card-body">
             <div class="table-responsive">
@@ -43,6 +45,7 @@
                         {% for user in users %}
                         <tr class="user-row" data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
                             data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
+                            data-user-has-repo="{{ user.has_private_repository | tojson }}"
                             data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
                             data-user-profile="{{ user.profile | join(',') if user.profile is iterable and user.profile is not string else (user.profile if user.profile else '') }}"
                             data-user-is-active="{{ user.is_active | tojson }}" style="cursor: pointer;">
@@ -61,7 +64,8 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="3" class="text-center text-muted fst-italic py-4">Nenhum usuário cadastrado.
+                            <td colspan="3" class="text-center text-muted fst-italic py-4">Nenhum usuário
+                                cadastrado.
                             </td>
                         </tr>
                         {% endfor %}
@@ -70,8 +74,33 @@
             </div>
         </div>
     </div>
+
+    <!-- PAGINAÇÃO DOS USUÁRIOS -->
+    {% if pagination %}
+    <nav aria-label="Navegação de usuários">
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num) }}">Anterior</a>
+            </li>
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.users', page=p) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+            {% endfor %}
+
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num) }}">Próxima</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 
+<!-- MODAL PARA CRIAR NOVO USUÁRIO -->
 <div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -142,6 +171,7 @@
     </div>
 </div>
 
+<!-- MODAL PARA DETALHES DO USUÁRIO -->
 <div class="modal fade" id="infoUsuarioModal" tabindex="-1" aria-labelledby="infoUsuarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content shadow-lg">
@@ -216,6 +246,11 @@
                 <hr class="my-4">
                 <div>
                     <h6 class="mb-3"><i class="bi bi-gear-wide-connected me-2 text-secondary"></i>Outras Ações</h6>
+                    <form id="formCriarRepoPrivado" method="POST" action="" class="mt-3">
+                        <button id="btnCriarRepo" class="btn btn-outline-success w-100" type="submit">
+                            <i class="bi bi-folder-plus me-1"></i>Criar Repositório Privado
+                        </button>
+                    </form>
                     <form id="formAlterarSenhaAdmin" method="POST" action="" class="mb-3">
                         <label for="novaSenhaAdminInput" class="form-label small text-muted">Redefinir Senha do
                             Usuário:</label>
@@ -251,8 +286,10 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    //<!-- SCRIPT PARA MANIPULAÇÃO DO MODAL DE DETALHES DO USUÁRIO -->
     document.addEventListener('DOMContentLoaded', function () {
         var infoUsuarioModalElement = document.getElementById('infoUsuarioModal');
+
         var modalTitle = infoUsuarioModalElement.querySelector('#infoUsuarioModalLabel');
         var modalUserNameSpan = infoUsuarioModalElement.querySelector('#modalUserName');
         var modalUserLoginSpan = infoUsuarioModalElement.querySelector('#modalUserLogin');
@@ -270,6 +307,7 @@
         var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
         var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
         infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
+
             var triggeringRow = event.relatedTarget;
             if (!triggeringRow || !triggeringRow.classList.contains('user-row')) {
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
@@ -349,7 +387,38 @@
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
                 if (formToggleUserStatus) formToggleUserStatus.action = '#';
             }
+            if (formCriarRepoPrivado) {
+                var urlCriarRepo = "{{ url_for('admin.create_private_repo', user_id=0) }}".replace('0', userId);
+                formCriarRepoPrivado.action = urlCriarRepo;
+            }
         });
+        if (infoUsuarioModalElement) {
+            var formCriarRepoPrivado = infoUsuarioModalElement.querySelector('#formCriarRepoPrivado');
+            var btnCriarRepo = infoUsuarioModalElement.querySelector('#btnCriarRepo');
+
+            infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
+                var triggeringRow = event.relatedTarget;
+                var userId = triggeringRow.dataset.userId;
+                var hasRepo = (triggeringRow.dataset.userHasRepo === 'true');
+
+                if (formCriarRepoPrivado) {
+                    var urlCriarRepo = "{{ url_for('admin.create_private_repo', user_id=0) }}".replace('0', userId);
+                    formCriarRepoPrivado.action = urlCriarRepo;
+                }
+
+                if (hasRepo) {
+                    btnCriarRepo.disabled = true;
+                    btnCriarRepo.classList.remove('btn-outline-success');
+                    btnCriarRepo.classList.add('btn-secondary');
+                    btnCriarRepo.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Repositório já existe';
+                } else {
+                    btnCriarRepo.disabled = false;
+                    btnCriarRepo.classList.remove('btn-secondary');
+                    btnCriarRepo.classList.add('btn-outline-success');
+                    btnCriarRepo.innerHTML = '<i class="bi bi-folder-plus me-1"></i> Criar Repositório Privado';
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
