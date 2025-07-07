@@ -6,7 +6,8 @@
     transition: all 0.2s ease-in-out;
 }
 
-.upload-zone:hover, .upload-zone.is-dragover {
+.upload-zone:hover,
+.upload-zone.is-dragover {
     background-color: #f8f9fa;
     border-color: #0d6efd;
 }
@@ -26,7 +27,7 @@
 
 .file-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
 }
 
 .file-card-icon {
@@ -59,13 +60,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    
+
     min-width: 0;
 }
 
 .btn-icon {
-    --bs-btn-padding-y: .1rem; 
-    --bs-btn-padding-x: .4rem; 
+    --bs-btn-padding-y: .1rem;
+    --bs-btn-padding-x: .4rem;
     --bs-btn-font-size: .75rem;
     color: #6c757d;
 }
@@ -76,7 +77,33 @@
 
 
 #preview-content img {
-    max-width: 100%; 
-    max-height: 70vh; 
-    object-fit: contain; 
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+.repository-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.repository-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}
+
+.repository-icon i {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.bg-danger-soft {
+    background-color: rgba(220, 53, 69, 0.15);
+}
+
+.bg-success-soft {
+    background-color: rgba(25, 135, 84, 0.15);
+}
+
+.bg-info-soft {
+    background-color: rgba(13, 202, 240, 0.15);
 }

@@ -66,21 +66,4 @@
 
 {% block scripts %}
 {{ super() }}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        //<-- FILTRO DATA/HORA DO REGISTRO -->
-        const dataRegistroInput = document.getElementById('data_registro_display_input');
-        if (dataRegistroInput) {
-            const now = new Date();
-            const day = ('0' + now.getDate()).slice(-2);
-            const month = ('0' + (now.getMonth() + 1)).slice(-2);
-            const year = now.getFullYear();
-            const hours = ('0' + now.getHours()).slice(-2);
-            const minutes = ('0' + now.getMinutes()).slice(-2);
-            const seconds = ('0' + now.getSeconds()).slice(-2);
-            const formattedDateTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-            dataRegistroInput.value = formattedDateTime;
-        }
-    });
-</script>
 {% endblock %}

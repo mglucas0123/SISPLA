@@ -18,7 +18,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark shadow-sm navbar-custom no-print">
         <div class="container-fluid">
             <a class="navbar-brand navbar-brand-custom" href="{{ url_for('main.panel') }}">
-                <i class="bi bi-hospital">    Central do Colaborador</i>
+                <i class="bi bi-hospital"> Central do Colaborador</i>
             </a>
             <div class="d-flex align-items-center ms-auto">
                 <div class="dropdown me-2">
@@ -61,8 +61,28 @@
                             </button>
                         </li>
                         {% if 'ADMIN' in current_user.profile %}
-                        <li> <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.manage_notices') }}">
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <h6 class="dropdown-header">Opções de Administrador</h6>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.users') }}">
+                                <i class="bi bi-people-fill me-2"></i>Gerenciar Usuários
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.manage_notices') }}">
                                 <i class="bi bi-megaphone-fill me-2"></i>Gerenciar Mural
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom"
+                                href="{{ url_for('admin.manage_repositories') }}">
+                                <i class="bi bi-archive-fill me-2"></i>Gerenciar Repositórios
                             </a>
                         </li>
                         {% endif %}
@@ -114,15 +134,16 @@
 
     {% block content %}{% endblock %}
     <br></br>
-    <footer class="footer-premium">
+    <footer class="footer-premium no-print">
         <div class="container">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
 
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
                     <a href="{{ url_for('main.panel') }}" class="footer-brand">
-                        <i class="bi bi-hospital">    Central do Colaborador</i>
+                        <i class="bi bi-hospital"> Central do Colaborador</i>
                     </a>
-                    <span class="footer-credit-text d-block mt-2">Desenvolvido por <strong>Lucas M. Araujo</strong></span>
+                    <span class="footer-credit-text d-block mt-2">Desenvolvido por <strong>Lucas M.
+                            Araujo</strong></span>
                 </div>
 
                 <div class="col-md-6 text-center text-md-end">

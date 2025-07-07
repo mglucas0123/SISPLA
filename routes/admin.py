@@ -3,7 +3,7 @@ from flask import Blueprint, current_app, render_template, request, redirect, ur
 from flask_login import current_user, login_required
 from werkzeug.security import generate_password_hash
 from functools import wraps
-from db import db, User, Notice, Repository
+from db import db, User, Notice, Repository, File, Form
 import shutil
 from werkzeug.utils import secure_filename
 
@@ -202,7 +202,24 @@ def manage_repositories():
     all_users = User.query.order_by(User.name).all()
     return render_template("repository/manage_repositories.html", repositories=all_repos, all_users=all_users)
 
-#<-- CRIAR UM NOVO REPOSITÓRIO -->
+def find_unique_foldername(repo_name, access_type, owner, upload_folder):    
+    if access_type == 'private':
+        base_foldername = secure_filename(owner.username)
+    else:
+        safe_owner_username = secure_filename(owner.username)
+        safe_repo_name = secure_filename(repo_name)
+        base_foldername = f"{safe_owner_username}_{safe_repo_name}_{access_type}"
+
+    parent_dir = os.path.join(upload_folder, access_type.capitalize())
+    
+    final_foldername = base_foldername
+    counter = 1
+    while os.path.exists(os.path.join(parent_dir, final_foldername)):
+        final_foldername = f"{base_foldername}_{counter}"
+        counter += 1
+        
+    return final_foldername
+
 @admin_bp.route("/repositories/create", methods=["POST"])
 @login_required
 @admin_required
@@ -210,31 +227,40 @@ def create_repository():
     name = request.form.get('name')
     description = request.form.get('description')
     access_type = request.form.get('access_type')
-    owner_id_to_set = request.form.get('owner_id', current_user.id, type=int)
+    owner_id = request.form.get('owner_id', current_user.id, type=int)
 
     if not name:
         flash("O nome do repositório é obrigatório.", "danger")
         return redirect(url_for('admin.manage_repositories'))
 
     if access_type != 'private':
-        owner_id_to_set = current_user.id
+        owner_id = current_user.id
+    
+    owner = User.query.get(owner_id)
+    if not owner:
+        flash("Usuário dono não encontrado.", "danger")
+        return redirect(url_for('admin.manage_repositories'))
+
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    unique_folder_name = find_unique_foldername(name, access_type, owner, upload_folder)
 
     new_repo = Repository(
         name=name,
         description=description,
         access_type=access_type,
-        owner_id=owner_id_to_set
+        owner_id=owner_id,
+        folder_name=unique_folder_name
     )
     db.session.add(new_repo)
-    db.session.commit() 
+    db.session.commit()
 
     try:
-        repo_folder_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"repo_{new_repo.id}")
+        repo_folder_path = os.path.join(upload_folder, access_type.capitalize(), unique_folder_name)
         os.makedirs(repo_folder_path, exist_ok=True)
         flash(f"Repositório '{name}' criado com sucesso!", "success")
     except Exception as e:
-        flash(f"Repositório criado no banco, mas falha ao criar pasta no servidor: {e}", "danger")
-    
+        flash(f"Repositório salvo no banco, mas falha ao criar pasta: {e}", "danger")
+
     return redirect(url_for('admin.manage_repositories'))
 
 #<-- EDITAR REPOSITÓRIO -->
@@ -243,12 +269,32 @@ def create_repository():
 @admin_required
 def edit_repository(repo_id):
     repo = Repository.query.get_or_404(repo_id)
-    
+    all_users = User.query.filter(User.id != repo.owner_id).order_by(User.name).all()
+
     if request.method == "POST":
+        original_access_type = repo.access_type
+        new_access_type = request.form.get('access_type')
+
+        if new_access_type != original_access_type:
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            old_parent_dir = os.path.join(upload_folder, original_access_type.capitalize())
+            new_parent_dir = os.path.join(upload_folder, new_access_type.capitalize())
+            
+            old_folder_path = os.path.join(old_parent_dir, repo.folder_name)
+            new_folder_path = os.path.join(new_parent_dir, repo.folder_name)
+
+            try:
+                os.makedirs(new_parent_dir, exist_ok=True)
+                if os.path.exists(old_folder_path):
+                    shutil.move(old_folder_path, new_folder_path)
+            except Exception as e:
+                flash(f"Não foi possível mover a pasta do repositório: {e}", "danger")
+                return redirect(url_for('admin.edit_repository', repo_id=repo.id))
+
         repo.name = request.form.get('name')
         repo.description = request.form.get('description')
-        repo.access_type = request.form.get('access_type')
-
+        repo.access_type = new_access_type
+        
         if repo.access_type == 'shared':
             shared_user_ids = request.form.getlist('shared_users', type=int)
             repo.shared_with_users = User.query.filter(User.id.in_(shared_user_ids)).all()
@@ -259,7 +305,6 @@ def edit_repository(repo_id):
         flash("Repositório atualizado com sucesso!", "success")
         return redirect(url_for('admin.manage_repositories'))
         
-    all_users = User.query.filter(User.id != repo.owner_id).order_by(User.name).all()
     return render_template("repository/edit_repository.html", repository=repo, all_users=all_users)
 
 @admin_bp.route("/users/create_private_repo/<int:user_id>", methods=['POST'])
@@ -290,17 +335,19 @@ def create_private_repo(user_id):
 @admin_required
 def delete_repository(repo_id):
     repo_to_delete = Repository.query.get_or_404(repo_id)
-
     try:
-        repo_folder_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"repo_{repo_to_delete.id}")
+        repo_folder_path = os.path.join(
+            current_app.config['UPLOAD_FOLDER'], 
+            repo_to_delete.access_type.capitalize(), 
+            repo_to_delete.folder_name
+        )
 
         if os.path.exists(repo_folder_path):
             shutil.rmtree(repo_folder_path)
 
         db.session.delete(repo_to_delete)
         db.session.commit()
-
-        flash(f"Repositório '{repo_to_delete.name}' e todos os seus arquivos foram excluídos com sucesso.", "success")
+        flash(f"Repositório '{repo_to_delete.name}' e todos os seus arquivos foram excluídos.", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Ocorreu um erro ao excluir o repositório: {str(e)}", "danger")

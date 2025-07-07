@@ -4,6 +4,7 @@ from flask import Flask, current_app
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
+from flask_migrate import Migrate 
 
 from db import db, User, Form
 from routes.admin import admin_bp
@@ -28,6 +29,8 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
         
     db.init_app(app)
+    
+    migrate = Migrate(app, db)
     
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -60,6 +63,7 @@ def create_app():
         with app.app_context():
             db.create_all()
             admin_usuario = db.session.execute(db.select(User).filter_by(username="admin")).scalar_one_or_none()
+            
             if not admin_usuario:
                 admin_pass = os.getenv('ADMIN_DEFAULT_PASSWORD', "admin")
                 admin = User(
@@ -74,6 +78,8 @@ def create_app():
                 print("Usuário admin padrão criado com sucesso.")
             else:
                 print("Usuário admin padrão já existe.")
+                
+                
         print("Banco de dados inicializado.")
     return app
 

@@ -20,19 +20,20 @@ class User(db.Model, UserMixin):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
-
+    
+    notices = db.relationship('Notice', back_populates='author')
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
     shared_repositories = db.relationship('Repository', secondary=repository_access, back_populates='shared_with_users')
     @property
     def has_private_repository(self):
-        for repo in self.owned_repositories:
-            if repo.access_type == 'private':
-                return True
-        return False
+        return db.session.query(
+            Repository.query.filter_by(owner_id=self.id, access_type='private').exists()
+        ).scalar()
 
     def __repr__(self):
         return f'<Users {self.username}>'
     
+        
 class Form(db.Model):
     __tablename__ = 'forms'
     id = db.Column(db.Integer, primary_key=True)
@@ -40,11 +41,9 @@ class Form(db.Model):
     sector = db.Column(db.String(100), nullable=False)
     date_registry = db.Column(db.DateTime, nullable=False)
     observation = db.Column(db.Text, nullable=False)
-
     worker = db.relationship('User', back_populates='forms')
-    
     def __repr__(self):
-        return f'<Forms {self.username}>'
+        return f'<Form id={self.id}>'
 
 class Notice(db.Model):
     __tablename__ = 'notices'
@@ -53,9 +52,8 @@ class Notice(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_registry = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    author = db.relationship('User', back_populates='notices')
 
-    author = db.relationship('User', backref='notices')
-    
     def __repr__(self):
         return f'<notices {self.title}>'
     
@@ -64,29 +62,25 @@ class Repository(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    
+    folder_name = db.Column(db.String(120), unique=True, nullable=False)
     access_type = db.Column(db.String(20), nullable=False, default='private')
-    
-    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+    date_created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     owner = db.relationship('User', backref=db.backref('owned_repositories', lazy=True))
-    
     files = db.relationship('File', back_populates='repository', cascade="all, delete-orphan")
-    
     shared_with_users = db.relationship('User', secondary=repository_access, back_populates='shared_repositories')
 
-    
 class File(db.Model):
     __tablename__ = 'files'
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(200), nullable=False)
+    filename = db.Column(db.String(200), nullable=True)
     name = db.Column(db.String(100), nullable=False)   
     description = db.Column(db.Text, nullable=True)
-    date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
-    repository_id = db.Column(db.Integer, db.ForeignKey('repositories.id'), nullable=False)
+    date_uploaded = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    is_folder = db.Column(db.Boolean, default=False, nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('files.id', name='fk_file_parent_id'), nullable=True)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repositories.id', name='fk_file_repository_id'), nullable=False)
     repository = db.relationship('Repository', back_populates='files')
-    
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     owner = db.relationship('User', backref=db.backref('owned_files', lazy=True))
+    children = db.relationship('File', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
