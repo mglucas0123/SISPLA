@@ -52,8 +52,7 @@
                             </span>
                         </div>
                     </div>
-                    <p class="card-text text-muted small flex-grow-1">{{ repo.description or 'Este repositório não
-                        possui uma descrição.' }}</p>
+                    <p class="card-text text-muted small flex-grow-1">{{ repo.description or 'Este repositório não possui uma descrição.' }}</p>
                     <a href="{{ url_for('repository.repository_detail_page', repo_id=repo.id) }}"
                         class="btn btn-outline-primary stretched-link mt-auto">
                         <i class="bi bi-arrow-right-circle me-2"></i>Acessar

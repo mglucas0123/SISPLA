@@ -78,8 +78,10 @@ class File(db.Model):
     description = db.Column(db.Text, nullable=True)
     date_uploaded = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     is_folder = db.Column(db.Boolean, default=False, nullable=False)
-    parent_id = db.Column(db.Integer, db.ForeignKey('files.id', name='fk_file_parent_id'), nullable=True)
-    repository_id = db.Column(db.Integer, db.ForeignKey('repositories.id', name='fk_file_repository_id'), nullable=False)
+    
+    parent_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=True)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repositories.id'), nullable=False)
+
     repository = db.relationship('Repository', back_populates='files')
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     owner = db.relationship('User', backref=db.backref('owned_files', lazy=True))

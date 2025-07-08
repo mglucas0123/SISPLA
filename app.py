@@ -4,7 +4,6 @@ from flask import Flask, current_app
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
-from flask_migrate import Migrate 
 
 from db import db, User, Form
 from routes.admin import admin_bp
@@ -29,9 +28,7 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
         
     db.init_app(app)
-    
-    migrate = Migrate(app, db)
-    
+        
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
