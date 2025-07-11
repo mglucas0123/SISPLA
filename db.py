@@ -86,3 +86,85 @@ class File(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     owner = db.relationship('User', backref=db.backref('owned_files', lazy=True))
     children = db.relationship('File', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
+    
+class Course(db.Model):
+    __tablename__ = 'courses'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    video_filename = db.Column(db.String(200), nullable=False) 
+    image_filename = db.Column(db.String(200), nullable=True)
+    duration_seconds = db.Column(db.Integer, nullable=False, default=0)
+    date_registry = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    
+    quiz = db.relationship('Quiz', backref='course', uselist=False, cascade="all, delete-orphan")
+
+    progress_records = db.relationship('UserCourseProgress', back_populates='course', cascade="all, delete-orphan", lazy='dynamic')
+
+class UserCourseProgress(db.Model):
+    __tablename__ = 'user_course_progress'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    last_watched_timestamp = db.Column(db.Float, default=0.0, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship('User', backref=db.backref('course_progress', lazy='dynamic'))
+    
+    course = db.relationship('Course', back_populates='progress_records')
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'course_id', name='_user_course_uc'),)
+
+#<!-- MODELO PARA PROVA -->
+class Quiz(db.Model):
+    __tablename__ = 'quizzes'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), unique=True, nullable=False)
+    questions = db.relationship('Question', backref='quiz', cascade="all, delete-orphan", lazy='dynamic')
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "questions": [
+                {
+                    "id": q.id,
+                    "text": q.text,
+                    "type": q.question_type,
+                    "options": [{"text": opt.text, "is_correct": opt.is_correct} for opt in q.options]
+                }
+                for q in self.questions.order_by('id')
+            ]
+        }
+
+class Question(db.Model):
+    __tablename__ = 'questions'
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    
+    question_type = db.Column(db.String(50), nullable=False)
+    
+    options = db.relationship('AnswerOption', backref='question', cascade="all, delete-orphan", lazy='dynamic')
+
+class AnswerOption(db.Model):
+    __tablename__ = 'answer_options'
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    text = db.Column(db.String(500), nullable=False)
+    is_correct = db.Column(db.Boolean, default=False, nullable=False)
+
+class UserQuizAttempt(db.Model):
+    __tablename__ = 'user_quiz_attempts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    score = db.Column(db.Float, nullable=True)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    answers = db.Column(db.Text, nullable=True) 
+
+    user = db.relationship('User', backref='quiz_attempts')
+    
+    quiz = db.relationship('Quiz', backref=db.backref('attempts', cascade="all, delete-orphan"))

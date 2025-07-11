@@ -12,6 +12,8 @@ from routes.main import main_bp
 from routes.util import util_bp
 from routes.form import form_bp
 from routes.repository import repository_bp
+from routes.training import training_bp
+
 from routes.util import format_date_filter
 
 load_dotenv()
@@ -46,6 +48,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(form_bp)
     app.register_blueprint(repository_bp)
+    app.register_blueprint(training_bp)
 
     # <--- Registro dos Filtros --->
     app.jinja_env.filters['format_date'] = format_date_filter

@@ -12,11 +12,10 @@ from db import db, File, Repository
 repository_bp = Blueprint('repository', __name__)
 
 # =========================================================================
-# FUNÇÕES AUXILIARES (HELPERS)
+#                           FUNÇÕES AUXILIARES
 # =========================================================================
 
 def get_repo_folder_path(repo):
-    """Retorna o caminho completo para a pasta física de um repositório."""
     return os.path.join(
         current_app.config['UPLOAD_FOLDER'],
         repo.access_type.capitalize(),
@@ -24,7 +23,6 @@ def get_repo_folder_path(repo):
     )
 
 def has_repo_access(repo, user):
-    """Verifica se um usuário tem acesso a um determinado repositório."""
     return (
         repo.access_type == 'public' or
         repo.owner_id == user.id or
@@ -32,27 +30,30 @@ def has_repo_access(repo, user):
     )
 
 def get_file_and_validate_access(file_id):
-    """Busca um arquivo e valida se o usuário atual tem permissão para acessá-lo."""
     file_obj = File.query.get_or_404(file_id)
     if not has_repo_access(file_obj.repository, current_user):
         abort(403)
     return file_obj
 
 def get_folder_full_path(folder: File) -> str:
-    """
-    Monta o caminho relativo completo de uma pasta a partir da raiz do repositório,
-    navegando recursivamente através dos seus pais.
-    """
     if folder.parent:
         return os.path.join(get_folder_full_path(folder.parent), folder.name)
     else:
         return folder.name
     
+
+def get_folder_physical_path(folder_obj):
+    repo_root_path = get_repo_folder_path(folder_obj.repository)
+    
+    path_parts = []
+    current_folder = folder_obj
+    while current_folder:
+        path_parts.append(current_folder.name)
+        current_folder = current_folder.parent
+    
+    return os.path.join(repo_root_path, *reversed(path_parts))
+    
 def get_item_physical_path(item):
-    """
-    Constrói o caminho físico completo para um arquivo ou pasta,
-    navegando recursivamente pela hierarquia de parent_id.
-    """
     repo = item.repository
     repo_root_path = get_repo_folder_path(repo)
     
@@ -70,9 +71,6 @@ def get_item_physical_path(item):
         return os.path.join(repo_root_path, subfolder_path, item.name)
     
 def recursively_delete_item(item):
-    """
-    Deleta um item e, se for uma pasta, deleta todo o seu conteúdo recursivamente.
-    """
     if item.is_folder:
         for child in item.children:
             recursively_delete_item(child)
@@ -88,14 +86,27 @@ def recursively_delete_item(item):
 
     db.session.delete(item)
     
-# ===================================================================
-# ROTAS DE PÁGINA (Renderizam HTML)
-# ===================================================================
+def get_item_directory_path(file_obj):
+    repo_folder_path = get_repo_folder_path(file_obj.repository)
+    
+    if file_obj.parent_id:
+        path_parts = []
+        parent = file_obj.parent
+        while parent:
+            path_parts.append(parent.name)
+            parent = parent.parent
 
+        return os.path.join(repo_folder_path, *reversed(path_parts))
+    else:
+        return repo_folder_path
+    
+# ===================================================================
+#                           ROTAS DE PÁGINA 
+# ===================================================================
+#<--- EXIBIR LISTA DE REPOSITÓRIOS ACESSIVEIS --->
 @repository_bp.route('/repository')
 @login_required
 def repository_list_page():
-    """Exibe a lista de repositórios acessíveis pelo usuário."""
     accessible_repos_query = db.select(Repository).where(
         or_(
             Repository.access_type == 'public',
@@ -106,11 +117,11 @@ def repository_list_page():
     all_accessible_repos = db.session.execute(accessible_repos_query).scalars().all()
     return render_template("repository/repository_list.html", repositories=all_accessible_repos)
 
+#<--- EXIBE O CONTEÚDO DE UM REPOSITÓRIO OU SUBPASTA --->
 @repository_bp.route('/repository/<int:repo_id>')
 @repository_bp.route('/repository/<int:repo_id>/folder/<int:folder_id>')
 @login_required
 def repository_detail_page(repo_id, folder_id=None):
-    """Exibe o conteúdo (pastas e arquivos) de um repositório ou de uma subpasta."""
     repo = Repository.query.get_or_404(repo_id)
     if not has_repo_access(repo, current_user):
         abort(403)
@@ -120,34 +131,51 @@ def repository_detail_page(repo_id, folder_id=None):
         abort(404)
 
     breadcrumbs = []
-    parent = current_folder
-    while parent:
-        breadcrumbs.append(parent)
-        parent = parent.parent
+    if current_folder:
+        parent = current_folder.parent
+        while parent:
+            breadcrumbs.append(parent)
+            parent = parent.parent
     breadcrumbs.reverse()
-
+    
     folders = File.query.filter_by(repository_id=repo.id, is_folder=True, parent_id=folder_id).order_by(File.name).all()
     files = File.query.filter_by(repository_id=repo.id, is_folder=False, parent_id=folder_id).order_by(File.name).all()
+
+    if current_folder:
+        current_physical_path = get_folder_physical_path(current_folder)
+    else:
+        current_physical_path = get_repo_folder_path(repo)
     
     files_with_details = []
-    repo_folder_path = get_repo_folder_path(repo)
     for file_obj in files:
-        full_path = os.path.join(repo_folder_path, file_obj.filename)
+        caminho_da_subpasta = ""
+        full_path = os.path.join(current_physical_path, file_obj.filename)
         size_in_bytes = os.path.getsize(full_path) if os.path.exists(full_path) else 0
         _, extension = os.path.splitext(file_obj.filename)
+        
+        for pasta in breadcrumbs:
+            caminho_da_subpasta += pasta.name + "/"
+            full_path = os.path.join(current_physical_path, caminho_da_subpasta, file_obj.filename)
+            size_in_bytes = os.path.getsize(full_path) if os.path.exists(full_path) else 0
+        
         files_with_details.append({
             'id': file_obj.id, 'name': file_obj.name, 'filename': file_obj.filename,
             'description': file_obj.description, 'date_uploaded': file_obj.date_uploaded,
             'extension': extension.lower(), 'size': size_in_bytes
         })
+        
+    all_folders_for_moving = File.query.filter_by(
+            repository_id=repo.id, 
+            is_folder=True
+        ).order_by(File.name).all()
+        
     
-    return render_template("repository/repository_detail.html", repository=repo, current_folder=current_folder, folders=folders, files=files_with_details, breadcrumbs=breadcrumbs)
-
+    return render_template("repository/repository_detail.html", repository=repo, current_folder=current_folder, folders=folders, files=files_with_details, breadcrumbs=breadcrumbs, all_folders=all_folders_for_moving)
 
 # =========================================================================
-# ROTAS DE AÇÃO (API / Lógica de Backend)
+#                           ROTAS DE AÇÃO
 # =========================================================================
-
+#<--- ROTA PARA FAZER UPLOAD DE ARQUIVO --->
 @repository_bp.route('/repository/<int:repo_id>/upload', methods=['POST'])
 @login_required
 def upload_file(repo_id):
@@ -157,29 +185,46 @@ def upload_file(repo_id):
 
     if 'file' not in request.files or request.files['file'].filename == '':
         flash("Nenhum arquivo selecionado.", "danger")
-        return redirect(url_for('repository.repository_detail_page', repo_id=repo.id))
+        return redirect(request.referrer)
 
-    file_get = request.files['file']
-    filename_secure = secure_filename(file_get.filename)
-    name_only, _ = os.path.splitext(filename_secure)
+    parent_id_str = request.form.get('parent_id')
+    parent_id = int(parent_id_str) if parent_id_str else None
+    
+    destination_path = ""
+    if parent_id:
+        parent_folder = get_file_and_validate_access(parent_id)
+        destination_path = get_folder_physical_path(parent_folder)
+    else:
+        destination_path = get_repo_folder_path(repo)
 
-    repo_folder_path = get_repo_folder_path(repo)
-    os.makedirs(repo_folder_path, exist_ok=True)
-    file_path = os.path.join(repo_folder_path, filename_secure)
-    file_get.save(file_path)
+    try:
+        os.makedirs(destination_path, exist_ok=True)
+        
+        file_get = request.files['file']
+        filename_secure = secure_filename(file_get.filename)
+        
+        file_get.save(os.path.join(destination_path, filename_secure))
 
-    new_file = File(
-        name=name_only,
-        filename=filename_secure,
-        description=request.form.get('description', ''),
-        repository_id=repo.id,
-        owner_id=current_user.id
-    )
-    db.session.add(new_file)
-    db.session.commit()
-    flash("Arquivo enviado com sucesso!", "success")
-    return redirect(url_for('repository.repository_detail_page', repo_id=repo.id))
+        name_only, _ = os.path.splitext(filename_secure)
+        new_file = File(
+            name=name_only,
+            filename=filename_secure,
+            description=request.form.get('description', ''),
+            repository_id=repo.id,
+            owner_id=current_user.id,
+            parent_id=parent_id
+        )
+        db.session.add(new_file)
+        db.session.commit()
+        flash("Arquivo enviado com sucesso!", "success")
 
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Ocorreu um erro durante o upload: {e}", "danger")
+
+    return redirect(request.referrer or url_for('repository.repository_detail_page', repo_id=repo.id))
+
+#<--- ROTA PARA CRIAR PASTA --->
 @repository_bp.route('/repository/<int:repo_id>/create_folder', methods=['POST'])
 @login_required
 def create_folder(repo_id):
@@ -233,21 +278,24 @@ def create_folder(repo_id):
         db.session.rollback()
         print(f"Erro ao criar pasta: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-    
+
+#<--- ROTA PARA VISUALIZAR ARQUIVO --->
 @repository_bp.route('/file/view/<int:file_id>')
 @login_required
 def view_file(file_id):
     file_obj = get_file_and_validate_access(file_id)
-    repo_folder_path = get_repo_folder_path(file_obj.repository)
-    return send_from_directory(repo_folder_path, file_obj.filename)
+    directory_path = get_item_directory_path(file_obj)
+    return send_from_directory(directory_path, file_obj.filename)
 
+#<--- ROTA PARA BAIXAR ARQUIVO --->
 @repository_bp.route('/file/download/<int:file_id>')
 @login_required
 def download_file(file_id):
     file_obj = get_file_and_validate_access(file_id)
-    repo_folder_path = get_repo_folder_path(file_obj.repository)
-    return send_from_directory(repo_folder_path, file_obj.filename, as_attachment=True)
+    directory_path = get_item_directory_path(file_obj)
+    return send_from_directory(directory_path, file_obj.filename, as_attachment=True)
 
+#<--- ROTA PARA RENOMEAR ARQUIVOS/PASTAS --->
 @repository_bp.route('/file/rename/<int:file_id>', methods=['POST'])
 @login_required
 def rename_file(file_id):
@@ -296,6 +344,7 @@ def rename_file(file_id):
             os.rename(new_path, old_path)
         return jsonify({'success': False, 'error': f"Erro de sistema: {str(e)}"}), 500
 
+#<--- ROTA PARA DELETAR ARQUIVOS --->
 @repository_bp.route('/file/delete/<int:file_id>', methods=['POST'])
 @login_required
 def delete_file(file_id):
@@ -314,8 +363,7 @@ def delete_file(file_id):
     return redirect(url_for('repository.repository_detail_page', repo_id=repo_id_to_redirect))
 
 
-#<---------------------------------------------------------------------------------------------------------------->
-
+#<--- ROTA PARA MOVER ARQUIVOS/PASTAS --->
 @repository_bp.route('/file/move', methods=['POST'])
 @login_required
 def move_file():

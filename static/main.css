@@ -683,4 +683,150 @@ body {
 
 .bg-info-soft {
   background-color: rgba(13, 202, 240, 0.15);
+}
+
+.breadcrumb-custom {
+  --bs-breadcrumb-divider: ">";
+  font-size: 0.95rem;
+}
+
+.breadcrumb-custom .breadcrumb-item a {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--bs-primary);
+  transition: color 0.2s ease-in-out;
+}
+
+.breadcrumb-custom .breadcrumb-item a:hover {
+  color: #0a58ca;
+}
+
+.breadcrumb-custom .breadcrumb-item.active {
+  font-weight: 600;
+  color: #495057;
+}
+
+.file-explorer-window {
+  border: 1px solid #d8dee4;
+  border-radius: 0.75rem;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.file-explorer-window-box {
+  border: 1px solid #d8dee4;
+  border-radius: 0rem;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.file-explorer-window .card-header {
+  background-color: #f6f8fa;
+  border-bottom: 1px solid #d8dee4;
+  padding: 0.75rem 1.5rem;
+  flex-shrink: 0;
+}
+
+.file-explorer-window .card-body {
+  padding: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.file-explorer-window .card-footer {
+  background-color: #f6f8fa;
+  border-top: 1px solid #d8dee4;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8rem;
+  color: #57606a;
+  flex-shrink: 0;
+}
+
+.empty-folder-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #aab2bd;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+
+.empty-folder-message .bi {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.file-explorer-window .table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.file-explorer-window .file-row {
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+
+.file-explorer-window .file-row.is-selected {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.file-explorer-window .file-row.is-selected .text-muted {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.custom-file-upload {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  position: relative;
+  width: 100%;
+  background-color: #fff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.custom-file-upload:hover {
+  border-color: #86b7fe;
+}
+
+.custom-file-upload .bi {
+  color: #6c757d;
+  margin-right: 0.75rem;
+}
+
+.custom-file-upload .file-name {
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.custom-file-upload input[type=file] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.table-responsive {
+  overflow: visible !important;
 }/*# sourceMappingURL=main.css.map */

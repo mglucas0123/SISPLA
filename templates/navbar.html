@@ -28,22 +28,34 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" aria-labelledby="acessosDropdown">
                         <li>
-                            <a class="dropdown-item dropdown-item-custom"
-                                href="http://10.2.2.143:9000/hospitalar/#/login" target="_blank"
-                                rel="noopener noreferrer">
-                                <i class="bi bi-file-medical me-2"></i>Acesso Salutem
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item dropdown-item-custom" href="https://mariofreitas.lab.jalis.net.br/"
+                            <a class="dropdown-item dropdown-item-custom" href="https://app.apontatu.com.br/"
                                 target="_blank" rel="noopener noreferrer">
-                                <i class="bi bi-shadows me-2"></i>Acesso Laboratório
+                                <i class="bi bi-clock-history me-2"></i>Ponto
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item dropdown-item-custom" href="http://10.2.2.30:3003/login"
                                 target="_blank" rel="noopener noreferrer">
-                                <i class="bi bi-layers me-2"></i>Acesso HEXMED
+                                <i class="bi bi-layers me-2"></i>HexMed
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="https://mariofreitas.lab.jalis.net.br/"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-shadows me-2"></i>Laboratório
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="https://portal.orisrh.com/"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-file-earmark-person me-2"></i>Oris RH
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom"
+                                href="http://10.2.2.143:9000/hospitalar/#/login" target="_blank"
+                                rel="noopener noreferrer">
+                                <i class="bi bi-file-medical me-2"></i>Salutem
                             </a>
                         </li>
                     </ul>
@@ -83,6 +95,11 @@
                             <a class="dropdown-item dropdown-item-custom"
                                 href="{{ url_for('admin.manage_repositories') }}">
                                 <i class="bi bi-archive-fill me-2"></i>Gerenciar Repositórios
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.manage_courses') }}">
+                                <i class="bi bi-mortarboard-fill me-2"></i>Gerenciar Treinamentos
                             </a>
                         </li>
                         {% endif %}

@@ -1,9 +1,11 @@
+from datetime import datetime
 import os
-from flask import Blueprint, current_app, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, current_app, json, render_template, request, redirect, url_for, session, flash
 from flask_login import current_user, login_required
+from sqlalchemy import select
 from werkzeug.security import generate_password_hash
 from functools import wraps
-from db import db, User, Notice, Repository, File, Form
+from db import AnswerOption, Course, Question, Quiz, UserCourseProgress, UserQuizAttempt, db, User, Notice, Repository, File, Form
 import shutil
 from werkzeug.utils import secure_filename
 
@@ -353,3 +355,191 @@ def delete_repository(repo_id):
         flash(f"Ocorreu um erro ao excluir o repositório: {str(e)}", "danger")
 
     return redirect(url_for('admin.manage_repositories'))
+
+
+#<!--- GERENCIAMENTO DE TREINAMENTOS --->
+@admin_bp.route("/courses")
+@login_required
+@admin_required
+def manage_courses():
+    query = select(Course).order_by(Course.date_registry.desc())
+
+    page_get = request.args.get('page', 1, type=int)
+    pagination = db.paginate(query, page=page_get, per_page=10, error_out=False)
+
+    return render_template(
+        "training/manage_courses.html",
+        courses=pagination.items, pagination=pagination
+    )
+
+
+# ROTA PARA ATIVAR/DESATIVAR UM CURSO
+@admin_bp.route("/courses/toggle_status/<int:course_id>", methods=['POST'])
+@login_required
+@admin_required
+def toggle_course_status(course_id):
+    course = Course.query.get_or_404(course_id)
+    course.is_active = not course.is_active
+    db.session.commit()
+    status = "ativado" if course.is_active else "desativado"
+    flash(f'O curso "{course.title}" foi {status}.', 'info')
+    return redirect(url_for('admin.manage_courses'))
+
+# ROTA PARA VER O PROGRESSO DOS ALUNOS
+@admin_bp.route("/courses/progress/<int:course_id>")
+@login_required
+@admin_required
+def view_course_progress(course_id):
+    course = Course.query.get_or_404(course_id)
+    progress_data = UserCourseProgress.query.filter_by(course_id=course.id).all()
+    return render_template("training/course_progress.html", course=course, progress_data=progress_data)
+
+# ROTA PARA DELETAR UM CURSO
+@admin_bp.route("/courses/delete/<int:course_id>", methods=['POST'])
+@login_required
+@admin_required
+def delete_course(course_id):
+    course_to_delete = Course.query.get_or_404(course_id)
+
+    try:
+        course_folder_name = secure_filename(course_to_delete.title)
+        course_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+
+        if os.path.exists(course_folder_path):
+            shutil.rmtree(course_folder_path)
+
+        UserQuizAttempt.query.filter_by(quiz_id=course_to_delete.quiz.id if course_to_delete.quiz else None).delete()
+        
+        db.session.delete(course_to_delete)
+        db.session.commit()
+        
+        flash(f'Curso "{course_to_delete.title}" e todos os seus arquivos foram excluídos com sucesso.', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocorreu um erro ao excluir o curso: {e}', 'danger')
+
+    return redirect(url_for('admin.manage_courses'))
+
+@admin_bp.route("/courses/edit/<int:course_id>", methods=['POST'])
+@login_required
+@admin_required
+def edit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    
+    course.title = request.form['title']
+    course.description = request.form.get('description', '')
+    course.duration_seconds = int(request.form.get('duration_seconds', 0))
+
+    course_folder_name = secure_filename(course.title)
+    course_upload_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    os.makedirs(course_upload_path, exist_ok=True)
+
+    if 'video' in request.files and request.files['video'].filename != '':
+        video_file = request.files['video']
+        video_filename = secure_filename(video_file.filename)
+        video_file.save(os.path.join(course_upload_path, video_filename))
+        course.video_filename = video_filename
+
+    if 'image' in request.files and request.files['image'].filename != '':
+        image_file = request.files['image']
+        image_filename = secure_filename(image_file.filename)
+        image_file.save(os.path.join(course_upload_path, image_filename))
+        course.image_filename = image_filename
+        
+    db.session.commit()
+    flash('Curso atualizado com sucesso!', 'success')
+    return redirect(url_for('admin.manage_courses'))
+
+@admin_bp.route("/courses/create", methods=["POST"])
+@login_required
+@admin_required
+def create_course():
+    if 'video' not in request.files or not request.form.get('title'):
+        flash("Título e arquivo de vídeo são obrigatórios.", "danger")
+        return redirect(url_for("admin.manage_courses"))
+
+    title = request.form['title']
+    
+    course_folder_name = secure_filename(title)
+    course_upload_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    os.makedirs(course_upload_path, exist_ok=True)
+    
+    video_file = request.files['video']
+    video_filename = secure_filename(video_file.filename)
+    video_file.save(os.path.join(course_upload_path, video_filename))
+    
+    image_filename = None
+    if 'image' in request.files and request.files['image'].filename != '':
+        image_file = request.files['image']
+        image_filename = secure_filename(image_file.filename)
+        image_file.save(os.path.join(course_upload_path, image_filename))
+
+
+    new_course = Course(
+        title=request.form['title'],
+        description=request.form.get('description', ''),
+        video_filename=video_filename, 
+        image_filename=image_filename,
+        duration_seconds=int(request.form.get('duration_seconds', 0)),
+        date_registry=datetime.utcnow()
+    )
+    db.session.add(new_course)
+    db.session.commit()
+    
+    flash("Novo curso criado com sucesso!", "success")
+    return redirect(url_for("admin.manage_courses"))
+
+#<!-- PROVA -->
+@admin_bp.route("/course/<int:course_id>/quiz", methods=['GET', 'POST'])
+@login_required
+@admin_required
+def manage_quiz(course_id):
+    course = Course.query.get_or_404(course_id)
+    
+    if not course.quiz:
+        quiz = Quiz(title=f"Avaliação para {course.title}", course_id=course.id)
+        db.session.add(quiz)
+        db.session.commit()
+    else:
+        quiz = course.quiz
+
+    if request.method == 'POST':
+        try:
+            old_questions = quiz.questions.all()
+
+            for question in old_questions:
+                db.session.delete(question)
+
+            db.session.flush()
+
+            questions_data = json.loads(request.form.get('questions_data'))
+            
+            for q_data in questions_data:
+                new_question = Question(
+                    quiz_id=quiz.id,
+                    text=q_data['text'],
+                    question_type=q_data['type']
+                )
+                db.session.add(new_question)
+                
+                if q_data['type'] == 'MULTIPLE_CHOICE':
+                    db.session.flush()
+                    for opt_data in q_data['options']:
+                        new_option = AnswerOption(
+                            question_id=new_question.id,
+                            text=opt_data['text'],
+                            is_correct=opt_data['is_correct']
+                        )
+                        db.session.add(new_option)
+
+            db.session.commit()
+            flash("Avaliação salva com sucesso!", "success")
+            return redirect(url_for('admin.manage_courses'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Ocorreu um erro ao salvar a avaliação: {e}", "danger")
+            return redirect(url_for('admin.manage_quiz', course_id=course_id))
+
+    return render_template("training/manage_quiz.html", course=course, quiz=quiz)

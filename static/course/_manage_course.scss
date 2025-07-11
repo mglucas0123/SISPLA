@@ -1,0 +1,43 @@
+.custom-file-upload {
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    display: inline-flex;
+    align-items: center;
+    padding: .375rem .75rem;
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+    background-color: #fff;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.custom-file-upload:hover {
+    border-color: #86b7fe;
+}
+
+.custom-file-upload .bi {
+    color: #6c757d;
+    margin-right: .75rem;
+}
+
+.custom-file-upload .file-name {
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.custom-file-upload input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.table-responsive {
+    overflow: visible !important;
+}
