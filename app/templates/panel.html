@@ -1,0 +1,353 @@
+{% extends "navbar.html" %}
+{% block title %} Painel Principal {% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 welcome-card">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="card-title mb-1">Bem-vindo(a) de volta, <span class="text-primary">{{
+                                    current_user.name }}</span>!</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'partials/_flash_messages.html' %}
+    <div class="menu-carousel-container">
+        <button id="scroll-left" class="arrow-button d-none d-lg-flex"><i class="bi bi-chevron-left"></i></button>
+        <div class="menu-carousel">
+            <div class="menu-carousel-track">
+                <div class="d-flex flex-row gap-2 flex-wrap">
+                    <div class="kpi-card-wrapper p-0 m-0">
+                        <div class="card shadow-sm h-100 text-center kpi-card border-start border-4 border-primary p-0"
+                            style="min-width:220px; max-width:260px;">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-3">
+                                <div class="icon-circle mb-2"
+                                    style="background:rgba(13,110,253,0.08); width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:50%;">
+                                    <i class="bi bi-archive text-primary fs-4"></i>
+                                </div>
+                                <div class="mb-2 fw-semibold small text-uppercase text-secondary letter-spacing-1"
+                                    style="letter-spacing:1px;">
+                                    Repositório de Arquivos
+                                </div>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="{{ url_for('repository.repository_list_page') }}"
+                                        class="btn btn-primary btn-sm px-3 d-flex align-items-center"
+                                        aria-label="Repositório de Arquivos" title="Repositório de Arquivos">
+                                        <i class="bi bi-archive me-1"></i>
+                                        Acessar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if 'CRIAR_RELATORIOS' in current_user.profile or 'VER_RELATORIOS' in current_user.profile or
+                    'ADMIN' in current_user.profile %}
+                    <div class="kpi-card-wrapper p-0 m-0">
+                        <div class="card shadow-sm h-100 text-center kpi-card border-start border-success border-4 p-0"
+                            style="min-width:220px; max-width:260px;">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-3">
+                                <div class="icon-circle mb-2"
+                                    style="background:rgba(25,135,84,0.08); width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:50%;">
+                                    <i class="bi bi-arrow-left-right text-success fs-4"></i>
+                                </div>
+                                <div class="mb-2 fw-semibold small text-uppercase text-secondary letter-spacing-1"
+                                    style="letter-spacing:1px;">
+                                    Passagem de Plantão
+                                </div>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    {% if 'CRIAR_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile
+                                    %}
+                                    <a href="{{ url_for('form.new_form') }}"
+                                        class="btn btn-success btn-sm px-3 d-flex align-items-center"
+                                        aria-label="Registrar Plantão" title="Novo Registro">
+                                        <i class="bi bi-journal-plus me-1"></i>
+                                        Novo
+                                    </a>
+
+                                    {% endif %}
+                                    {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
+                                    <a href="{{ url_for('form.forms') }}"
+                                        class="btn btn-outline-success btn-sm px-3 d-flex align-items-center"
+                                        aria-label="Relatórios de Plantão" title="Ver Relatórios">
+                                        <i class="bi bi-clipboard-data me-1"></i>
+                                        Relatórios
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="kpi-card-wrapper p-0 m-0">
+                        <div class="card shadow-sm h-100 text-center kpi-card border-start border-4 border-warning p-0"
+                            style="min-width:220px; max-width:260px;">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-3">
+                                <div class="icon-circle mb-2"
+                                    style="background:rgba(13,110,253,0.08); width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:50%;">
+                                    <i class="bi bi-mortarboard-fill text-warning fs-4"></i>
+                                </div>
+                                <div class="mb-2 fw-semibold small text-uppercase text-secondary letter-spacing-1"
+                                    style="letter-spacing:1px;">
+                                    Treinamentos
+                                </div>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="{{ url_for('training.course_list_page') }}"
+                                        class="btn btn-warning btn-sm px-3 d-flex align-items-center"
+                                        aria-label="Repositório de Arquivos" title="Repositório de Arquivos">
+                                        <i class="bi bi-mortarboard-fill me-1"></i>
+                                        Acessar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>-
+                </div>
+            </div>
+        </div>
+        <button id="scroll-right" class="arrow-button d-none d-lg-flex"><i class="bi bi-chevron-right"></i></button>
+    </div>
+    {% if notice %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-megaphone-fill me-2"></i>Mural de Avisos
+                    </h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for n in notice %}
+                    <div class="list-group-item py-3">
+
+                        {# LÓGICA DE EXIBIÇÃO ATUALIZADA #}
+                        {% if n.notice_type == 'IMAGE' and n.image_filename %}
+                        <div class="text-center">
+                            <a href="#" class="d-inline-block position-relative" data-bs-toggle="modal"
+                                data-bs-target="#imageNoticeModal"
+                                data-img-src="{{ url_for('admin.serve_notice_image', filename=n.image_filename) }}">
+
+                                <img src="{{ url_for('admin.serve_notice_image', filename=n.image_filename) }}"
+                                    class="img-fluid rounded shadow-sm" alt="Aviso em imagem"
+                                    style="max-height: 200px; max-width: 100%;">
+
+                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                                    style="background-color: rgba(0,0,0,0.4); border-radius: .375rem;">
+                                    <i class="bi bi-arrows-fullscreen text-white display-4"></i>
+                                </div>
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-semibold text-dark">{{ n.title }}</h6>
+                            <span class="badge bg-light text-secondary border">
+                                {{ n.date_registry | format_date_time }}
+                            </span>
+                        </div>
+                        <div class="text-body" style="white-space: pre-wrap;">{{ n.content | safe }}</div>
+                        {% endif %}
+
+                        <div class="text-end mt-2 pt-2 border-top">
+                            <small class="text-muted">
+                                Publicado por <strong>{{ n.author.name }}</strong>
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center text-muted p-4">
+                    <i class="bi bi-info-circle me-2"></i>Nenhum aviso publicado no momento.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<div class="modal fade" id="imageNoticeModal" tabindex="-1" aria-labelledby="imageNoticeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-body p-0 position-relative text-center">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2" 
+                        style="z-index: 10; background-color: rgba(0,0,0,0.5); border-radius: 50%;"
+                        data-bs-dismiss="modal" aria-label="Fechar"></button>
+                
+                <img id="modalNoticeImage" src="" class="img-fluid rounded" alt="Imagem do Aviso" style="max-height: 90vh; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+</div>
+{% if popup_aviso %}
+<div class="modal fade" id="avisoModal" tabindex="-1" aria-labelledby="avisoModalLabel" aria-hidden="true">
+
+    {% if popup_aviso.notice_type == 'IMAGE' and popup_aviso.image_filename %}
+    <div class="modal-dialog modal-dialog-centered modal-xl"> {# 1. Usa modal-xl para o máximo de largura #}
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-body p-0 position-relative text-center">
+
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2"
+                    style="z-index: 10; background-color: rgba(0,0,0,0.5); border-radius: 50%;" data-bs-dismiss="modal"
+                    aria-label="Fechar"></button>
+
+                <img src="{{ url_for('admin.serve_notice_image', filename=popup_aviso.image_filename) }}"
+                    class="img-fluid rounded" alt="Imagem do Aviso" style="max-height: 90vh; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+
+    {# SE FOR UM AVISO DE TEXTO, USA O LAYOUT COMPLETO #}
+    {% else %}
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 border-top border-primary border-5" style="border-radius: 0.5rem;">
+            <div class="modal-body p-4 p-lg-5">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                    aria-label="Fechar"></button>
+                <div class="text-center">
+                    <i class="bi bi-megaphone-fill display-4 text-primary mb-3"></i>
+                    <h4 class="modal-title mb-3" id="avisoModalLabel">{{ popup_aviso.title }}</h4>
+                    <p class="text-secondary" style="white-space: pre-wrap;">{{ popup_aviso.content | safe }}</p>
+                </div>
+                <hr class="my-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="small text-muted"><strong class="d-block">Publicado por:</strong><span>{{
+                            popup_aviso.author.name }}</span></div>
+                    <div class="small text-muted text-end"><strong class="d-block">Data:</strong><span>{{
+                            popup_aviso.date_registry | format_date_time }}</span></div>
+                </div>
+                <div class="d-grid mt-4">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const track = document.querySelector('.menu-carousel-track');
+        const scrollLeftBtn = document.getElementById('scroll-left');
+        const scrollRightBtn = document.getElementById('scroll-right');
+        if (track && scrollLeftBtn && scrollRightBtn) {
+            const checkArrows = () => {
+                const hasOverflow = track.scrollWidth > track.clientWidth;
+                if (!hasOverflow) {
+                    scrollLeftBtn.classList.add('d-none');
+                    scrollRightBtn.classList.add('d-none');
+                } else {
+                    scrollLeftBtn.classList.remove('d-lg-flex');
+                    scrollLeftBtn.classList.add('d-lg-flex');
+                    scrollRightBtn.classList.remove('d-lg-flex');
+                    scrollRightBtn.classList.add('d-lg-flex');
+                    if (track.scrollLeft === 0) {
+                        scrollLeftBtn.style.visibility = 'hidden';
+                    } else {
+                        scrollLeftBtn.style.visibility = 'visible';
+                    }
+                    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 5) {
+                        scrollRightBtn.style.visibility = 'hidden';
+                    } else {
+                        scrollRightBtn.style.visibility = 'visible';
+                    }
+                }
+            };
+            scrollRightBtn.addEventListener('click', () => {
+                const cardWidth = track.querySelector('.kpi-card-wrapper').offsetWidth;
+                track.scrollLeft += cardWidth + 24;
+            });
+            scrollLeftBtn.addEventListener('click', () => {
+                const cardWidth = track.querySelector('.kpi-card-wrapper').offsetWidth;
+                track.scrollLeft -= cardWidth + 24;
+            });
+            window.addEventListener('resize', checkArrows);
+            track.addEventListener('scroll', checkArrows);
+            checkArrows();
+        }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        var avisoModalElement = document.getElementById('avisoModal');
+        if (avisoModalElement) {
+            var avisoModal = new bootstrap.Modal(avisoModalElement);
+            avisoModal.show();
+        }
+
+        const imageNoticeModal = document.getElementById('imageNoticeModal');
+        if (imageNoticeModal) {
+            const modalImage = document.getElementById('modalNoticeImage');
+            
+            imageNoticeModal.addEventListener('show.bs.modal', function (event) {
+                const triggerLink = event.relatedTarget;
+                const imageUrl = triggerLink.getAttribute('data-img-src');
+                modalImage.src = imageUrl;
+            });
+        }
+    });
+
+    //Mural de Avisos
+    document.addEventListener('DOMContentLoaded', function () {
+        const items = document.querySelectorAll('.notice-item');
+        const perPage = 3;
+        const total = items.length;
+        const pageCount = Math.ceil(total / perPage);
+        const pagination = document.getElementById('notice-pagination');
+        let currentPage = 1;
+
+        function showPage(page) {
+            currentPage = page;
+            items.forEach((item, idx) => {
+                item.style.display = (idx >= (page - 1) * perPage && idx < page * perPage) ? '' : 'none';
+            });
+            renderPagination();
+        }
+
+        function renderPagination() {
+            if (pageCount <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            let html = '';
+            html += `<li class="page-item${currentPage === 1 ? ' disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage - 1}">&laquo;</a>
+                        </li>`;
+            for (let i = 1; i <= pageCount; i++) {
+                html += `<li class="page-item${i === currentPage ? ' active' : ''}">
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>`;
+            }
+            html += `<li class="page-item${currentPage === pageCount ? ' disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage + 1}">&raquo;</a>
+                        </li>`;
+            pagination.innerHTML = html;
+            pagination.querySelectorAll('a.page-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const page = parseInt(this.getAttribute('data-page'));
+                    if (page >= 1 && page <= pageCount) showPage(page);
+                });
+            });
+        }
+
+        if (total > 0) {
+            showPage(1);
+        }
+    });
+</script>
+{% endblock %}

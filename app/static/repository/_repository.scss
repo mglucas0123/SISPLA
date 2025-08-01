@@ -1,0 +1,219 @@
+.upload-zone {
+    border: 2px dashed #ced4da;
+    border-radius: .5rem;
+    padding: 2.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.upload-zone:hover,
+.upload-zone.is-dragover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd;
+}
+
+.file-feedback {
+    display: flex;
+    align-items: center;
+    background-color: #e9f5ec;
+    border-radius: .375rem;
+    padding: .75rem 1rem;
+    border: 1px solid #d1e7dd;
+}
+
+.file-card {
+    transition: all 0.2s ease-in-out;
+}
+
+.file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}
+
+.file-card-icon {
+    font-size: 2.5rem;
+    color: #0d6efd;
+}
+
+.file-card-name {
+    font-weight: 600;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-card-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-card-date {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+.file-card-info {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    min-width: 0;
+}
+
+.btn-icon {
+    --bs-btn-padding-y: .1rem;
+    --bs-btn-padding-x: .4rem;
+    --bs-btn-font-size: .75rem;
+    color: #6c757d;
+}
+
+.btn-icon:hover {
+    background-color: #e9ecef;
+}
+
+
+#preview-content img {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+.repository-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.repository-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}
+
+.repository-icon i {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.bg-danger-soft {
+    background-color: rgba(220, 53, 69, 0.15);
+}
+
+.bg-success-soft {
+    background-color: rgba(25, 135, 84, 0.15);
+}
+
+.bg-info-soft {
+    background-color: rgba(13, 202, 240, 0.15);
+}
+
+.breadcrumb-custom {
+    --bs-breadcrumb-divider: '>';
+    font-size: 0.95rem;
+}
+
+.breadcrumb-custom .breadcrumb-item a {
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--bs-primary);
+    transition: color 0.2s ease-in-out;
+}
+
+.breadcrumb-custom .breadcrumb-item a:hover {
+    color: #0a58ca;
+}
+
+.breadcrumb-custom .breadcrumb-item.active {
+    font-weight: 600;
+    color: #495057;
+}
+
+.file-explorer-window {
+    border: 1px solid #d8dee4;
+    border-radius: 0.75rem;
+    height: 75vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.file-explorer-window .file-explorer-window-box {
+    border: 1px solid #d8dee4;
+    border-radius: 0.75rem;
+    height: 75vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+
+.file-explorer-window .card-header {
+    flex-grow: 1; 
+    overflow-y: auto;
+    padding: 0; 
+    display: flex; 
+    flex-direction: column;
+    background-color: #f6f8fa;
+    border-bottom: 1px solid #d8dee4;
+}
+
+.file-explorer-window .file-list-container {
+    flex-grow: 1;
+    width: 100%;
+    overflow: visible;
+}
+
+.file-explorer-window .table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.file-explorer-window .table thead {
+    position: sticky;
+    top: 0;
+    background-color: #f6f8fa;
+    z-index: 10;
+    border-bottom: 1px solid #d8dee4;
+}
+
+.file-explorer-window .table th,
+.file-explorer-window .table td {
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+
+
+.empty-folder-message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    color: #aab2bd;
+    padding: 2rem;
+    text-align: center;
+}
+
+.table-responsive {
+    overflow-x: auto; 
+}
+
+.file-row {
+    cursor: pointer;
+    user-select: none;
+}
+
+.file-row.is-selected {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.file-row.is-selected .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+

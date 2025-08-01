@@ -1,0 +1,49 @@
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
+</head>
+{% set icon_map = {
+    'success': 'bi-check-circle-fill',
+    'danger': 'bi-exclamation-triangle-fill',
+    'warning': 'bi-exclamation-triangle-fill',
+    'info': 'bi-info-circle-fill'
+} %}
+
+<div id="toast-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% set category, message = messages[-1] %}
+            
+            <div class="toast-notification alert alert-{{ category }} d-flex align-items-center p-2" role="alert">
+                <i class="bi {{ icon_map.get(category, 'bi-info-circle-fill') }} me-3 fs-4"></i>
+                <div class="message-text">{{ message }}</div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+        {% endif %}
+    {% endwith %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const allToasts = document.querySelectorAll('.toast-notification');
+        allToasts.forEach(toast => {
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+            }, 4500);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+
+            const closeButton = toast.querySelector('.btn-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    toast.classList.add('fade-out');
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 500);
+                });
+            }
+        });
+    });
+</script>

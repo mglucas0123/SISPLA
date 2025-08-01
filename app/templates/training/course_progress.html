@@ -1,0 +1,209 @@
+{% extends "navbar.html" %}
+
+{% block title %}Progresso do Curso: {{ course.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .progress-card {
+        transition: all 0.2s ease-in-out;
+    }
+    .progress-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .progress-bar-thin {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+    }
+    .progress-bar-thin .progress-bar {
+        border-radius: 4px;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h2 mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Progresso do Curso</h1>
+            <p class="text-muted mb-0">Análise de desempenho para o curso: <strong>{{ course.title }}</strong></p>
+        </div>
+        <a href="{{ url_for('admin.manage_courses') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+
+    {% set total_users = progress_data|length %}
+    {% set completed_users = progress_data|selectattr('completed_at')|list|length %}
+    {% set completion_rate = (completed_users / total_users * 100)|round if total_users > 0 else 0 %}
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 progress-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <i class="bi bi-people-fill display-4 text-primary me-3"></i>
+                    <div>
+                        <h6 class="card-subtitle text-muted mb-1">Inscritos</h6>
+                        <h3 class="card-title fw-bold mb-0">{{ total_users }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 progress-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <i class="bi bi-person-check-fill display-4 text-success me-3"></i>
+                    <div>
+                        <h6 class="card-subtitle text-muted mb-1">Concluíram</h6>
+                        <h3 class="card-title fw-bold mb-0">{{ completed_users }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 progress-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <i class="bi bi-pie-chart-fill display-4 text-info me-3"></i>
+                    <div>
+                        <h6 class="card-subtitle text-muted mb-1">Taxa de Conclusão</h6>
+                        <h3 class="card-title fw-bold mb-0">{{ completion_rate }}%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 progress-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <i class="bi bi-star-half display-4 text-warning me-3"></i>
+                    <div>
+                        <h6 class="card-subtitle text-muted mb-1">Média de Notas</h6>
+                        <h3 class="card-title fw-bold mb-0">{{ "%.1f"|format(average_score) }}%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if course.quiz %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-bar-chart-line-fill me-2"></i>Distribuição de Notas da Avaliação</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="scoreDistributionChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Desempenho por Aluno</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3" style="width: 25%;">Aluno</th>
+                            <th scope="col" style="width: 25%;">Progresso</th>
+                            <th scope="col" class="text-center">Nota Avaliação</th> <th scope="col" class="text-center">Status</th>
+                            <th scope="col" class="text-center">Data Início</th>   <th scope="col" class="text-center pe-3">Data Conclusão</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in progress_data %}
+                        {% set user = p.user %}
+                        {% set attempt_data = attempts_map.get(user.id) %}
+                        {% set percent = ((p.last_watched_timestamp / course.duration_seconds) * 100)|round if course.duration_seconds > 0 else 0 %}
+                        {% if p.completed_at %}{% set percent = 100 %}{% endif %}
+                        <tr>
+                            <td class="ps-3">{{ user.name }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-2 progress-bar-thin">
+                                        <div class="progress-bar {% if percent == 100 %}bg-success{% endif %}" role="progressbar" 
+                                             style="width: {{ percent }}%;" aria-valuenow="{{ percent }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <span class="fw-bold small">{{ percent }}%</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                {% if attempt_data %}
+                                    <span class="fw-bold">{{ "%.1f"|format(attempt_data.best_score) }}%</span>
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if p.completed_at %}
+                                    <span class="badge bg-success-subtle text-success-emphasis rounded-pill p-2"><i class="bi bi-check-circle-fill me-1"></i>Concluído</span>
+                                {% elif p.last_watched_timestamp > 0 %}
+                                    <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill p-2"><i class="bi bi-play-circle-fill me-1"></i>Em Andamento</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill p-2"><i class="bi bi-pause-circle-fill me-1"></i>Não Iniciado</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center text-muted small">
+                                {{ p.created_at | format_date_time if p.created_at else '--' }}
+                            </td>
+                            <td class="text-center text-muted small pe-3">
+                                {{ p.completed_at | format_date_time if p.completed_at else '--' }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted p-5">Ninguém iniciou este treinamento ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartData = JSON.parse('{{ chart_data_json|safe }}');
+    
+    if (chartData && document.getElementById('scoreDistributionChart')) {
+        const ctx = document.getElementById('scoreDistributionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Nº de Alunos',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(25, 135, 84, 0.6)',
+                    borderColor: 'rgba(25, 135, 84, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

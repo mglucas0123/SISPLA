@@ -1,0 +1,91 @@
+{% extends "navbar.html" %}
+{% block title %}Gerenciar Mural de Avisos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2 mb-0"><i class="bi bi-megaphone-fill me-2"></i>Gerenciar Mural de Avisos</h1>
+        <a href="{{ url_for('main.panel') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left-circle me-1"></i>Voltar ao Painel</a>
+    </div>
+
+    {% include 'partials/_flash_messages.html' %}
+
+    <div class="card shadow-sm mb-5">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="noticeTypeTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-tab-pane" type="button" role="tab">
+                        <i class="bi bi-card-text me-1"></i>Publicar Texto
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-tab-pane" type="button" role="tab">
+                        <i class="bi bi-card-image me-1"></i>Publicar Imagem
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="noticeTypeTabContent">
+                <div class="tab-pane fade show active p-2" id="text-tab-pane" role="tabpanel">
+                    <form method="POST" action="{{ url_for('admin.manage_notices') }}">
+                        <input type="hidden" name="notice_type" value="TEXT">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Conteúdo do Aviso</label>
+                            <textarea class="form-control" name="content" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Publicar Aviso em Texto</button>
+                    </form>
+                </div>
+                <div class="tab-pane fade p-2" id="image-tab-pane" role="tabpanel">
+                    <form method="POST" action="{{ url_for('admin.manage_notices') }}" enctype="multipart/form-data">
+                        <input type="hidden" name="notice_type" value="IMAGE">
+                        <div class="mb-3">
+                            <label for="image_file" class="form-label">Selecione a Imagem</label>
+                            <input class="form-control" type="file" name="image_file" accept="image/jpeg, image/png, image/gif" required>
+                            <small class="form-text text-muted">A imagem será exibida centralizada no mural de avisos.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Publicar Aviso em Imagem</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light"><h5 class="mb-0">Avisos Atuais</h5></div>
+        <div class="list-group list-group-flush">
+            {% for notice in notices %}
+            <div class="list-group-item p-3">
+                
+                {% if notice.notice_type == 'IMAGE' and notice.image_filename %}
+                    <div class="text-center">
+                        <img src="{{ url_for('admin.serve_notice_image', filename=notice.image_filename) }}" class="img-fluid rounded shadow-sm" alt="Aviso em imagem" style="max-height: 400px;">
+                    </div>
+                {% else %}
+                    <h6 class="mb-1 fw-bold">{{ notice.title }}</h6>
+                    <p class="mb-1" style="white-space: pre-wrap;">{{ notice.content | safe }}</p>
+                {% endif %}
+
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                    <small class="text-muted">Publicado por: <strong>{{ notice.author.name }}</strong> em {{ notice.date_registry | format_date_time }}</small>
+                    <form method="POST" action="{{ url_for('admin.delet_notice', notice_id=notice.id) }}" onsubmit="return confirm('Tem certeza que deseja excluir este aviso?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Deletar Aviso">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="list-group-item p-4 text-center text-muted">
+                <i class="bi bi-info-circle me-2"></i>Nenhum aviso publicado no momento.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

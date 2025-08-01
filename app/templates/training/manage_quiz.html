@@ -1,0 +1,284 @@
+{% extends "navbar.html" %}
+{% block title %}Editor de Avaliação: {{ course.title }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .question-card {
+        border-left: 4px solid var(--bs-primary);
+        transition: box-shadow 0.2s ease-in-out;
+    }
+    .question-card:hover {
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .options-container h6 {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .grab-handle { cursor: grab; }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container py-4">
+    {% include 'partials/_flash_messages.html' %}
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h2 mb-0"><i class="bi bi-ui-checks-grid me-2"></i>Editor de Avaliação</h1>
+            <p class="text-muted mb-0">Para o curso: <strong class="text-primary">{{ course.title }}</strong></p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.manage_courses') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+            <button type="submit" form="quizForm" class="btn btn-primary px-4 ms-2"><i class="bi bi-check-circle-fill me-2"></i>Salvar Avaliação</button>
+        </div>
+    </div>
+
+    <form method="POST" id="quizForm" enctype="multipart/form-data">
+        <input type="hidden" name="questions_data" id="questions_data_input">
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-paperclip me-2"></i>Texto e Material de Apoio</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="support_text_editor" class="form-label fw-bold">Texto Principal da Avaliação</label>
+                    <textarea id="support_text_editor" name="support_text" class="form-control" rows="8">{{ quiz.support_text or '' }}</textarea>
+                </div>
+                
+                <hr>
+
+                <div class="mb-2">
+                    <label class="form-label fw-bold">Materiais Anexados</label>
+                    {% if quiz.attachments %}
+                        <ul class="list-group">
+                            {% for attachment in quiz.attachments %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                    <a href="{{ url_for('admin.download_attachment', attachment_id=attachment.id) }}" target="_blank">{{ attachment.filename }}</a>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="delete_attachments" value="{{ attachment.id }}" id="del_attach_{{ attachment.id }}">
+                                    <label class="form-check-label text-danger" for="del_attach_{{ attachment.id }}">
+                                        Excluir
+                                    </label>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Nenhum material anexado.</p>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <label for="new_attachments" class="form-label">Adicionar Novos Materiais</label>
+                    <input class="form-control" type="file" name="new_attachments" id="new_attachments" multiple>
+                    <div class="form-text">Você pode selecionar múltiplos arquivos para enviar.</div>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="mb-3">Questões da Avaliação</h5>
+        <div id="questions-container" class="d-grid gap-3">
+            {% for q in quiz.questions | sort(attribute='id') %}
+            <div class="card shadow-sm question-card" data-question-id="{{ q.id }}">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center grab-handle">
+                    <span class="fw-bold text-muted"><i class="bi bi-grip-vertical me-2"></i>Questão {{ loop.index }}</span>
+                    <button type="button" class="btn-close remove-question-btn" aria-label="Remover Questão"></button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3"><label class="form-label">Texto da Questão</label><textarea class="form-control question-text" rows="2">{{ q.text }}</textarea></div>
+                    <div class="mb-3"><label class="form-label">Tipo de Questão</label>
+                        <select class="form-select question-type">
+                            <option value="MULTIPLE_CHOICE" {% if q.question_type == 'MULTIPLE_CHOICE' %}selected{% endif %}>Múltipla Escolha</option>
+                            <option value="TEXT_INPUT" {% if q.question_type == 'TEXT_INPUT' %}selected{% endif %}>Resposta de Texto</option>
+                        </select>
+                    </div>
+                    <div class="options-container mt-3 pt-3 border-top">
+                        </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-center mt-4">
+             <button type="button" id="addQuestionBtn" class="btn btn-outline-primary"><i class="bi bi-plus-lg me-2"></i>Adicionar Nova Questão</button>
+        </div>
+    </form>
+</div>
+
+<template id="question-template">
+    <div class="card shadow-sm question-card" data-question-id="">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center grab-handle">
+            <span class="fw-bold text-muted"><i class="bi bi-grip-vertical me-2"></i>Nova Questão</span>
+            <button type="button" class="btn-close remove-question-btn"></button>
+        </div>
+        <div class="card-body">
+            <div class="mb-3"><label class="form-label">Texto da Questão</label><textarea class="form-control question-text" rows="2" placeholder="Digite o enunciado da questão..."></textarea></div>
+            <div class="mb-3"><label class="form-label">Tipo de Questão</label><select class="form-select question-type"><option value="MULTIPLE_CHOICE" selected>Múltipla Escolha</option><option value="TEXT_INPUT">Resposta de Texto</option></select></div>
+            <div class="options-container mt-3 pt-3 border-top"></div>
+        </div>
+    </div>
+</template>
+
+<template id="multiple-choice-options-template">
+    <h6>Opções de Resposta (marque a correta):</h6>
+    <div class="options-list"></div>
+    <button type="button" class="btn btn-sm btn-outline-secondary add-option-btn mt-2"><i class="bi bi-plus-circle me-1"></i>Adicionar Opção</button>
+</template>
+
+<template id="multiple-choice-option-item-template">
+    <div class="input-group mb-2">
+        <div class="input-group-text"><input class="form-check-input mt-0" type="radio"></div>
+        <input type="text" class="form-control option-text" placeholder="Texto da opção...">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-option-btn" aria-label="Remover Opção"><i class="bi bi-trash"></i></button>
+    </div>
+</template>
+
+<template id="text-input-answer-template">
+    <h6>Resposta Correta:</h6>
+    <input type="text" class="form-control option-text" placeholder="Digite a resposta exata esperada...">
+</template>
+{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questionsContainer = document.getElementById('questions-container');
+    const quizForm = document.getElementById('quizForm');
+    const addQuestionBtn = document.getElementById('addQuestionBtn');
+    
+    const initialQuizData = JSON.parse('{{ quiz.to_dict() | tojson | safe }}');
+
+    function renderQuestion(questionData) {
+        const card = questionsContainer.querySelector(`[data-question-id="${questionData.id}"]`);
+        if (!card) return;
+        
+        const optionsContainer = card.querySelector('.options-container');
+        updateOptionsUI(optionsContainer, questionData.question_type, questionData.options, questionData.id);
+    }
+
+    function updateOptionsUI(container, type, options = [], questionId = '') {
+        container.innerHTML = '';
+
+        if (type === 'MULTIPLE_CHOICE') {
+            const mcTemplate = document.getElementById('multiple-choice-options-template').content.cloneNode(true);
+            const optionsList = mcTemplate.querySelector('.options-list');
+            
+            options.forEach(opt => {
+                const itemTemplate = document.getElementById('multiple-choice-option-item-template').content.cloneNode(true);
+                itemTemplate.querySelector('.option-text').value = opt.text;
+                const radio = itemTemplate.querySelector('input[type="radio"]');
+                radio.name = `correct_option_${questionId}`;
+                radio.checked = opt.is_correct;
+                optionsList.appendChild(itemTemplate);
+            });
+            container.appendChild(mcTemplate);
+
+        } else if (type === 'TEXT_INPUT') {
+            const tiTemplate = document.getElementById('text-input-answer-template').content.cloneNode(true);
+            tiTemplate.querySelector('.option-text').value = options.length > 0 ? options[0].text : '';
+            container.appendChild(tiTemplate);
+        }
+    }
+
+    function addQuestion() {
+        const template = document.getElementById('question-template');
+        const clone = template.content.cloneNode(true);
+        const card = clone.querySelector('.question-card');
+        
+        const uniqueId = `new_${Date.now()}`;
+        card.dataset.questionId = uniqueId;
+        
+        questionsContainer.appendChild(clone);
+        
+        const newCardElement = questionsContainer.querySelector(`[data-question-id="${uniqueId}"]`);
+        const select = newCardElement.querySelector('.question-type');
+        updateOptionsUI(newCardElement.querySelector('.options-container'), select.value, [], uniqueId);
+    }
+
+    function prepareAndSubmit(event) {
+        event.preventDefault();
+
+        let questionsData = [];
+        let isValid = true;
+        
+        document.querySelectorAll('.question-card').forEach(card => {
+            const questionText = card.querySelector('.question-text').value.trim();
+            if (!questionText) isValid = false;
+            
+            const questionType = card.querySelector('.question-type').value;
+            let options = [];
+
+            if (questionType === 'MULTIPLE_CHOICE') {
+                let hasCorrect = false;
+                card.querySelectorAll('.options-list .input-group').forEach(optGroup => {
+                    const text = optGroup.querySelector('.option-text').value.trim();
+                    const isCorrect = optGroup.querySelector('input[type="radio"]').checked;
+                    if (isCorrect) hasCorrect = true;
+                    if (text) options.push({ text, is_correct: isCorrect });
+                });
+                if (!hasCorrect && options.length > 0) {
+                    alert('Atenção: Uma questão de múltipla escolha não tem resposta correta marcada.');
+                    isValid = false;
+                }
+
+            } else if (questionType === 'TEXT_INPUT') {
+                const answerText = card.querySelector('.option-text').value.trim();
+                if (answerText) {
+                  options.push({ text: answerText, is_correct: true });
+                } else {
+                  alert('Atenção: Uma questão de texto não tem resposta definida.');
+                  isValid = false;
+                }
+            }
+            questionsData.push({id: card.dataset.questionId, text: questionText, question_type: questionType, options: options});
+        });
+
+        if (!isValid) {
+            alert('Por favor, corrija os erros na avaliação antes de salvar.');
+            return;
+        }
+
+        document.getElementById('questions_data_input').value = JSON.stringify(questionsData);
+        quizForm.submit();
+    }
+    
+    if (initialQuizData && initialQuizData.questions) {
+        initialQuizData.questions.forEach(renderQuestion);
+    }
+
+    questionsContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-question-btn')) {
+            e.target.closest('.question-card').remove();
+        } else if (e.target.closest('.add-option-btn')) {
+            const questionCard = e.target.closest('.question-card');
+            const optionsList = questionCard.querySelector('.options-list');
+            const itemTemplate = document.getElementById('multiple-choice-option-item-template').content.cloneNode(true);
+            itemTemplate.querySelector('input[type="radio"]').name = `correct_option_${questionCard.dataset.questionId}`;
+            optionsList.appendChild(itemTemplate);
+        } else if (e.target.closest('.remove-option-btn')) {
+            e.target.closest('.input-group').remove();
+        }
+    });
+
+    questionsContainer.addEventListener('change', function(e) {
+        if (e.target.classList.contains('question-type')) {
+            const card = e.target.closest('.question-card');
+            updateOptionsUI(card.querySelector('.options-container'), e.target.value, [], card.dataset.questionId);
+        }
+    });
+    
+    addQuestionBtn.addEventListener('click', addQuestion);
+    quizForm.addEventListener('submit', prepareAndSubmit);
+});
+</script>
+{% endblock %}

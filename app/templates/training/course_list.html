@@ -1,0 +1,110 @@
+{% extends "navbar.html" %}
+{% block title %}Plataforma de Treinamentos{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .course-card {
+        border: none;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        overflow: hidden; 
+    }
+    .course-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,.15) !important;
+    }
+    .course-card-img-top {
+        height: 160px;
+        object-fit: cover; 
+    }
+    .course-card .card-footer {
+        background-color: #fff;
+        border-top: 1px solid #f0f0f0;
+    }
+    .progress-bar-custom {
+        background-color: #e9ecef;
+    }
+    .progress-bar-custom .progress-bar {
+        background-color: var(--bs-primary);
+    }
+</style>
+{% endblock %}
+
+
+{% include 'partials/_flash_messages.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-5 fw-bold">Plataforma de Treinamentos</h1>
+            <p class="lead text-muted">Aprimore seus conhecimentos com nossos cursos e treinamentos internos.</p>
+        </div>
+    </div>
+    {% if in_progress %}
+    <h3 class="mb-4 fw-light"><i class="bi bi-play-circle-fill text-primary me-2"></i>Continuar Assistindo</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for course, progress in in_progress %}
+        <div class="col">
+            <div class="card h-100 shadow-sm course-card">
+                <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" class="card-img-top course-card-img-top" alt="Capa do curso">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <p class="card-text small text-muted flex-grow-1">{{ course.description|truncate(80) }}</p>
+                    <div class="progress mt-3 mb-2" style="height: 5px;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted mb-3">{{ progress }}% concluído</small>
+                    <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-primary stretched-link mt-auto">Continuar Curso</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <h3 class="mb-4 fw-light"><i class="bi bi-collection-play-fill text-secondary me-2"></i>Cursos Disponíveis</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for course in available %}
+        <div class="col">
+            <div class="card h-100 shadow-sm course-card">
+                <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" class="card-img-top course-card-img-top" alt="Capa do curso">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <p class="card-text small text-muted flex-grow-1">{{ course.description|truncate(100) }}</p>
+                    <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-outline-secondary stretched-link mt-auto">Iniciar Curso</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-muted">Nenhum novo curso disponível no momento.</p>
+        {% endfor %}
+    </div>
+
+    {% if completed %}
+    <h3 class="mb-4 fw-light"><i class="bi bi-check-circle-fill text-success me-2"></i>Cursos Concluídos</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for course, attempt in completed %}
+        <div class="col">
+            <div class="card h-100 shadow-sm course-card">
+                <div class="position-relative">
+                    <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" class="card-img-top course-card-img-top" alt="Capa do curso">
+                    
+                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(25,135,84,0.7);"></div>
+                    <div class="position-absolute top-50 start-50 translate-middle text-white text-center">
+                        <i class="bi bi-patch-check-fill display-4"></i>
+                        <h5 class="mt-2">Concluído</h5>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <a href="{{ url_for('training.course_player_page', course_id=course.id) }}"
+                        class="btn btn-outline-success stretched-link mt-auto">Revisar</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
