@@ -94,20 +94,18 @@
                                     <i class="bi bi-mortarboard-fill text-warning fs-4"></i>
                                 </div>
                                 <div class="mb-2 fw-semibold small text-uppercase text-secondary letter-spacing-1"
-                                    style="letter-spacing:1px;">
-                                    Treinamentos
+                                    style="letter-spacing:1px;"> Treinamentos
                                 </div>
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="{{ url_for('training.course_list_page') }}"
                                         class="btn btn-warning btn-sm px-3 d-flex align-items-center"
                                         aria-label="Repositório de Arquivos" title="Repositório de Arquivos">
-                                        <i class="bi bi-mortarboard-fill me-1"></i>
-                                        Acessar
+                                        <i class="bi bi-mortarboard-fill me-1"></i> Acessar
                                     </a>
                                 </div>
                             </div>
                         </div>
-                    </div>-
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,7 +124,6 @@
                     {% for n in notice %}
                     <div class="list-group-item py-3">
 
-                        {# LÓGICA DE EXIBIÇÃO ATUALIZADA #}
                         {% if n.notice_type == 'IMAGE' and n.image_filename %}
                         <div class="text-center">
                             <a href="#" class="d-inline-block position-relative" data-bs-toggle="modal"
@@ -193,7 +190,7 @@
 <div class="modal fade" id="avisoModal" tabindex="-1" aria-labelledby="avisoModalLabel" aria-hidden="true">
 
     {% if popup_aviso.notice_type == 'IMAGE' and popup_aviso.image_filename %}
-    <div class="modal-dialog modal-dialog-centered modal-xl"> {# 1. Usa modal-xl para o máximo de largura #}
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0">
             <div class="modal-body p-0 position-relative text-center">
 
@@ -207,7 +204,6 @@
         </div>
     </div>
 
-    {# SE FOR UM AVISO DE TEXTO, USA O LAYOUT COMPLETO #}
     {% else %}
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg border-0 border-top border-primary border-5" style="border-radius: 0.5rem;">

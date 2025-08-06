@@ -1,4 +1,5 @@
 import enum
+from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
@@ -138,7 +139,7 @@ class Quiz(db.Model):
             "title": self.title,
             "questions": [q.to_dict() for q in sorted_questions]
         }
-        
+    
 class QuizAttachment(db.Model):
     __tablename__ = 'quiz_attachments'
     id = db.Column(db.Integer, primary_key=True)
@@ -149,10 +150,17 @@ class QuizAttachment(db.Model):
     def __repr__(self):
         return f'<QuizAttachment {self.filename}>'
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'filename': self.filename,
+            'url': url_for('training.download_attachment', attachment_id=self.id, _external=True)
+        }
+
 class QuestionType(enum.Enum):
     MULTIPLE_CHOICE = "Múltipla Escolha"
     TEXT_INPUT = "Resposta de Texto"
-    
+
 class Question(db.Model):
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)

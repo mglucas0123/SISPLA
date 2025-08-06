@@ -1,0 +1,50 @@
+{% macro render_course_card(course, status, progress=None, attempt=None) %}
+<div class="col">
+    <div class="card h-100 shadow-sm course-card">
+        <div class="position-relative">
+            <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" class="card-img-top course-card-img-top" alt="Capa do curso">
+            
+            {% if status == 'completed' %}
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center text-white text-center" style="background-color: rgba(25,135,84,0.75);">
+                    <i class="bi bi-patch-check-fill display-4"></i>
+                    <h5 class="mt-2">Concluído</h5>
+                    {% if attempt and attempt.score is not none %}
+                        <span class="badge bg-light text-success fs-6">Nota: {{ "%.0f"|format(attempt.score) }}%</span>
+                    {% endif %}
+                </div>
+            {% endif %} 
+        </div>
+
+        <div class="card-body d-flex flex-column">
+            <h5 class="card-title">{{ course.title }}</h5>
+            <p class="card-text small text-muted flex-grow-1">{{ course.description|truncate(90) }}</p>
+            
+            <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                <span>
+                    <i class="bi bi-clock-fill me-1"></i>
+                    Duração: {{ (course.duration_seconds / 60)|round|int }} min
+                </span>
+            </div>
+
+            {% if status == 'in_progress' %}
+            <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuax="100"></div>
+            </div>
+            <small class="text-muted mb-3">{{ progress }}% concluído</small>
+            {% endif %}
+        </div>
+
+        <div class="card-footer bg-white border-0 p-3">
+            <div class="d-grid">
+            {% if status == 'in_progress' %}
+                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-primary stretched-link">Continuar Curso</a>
+            {% elif status == 'completed' %}
+                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-outline-success stretched-link">Revisar Material</a>
+            {% else %}
+                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-outline-secondary stretched-link">Iniciar Curso</a>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

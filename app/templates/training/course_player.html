@@ -4,9 +4,6 @@
 {% block styles %}
 {{ super() }}
 <style>
-    #quiz-container {
-        display: none;
-    }
     .video-container {
         position: relative;
         padding-bottom: 56.25%;
@@ -29,6 +26,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_flash_messages.html' %}
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -51,95 +49,101 @@
                 </div>
             </div>
 
-            <div id="quiz-container" class="card shadow-sm" {% if not is_completed %}style="display: none;" {% endif %}>
+            <div id="quiz-container" class="card shadow-sm" {% if not is_completed %}style="display: none;"{% endif %}>
                 <div class="card-header bg-primary text-white">
                     <i class="bi bi-patch-check-fill me-2"></i>
-                    {% if is_completed %}Sua Avaliação{% else %}Avaliação Final{% endif %}
+                    Status do Curso
                 </div>
                 <div class="card-body p-4">
                     {% if quiz and quiz.questions|length > 0 %}
 
-                    <div class="support-materials mb-4">
-                        {% if quiz.support_text %}
-                        <div class="support-text-content p-3 border rounded bg-light">
-                            {{ quiz.support_text | safe }}
+                        <div class="support-materials mb-4">
+                            {% if quiz.support_text %}<div class="support-text-content p-3 border rounded bg-light">{{ quiz.support_text | safe }}</div>{% endif %}
+                            {% if quiz.attachments %}
+                            <div class="attachments-list mt-3">
+                                <h6 class="text-muted">Materiais de Apoio:</h6>
+                                <ul class="list-group">
+                                    {% for attachment in quiz.attachments %}
+                                    <li class="list-group-item list-group-item-action">
+                                        <a href="{{ url_for('training.download_attachment', attachment_id=attachment.id) }}" target="_blank" class="text-decoration-none">
+                                            <i class="bi bi-file-earmark-arrow-down me-2"></i>{{ attachment.filename }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                        {% if quiz.attachments %}
-                        <div class="attachments-list mt-3">
-                            <h6 class="text-muted">Materiais de Apoio:</h6>
-                            <ul class="list-group">
-                                {% for attachment in quiz.attachments %}
-                                <li class="list-group-item list-group-item-action">
-                                    <a href="{{ url_for('admin.download_attachment', attachment_id=attachment.id) }}" target="_blank" class="text-decoration-none">
-                                        <i class="bi bi-file-earmark-arrow-down me-2"></i>{{ attachment.filename }}
-                                    </a>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% if quiz.support_text or quiz.attachments %}<hr class="my-4">{% endif %}
-                    {% if is_completed and user_attempt %}
-                    <form>
-                        {% for question in quiz.questions | sort(attribute='id') %}
-                        <div class="mb-4 pb-3 border-bottom">
-                            <p class="fw-bold">{{ loop.index }}. {{ question.text }}</p>
-                            {% set user_answer_data = user_attempt.answers_dict.get(question.id|string) %}
-                            
-                            {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
-                            {% for option in question.options %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="option_{{ option.id }}" value="{{ option.id }}" disabled {% if user_answer_data and option.id==user_answer_data.answer %}checked{% endif %}>
-                                <label class="form-check-label" for="option_{{ option.id }}">
-                                    {{ option.text }}
-                                    {% if user_answer_data and option.id == user_answer_data.answer %}
-                                        {% if user_answer_data.is_correct %}<i class="bi bi-check-circle-fill text-success ms-1"></i>
-                                        {% else %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>
+                        {% if quiz.support_text or quiz.attachments %}<hr class="my-4">{% endif %}
+                        
+                        {% if is_completed and user_attempt %}
+                        <form>
+                            {% for question in quiz.questions | sort(attribute='id') %}
+                            <div class="mb-4 pb-3 border-bottom">
+                                <p class="fw-bold">{{ loop.index }}. {{ question.text }}</p>
+                                {% set user_answer_data = user_attempt.answers_dict.get(question.id|string) %}
+                                
+                                {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
+                                {% for option in question.options %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ option.id }}" disabled {% if user_answer_data and option.id == user_answer_data.answer %}checked{% endif %}>
+                                    <label class="form-check-label" for="option_{{ option.id }}">
+                                        {{ option.text }}
+                                        {% if user_answer_data and option.id == user_answer_data.answer %}
+                                            {% if user_answer_data.is_correct %}<i class="bi bi-check-circle-fill text-success ms-1"></i>
+                                            {% else %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>
+                                            {% endif %}
+                                        {% elif option.is_correct %}
+                                            <span class="text-success small ms-2">(Resposta Correta)</span>
                                         {% endif %}
-                                    {% elif option.is_correct %}
-                                        <span class="text-success small ms-2">(Resposta Correta)</span>
-                                    {% endif %}
-                                </label>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                {% elif question.question_type.name == 'TEXT_INPUT' %}
+                                    <textarea class="form-control" rows="2" readonly>{% if user_answer_data %}{{ user_answer_data.answer }}{% endif %}</textarea>
+                                {% endif %}
                             </div>
                             {% endfor %}
-                            
-                            {% elif question.question_type.name == 'TEXT_INPUT' %}
-                            <textarea name="question_{{ question.id }}" class="form-control" rows="2" readonly>{% if user_answer_data %}{{ user_answer_data.answer }}{% endif %}</textarea>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                        <div class="d-grid mt-4">
-                            <button type="button" class="btn btn-secondary btn-lg" disabled>Avaliação Concluída</button>
-                        </div>
-                    </form>
-                    {% else %}
-                    <form method="POST" action="{{ url_for('training.submit_quiz', quiz_id=quiz.id) }}">
-                        {% for question in quiz.questions | sort(attribute='id') %}
-                        <div class="mb-4 pb-3 border-bottom">
-                            <p class="fw-bold">{{ loop.index }}. {{ question.text }}</p>
-                            
-                            {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
-                            {% for option in question.options %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="option_{{ option.id }}" value="{{ option.id }}" required>
-                                <label class="form-check-label" for="option_{{ option.id }}">{{ option.text }}</label>
+                            <div class="d-grid mt-4">
+                                <a href="{{ url_for('training.course_list_page') }}" class="btn btn-primary mt-3">
+                                <i class="bi bi-collection-play-fill me-2"></i>Voltar para a lista de cursos
+                            </a>
+                            </div>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('training.submit_quiz', quiz_id=quiz.id) }}">
+                            {% for question in quiz.questions | sort(attribute='id') %}
+                            <div class="mb-4 pb-3 border-bottom">
+                                <p class="fw-bold">{{ loop.index }}. {{ question.text }}</p>
+                                {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
+                                    {% for option in question.options %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="option_{{ option.id }}" value="{{ option.id }}" required>
+                                        <label class="form-check-label" for="option_{{ option.id }}">{{ option.text }}</label>
+                                    </div>
+                                    {% endfor %}
+                                {% elif question.question_type.name == 'TEXT_INPUT' %}
+                                    <textarea name="question_{{ question.id }}" class="form-control" rows="2" required></textarea>
+                                {% endif %}
                             </div>
                             {% endfor %}
-                            
-                            {% elif question.question_type.name == 'TEXT_INPUT' %}
-                            <textarea name="question_{{ question.id }}" class="form-control" rows="2" required></textarea>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-success btn-lg">Finalizar e Enviar Respostas</button>
-                        </div>
-                    </form>
-                    {% endif %}
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-success btn-lg">Finalizar e Enviar Respostas</button>
+                            </div>
+                        </form>
+                        {% endif %}
+
                     {% else %}
-                    <p class="text-muted text-center">Este curso não possui uma avaliação final.</p>
+                        
+                        <div class="text-center">
+                            <i class="bi bi-check-circle-fill text-success display-4"></i>
+                            <h4 class="mt-3">Treinamento Concluído!</h4>
+                            <p class="text-muted">Parabéns, você finalizou o "{{ course.title }}".</p>
+                            <a href="{{ url_for('training.course_list_page') }}" class="btn btn-primary mt-3">
+                                <i class="bi bi-collection-play-fill me-2"></i>Voltar para a lista de cursos
+                            </a>
+                        </div>
+
                     {% endif %}
                 </div>
             </div>
@@ -147,32 +151,40 @@
     </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const video = document.getElementById('course-video');
     const videoWrapper = document.getElementById('video-wrapper');
-    const quizContainer = document.getElementById('quiz-container');
+    const statusContainer = document.getElementById('quiz-container');
     const courseId = '{{ course.id }}';
     const hasQuiz = "{{ 'true' if quiz and quiz.questions|length > 0 else 'false' }}";
+    
+    const isCompleted = JSON.parse('{{ is_completed | tojson }}'); 
 
-    let lastUpdateTime = 0;
+    if (video && !isCompleted) {
+        let lastUpdateTime = 0;
 
-    if (video) {
-        const saveProgress = (timestamp) => {
+        const saveProgress = (timestamp, finished = false) => {
             fetch(`/course/${courseId}/progress`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     timestamp: timestamp,
-                    course_id: courseId
+                    finished: finished
                 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.completed) {
+                    if (videoWrapper) videoWrapper.style.display = 'none';
+                    if (statusContainer) statusContainer.style.display = 'block';
+                }
             });
         };
 
-        video.addEventListener('timeupdate', function () {
+        video.addEventListener('timeupdate', () => {
             const currentTime = Math.floor(video.currentTime);
             if (currentTime > lastUpdateTime + 9) {
                 saveProgress(currentTime);
@@ -180,15 +192,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        video.addEventListener('ended', function () {
-            saveProgress(video.duration);
-            if (quizContainer && hasQuiz) {
-                videoWrapper.style.display = 'none';
-                quizContainer.style.display = 'block';
+        video.addEventListener('ended', () => {
+            saveProgress(video.duration, true);
+            
+            if (hasQuiz) {
+                if (videoWrapper) videoWrapper.style.display = 'none';
+                if (statusContainer) statusContainer.style.display = 'block';
             }
         });
 
-        window.addEventListener('beforeunload', function () {
+        window.addEventListener('beforeunload', () => {
             if (!video.ended) {
                 saveProgress(video.currentTime);
             }

@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, current_app, json, jsonify, redirect, render_template, request, send_from_directory, flash, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from app.models import AnswerOption, QuestionType, Quiz, UserQuizAttempt, db, Course, UserCourseProgress
+from app.models import AnswerOption, QuestionType, Quiz, QuizAttachment, UserQuizAttempt, db, Course, UserCourseProgress
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
@@ -13,6 +13,7 @@ training_bp = Blueprint('training', __name__, template_folder='../templates')
 def save_progress(course_id):
     data = request.get_json()
     current_time = float(data.get('timestamp', 0))
+    finished = data.get('finished', False)
 
     progress = UserCourseProgress.query.filter_by(
         user_id=current_user.id,
@@ -21,20 +22,25 @@ def save_progress(course_id):
 
     if current_time > (progress.last_watched_timestamp + 15) and progress.last_watched_timestamp > 0:
         return jsonify({'success': False, 'error': 'Avanco de vídeo detectado.'}), 400
-
+    
     progress.last_watched_timestamp = max(progress.last_watched_timestamp, current_time)
+    course = Course.query.get_or_404(course_id)
+    just_completed = False
 
-    course = Course.query.get(course_id)
+    is_quizless = not course.quiz or not course.quiz.questions
 
-    if (progress.last_watched_timestamp >= (course.duration_seconds * 0.99) and
-            (not course.quiz or not len(course.quiz.questions) > 0) and
-            progress.completed_at is None):
+    if finished and is_quizless and progress.completed_at is None:
         progress.completed_at = datetime.utcnow()
+        just_completed = True
         flash(f'Parabéns! Você concluiu o treinamento "{course.title}"!', 'success')
 
     db.session.commit()
-    return jsonify({'success': True, 'last_timestamp': progress.last_watched_timestamp})
-
+    
+    return jsonify({
+        'success': True, 
+        'last_timestamp': progress.last_watched_timestamp,
+        'completed': just_completed 
+    })
 
 @training_bp.route('/courses')
 @login_required
@@ -175,7 +181,7 @@ def submit_quiz(quiz_id):
         user_id=current_user.id,
         quiz_id=quiz_id,
         score=score,
-        answers=json.dumps(user_answers_data) 
+        answers=json.dumps(user_answers_data)
     )
     db.session.add(new_attempt)
 
@@ -214,3 +220,14 @@ def serve_course_image(course_id):
     course_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
     
     return send_from_directory(course_folder_path, course.image_filename)
+    
+@training_bp.route('/quiz/attachments/<int:attachment_id>')
+@login_required
+def download_attachment(attachment_id):
+    attachment = QuizAttachment.query.get_or_404(attachment_id)
+    return send_from_directory(
+        current_app.config['UPLOAD_FOLDER'],
+        attachment.filepath,
+        as_attachment=True,
+        download_name=attachment.filename
+    )

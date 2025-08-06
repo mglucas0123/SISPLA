@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import uuid
-from flask import Blueprint, current_app, json, render_template, request, redirect, send_from_directory, url_for, session, flash
+from flask import Blueprint, current_app, json, jsonify, render_template, request, redirect, send_from_directory, url_for, session, flash
 from flask_login import current_user, login_required
 from sqlalchemy import select
 from werkzeug.security import generate_password_hash
@@ -462,7 +462,7 @@ def view_course_progress(course_id):
         attempts_map=attempts_map,
         average_score=average_score,
         chart_data_json=json.dumps(chart_data))
-
+    
 # ROTA PARA DELETAR UM CURSO
 @admin_bp.route("/courses/delete/<int:course_id>", methods=['POST'])
 @login_required
@@ -477,12 +477,10 @@ def delete_course(course_id):
         if os.path.exists(course_folder_path):
             shutil.rmtree(course_folder_path)
 
-        UserQuizAttempt.query.filter_by(quiz_id=course_to_delete.quiz.id if course_to_delete.quiz else None).delete()
-        
         db.session.delete(course_to_delete)
         db.session.commit()
         
-        flash(f'Curso "{course_to_delete.title}" e todos os seus arquivos foram excluídos com sucesso.', 'success')
+        flash(f'Curso "{course_to_delete.title}" e todos os seus dados foram excluídos com sucesso.', 'success')
 
     except Exception as e:
         db.session.rollback()
@@ -571,37 +569,13 @@ def manage_quiz(course_id):
         quiz = Quiz(title=f"Avaliação para {course.title}", course_id=course.id)
         db.session.add(quiz)
         db.session.commit()
-        quiz = course.quiz
 
     if request.method == 'POST':
         try:
             quiz.support_text = request.form.get('support_text')
-
-            attachments_to_delete_ids = request.form.getlist('delete_attachments')
-            if attachments_to_delete_ids:
-                attachments_to_delete = db.session.query(QuizAttachment).filter(QuizAttachment.id.in_(attachments_to_delete_ids)).all()
-                for attachment in attachments_to_delete:
-                    try:
-                        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], attachment.filepath)
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
-                    except OSError as e:
-                        print(f"Erro ao tentar deletar o arquivo físico: {e}")
-                    db.session.delete(attachment)
-
-            uploaded_files = request.files.getlist('new_attachments')
+            
             upload_folder = current_app.config['UPLOAD_FOLDER']
             os.makedirs(upload_folder, exist_ok=True)
-            
-            for file in uploaded_files:
-                if file and file.filename:
-                    original_filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4().hex}_{original_filename}"
-                    file.save(os.path.join(upload_folder, unique_filename))
-                    new_attachment = QuizAttachment(
-                        filename=original_filename, filepath=unique_filename, quiz_id=quiz.id
-                    )
-                    db.session.add(new_attachment)
 
             questions_data_from_form = json.loads(request.form.get('questions_data'))
             
@@ -648,13 +622,103 @@ def manage_quiz(course_id):
 
     return render_template("training/manage_quiz.html", course=course, quiz=quiz)
 
-@admin_bp.route('/attachments/<int:attachment_id>')
+
+# ROTA PARA DELETAR UM ANEXO ESPECÍFICO
+@admin_bp.route("/quiz/attachment/<int:attachment_id>", methods=['DELETE'])
 @login_required
-def download_attachment(attachment_id):
+@admin_required
+def delete_attachment(attachment_id):
     attachment = QuizAttachment.query.get_or_404(attachment_id)
-    return send_from_directory(
-        current_app.config['UPLOAD_FOLDER'],
-        attachment.filepath,
-        as_attachment=True,
-        download_name=attachment.filename
-    )
+    
+    try:
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], attachment.filepath)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+        db.session.delete(attachment)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Anexo excluído com sucesso.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao excluir anexo {attachment_id}: {e}")
+        return jsonify({'success': False, 'message': 'Erro ao excluir o anexo.'}), 500
+    
+    
+
+@admin_bp.route("/quiz/<int:quiz_id>/attachment", methods=['POST'])
+@login_required
+@admin_required
+def upload_attachment(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    course = quiz.course
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Nenhum arquivo enviado.'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'Nome de arquivo vazio.'}), 400
+
+    try:
+        original_filename = secure_filename(file.filename)
+        course_foldername = secure_filename(course.title)
+        unique_filename = f"{uuid.uuid4().hex}_{original_filename}"
+
+        relative_path = os.path.join('courses', course_foldername, 'support_material')
+        absolute_dir_path = os.path.join(current_app.config['UPLOAD_FOLDER'], relative_path)
+
+        os.makedirs(absolute_dir_path, exist_ok=True)
+        
+        final_save_path = os.path.join(absolute_dir_path, unique_filename)
+        
+        file.save(final_save_path)
+        filepath_to_db = os.path.join(relative_path, unique_filename)
+
+        new_attachment = QuizAttachment(
+            quiz_id=quiz_id,
+            filename=original_filename,
+            filepath=filepath_to_db.replace('\\', '/') 
+        )
+        db.session.add(new_attachment)
+        db.session.commit()
+
+        return jsonify({
+            'success': True, 
+            'attachment': new_attachment.to_dict()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao fazer upload para o quiz {quiz_id}: {e}")
+        return jsonify({'success': False, 'message': 'Erro interno ao salvar o anexo.'}), 500
+
+# ROTA PARA RESETAR O PROGRESSO DE UM ALUNO
+@admin_bp.route("/course/<int:course_id>/reset_progress/<int:user_id>", methods=['POST'])
+@login_required
+@admin_required
+def reset_user_progress(course_id, user_id):
+    progress_to_delete = UserCourseProgress.query.filter_by(
+        user_id=user_id,
+        course_id=course_id
+    ).first()
+
+    if progress_to_delete:
+        db.session.delete(progress_to_delete)
+
+    course = Course.query.get_or_404(course_id)
+    if course and course.quiz:
+        UserQuizAttempt.query.filter_by(
+            user_id=user_id,
+            quiz_id=course.quiz.id
+        ).delete()
+
+    try:
+        db.session.commit()
+        user = User.query.get(user_id)
+        flash(f"Progresso de '{user.name}' no curso '{course.title}' foi resetado com sucesso.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao resetar o progresso: {e}", "danger")
+
+    return redirect(url_for('admin.view_course_progress', course_id=course_id))
