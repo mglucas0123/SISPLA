@@ -248,7 +248,6 @@
 
         if (!tableBody) return;
 
-        //<--- MAPEAMENTO DE ÍCONES --->
         const iconMap = { '.pdf': 'bi-file-earmark-pdf-fill text-danger', '.doc': 'bi-file-earmark-word-fill text-primary', '.docx': 'bi-file-earmark-word-fill text-primary', '.xls': 'bi-file-earmark-excel-fill text-success', '.xlsx': 'bi-file-earmark-excel-fill text-success', '.zip': 'bi-file-earmark-zip-fill text-secondary', '.jpg': 'bi-file-earmark-image-fill text-info', '.jpeg': 'bi-file-earmark-image-fill text-info', '.png': 'bi-file-earmark-image-fill text-info', '.txt': 'bi-file-earmark-text-fill text-muted' };
         const defaultIcon = 'bi-file-earmark-fill';
 
@@ -259,7 +258,6 @@
             });
         }
 
-        //<--- LÓGICA DE INTERAÇÃO (SELEÇÃO, CLIQUE, MENU) --->
         function selectRow(row) {
             if (selectedRow) selectedRow.classList.remove('is-selected');
             if (row) {
@@ -317,7 +315,6 @@
             if (!tableBody.parentElement.contains(e.target)) selectRow(null);
         });
 
-        //<--- LÓGICA DO MENU DE CONTEXTO --->
         function updateContextMenuActions(row) {
             const isFile = row && !row.classList.contains('is-folder');
             const isFolder = row && row.classList.contains('is-folder');
@@ -342,7 +339,6 @@
         }
         document.getElementById('context-create-folder').onclick = e => { e.preventDefault(); createNewFolder(); };
 
-        //<--- FUNÇÕES DE AÇÃO PRINCIPAIS --->
         window.createNewFolder = function () {
             const folderName = prompt("Digite o nome da nova pasta:");
 
@@ -498,7 +494,7 @@
                     }
                 });
         }
-        //<--- LÓGICA DE DRAG-AND-DROP --->
+
         let draggedItem = null;
         tableBody.addEventListener('dragstart', e => {
             const row = e.target.closest('.file-row');
@@ -545,7 +541,6 @@
             }
         });
 
-        //<--- LÓGICA DE UPLOAD --->
         const uploadModal = document.getElementById('uploadModal');
         if (uploadModal) {
             const uploadZone = uploadModal.querySelector('#upload-zone');

@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 util_bp = Blueprint('util', __name__, template_folder='../templates')
 
-#<--TROCA DE SENHA PELA NAVBAR -->
+#<!--- TROCA DE SENHA NAVBAR --->
 @util_bp.route("/change-password", methods=["POST"])
 @login_required
 def user_change_password():
@@ -28,7 +28,7 @@ def user_change_password():
         flash("Senha atual incorreta.", "danger")
     return redirect(request.referrer or url_for("main.painel"))
 
-#<-- FILTRO DATA E HORA -->
+#<!--- FILTRO DATA E HORA --->
 def format_date_filter(value, target_tz_str='Etc/GMT+3', format_str='%d/%m/%Y'):
     if value is None:
         return "N/A" 

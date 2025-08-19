@@ -38,10 +38,6 @@ def new_form():
 @form_bp.route("/forms")
 @login_required
 def forms():
-    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para visualizar os relatórios.", "danger")
-        return redirect(url_for("main.panel"))
-
     data_inicio_str = request.args.get('data_inicio', '').strip()
     data_fim_str = request.args.get('data_fim', '').strip()
     tipo_data = request.args.get('tipo_data', 'registro').strip()
@@ -98,13 +94,6 @@ def details_form(form_id):
     if not formulario:
         flash("Formulário não encontrado.", "danger")
         return redirect(url_for('form.forms'))
-    
-    can_view_all = "ADMIN" in current_user.profile or "VER_RELATORIOS" in current_user.profile
-    is_owner = "CRIAR_RELATORIOS" in current_user.profile and formulario.worker_id == current_user.id
-    
-    if not (can_view_all or is_owner):
-        flash("Acesso negado! Você não tem permissão para visualizar os detalhes deste formulário.", "danger")
-        return redirect(url_for("form.forms"))
     
     return render_template("form/details_form.html", formulario=formulario)
 

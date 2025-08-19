@@ -1,12 +1,11 @@
 {% extends "navbar.html" %}
+
 {% block title %}Gerenciar Usuários{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-
     {% include 'partials/_flash_messages.html' %}
 
-    <!-- TÍTULO DA PÁGINA E BOTÕES "NOVO USUÁRIO" E "VOLTAR PARA O PAINEL" -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2 mb-0">Gerenciar Usuários</h1>
         <div>
@@ -19,7 +18,6 @@
         </div>
     </div>
 
-    <!-- SEÇÃO DOS USUÁRIOS-->
     <div class="card shadow-sm">
         <div class="card-body">
             <div class="table-responsive">
@@ -43,19 +41,15 @@
                             <td>{{ user.username }}</td>
                             <td class="text-center">
                                 {% if user.is_active %}
-                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill p-2"><i
-                                        class="bi bi-check-circle-fill me-1"></i>Liberado</span>
+                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill p-2"><i class="bi bi-check-circle-fill me-1"></i>Liberado</span>
                                 {% else %}
-                                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill p-2"><i
-                                        class="bi bi-slash-circle-fill me-1"></i>Bloqueado</span>
+                                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill p-2"><i class="bi bi-slash-circle-fill me-1"></i>Bloqueado</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="3" class="text-center text-muted fst-italic py-4">Nenhum usuário
-                                cadastrado.
-                            </td>
+                            <td colspan="3" class="text-center text-muted fst-italic py-4">Nenhum usuário cadastrado.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -64,7 +58,6 @@
         </div>
     </div>
 
-    <!-- PAGINAÇÃO DOS USUÁRIOS -->
     {% if pagination %}
     <nav aria-label="Navegação de usuários">
         <ul class="pagination justify-content-center mt-4">
@@ -89,14 +82,11 @@
     {% endif %}
 </div>
 
-<!-- MODAL PARA CRIAR NOVO USUÁRIO -->
-<div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ url_for('admin.users') }}" class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="criarUsuarioModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Criar
-                    Novo Usuário</h5>
+                <h5 class="modal-title" id="criarUsuarioModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Criar Novo Usuário</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
@@ -106,8 +96,7 @@
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="username" class="form-label">Nome de usuário<span
-                                class="text-danger">*</span></label>
+                        <label for="username" class="form-label">Nome de usuário<span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="username" name="username" required>
                     </div>
                 </div>
@@ -115,8 +104,7 @@
                     <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com"
-                            required>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com" required>
                     </div>
                 </div>
                 <div class="mb-3">
@@ -128,24 +116,18 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="profile" value="ADMIN"
-                                    id="perm_admin_criar">
-                                <label class="form-check-label" for="perm_admin_criar"><i
-                                        class="bi bi-shield-lock-fill text-danger me-1"></i>Administrador</label>
+                                <input class="form-check-input" type="checkbox" name="profile" value="ADMIN" id="perm_admin_criar">
+                                <label class="form-check-label" for="perm_admin_criar"><i class="bi bi-shield-lock-fill text-danger me-1"></i>Administrador</label>
                             </div>
                             <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="profile" value="CRIAR_RELATORIOS"
-                                    id="perm_criar_criar">
-                                <label class="form-check-label" for="perm_criar_criar"><i
-                                        class="bi bi-pencil-fill text-success me-1"></i>Criar relatórios</label>
+                                <input class="form-check-input" type="checkbox" name="profile" value="CRIAR_RELATORIOS" id="perm_criar_criar">
+                                <label class="form-check-label" for="perm_criar_criar"><i class="bi bi-pencil-fill text-success me-1"></i>Criar relatórios</label>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="profile" value="VER_RELATORIOS"
-                                    id="perm_ver_criar">
-                                <label class="form-check-label" for="perm_ver_criar"><i
-                                        class="bi bi-eye-fill text-info me-1"></i>Ver relatórios</label>
+                                <input class="form-check-input" type="checkbox" name="profile" value="VER_RELATORIOS" id="perm_ver_criar">
+                                <label class="form-check-label" for="perm_ver_criar"><i class="bi bi-eye-fill text-info me-1"></i>Ver relatórios</label>
                             </div>
                         </div>
                     </div>
@@ -153,20 +135,17 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle-fill me-2"></i>Criar
-                    Usuário</button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle-fill me-2"></i>Criar Usuário</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- MODAL PARA DETALHES DO USUÁRIO -->
 <div class="modal fade" id="infoUsuarioModal" tabindex="-1" aria-labelledby="infoUsuarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content shadow-lg">
             <div class="modal-header bg-light border-bottom">
-                <h5 class="modal-title" id="infoUsuarioModalLabel"><i
-                        class="bi bi-person-badge me-2 text-primary"></i>Detalhes do Usuário</h5>
+                <h5 class="modal-title" id="infoUsuarioModalLabel"><i class="bi bi-person-badge me-2 text-primary"></i>Detalhes do Usuário</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body p-4">
@@ -206,43 +185,33 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit"
-                                            value="ADMIN" id="perm_admin_edit" role="switch">
-                                        <label class="form-check-label" for="perm_admin_edit"><i
-                                                class="bi bi-shield-lock-fill text-danger me-1"></i>Administrador</label>
+                                        <input class="form-check-input" type="checkbox" name="profile_edit" value="ADMIN" id="perm_admin_edit" role="switch">
+                                        <label class="form-check-label" for="perm_admin_edit"><i class="bi bi-shield-lock-fill text-danger me-1"></i>Administrador</label>
                                     </div>
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit"
-                                            value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
-                                        <label class="form-check-label" for="perm_criar_edit"><i
-                                                class="bi bi-pencil-fill text-success me-1"></i>Criar relatórios</label>
+                                        <input class="form-check-input" type="checkbox" name="profile_edit" value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
+                                        <label class="form-check-label" for="perm_criar_edit"><i class="bi bi-pencil-fill text-success me-1"></i>Criar relatórios</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit"
-                                            value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
-                                        <label class="form-check-label" for="perm_ver_edit"><i
-                                                class="bi bi-eye-fill text-info me-1"></i>Ver relatórios</label>
+                                        <input class="form-check-input" type="checkbox" name="profile_edit" value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
+                                        <label class="form-check-label" for="perm_ver_edit"><i class="bi bi-eye-fill text-info me-1"></i>Ver relatórios</label>
                                     </div>
                                 </div>
                             </div>
                         </fieldset>
-                        <button type="submit" class="btn btn-success mt-3 w-100"><i
-                                class="bi bi-check-circle-fill me-2"></i>Salvar Permissões</button>
+                        <button type="submit" class="btn btn-success mt-3 w-100"><i class="bi bi-check-circle-fill me-2"></i>Salvar Permissões</button>
                     </form>
                 </div>
                 <hr class="my-4">
                 <div>
                     <h6 class="mb-3"><i class="bi bi-gear-wide-connected me-2 text-secondary"></i>Outras Ações</h6>
                     <form id="formAlterarSenhaAdmin" method="POST" action="" class="mb-3">
-                        <label for="novaSenhaAdminInput" class="form-label small text-muted">Redefinir Senha do
-                            Usuário:</label>
+                        <label for="novaSenhaAdminInput" class="form-label small text-muted">Redefinir Senha do Usuário:</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" name="nova_senha" id="novaSenhaAdminInput"
-                                placeholder="Digite a nova senha" required>
-                            <button class="btn btn-outline-primary" type="submit"><i
-                                    class="bi bi-key-fill me-1"></i>Redefinir Senha</button>
+                            <input type="password" class="form-control" name="nova_senha" id="novaSenhaAdminInput" placeholder="Digite a nova senha" required>
+                            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-key-fill me-1"></i>Redefinir Senha</button>
                         </div>
                     </form>
                     <form id="formToggleUserStatus" method="POST" action="" class="mb-3">
@@ -252,15 +221,12 @@
                     </form>
                     <form id="formDeletarUsuario" method="POST" action=""
                         onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
-                        <button class="btn btn-danger w-100" type="submit"><i class="bi bi-trash3-fill me-1"></i>Deletar
-                            Usuário</button>
+                        <button class="btn btn-danger w-100" type="submit"><i class="bi bi-trash3-fill me-1"></i>Deletar Usuário</button>
                     </form>
-
                 </div>
             </div>
             <div class="modal-footer bg-light border-top">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i
-                        class="bi bi-x-lg me-1"></i>Fechar</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Fechar</button>
             </div>
         </div>
     </div>
@@ -270,7 +236,6 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    //<!-- SCRIPT PARA MANIPULAÇÃO DO MODAL DE DETALHES DO USUÁRIO -->
     document.addEventListener('DOMContentLoaded', function () {
         var infoUsuarioModalElement = document.getElementById('infoUsuarioModal');
 

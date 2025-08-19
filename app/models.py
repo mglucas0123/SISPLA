@@ -121,7 +121,6 @@ class UserCourseProgress(db.Model):
 
     __table_args__ = (db.UniqueConstraint('user_id', 'course_id', name='_user_course_uc'),)
 
-#<!-- MODELO PARA PROVA -->
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)

@@ -21,7 +21,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-#<-- CRIAR NOVO USUÁRIO -->
+#<!--- CRIAR NOVO USUÁRIO --->
 @admin_bp.route("/users", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -65,7 +65,7 @@ def users():
     
     return render_template("users.html", users=users_in_page, pagination=pagination)
 
-#<-- TROCAR SENHA -->
+#<!--- TROCAR SENHA --->
 @admin_bp.route("/admin_change_password/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -85,7 +85,7 @@ def admin_change_password(user_id):
 
     return redirect(url_for("admin.users"))
 
-#<-- DELETAR USUARIO -->
+#<!--- DELETAR USUARIO --->
 @admin_bp.route("/users/delete_user/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -103,7 +103,7 @@ def delete_user(user_id):
         flash("Usuário não encontrado.", "danger")
     return redirect(url_for("admin.users"))
 
-#<-- EDITAR PERMISSÕES -->
+#<!--- EDITAR PERMISSÕES --->
 @admin_bp.route("/users/change_permissions/<int:user_id_to_edit>", methods=["POST"])
 @login_required
 @admin_required
@@ -124,7 +124,7 @@ def change_permissions(user_id_to_edit):
     flash(f"Permissões do usuário '{user_to_edit.name}' foram atualizadas!", "success")
     return redirect(url_for("admin.users"))
 
-#<-- EDITAR STATUS DA CONTA -->
+#<!--- EDITAR STATUS DA CONTA --->
 @admin_bp.route("/users/toggle_status/<int:user_id_to_toggle>", methods=["POST"])
 @login_required
 @admin_required
@@ -213,8 +213,8 @@ def delet_notice(notice_id):
 
     return redirect(url_for("admin.manage_notices"))
 
-#<---- REPOSITÓRIO ---->
-#<-- GERENCIAR REPOSITÓRIOS -->
+#<!----- REPOSITÓRIO ---->
+#<!--- GERENCIAR REPOSITÓRIOS --->
 @admin_bp.route("/repositories")
 @login_required
 @admin_required
@@ -241,12 +241,7 @@ def find_unique_foldername(repo_name, access_type, owner, upload_folder):
         
     return final_foldername
 
-@admin_bp.route('/notices/image/<path:filename>')
-@login_required
-def serve_notice_image(filename):
-    notice_upload_path = os.path.join(current_app.root_path, 'uploads', 'notices')
-    return send_from_directory(notice_upload_path, filename)
-
+#<!--- CRIAR REPOSITÓRIO --->
 @admin_bp.route("/repositories/create", methods=["POST"])
 @login_required
 @admin_required
@@ -290,7 +285,7 @@ def create_repository():
 
     return redirect(url_for('admin.manage_repositories'))
 
-#<-- EDITAR REPOSITÓRIO -->
+#<!--- EDITAR REPOSITÓRIO --->
 @admin_bp.route("/repositories/edit/<int:repo_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -381,7 +376,7 @@ def delete_repository(repo_id):
 
     return redirect(url_for('admin.manage_repositories'))
 
-
+#<!----- TREINAMENTOS ---->
 #<!--- GERENCIAMENTO DE TREINAMENTOS --->
 @admin_bp.route("/courses")
 @login_required
@@ -398,7 +393,7 @@ def manage_courses():
     )
 
 
-# ROTA PARA ATIVAR/DESATIVAR UM CURSO
+#<!--- ATIVAR/DESATIVAR CURSOS --->
 @admin_bp.route("/courses/toggle_status/<int:course_id>", methods=['POST'])
 @login_required
 @admin_required
@@ -410,7 +405,6 @@ def toggle_course_status(course_id):
     flash(f'O curso "{course.title}" foi {status}.', 'info')
     return redirect(url_for('admin.manage_courses'))
 
-# ROTA PARA VER O PROGRESSO DOS ALUNOS
 @admin_bp.route("/courses/progress/<int:course_id>")
 @login_required
 @admin_required
@@ -463,7 +457,6 @@ def view_course_progress(course_id):
         average_score=average_score,
         chart_data_json=json.dumps(chart_data))
     
-# ROTA PARA DELETAR UM CURSO
 @admin_bp.route("/courses/delete/<int:course_id>", methods=['POST'])
 @login_required
 @admin_required
@@ -557,7 +550,6 @@ def create_course():
     flash("Novo curso criado com sucesso!", "success")
     return redirect(url_for("admin.manage_courses"))
 
-#<!-- PROVA -->
 @admin_bp.route("/course/<int:course_id>/quiz", methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -623,7 +615,6 @@ def manage_quiz(course_id):
     return render_template("training/manage_quiz.html", course=course, quiz=quiz)
 
 
-# ROTA PARA DELETAR UM ANEXO ESPECÍFICO
 @admin_bp.route("/quiz/attachment/<int:attachment_id>", methods=['DELETE'])
 @login_required
 @admin_required
@@ -693,7 +684,6 @@ def upload_attachment(quiz_id):
         current_app.logger.error(f"Erro ao fazer upload para o quiz {quiz_id}: {e}")
         return jsonify({'success': False, 'message': 'Erro interno ao salvar o anexo.'}), 500
 
-# ROTA PARA RESETAR O PROGRESSO DE UM ALUNO
 @admin_bp.route("/course/<int:course_id>/reset_progress/<int:user_id>", methods=['POST'])
 @login_required
 @admin_required
@@ -722,3 +712,9 @@ def reset_user_progress(course_id, user_id):
         flash(f"Erro ao resetar o progresso: {e}", "danger")
 
     return redirect(url_for('admin.view_course_progress', course_id=course_id))
+
+@admin_bp.route('/notices/image/<path:filename>')
+@login_required
+def serve_notice_image(filename):
+    notice_upload_path = os.path.join(current_app.root_path, 'uploads', 'notices')
+    return send_from_directory(notice_upload_path, filename)

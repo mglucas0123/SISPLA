@@ -100,10 +100,7 @@ def get_item_directory_path(file_obj):
     else:
         return repo_folder_path
     
-# ===================================================================
-#                           ROTAS DE PÁGINA 
-# ===================================================================
-#<--- EXIBIR LISTA DE REPOSITÓRIOS ACESSIVEIS --->
+#<!--- EXIBIR LISTA DE REPOSITÓRIOS ACESSIVEIS --->
 @repository_bp.route('/repository')
 @login_required
 def repository_list_page():
@@ -117,7 +114,7 @@ def repository_list_page():
     all_accessible_repos = db.session.execute(accessible_repos_query).scalars().all()
     return render_template("repository/repository_list.html", repositories=all_accessible_repos)
 
-#<--- EXIBE O CONTEÚDO DE UM REPOSITÓRIO OU SUBPASTA --->
+#<!--- EXIBE O CONTEÚDO DE UM REPOSITÓRIO OU SUBPASTA --->
 @repository_bp.route('/repository/<int:repo_id>')
 @repository_bp.route('/repository/<int:repo_id>/folder/<int:folder_id>')
 @login_required
@@ -172,10 +169,7 @@ def repository_detail_page(repo_id, folder_id=None):
     
     return render_template("repository/repository_detail.html", repository=repo, current_folder=current_folder, folders=folders, files=files_with_details, breadcrumbs=breadcrumbs, all_folders=all_folders_for_moving)
 
-# =========================================================================
-#                           ROTAS DE AÇÃO
-# =========================================================================
-#<--- ROTA PARA FAZER UPLOAD DE ARQUIVO --->
+#<!--- UPLOAD DE ARQUIVO --->
 @repository_bp.route('/repository/<int:repo_id>/upload', methods=['POST'])
 @login_required
 def upload_file(repo_id):
@@ -223,7 +217,7 @@ def upload_file(repo_id):
         return redirect(url_for('repository.repository_detail_page', repo_id=repo.id))
     
 
-#<--- ROTA PARA CRIAR PASTA --->
+#<!--- CRIAR PASTA --->
 @repository_bp.route('/repository/<int:repo_id>/create_folder', methods=['POST'])
 @login_required
 def create_folder(repo_id):
@@ -278,7 +272,7 @@ def create_folder(repo_id):
         print(f"Erro ao criar pasta: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-#<--- ROTA PARA VISUALIZAR ARQUIVO --->
+#<!--- VISUALIZAR ARQUIVO --->
 @repository_bp.route('/file/view/<int:file_id>')
 @login_required
 def view_file(file_id):
@@ -286,7 +280,7 @@ def view_file(file_id):
     directory_path = get_item_directory_path(file_obj)
     return send_from_directory(directory_path, file_obj.filename)
 
-#<--- ROTA PARA BAIXAR ARQUIVO --->
+#<!--- BAIXAR ARQUIVO --->
 @repository_bp.route('/file/download/<int:file_id>')
 @login_required
 def download_file(file_id):
@@ -294,7 +288,7 @@ def download_file(file_id):
     directory_path = get_item_directory_path(file_obj)
     return send_from_directory(directory_path, file_obj.filename, as_attachment=True)
 
-#<--- ROTA PARA RENOMEAR ARQUIVOS/PASTAS --->
+#<!--- RENOMEAR ARQUIVOS/PASTAS --->
 @repository_bp.route('/file/rename/<int:file_id>', methods=['POST'])
 @login_required
 def rename_file(file_id):
@@ -343,7 +337,7 @@ def rename_file(file_id):
             os.rename(new_path, old_path)
         return jsonify({'success': False, 'error': f"Erro de sistema: {str(e)}"}), 500
 
-#<--- ROTA PARA DELETAR ARQUIVOS --->
+#<!--- DELETAR ARQUIVOS --->
 @repository_bp.route('/file/delete/<int:file_id>', methods=['POST'])
 @login_required
 def delete_file(file_id):
@@ -362,7 +356,7 @@ def delete_file(file_id):
     return redirect(url_for('repository.repository_detail_page', repo_id=repo_id_to_redirect))
 
 
-#<--- ROTA PARA MOVER ARQUIVOS/PASTAS --->
+#<!--- MOVER ARQUIVOS/PASTAS --->
 @repository_bp.route('/file/move', methods=['POST'])
 @login_required
 def move_file():

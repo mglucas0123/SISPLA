@@ -90,7 +90,6 @@ def course_list_page():
         available=courses_available
     )
     
-#<!--- PROVA --->
 @training_bp.route("/course/<int:course_id>/player")
 @login_required
 def course_player_page(course_id):
@@ -135,6 +134,7 @@ def course_player_page(course_id):
         is_completed=is_completed,
         user_attempt=user_attempt
     )
+    
 @training_bp.route("/quiz/submit/<int:quiz_id>", methods=['POST'])
 @login_required
 def submit_quiz(quiz_id):

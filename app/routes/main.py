@@ -4,7 +4,6 @@ from app.models import db, Notice
 
 main_bp = Blueprint('main', __name__, template_folder='../templates')
 
-#<-- REDIRECIONAMENTO PARA LINK VAZIO -->
 @main_bp.route("/")
 def index():
     return redirect(url_for("main.panel"))

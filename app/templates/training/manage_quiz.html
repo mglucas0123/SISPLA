@@ -186,25 +186,14 @@
 
     document.addEventListener('DOMContentLoaded', function () {
 
-        // =================================================================
-        // 1. DECLARAÇÃO DE CONSTANTES E VARIÁVEIS
-        // =================================================================
-        
-        // --- Para as Questões ---
         const questionsContainer = document.getElementById('questions-container');
         const quizForm = document.getElementById('quizForm');
         const addQuestionBtn = document.getElementById('addQuestionBtn');
         const initialQuizData = JSON.parse('{{ quiz.to_dict() | tojson | safe }}');
-
-        // --- Para os Anexos ---
         const attachmentList = document.getElementById('attachment-list');
         const fileInput = document.getElementById('file-input');
         const noAttachmentsMsg = document.getElementById('no-attachments-msg');
         const quizId = '{{ quiz.id }}';
-
-        // =================================================================
-        // 2. FUNÇÕES DE GERENCIAMENTO DE QUESTÕES
-        // =================================================================
 
         function renderQuestion(questionData) {
             const card = questionsContainer.querySelector(`[data-question-id="${questionData.id}"]`);
@@ -290,10 +279,6 @@
             quizForm.submit();
         }
 
-        // =================================================================
-        // 3. LÓGICA DE GERENCIAMENTO DE ANEXOS (SIMPLIFICADA)
-        // =================================================================
-
         attachmentList.addEventListener('click', function (e) {
             const deleteBtn = e.target.closest('.delete-attachment-btn');
             if (!deleteBtn) return;
@@ -360,10 +345,6 @@
             }
             e.target.value = '';
         });
-
-        // =================================================================
-        // 4. INICIALIZAÇÃO E EVENT LISTENERS PRINCIPAIS
-        // =================================================================
 
         if (initialQuizData && initialQuizData.questions) {
             initialQuizData.questions.forEach(renderQuestion);

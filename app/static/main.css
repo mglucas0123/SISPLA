@@ -45,8 +45,7 @@ html {
   pointer-events: none;
   z-index: 2;
   background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #132ea8 100%);
-  -webkit-clip-path: inherit;
-          clip-path: inherit;
+  clip-path: inherit;
 }
 
 .login-branding {

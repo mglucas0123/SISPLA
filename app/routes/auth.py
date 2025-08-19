@@ -6,7 +6,7 @@ from app.models import db, User
 
 auth_bp = Blueprint('auth', __name__, template_folder='../templates')
 
-#<-- LOGIN -->
+#<!--- LOGIN --->
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -27,7 +27,7 @@ def login():
 
     return render_template("login.html")
 
-#<-- LOGOUT -->
+#<!--- LOGOUT --->
 @auth_bp.route("/logout")
 @login_required
 def logout():

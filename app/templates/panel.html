@@ -9,8 +9,7 @@
                 <div class="card-body p-4">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h3 class="card-title mb-1">Bem-vindo(a) de volta, <span class="text-primary">{{
-                                    current_user.name }}</span>!</h3>
+                            <h3 class="card-title mb-1">Bem-vindo(a) de volta, <span class="text-primary">{{ current_user.name }}</span>!</h3>
                         </div>
                     </div>
                 </div>
@@ -32,8 +31,7 @@
                                     <i class="bi bi-archive text-primary fs-4"></i>
                                 </div>
                                 <div class="mb-2 fw-semibold small text-uppercase text-secondary letter-spacing-1"
-                                    style="letter-spacing:1px;">
-                                    Repositório de Arquivos
+                                    style="letter-spacing:1px;"> Repositório de Arquivos
                                 </div>
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="{{ url_for('repository.repository_list_page') }}"
@@ -47,8 +45,6 @@
                         </div>
                     </div>
 
-                    {% if 'CRIAR_RELATORIOS' in current_user.profile or 'VER_RELATORIOS' in current_user.profile or
-                    'ADMIN' in current_user.profile %}
                     <div class="kpi-card-wrapper p-0 m-0">
                         <div class="card shadow-sm h-100 text-center kpi-card border-start border-success border-4 p-0"
                             style="min-width:220px; max-width:260px;">
@@ -72,19 +68,16 @@
                                     </a>
 
                                     {% endif %}
-                                    {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
                                     <a href="{{ url_for('form.forms') }}"
                                         class="btn btn-outline-success btn-sm px-3 d-flex align-items-center"
                                         aria-label="Relatórios de Plantão" title="Ver Relatórios">
                                         <i class="bi bi-clipboard-data me-1"></i>
                                         Relatórios
                                     </a>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {% endif %}
                     <div class="kpi-card-wrapper p-0 m-0">
                         <div class="card shadow-sm h-100 text-center kpi-card border-start border-4 border-warning p-0"
                             style="min-width:220px; max-width:260px;">
@@ -123,8 +116,13 @@
                 <div class="list-group list-group-flush">
                     {% for n in notice %}
                     <div class="list-group-item py-3">
-
                         {% if n.notice_type == 'IMAGE' and n.image_filename %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-semibold text-dark"></h6>
+                            <span class="badge bg-light text-secondary border">
+                                {{ n.date_registry | format_date_time }}
+                            </span>
+                        </div>
                         <div class="text-center">
                             <a href="#" class="d-inline-block position-relative" data-bs-toggle="modal"
                                 data-bs-target="#imageNoticeModal"
@@ -177,18 +175,18 @@
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0">
             <div class="modal-body p-0 position-relative text-center">
-                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2" 
-                        style="z-index: 10; background-color: rgba(0,0,0,0.5); border-radius: 50%;"
-                        data-bs-dismiss="modal" aria-label="Fechar"></button>
-                
-                <img id="modalNoticeImage" src="" class="img-fluid rounded" alt="Imagem do Aviso" style="max-height: 90vh; object-fit: contain;">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2"
+                    style="z-index: 10; background-color: rgba(0,0,0,0.5); border-radius: 50%;" data-bs-dismiss="modal"
+                    aria-label="Fechar"></button>
+
+                <img id="modalNoticeImage" src="" class="img-fluid rounded" alt="Imagem do Aviso"
+                    style="max-height: 90vh; object-fit: contain;">
             </div>
         </div>
     </div>
 </div>
 {% if popup_aviso %}
 <div class="modal fade" id="avisoModal" tabindex="-1" aria-labelledby="avisoModalLabel" aria-hidden="true">
-
     {% if popup_aviso.notice_type == 'IMAGE' and popup_aviso.image_filename %}
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0">
@@ -203,7 +201,6 @@
             </div>
         </div>
     </div>
-
     {% else %}
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg border-0 border-top border-primary border-5" style="border-radius: 0.5rem;">
@@ -229,14 +226,12 @@
         </div>
     </div>
     {% endif %}
-
 </div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const track = document.querySelector('.menu-carousel-track');
@@ -288,7 +283,7 @@
         const imageNoticeModal = document.getElementById('imageNoticeModal');
         if (imageNoticeModal) {
             const modalImage = document.getElementById('modalNoticeImage');
-            
+
             imageNoticeModal.addEventListener('show.bs.modal', function (event) {
                 const triggerLink = event.relatedTarget;
                 const imageUrl = triggerLink.getAttribute('data-img-src');
@@ -297,7 +292,6 @@
         }
     });
 
-    //Mural de Avisos
     document.addEventListener('DOMContentLoaded', function () {
         const items = document.querySelectorAll('.notice-item');
         const perPage = 3;

@@ -2,7 +2,7 @@ import os
 import subprocess
 import datetime
 
-from flask import Flask, current_app
+from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
@@ -12,26 +12,21 @@ from app.models import db, User
 from app.routes.admin import admin_bp
 from app.routes.auth import auth_bp
 from app.routes.main import main_bp
-from app.routes.util import util_bp
+from app.routes.util import util_bp, format_date_filter
 from app.routes.form import form_bp
 from app.routes.repository import repository_bp
 from app.routes.training import training_bp
-from app.routes.util import format_date_filter
 
 load_dotenv()
 
 def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
-
     app.secret_key = os.getenv('SECRET_KEY', '')
-    
     basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
     app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'app', 'uploads')
-        
+    app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
     db.init_app(app)
     Migrate(app, db)
     
@@ -39,7 +34,6 @@ def create_app():
     registry_routes(app)
     registry_filters(app)
     initdb(app)
-
     return app
 
 def registry_routes(app):
@@ -89,7 +83,6 @@ def initdb(app):
             else:
                 print("Usuário admin padrão já existe.")
         print("Banco de dados inicializado.")
-    
     @app.cli.command("migrate-upgrade")
     def migrate_upgrade():
         msg = f"Auto migration - {datetime.datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}"
