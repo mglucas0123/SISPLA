@@ -1,57 +1,153 @@
+
 {% extends "navbar.html" %}
 {% block title %}Editar Repositório{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h1 class="h2 mb-0"><i class="bi bi-pencil-square me-2"></i>Editar Repositório</h1>
-        <a href="{{ url_for('admin.manage_repositories') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+<div class="container-fluid px-4 py-4 repository-page">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="icon-wrapper me-3">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h1 class="page-title mb-1">Editar Repositório</h1>
+                    <p class="page-subtitle mb-0">Modifique as configurações do repositório "{{ repository.name }}"</p>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.manage_repositories') }}" class="btn btn-outline-secondary btn-modern">
+                <i class="bi bi-arrow-left me-2"></i>
+                Voltar
+            </a>
+        </div>
     </div>
 
-    <div class="card shadow-sm">
-        <form method="POST" action="{{ url_for('admin.edit_repository', repo_id=repository.id) }}">
-            <div class="card-body p-4">
-                <h5 class="card-title mb-4">Detalhes de "{{ repository.name }}"</h5>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="name" class="form-label">Nome do Repositório <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ repository.name }}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="access_type" class="form-label">Tipo de Acesso</label>
-                        <select class="form-select" id="access_type_select" name="access_type">
-                            <option value="private" {% if repository.access_type == 'private' %}selected{% endif %}>Privado</option>
-                            <option value="public" {% if repository.access_type == 'public' %}selected{% endif %}>Público</option>
-                            <option value="shared" {% if repository.access_type == 'shared' %}selected{% endif %}>Compartilhado</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <label for="description" class="form-label">Descrição</label>
-                        <textarea class="form-control" id="description" name="description" rows="3">{{ repository.description or '' }}</textarea>
-                    </div>
+    <!-- Edit Form -->
+    <div class="form-container">
+        <div class="form-card">
+            <form method="POST" action="{{ url_for('admin.edit_repository', repo_id=repository.id) }}">
+                <div class="form-card-header">
+                    <h2 class="form-title">Configurações do Repositório</h2>
                 </div>
-
-                <div id="shared-users-section" class="mt-4 pt-4 border-top {% if repository.access_type != 'shared' %}d-none{% endif %}">
-                    <h6 class="mb-3">Compartilhar com Usuários Específicos</h6>
-                    <div class="user-list-container border rounded p-3" style="max-height: 300px; overflow-y: auto;">
-                        {% for user in all_users %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="shared_users" value="{{ user.id }}" id="user-{{ user.id }}"
-                                {% if user in repository.shared_with_users %}checked{% endif %}>
-                            <label class="form-check-label" for="user-{{ user.id }}">
-                                {{ user.name }} ({{ user.username }})
+                
+                <div class="form-card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name" class="form-label">
+                                Nome do Repositório
+                                <span class="required-indicator">*</span>
                             </label>
+                            <input type="text" class="form-control modern-input" id="name" name="name" 
+                                   value="{{ repository.name }}" required>
                         </div>
-                        {% else %}
-                        <p class="text-muted">Nenhum outro usuário no sistema para compartilhar.</p>
-                        {% endfor %}
+                        
+                        <div class="form-group">
+                            <label for="access_type" class="form-label">Tipo de Acesso</label>
+                            <select class="form-select modern-select" id="access_type_select" name="access_type">
+                                <option value="private" {% if repository.access_type == 'private' %}selected{% endif %}>
+                                    <i class="bi bi-lock-fill"></i> Privado
+                                </option>
+                                <option value="public" {% if repository.access_type == 'public' %}selected{% endif %}>
+                                    <i class="bi bi-globe-americas"></i> Público
+                                </option>
+                                <option value="shared" {% if repository.access_type == 'shared' %}selected{% endif %}>
+                                    <i class="bi bi-people-fill"></i> Compartilhado
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control modern-textarea" id="description" name="description" 
+                                      rows="4" placeholder="Descreva o propósito deste repositório...">{{ repository.description or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Shared Users Section -->
+                    <div id="shared-users-section" class="shared-users-section {% if repository.access_type != 'shared' %}d-none{% endif %}">
+                        <div class="section-header">
+                            <h3 class="section-title">
+                                <i class="bi bi-people-fill me-2"></i>
+                                Compartilhar com Usuários
+                            </h3>
+                            <p class="section-subtitle">Selecione os usuários que terão acesso a este repositório</p>
+                        </div>
+
+                        <!-- Filtro de Pesquisa -->
+                        <div class="user-filter-section">
+                            <div class="search-box">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="user-search" class="form-control modern-input search-input" 
+                                       placeholder="Pesquisar usuários por nome ou username...">
+                            </div>
+                            <div class="filter-info">
+                                <span id="users-count">{{ all_users|length }}</span> usuários encontrados
+                            </div>
+                        </div>
+                        
+                        <div class="users-list-container">
+                            {% if all_users %}
+                            <div class="users-list" id="users-list">
+                                {% for user in all_users %}
+                                <div class="user-item" data-user-name="{{ user.name|lower }}" data-user-username="{{ user.username|lower }}">
+                                    <div class="form-check modern-checkbox">
+                                        <input class="form-check-input" type="checkbox" name="shared_users" 
+                                               value="{{ user.id }}" id="user-{{ user.id }}"
+                                               {% if user in repository.shared_with_users %}checked{% endif %}>
+                                        <label class="form-check-label" for="user-{{ user.id }}">
+                                            <div class="user-info">
+                                                <div class="user-avatar">
+                                                    <i class="bi bi-person-circle"></i>
+                                                </div>
+                                                <div class="user-details">
+                                                    <span class="user-name">{{ user.name }}</span>
+                                                    <span class="user-username">@{{ user.username }}</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Paginação -->
+                            <div class="pagination-section" id="pagination-section">
+                                <div class="pagination-info">
+                                    <span id="pagination-info-text">Mostrando 1-10 de {{ all_users|length }} usuários</span>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button type="button" id="prev-page" class="btn btn-outline-secondary btn-sm" disabled>
+                                        <i class="bi bi-chevron-left me-1"></i>
+                                        Anterior
+                                    </button>
+                                    <span id="page-numbers" class="page-numbers"></span>
+                                    <button type="button" id="next-page" class="btn btn-outline-secondary btn-sm">
+                                        Próximo
+                                        <i class="bi bi-chevron-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="empty-users">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Nenhum outro usuário disponível para compartilhamento.
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-footer text-end">
-                <button type="submit" class="btn btn-primary px-4">Salvar Alterações</button>
-            </div>
-        </form>
+                
+                <div class="form-card-footer">
+                    <button type="submit" class="btn btn-primary btn-modern btn-save">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -66,10 +162,178 @@
         accessTypeSelect.addEventListener('change', function() {
             if (this.value === 'shared') {
                 sharedUsersSection.classList.remove('d-none');
+                sharedUsersSection.style.opacity = '0';
+                sharedUsersSection.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    sharedUsersSection.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    sharedUsersSection.style.opacity = '1';
+                    sharedUsersSection.style.transform = 'translateY(0)';
+                    
+                    // Inicializar paginação quando a seção ficar visível
+                    initializeUserPagination();
+                }, 10);
             } else {
-                sharedUsersSection.classList.add('d-none');
+                sharedUsersSection.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                sharedUsersSection.style.opacity = '0';
+                sharedUsersSection.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    sharedUsersSection.classList.add('d-none');
+                }, 300);
             }
         });
+
+        // Inicializar paginação se a seção já estiver visível
+        if (!sharedUsersSection.classList.contains('d-none')) {
+            initializeUserPagination();
+        }
     });
+
+    // Sistema de filtro e paginação de usuários
+    function initializeUserPagination() {
+        const searchInput = document.getElementById('user-search');
+        const usersList = document.getElementById('users-list');
+        const usersCountSpan = document.getElementById('users-count');
+        const paginationSection = document.getElementById('pagination-section');
+        const paginationInfo = document.getElementById('pagination-info-text');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageNumbers = document.getElementById('page-numbers');
+        
+        if (!usersList) return;
+        
+        const allUserItems = Array.from(usersList.querySelectorAll('.user-item'));
+        const itemsPerPage = 10;
+        let currentPage = 1;
+        let filteredItems = [...allUserItems];
+
+        function filterUsers() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            filteredItems = allUserItems.filter(item => {
+                const userName = item.dataset.userName || '';
+                const userUsername = item.dataset.userUsername || '';
+                
+                return userName.includes(searchTerm) || userUsername.includes(searchTerm);
+            });
+            
+            // Atualizar contador
+            usersCountSpan.textContent = filteredItems.length;
+            
+            // Resetar para primeira página
+            currentPage = 1;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Esconder todos os itens
+            allUserItems.forEach(item => item.classList.add('hidden'));
+            
+            // Calcular índices da página atual
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const itemsToShow = filteredItems.slice(startIndex, endIndex);
+            
+            // Mostrar itens da página atual
+            itemsToShow.forEach(item => item.classList.remove('hidden'));
+            
+            // Atualizar informações de paginação
+            const totalItems = filteredItems.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            if (totalItems === 0) {
+                paginationInfo.textContent = 'Nenhum usuário encontrado';
+                paginationSection.style.display = 'none';
+            } else {
+                const startItem = startIndex + 1;
+                const endItem = Math.min(endIndex, totalItems);
+                paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${totalItems} usuários`;
+                paginationSection.style.display = totalPages > 1 ? 'flex' : 'none';
+            }
+            
+            // Atualizar botões de navegação
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
+            
+            // Atualizar números das páginas
+            updatePageNumbers(totalPages);
+        }
+
+        function updatePageNumbers(totalPages) {
+            pageNumbers.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Ajustar o início se necessário
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // Primeira página se não estiver visível
+            if (startPage > 1) {
+                addPageNumber(1);
+                if (startPage > 2) {
+                    addEllipsis();
+                }
+            }
+            
+            // Páginas visíveis
+            for (let i = startPage; i <= endPage; i++) {
+                addPageNumber(i);
+            }
+            
+            // Última página se não estiver visível
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    addEllipsis();
+                }
+                addPageNumber(totalPages);
+            }
+        }
+
+        function addPageNumber(pageNum) {
+            const pageSpan = document.createElement('span');
+            pageSpan.className = `page-number ${pageNum === currentPage ? 'active' : ''}`;
+            pageSpan.textContent = pageNum;
+            pageSpan.addEventListener('click', () => {
+                currentPage = pageNum;
+                updateDisplay();
+            });
+            pageNumbers.appendChild(pageSpan);
+        }
+
+        function addEllipsis() {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'page-ellipsis';
+            ellipsis.textContent = '...';
+            pageNumbers.appendChild(ellipsis);
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterUsers);
+        
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                updateDisplay();
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateDisplay();
+            }
+        });
+
+        // Inicializar display
+        updateDisplay();
+    }
 </script>
 {% endblock %}

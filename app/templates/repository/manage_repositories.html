@@ -1,72 +1,127 @@
-{% extends "navbar.html" %}
 
+{% extends "navbar.html" %}
 {% block title %}Gerenciar Repositórios{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h1 class="h2 mb-0"><i class="bi bi-archive-fill me-2"></i>Gerenciar Repositórios</h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRepoModal">
-            <i class="bi bi-plus-circle-fill me-2"></i>Novo Repositório
-        </button>
+<div class="container-fluid px-4 py-4 repository-page">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="icon-wrapper me-3">
+                    <i class="bi bi-archive-fill"></i>
+                </div>
+                <div>
+                    <h1 class="page-title mb-1">Gerenciar Repositórios</h1>
+                    <p class="page-subtitle mb-0">Administre todos os repositórios do sistema</p>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary btn-modern" data-bs-toggle="modal" data-bs-target="#createRepoModal">
+                <i class="bi bi-plus-circle-fill me-2"></i>
+                Novo Repositório
+            </button>
+        </div>
     </div>
 
     {% include 'partials/_flash_messages.html' %}
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-light">
-            <h5 class="mb-0">Repositórios Cadastrados</h5>
+    <!-- Repositories Table -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <h3 class="form-title">
+                <i class="bi bi-list-ul me-2"></i>
+                Repositórios Cadastrados
+            </h3>
         </div>
-        <div class="card-body p-0">
+        <div class="form-card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0 modern-table">
+                    <thead class="table-header">
                         <tr>
-                            <th scope="col" class="ps-3">Nome do Repositório</th>
-                            <th scope="col">Dono</th>
+                            <th scope="col" class="ps-4">Nome do Repositório</th>
+                            <th scope="col">Proprietário</th>
                             <th scope="col" class="text-center">Tipo de Acesso</th>
                             <th scope="col" class="text-center">Arquivos</th>
-                            <th scope="col" class="text-end pe-3">Ações</th>
+                            <th scope="col" class="text-center">Data de Criação</th>
+                            <th scope="col" class="text-end pe-4">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for repo in repositories %}
-                        <tr>
-                            <td class="ps-3">
-                                <strong class="d-block">{{ repo.name }}</strong>
-                                <small class="text-muted">{{ repo.description }}</small>
+                        <tr class="table-row">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="table-icon me-3">
+                                        {% if repo.access_type == 'private' %}
+                                        <i class="bi bi-lock-fill text-danger"></i>
+                                        {% elif repo.access_type == 'public' %}
+                                        <i class="bi bi-globe-americas text-success"></i>
+                                        {% elif repo.access_type == 'shared' %}
+                                        <i class="bi bi-people-fill text-info"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-primary repo-name">{{ repo.name }}</div>
+                                        <div class="text-muted small repo-description">
+                                            {{ repo.description or 'Sem descrição' }}
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
-                            <td>{{ repo.owner.name }}</td>
+                            <td>
+                                <div class="owner-info">
+                                    <div class="fw-semibold">{{ repo.owner.name }}</div>
+                                    <div class="text-muted small">@{{ repo.owner.username }}</div>
+                                </div>
+                            </td>
                             <td class="text-center">
-                                {% if repo.access_type == 'public' %}
-                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill"><i
-                                        class="bi bi-globe me-1"></i> Público</span>
-                                {% elif repo.access_type == 'private' %}
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill"><i
-                                        class="bi bi-lock-fill me-1"></i> Privado</span>
-                                {% elif repo.access_type == 'shared' %}
-                                <span class="badge bg-info-subtle text-info-emphasis rounded-pill"><i
-                                        class="bi bi-people-fill me-1"></i> Compartilhado</span>
-                                {% endif %}
+                                <span class="status-badge 
+                                    {% if repo.access_type == 'private' %}status-private
+                                    {% elif repo.access_type == 'public' %}status-public
+                                    {% elif repo.access_type == 'shared' %}status-shared
+                                    {% endif %}">
+                                    {% if repo.access_type == 'public' %}
+                                    <i class="bi bi-globe me-1"></i> Público
+                                    {% elif repo.access_type == 'shared' %}
+                                    <i class="bi bi-people-fill me-1"></i> Compartilhado
+                                    {% elif repo.access_type == 'private' %}
+                                    <i class="bi bi-lock-fill me-1"></i> Privado
+                                    {% endif %}
+                                </span>
                             </td>
-                            <td class="text-center">{{ repo.files|length }}</td>
-                            <td class="text-end pe-3">
-                                <a href="{{ url_for('admin.edit_repository', repo_id=repo.id) }}"
-                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil-fill me-1"></i> Editar
-                                </a>
-                                <form method="POST" action="{{ url_for('admin.delete_repository', repo_id=repo.id) }}"
-                                    style="display: inline-block;"
-                                    onsubmit="return confirm('ATENÇÃO: Você tem certeza que deseja excluir o repositório \'{{ repo.name }}\'? Todos os arquivos dentro dele serão apagados permanentemente.');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
-                                        <i class="bi bi-trash3-fill me-1"></i> Excluir
-                                    </button>
-                                </form>
+                            <td class="text-center">
+                                <span class="file-count">{{ repo.files|length }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="creation-date">{{ repo.date_created.strftime('%d/%m/%Y') }}</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('admin.edit_repository', repo_id=repo.id) }}"
+                                       class="btn btn-sm btn-outline-primary action-btn">
+                                        <i class="bi bi-pencil-fill me-1"></i> Editar
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.delete_repository', repo_id=repo.id) }}"
+                                          style="display: inline-block;"
+                                          onsubmit="return confirm('ATENÇÃO: Você tem certeza que deseja excluir o repositório \'{{ repo.name }}\'? Todos os arquivos dentro dele serão apagados permanentemente.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger action-btn ms-1">
+                                            <i class="bi bi-trash3-fill me-1"></i> Excluir
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted p-5">Nenhum repositório criado ainda.</td>
+                            <td colspan="6" class="text-center p-5">
+                                <div class="empty-table-message">
+                                    <i class="bi bi-folder2-open display-4 text-muted mb-3"></i>
+                                    <h5 class="text-muted">Nenhum repositório criado ainda</h5>
+                                    <p class="text-muted">Clique em "Novo Repositório" para começar</p>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -76,52 +131,66 @@
     </div>
 </div>
 
+<!-- Create Repository Modal -->
 <div class="modal fade" id="createRepoModal" tabindex="-1" aria-labelledby="createRepoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="POST" action="{{ url_for('admin.create_repository') }}" class="modal-content">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" action="{{ url_for('admin.create_repository') }}" class="modal-content modern-modal">
             <div class="modal-header">
-                <h5 class="modal-title" id="createRepoModalLabel">Criar Novo Repositório</h5>
+                <h5 class="modal-title fw-bold" id="createRepoModalLabel">
+                    <i class="bi bi-plus-circle-fill me-2 text-primary"></i>
+                    Criar Novo Repositório
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="name" class="form-label">Nome do Repositório <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="name" name="name" required>
-                </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Descrição (Opcional)</label>
-                    <textarea class="form-control" id="description" name="description" rows="2"></textarea>
-                </div>
-                <div class="mb-3">
-                    <div class="mb-3">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            Nome do Repositório <span class="required-indicator">*</span>
+                        </label>
+                        <input type="text" class="form-control modern-input" id="name" name="name" 
+                               placeholder="Digite o nome do repositório..." required>
+                    </div>
+                    <div class="form-group">
                         <label for="access_type" class="form-label">Tipo de Acesso</label>
-                        <select class="form-select" id="create_access_type_select" name="access_type">
+                        <select class="form-select modern-select" id="create_access_type_select" name="access_type">
                             <option value="private" selected>Privado</option>
                             <option value="public">Público</option>
                             <option value="shared">Compartilhado</option>
                         </select>
                     </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="description" class="form-label">Descrição</label>
+                    <textarea class="form-control modern-textarea" id="description" name="description" 
+                              rows="3" placeholder="Descreva o propósito deste repositório..."></textarea>
+                </div>
 
-                    <div id="owner-selection-div" class="mb-3">
-                        <label for="owner_id" class="form-label">Dono do Repositório Privado</label>
-                        <select class="form-select" id="owner_id" name="owner_id">
-                            {% for user in all_users %}
-                            <option value="{{ user.id }}" {% if user.id==current_user.id %}selected{% endif %}>
-                                {{ user.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div id="owner-selection-div" class="form-group full-width">
+                    <label for="owner_id" class="form-label">Proprietário do Repositório</label>
+                    <select class="form-select modern-select" id="owner_id" name="owner_id">
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}" {% if user.id==current_user.id %}selected{% endif %}>
+                            {{ user.name }} (@{{ user.username }})
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Criar Repositório</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>Criar Repositório
+                </button>
             </div>
         </form>
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 {{ super() }}
 <script>
@@ -141,7 +210,6 @@
         }
 
         toggleOwnerSelection();
-
         accessTypeSelect.addEventListener('change', toggleOwnerSelection);
     });
 </script>

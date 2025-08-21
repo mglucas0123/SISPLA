@@ -15,16 +15,28 @@
 
 <body>
     {% if current_user.is_authenticated %}
-    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm navbar-custom no-print">
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-lg navbar-custom no-print">
         <div class="container-fluid">
             <a class="navbar-brand navbar-brand-custom" href="{{ url_for('main.panel') }}">
-                <i class="bi bi-hospital"> Central do Colaborador</i>
+                <div class="brand-container">
+                    <div class="brand-icon-wrapper">
+                        <i class="bi bi-hospital-fill brand-icon"></i>
+                        <div class="pulse-ring"></div>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">Central do Colaborador</span>
+                        <span class="brand-subtitle">Sistema Integrado Hospitalar</span>
+                    </div>
+                </div>
             </a>
+            
+            <!-- Status Indicador -->
             <div class="d-flex align-items-center ms-auto">
                 <div class="dropdown me-2">
-                    <button class="btn dropdown-toggle user-dropdown-button" type="button" id="acessosDropdown"
+                    <button class="btn dropdown-toggle access-dropdown-button" type="button" id="acessosDropdown"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-grid-fill me-1"></i> Acessos
+                        <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+                        <span>Sistemas</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" aria-labelledby="acessosDropdown">
                         <li>
@@ -63,7 +75,12 @@
                 <div class="dropdown">
                     <button class="btn dropdown-toggle user-dropdown-button" type="button" id="userDropdownGlobal"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-fill"></i> {{ current_user.name }}
+                        <div class="user-avatar">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div class="user-info d-none d-sm-block">
+                            <span class="user-name">{{ current_user.name }}</span>
+                        </div>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" aria-labelledby="userDropdownGlobal">
                         <li>
@@ -121,32 +138,131 @@
     {% if current_user.is_authenticated %}
     <div class="modal fade" id="modalTrocarSenhaBase" tabindex="-1" aria-labelledby="modalTrocarSenhaBaseLabel"
         aria-hidden="true">
-        <div class="modal-dialog">
-            <form class="modal-content" method="POST" action="{{ url_for('util.user_change_password') }}">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTrocarSenhaBaseLabel"><i class="bi bi-key-fill me-2"></i>Trocar
-                        Minha Senha</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="senha_atual_base" class="form-label">Senha Atual</label>
-                        <input type="password" class="form-control" name="senha_atual" id="senha_atual_base" required
-                            autocomplete="current-password">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content password-change-modal" method="POST" action="{{ url_for('util.user_change_password') }}">
+                <div class="modal-header password-modal-header">
+                    <div class="modal-title-container">
+                        <div class="modal-icon-wrapper">
+                            <i class="bi bi-shield-lock-fill modal-icon"></i>
+                        </div>
+                        <div class="modal-title-text">
+                            <h5 class="modal-title" id="modalTrocarSenhaBaseLabel">Alterar Senha</h5>
+                            <p class="modal-subtitle">Mantenha sua conta segura</p>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="nova_senha_base" class="form-label">Nova Senha</label>
-                        <input type="password" class="form-control" name="nova_senha" id="nova_senha_base" required
-                            autocomplete="new-password">
+                    <button type="button" class="btn-close password-modal-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body password-modal-body">
+                    <div class="security-notice">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <span>Sua nova senha deve ter pelo menos 8 caracteres</span>
+                    </div>
+                    
+                    <div class="password-field-group">
+                        <label for="senha_atual_base" class="form-label password-label">
+                            <i class="bi bi-lock-fill me-2"></i>Senha Atual
+                        </label>
+                        <div class="password-input-wrapper">
+                            <input type="password" class="form-control password-input" name="senha_atual" 
+                                   id="senha_atual_base" required autocomplete="current-password"
+                                   placeholder="Digite sua senha atual">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('senha_atual_base', this)">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="password-field-group">
+                        <label for="nova_senha_base" class="form-label password-label">
+                            <i class="bi bi-shield-check-fill me-2"></i>Nova Senha
+                        </label>
+                        <div class="password-input-wrapper">
+                            <input type="password" class="form-control password-input" name="nova_senha" 
+                                   id="nova_senha_base" required autocomplete="new-password"
+                                   placeholder="Digite sua nova senha" minlength="8">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('nova_senha_base', this)">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength-indicator">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strengthFill"></div>
+                            </div>
+                            <small class="strength-text" id="strengthText">Digite uma senha para ver a força</small>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Alterar Senha</button>
+                <div class="modal-footer password-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-save">
+                        <i class="bi bi-check-circle-fill me-2"></i>Alterar Senha
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash-fill';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye-fill';
+            }
+        }
+        
+        document.getElementById('nova_senha_base').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            let text = '';
+            let color = '';
+            
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            switch (strength) {
+                case 0:
+                case 1:
+                    text = 'Muito fraca';
+                    color = '#ff4757';
+                    break;
+                case 2:
+                    text = 'Fraca';
+                    color = '#ff7675';
+                    break;
+                case 3:
+                    text = 'Razoável';
+                    color = '#fdcb6e';
+                    break;
+                case 4:
+                    text = 'Forte';
+                    color = '#6c5ce7';
+                    break;
+                case 5:
+                    text = 'Muito forte';
+                    color = '#00b894';
+                    break;
+            }
+            
+            strengthFill.style.width = `${(strength / 5) * 100}%`;
+            strengthFill.style.backgroundColor = color;
+            strengthText.textContent = text;
+            strengthText.style.color = color;
+        });
+    </script>
     {% endif %}
 
     <main class="flex-shrink-0">

@@ -1,72 +1,104 @@
+
 {% extends "navbar.html" %}
-{% block title %}Seus Repositórios{% endblock %}
+{% block title %}Repositórios{% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-        <div>
-            <h1 class="h2 mb-0">
-                <i class="bi bi-journal-richtext text-primary"></i>
-                Seus Repositórios
-            </h1>
-            <p class="mb-0 text-muted">Acesse e gerencie seus repositórios.</p>
+<div class="container-fluid px-4 py-4 repository-page">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-header">
+            <div class="d-flex align-items-center">
+                <div class="icon-wrapper me-3">
+                    <i class="bi bi-journal-richtext"></i>
+                </div>
+                <div>
+                    <h1 class="page-title mb-1">Repositórios</h1>
+                    <p class="page-subtitle mb-0">Acesse e gerencie seus repositórios de documentos</p>
+                </div>
+            </div>
         </div>
         {% if 'ADMIN' in current_user.profile %}
-        <a href="{{ url_for('admin.manage_repositories') }}" class="btn btn-primary">
-            <i class="bi bi-shield-lock-fill me-2"></i> Gerenciar Todos
-        </a>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.manage_repositories') }}" class="btn btn-primary btn-modern">
+                <i class="bi bi-shield-lock-fill me-2"></i>
+                Gerenciar Todos
+            </a>
+        </div>
         {% endif %}
     </div>
 
     {% include 'partials/_flash_messages.html' %}
 
-    <div class="row g-4">
+    <!-- Repositories Grid -->
+    <div class="repositories-grid">
         {% for repo in repositories %}
-        <div class="col-lg-4 col-md-6 d-flex align-items-stretch">
-            <div class="card w-100 shadow-sm border-0 repository-card">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="d-flex align-items-start mb-3">
-                        <div class="repository-icon me-3">
-                            {% if repo.access_type == 'private' %}
-                            <i class="bi bi-lock-fill text-danger"></i>
-                            {% elif repo.access_type == 'public' %}
-                            <i class="bi bi-globe-americas text-primary"></i>
+        <div class="repository-card-wrapper">
+            <div class="repository-card">
+                <div class="repository-card-header">
+                    <div class="repository-icon">
+                        {% if repo.access_type == 'private' %}
+                        <i class="bi bi-lock-fill text-danger"></i>
+                        {% elif repo.access_type == 'public' %}
+                        <i class="bi bi-globe-americas text-success"></i>
+                        {% elif repo.access_type == 'shared' %}
+                        <i class="bi bi-people-fill text-info"></i>
+                        {% endif %}
+                    </div>
+                    <div class="repository-status">
+                        <span class="status-badge 
+                            {% if repo.access_type == 'private' %}status-private
+                            {% elif repo.access_type == 'public' %}status-public
+                            {% elif repo.access_type == 'shared' %}status-shared
+                            {% endif %}">
+                            {% if repo.access_type == 'public' %}
+                            Público
                             {% elif repo.access_type == 'shared' %}
-                            <i class="bi bi-people-fill text-info"></i>
+                            Compartilhado
+                            {% elif repo.access_type == 'private' %}
+                            Privado
                             {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="repository-card-body">
+                    <h3 class="repository-title">{{ repo.name }}</h3>
+                    <p class="repository-description">
+                        {{ repo.description or 'Este repositório não possui uma descrição.' }}
+                    </p>
+                    
+                    <div class="repository-stats">
+                        <div class="stat-item">
+                            <i class="bi bi-files me-1"></i>
+                            <span>{{ repo.files|length }} arquivos</span>
                         </div>
-                        <div class="flex-grow-1">
-                            <h5 class="card-title mb-1">{{ repo.name }}</h5>
-                            <span class="badge 
-                                {% if repo.access_type == 'private' %}bg-danger-soft
-                                {% elif repo.access_type == 'public' %}bg-success-soft
-                                {% elif repo.access_type == 'shared' %}bg-info-soft
-                                {% endif %} text-dark-emphasis rounded-pill">
-                                {% if repo.access_type == 'public' %}
-                                Público
-                                {% elif repo.access_type == 'shared' %}
-                                Compartilhado
-                                {% elif repo.access_type == 'private' %}
-                                Privado
-                                {% endif %}
-                            </span>
+                        <div class="stat-item">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            <span>{{ repo.date_created.strftime('%d/%m/%Y') }}</span>
                         </div>
                     </div>
-                    <p class="card-text text-muted small flex-grow-1">{{ repo.description or 'Este repositório não possui uma descrição.' }}</p>
-                    <a href="{{ url_for('repository.repository_detail_page', repo_id=repo.id) }}"
-                        class="btn btn-outline-primary stretched-link mt-auto">
-                        <i class="bi bi-arrow-right-circle me-2"></i>Acessar
+                </div>
+                
+                <div class="repository-card-footer">
+                    <a href="{{ url_for('repository.repository_detail_page', repo_id=repo.id) }}" 
+                       class="btn btn-outline-primary btn-repository">
+                        <i class="bi bi-arrow-right-circle me-2"></i>
+                        Acessar Repositório
                     </a>
                 </div>
             </div>
         </div>
         {% else %}
-        <div class="col-12">
-            <div class="text-center p-5 bg-light rounded border">
-                <i class="bi bi-folder-x display-4 text-muted mb-3"></i>
-                <h4 class="mb-2">Nenhum Repositório Encontrado</h4>
-                <p class="text-muted">Você ainda não tem acesso a nenhum repositório. <br>Entre em contato com um
-                    administrador para obter ajuda.</p>
+        <div class="empty-state">
+            <div class="empty-state-content">
+                <div class="empty-icon">
+                    <i class="bi bi-folder-x"></i>
+                </div>
+                <h3 class="empty-title">Nenhum Repositório Encontrado</h3>
+                <p class="empty-description">
+                    Você ainda não tem acesso a nenhum repositório.<br>
+                    Entre em contato com um administrador para obter ajuda.
+                </p>
             </div>
         </div>
         {% endfor %}
