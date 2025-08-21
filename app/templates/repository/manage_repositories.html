@@ -1,32 +1,38 @@
-
 {% extends "navbar.html" %}
 {% block title %}Gerenciar Repositórios{% endblock %}
 
 {% block content %}
+
 <div class="container-fluid px-4 py-4 repository-page">
-    <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="page-header">
-            <div class="d-flex align-items-center">
-                <div class="icon-wrapper me-3">
-                    <i class="bi bi-archive-fill"></i>
+
+    {% include 'partials/_flash_messages.html' %}
+    <div class="container-fluid px-4 py-4 repository-page">
+        <!-- Header Section -->
+        <div class="manage-repositories-header">
+            <div class="manage-repositories-header-content">
+                <div class="manage-repositories-title-section">
+                    <h1 class="manage-repositories-main-title">
+                        <i class="bi bi-archive-fill"></i>
+                        Gerenciar Repositórios
+                    </h1>
+                    <p class="manage-repositories-subtitle">
+                        Administre todos os repositórios do sistema
+                    </p>
                 </div>
-                <div>
-                    <h1 class="page-title mb-1">Gerenciar Repositórios</h1>
-                    <p class="page-subtitle mb-0">Administre todos os repositórios do sistema</p>
+                <div class="manage-repositories-actions">
+                    <button class="manage-repositories-create-btn" data-bs-toggle="modal"
+                        data-bs-target="#createRepoModal">
+                        <i class="bi bi-plus-circle"></i>
+                        Novo Repositório
+                    </button>
+                    <a href="{{ url_for('main.panel') }}" class="manage-repositories-back-btn">
+                        <i class="bi bi-arrow-left-circle"></i>
+                        Voltar ao Painel
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="header-actions">
-            <button class="btn btn-primary btn-modern" data-bs-toggle="modal" data-bs-target="#createRepoModal">
-                <i class="bi bi-plus-circle-fill me-2"></i>
-                Novo Repositório
-            </button>
-        </div>
     </div>
-
-    {% include 'partials/_flash_messages.html' %}
-
     <!-- Repositories Table -->
     <div class="form-card">
         <div class="form-card-header">
@@ -100,12 +106,13 @@
                             <td class="text-end pe-4">
                                 <div class="action-buttons">
                                     <a href="{{ url_for('admin.edit_repository', repo_id=repo.id) }}"
-                                       class="btn btn-sm btn-outline-primary action-btn">
+                                        class="btn btn-sm btn-outline-primary action-btn">
                                         <i class="bi bi-pencil-fill me-1"></i> Editar
                                     </a>
-                                    <form method="POST" action="{{ url_for('admin.delete_repository', repo_id=repo.id) }}"
-                                          style="display: inline-block;"
-                                          onsubmit="return confirm('ATENÇÃO: Você tem certeza que deseja excluir o repositório \'{{ repo.name }}\'? Todos os arquivos dentro dele serão apagados permanentemente.');">
+                                    <form method="POST"
+                                        action="{{ url_for('admin.delete_repository', repo_id=repo.id) }}"
+                                        style="display: inline-block;"
+                                        onsubmit="return confirm('ATENÇÃO: Você tem certeza que deseja excluir o repositório \'{{ repo.name }}\'? Todos os arquivos dentro dele serão apagados permanentemente.');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger action-btn ms-1">
                                             <i class="bi bi-trash3-fill me-1"></i> Excluir
                                         </button>
@@ -148,8 +155,8 @@
                         <label for="name" class="form-label">
                             Nome do Repositório <span class="required-indicator">*</span>
                         </label>
-                        <input type="text" class="form-control modern-input" id="name" name="name" 
-                               placeholder="Digite o nome do repositório..." required>
+                        <input type="text" class="form-control modern-input" id="name" name="name"
+                            placeholder="Digite o nome do repositório..." required>
                     </div>
                     <div class="form-group">
                         <label for="access_type" class="form-label">Tipo de Acesso</label>
@@ -160,11 +167,11 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="form-group full-width">
                     <label for="description" class="form-label">Descrição</label>
-                    <textarea class="form-control modern-textarea" id="description" name="description" 
-                              rows="3" placeholder="Descreva o propósito deste repositório..."></textarea>
+                    <textarea class="form-control modern-textarea" id="description" name="description" rows="3"
+                        placeholder="Descreva o propósito deste repositório..."></textarea>
                 </div>
 
                 <div id="owner-selection-div" class="form-group full-width">
