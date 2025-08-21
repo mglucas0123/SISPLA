@@ -1,297 +1,527 @@
+
 {% extends "navbar.html" %}
 
 {% block title %}Gerenciar Cursos e Treinamentos{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h1 class="h2 mb-0"><i class="bi bi-camera-reels-fill me-2"></i>Gerenciar Cursos</h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCourseModal">
-            <i class="bi bi-plus-circle-fill me-2"></i>Novo Curso
-        </button>
-    </div>
-
-    {% include 'partials/_flash_messages.html' %}
-
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-3" style="width: 45%;">Curso</th>
-                            <th class="text-center">Progresso Geral</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-end pe-3">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for course in courses %}
-                        <tr class="course-row" data-course-id="{{ course.id }}" data-course-title="{{ course.title }}"
-                            data-course-description="{{ course.description or '' }}"
-                            data-course-duration="{{ course.duration_seconds }}">
-                            <td class="ps-3">
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}"
-                                        alt="Capa" class="rounded me-3"
-                                        style="width: 80px; height: 45px; object-fit: cover;">
-                                    <div>
-                                        <strong class="d-block">{{ course.title }} <small class="text-muted">| {{ (course.duration_seconds / 60)|round(1) }} min</small></strong>
-                                        <small class="text-muted">Criação: {{course.date_registry | format_date_time}}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <a href="{{ url_for('admin.view_course_progress', course_id=course.id) }}"
-                                    class="btn btn-sm btn-link text-decoration-none">
-                                    Ver Alunos
-                                </a>
-                            </td>
-                            <td class="text-center">
-                                <div class="form-check form-switch d-inline-block" title="Ativar/Desativar Curso">
-                                    <form method="POST"
-                                        action="{{ url_for('admin.toggle_course_status', course_id=course.id) }}"
-                                        class="toggle-form">
-                                        <input class="form-check-input" type="checkbox" role="switch" {% if
-                                            course.is_active %}checked{% endif %} onchange="this.form.submit()">
-                                    </form>
-                                </div>
-                            </td>
-                            <td class="text-end pe-3">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                        data-bs-toggle="dropdown">
-                                        Opções
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item edit-btn" href="#"><i
-                                                    class="bi bi-pencil-fill me-2"></i>Editar</a>
-                                        </li>
-                                        <li><a class="dropdown-item"
-                                                href="{{ url_for('admin.manage_quiz', course_id=course.id) }}"><i
-                                                    class="bi bi-ui-checks-grid me-2"></i>Gerenciar Avaliação</a></li>
-
-                                        <li><a class="dropdown-item"
-                                                href="{{ url_for('training.course_player_page', course_id=course.id) }}"
-                                                target="_blank"><i class="bi bi-play-circle-fill me-2"></i>Ver como Aluno</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li>
-                                            <form method="POST"
-                                                action="{{ url_for('admin.delete_course', course_id=course.id) }}"
-                                                onsubmit="return confirm('Tem certeza que deseja excluir este curso e todo o seu conteúdo?');">
-                                                <button type="submit" class="dropdown-item text-danger"><i
-                                                        class="bi bi-trash3-fill me-2"></i>Excluir Curso</button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="text-center text-muted p-5">Nenhum curso cadastrado.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+<div class="manage-courses-page">
+    <div class="container">
+        <!-- Header Section -->
+        <div class="manage-courses-header">
+            <div class="manage-courses-header-content">
+                <div class="manage-courses-title-section">
+                    <h1 class="manage-courses-main-title">
+                        <i class="bi bi-camera-reels-fill"></i>
+                        Gerenciar Cursos
+                    </h1>
+                    <p class="manage-courses-subtitle">
+                        Administre todos os seus cursos e treinamentos em um só lugar
+                    </p>
+                </div>
+                <button class="manage-courses-create-btn" data-bs-toggle="modal" data-bs-target="#createCourseModal">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    Novo Curso
+                </button>
             </div>
         </div>
-    </div>
 
-    {% if pagination %}
-    <nav aria-label="Navegação de cursos">
-        <ul class="pagination justify-content-center mt-4">
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('admin.manage_courses', page=pagination.prev_num) }}">Anterior</a>
-            </li>
-            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-            {% if p %}
-            <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('admin.manage_courses', page=p) }}">{{ p }}</a>
-            </li>
+        {% include 'partials/_flash_messages.html' %}
+
+        <!-- Filters Section -->
+        <div class="manage-courses-filters">
+            <div class="manage-courses-filters-content">
+                <div class="manage-courses-filters-left">
+                    <div class="manage-courses-search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar cursos..." 
+                               value="{{ request.args.get('search', '') }}">
+                    </div>
+                </div>
+                
+                <div class="manage-courses-filters-right">
+                    <div class="manage-courses-filter-group">
+                        <label class="manage-courses-filter-label">Status:</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Ativos</option>
+                            <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inativos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="manage-courses-filter-group">
+                        <label class="manage-courses-filter-label">Ordenar por:</label>
+                        <select id="sortFilter" class="form-select">
+                            <option value="date_desc" {% if request.args.get('sort', 'date_desc') == 'date_desc' %}selected{% endif %}>Data (Mais recente)</option>
+                            <option value="date_asc" {% if request.args.get('sort') == 'date_asc' %}selected{% endif %}>Data (Mais antigo)</option>
+                            <option value="title_asc" {% if request.args.get('sort') == 'title_asc' %}selected{% endif %}>Título (A-Z)</option>
+                            <option value="title_desc" {% if request.args.get('sort') == 'title_desc' %}selected{% endif %}>Título (Z-A)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="applyFilters" class="manage-courses-apply-btn" title="Aplicar filtros">
+                        <i class="bi bi-search"></i>
+                        Filtrar
+                    </button>
+                    
+                    <button id="clearFilters" class="manage-courses-clear-btn" title="Limpar filtros">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="manage-courses-results-info">
+                <span class="manage-courses-results-text">
+                    Mostrando {{ courses|length }} de {{ pagination.total if pagination else courses|length }} cursos
+                </span>
+            </div>
+        </div>
+
+        <!-- Courses Grid Section -->
+        <div class="manage-courses-section">
+            {% if courses %}
+            <div class="manage-courses-grid">
+                {% for course in courses %}
+                <div class="manage-course-card course-row" data-course-id="{{ course.id }}" 
+                     data-course-title="{{ course.title }}"
+                     data-course-description="{{ course.description or '' }}"
+                     data-course-duration="{{ course.duration_seconds }}">
+                    
+                    <div class="manage-course-card-image">
+                        <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" 
+                             alt="Capa do curso {{ course.title }}">
+                        
+                        <div class="manage-course-card-duration">
+                            <i class="bi bi-clock-fill"></i>
+                            {% set minutes = (course.duration_seconds / 60)|round(0)|int %}
+                            {% if minutes > 60 %}
+                                {{ (minutes // 60) }}h {{ minutes % 60 }}min
+                            {% else %}
+                                {{ minutes }} min
+                            {% endif %}
+                        </div>
+                        
+                        <div class="manage-course-card-status {% if course.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if course.is_active %}
+                                <i class="bi bi-check-circle-fill"></i>
+                                Ativo
+                            {% else %}
+                                <i class="bi bi-x-circle-fill"></i>
+                                Inativo
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="manage-course-card-content">
+                        <h3 class="manage-course-card-title">{{ course.title }}</h3>
+                        
+                        {% if course.description %}
+                        <p class="manage-course-card-description">{{ course.description }}</p>
+                        {% endif %}
+                        
+                        <div class="manage-course-card-meta">
+                            <div class="manage-course-card-date">
+                                <i class="bi bi-calendar-plus-fill"></i>
+                                {{ course.date_registry | format_date_time }}
+                            </div>
+                            
+                            <div class="manage-course-card-toggle">
+                                <div class="form-check form-switch" title="Ativar/Desativar Curso">
+                                    <form method="POST" 
+                                          action="{{ url_for('admin.toggle_course_status', course_id=course.id) }}"
+                                          class="toggle-form">
+                                        <input class="form-check-input" type="checkbox" role="switch" 
+                                               {% if course.is_active %}checked{% endif %} 
+                                               onchange="this.form.submit()">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="manage-course-card-actions">
+                            <a href="{{ url_for('admin.view_course_progress', course_id=course.id) }}" 
+                               class="manage-course-card-btn btn-primary">
+                                <i class="bi bi-graph-up-arrow"></i>
+                                Ver Progresso
+                            </a>
+                            
+                            <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" 
+                               target="_blank" 
+                               class="manage-course-card-btn btn-secondary">
+                                <i class="bi bi-play-circle-fill"></i>
+                                Visualizar
+                            </a>
+                            
+                            <div class="manage-course-card-dropdown dropdown">
+                                <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item edit-btn" href="#">
+                                            <i class="bi bi-pencil-fill"></i>
+                                            Editar Curso
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{{ url_for('admin.manage_quiz', course_id=course.id) }}">
+                                            <i class="bi bi-ui-checks-grid"></i>
+                                            Gerenciar Avaliação
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" 
+                                              action="{{ url_for('admin.delete_course', course_id=course.id) }}"
+                                              onsubmit="return confirm('Tem certeza que deseja excluir este curso e todo o seu conteúdo?');"
+                                              style="margin: 0;">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash3-fill"></i>
+                                                Excluir Curso
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
+            <div class="manage-courses-empty">
+                <div class="manage-courses-empty-icon">
+                    <i class="bi bi-collection-play"></i>
+                </div>
+                <h3 class="manage-courses-empty-title">Nenhum curso cadastrado</h3>
+                <p class="manage-courses-empty-text">
+                    Comece criando seu primeiro curso e compartilhe conhecimento!
+                </p>
+                <button class="manage-courses-empty-btn" data-bs-toggle="modal" data-bs-target="#createCourseModal">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    Criar Primeiro Curso
+                </button>
+            </div>
             {% endif %}
-            {% endfor %}
+        </div>
 
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('admin.manage_courses', page=pagination.next_num) }}">Próxima</a>
-            </li>
-        </ul>
-    </nav>
-    {% endif %}
+        <!-- Pagination -->
+        {% if pagination and pagination.pages > 1 %}
+        <div class="manage-courses-pagination">
+            <nav aria-label="Navegação de cursos">
+                <ul class="pagination">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.manage_courses', page=pagination.prev_num) }}">
+                            <i class="bi bi-chevron-left"></i>
+                            Anterior
+                        </a>
+                    </li>
+                    
+                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.manage_courses', page=p) }}">{{ p }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.manage_courses', page=pagination.next_num) }}">
+                            Próxima
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
-<div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel"
-    aria-hidden="true">
+<!-- Create Course Modal -->
+<div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form id="createCourseForm" method="POST" action="{{ url_for('admin.create_course') }}"
-            enctype="multipart/form-data" class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="createCourseModalLabel"><i class="bi bi-plus-circle-fill me-2"></i>Novo
-                    Curso</h5>
+        <form id="createCourseForm" method="POST" action="{{ url_for('admin.create_course') }}" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createCourseModalLabel">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    Criar Novo Curso
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body">
                 <div class="row g-4">
                     <div class="col-md-7">
-                        <div class="mb-3"><label for="create-title" class="form-label fw-semibold">Título do
-                                Curso</label><input type="text" class="form-control" id="create-title" name="title"
-                                required></div>
-                        <div class="mb-3"><label for="create-description"
-                                class="form-label fw-semibold">Descrição</label><textarea class="form-control"
-                                id="create-description" name="description" rows="4"></textarea></div>
-                        <div class="mb-3"><label for="create-duration-time" class="form-label fw-semibold">Duração do
-                                Vídeo</label><input type="time" class="form-control" id="create-duration-time"
-                                name="duration_time" step="1" value="00:00:00" required></div>
+                        <div class="mb-3">
+                            <label for="create-title" class="form-label">Título do Curso</label>
+                            <input type="text" class="form-control" id="create-title" name="title" 
+                                   placeholder="Digite o título do curso..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="create-description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="create-description" name="description" 
+                                      rows="4" placeholder="Descreva o conteúdo do curso..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="create-duration-time" class="form-label">Duração do Vídeo</label>
+                            <input type="time" class="form-control" id="create-duration-time" 
+                                   name="duration_time" step="1" value="00:00:00" required>
+                        </div>
                     </div>
                     <div class="col-md-5">
-                        <div class="mb-3"><label class="form-label fw-semibold">Vídeo do Curso</label>
-                            <div class="custom-file-upload"><i class="bi bi-film"></i><span class="file-name">Selecione
-                                    o vídeo...</span><input type="file" class="form-control" name="video"
-                                    accept="video/mp4" required></div>
-                            <small class="form-text text-muted mt-1 d-block">Insira um vídeo no formato MP4.</small>
+                        <div class="mb-3">
+                            <label class="form-label">Vídeo do Curso</label>
+                            <div class="custom-file-upload">
+                                <i class="bi bi-film"></i>
+                                <span class="file-name">Selecione o arquivo de vídeo...</span>
+                                <input type="file" name="video" accept="video/mp4" required>
+                            </div>
+                            <small class="form-text text-muted mt-2">Formato aceito: MP4</small>
                         </div>
-                        <div class="mb-3"><label class="form-label fw-semibold">Imagem da Capa</label>
-                            <div class="custom-file-upload"><i class="bi bi-image-alt"></i><span
-                                    class="file-name">Selecione a imagem...</span><input type="file"
-                                    class="form-control" name="image" accept="image/jpeg, image/png"></div>
-                            <small class="form-text text-muted mt-1 d-block">Insira uma imagem no formato PNG ou
-                                JPG.</small>
+                        <div class="mb-3">
+                            <label class="form-label">Imagem da Capa</label>
+                            <div class="custom-file-upload">
+                                <i class="bi bi-image-alt"></i>
+                                <span class="file-name">Selecione a imagem da capa...</span>
+                                <input type="file" name="image" accept="image/jpeg,image/png,image/jpg">
+                            </div>
+                            <small class="form-text text-muted mt-2">Formatos aceitos: PNG, JPG, JPEG</small>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light"><input type="hidden" id="create-duration-seconds"
-                    name="duration_seconds"><button type="button" class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Criar
-                    Curso</button></div>
+            <div class="modal-footer">
+                <input type="hidden" id="create-duration-seconds" name="duration_seconds">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    Criar Curso
+                </button>
+            </div>
         </form>
     </div>
 </div>
 
+<!-- Edit Course Modal -->
 <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form id="editCourseForm" method="POST" action="" enctype="multipart/form-data" class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="editCourseModalLabel"></h5><button type="button" class="btn-close"
-                    data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCourseModalLabel">
+                    <i class="bi bi-pencil-square"></i>
+                    Editar Curso
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body">
                 <div class="row g-4">
                     <div class="col-md-7">
-                        <div class="mb-3"><label for="edit-title" class="form-label fw-semibold">Título</label><input
-                                type="text" class="form-control" id="edit-title" name="title" required></div>
-                        <div class="mb-3"><label for="edit-description"
-                                class="form-label fw-semibold">Descrição</label><textarea class="form-control"
-                                id="edit-description" name="description" rows="4"></textarea></div>
-                        <div class="mb-3"><label for="edit-duration-time"
-                                class="form-label fw-semibold">Duração</label><input type="time" class="form-control"
-                                id="edit-duration-time" name="duration_time" step="1" required></div>
+                        <div class="mb-3">
+                            <label for="edit-title" class="form-label">Título do Curso</label>
+                            <input type="text" class="form-control" id="edit-title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="edit-description" name="description" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-duration-time" class="form-label">Duração do Vídeo</label>
+                            <input type="time" class="form-control" id="edit-duration-time" 
+                                   name="duration_time" step="1" required>
+                        </div>
                     </div>
                     <div class="col-md-5">
-                        <div class="mb-3"><label class="form-label fw-semibold">Vídeo</label>
-                            <div class="custom-file-upload"><i class="bi bi-film"></i><span
-                                    class="file-name">Trocarvídeo...</span>
-                                <input type="file" class="form-control" name="video" accept="video/mp4">
-                            </div><small class="form-text text-muted mt-1 d-block">Deixe embranco para não
-                                alterar.</small>
+                        <div class="mb-3">
+                            <label class="form-label">Vídeo do Curso</label>
+                            <div class="custom-file-upload">
+                                <i class="bi bi-film"></i>
+                                <span class="file-name">Alterar arquivo de vídeo...</span>
+                                <input type="file" name="video" accept="video/mp4">
+                            </div>
+                            <small class="form-text text-muted mt-2">Deixe em branco para não alterar</small>
                         </div>
-                        <div class="mb-3"><label class="form-label fw-semibold">Imagem da Capa</label>
-                            <div class="custom-file-upload"><i class="bi bi-image-alt"></i><span
-                                    class="file-name">Trocar imagem...</span><input type="file" class="form-control"
-                                    name="image" accept="image/jpeg, image/png"></div><small
-                                class="form-text text-muted mt-1 d-block">Deixe em branco para não alterar.</small>
+                        <div class="mb-3">
+                            <label class="form-label">Imagem da Capa</label>
+                            <div class="custom-file-upload">
+                                <i class="bi bi-image-alt"></i>
+                                <span class="file-name">Alterar imagem da capa...</span>
+                                <input type="file" name="image" accept="image/jpeg,image/png,image/jpg">
+                            </div>
+                            <small class="form-text text-muted mt-2">Deixe em branco para não alterar</small>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light"><input type="hidden" id="edit-duration-seconds"
-                    name="duration_seconds"><button type="button" class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Salvar
-                    Alterações</button></div>
+            <div class="modal-footer">
+                <input type="hidden" id="edit-duration-seconds" name="duration_seconds">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Salvar Alterações
+                </button>
+            </div>
         </form>
     </div>
 </div>
 {% endblock %}
 
-
 {% block scripts %}
 {{ super() }}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const hmsToSeconds = (timeString) => {
-            if (!timeString) return 0;
-            const [hours, minutes, seconds] = timeString.split(':').map(Number);
-            return (hours * 3600) + (minutes * 60) + (seconds || 0);
-        };
+document.addEventListener('DOMContentLoaded', function () {
+    // Utility functions
+    const hmsToSeconds = (timeString) => {
+        if (!timeString) return 0;
+        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        return (hours * 3600) + (minutes * 60) + (seconds || 0);
+    };
 
-        const secondsToHMS = (totalSeconds) => {
-            if (isNaN(totalSeconds) || totalSeconds < 0) return "00:00:00";
-            const h = Math.floor(totalSeconds / 3600);
-            const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = totalSeconds % 60;
-            return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
-        };
+    const secondsToHMS = (totalSeconds) => {
+        if (isNaN(totalSeconds) || totalSeconds < 0) return "00:00:00";
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    };
 
-        document.querySelectorAll('.custom-file-upload input[type="file"]').forEach(input => {
-            input.addEventListener('change', function () {
-                const fileNameSpan = this.parentElement.querySelector('.file-name');
-                if (this.files.length > 0) {
-                    fileNameSpan.textContent = this.files[0].name;
-                    fileNameSpan.style.color = '#212529';
-                }
-            });
-        });
-
-        const createModal = document.getElementById('createCourseModal');
-        const createForm = document.getElementById('createCourseForm');
-        createModal.addEventListener('show.bs.modal', function () {
-            createForm.reset();
-            createForm.querySelectorAll('.file-name').forEach(span => {
-                const isVideo = span.nextElementSibling.name === 'video';
-                span.textContent = isVideo ? 'Selecione o vídeo...' : 'Selecione a imagem...';
-                span.style.color = '#6c757d';
-            });
-        });
-        createForm.addEventListener('submit', function () {
-            const timeValue = createForm.querySelector('input[name="duration_time"]').value;
-            createForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
-        });
-
-        const editModal = new bootstrap.Modal(document.getElementById('editCourseModal'));
-        const editForm = document.getElementById('editCourseForm');
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                const row = e.target.closest('.course-row');
-                const courseId = row.dataset.courseId;
-
-                editForm.action = `{{ url_for('admin.edit_course', course_id=0) }}`.replace('0', courseId);
-
-                const modalTitleElement = editForm.querySelector('#editCourseModalLabel');
-                const courseTitle = row.dataset.courseTitle;
-                modalTitleElement.innerHTML = `<i class="bi bi-pencil-square">  Editar Curso:</i> <i class="text-primary"> ${courseTitle}</i>`;
-
-                editForm.querySelector('#edit-title').value = row.dataset.courseTitle;
-                editForm.querySelector('#edit-description').value = row.dataset.courseDescription;
-                editForm.querySelector('#edit-duration-time').value = secondsToHMS(parseInt(row.dataset.courseDuration, 10));
-
-                editForm.querySelectorAll('.file-name').forEach(span => {
-                    const isVideo = span.nextElementSibling.name === 'video';
-                    span.textContent = isVideo ? 'Trocar vídeo...' : 'Trocar imagem...';
-                    span.style.color = '#6c757d';
-                });
-
-                editModal.show();
-            });
-        });
-        editForm.addEventListener('submit', function () {
-            const timeValue = editForm.querySelector('input[name="duration_time"]').value;
-            editForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
+    // File upload styling
+    document.querySelectorAll('.custom-file-upload input[type="file"]').forEach(input => {
+        input.addEventListener('change', function () {
+            const fileNameSpan = this.parentElement.querySelector('.file-name');
+            if (this.files.length > 0) {
+                fileNameSpan.textContent = this.files[0].name;
+                fileNameSpan.style.color = '#2d3748';
+                fileNameSpan.style.fontWeight = '600';
+            }
         });
     });
+
+    // Create Course Modal
+    const createModal = document.getElementById('createCourseModal');
+    const createForm = document.getElementById('createCourseForm');
+    
+    createModal.addEventListener('show.bs.modal', function () {
+        createForm.reset();
+        createForm.querySelectorAll('.file-name').forEach(span => {
+            const input = span.nextElementSibling;
+            const isVideo = input.name === 'video';
+            span.textContent = isVideo ? 'Selecione o arquivo de vídeo...' : 'Selecione a imagem da capa...';
+            span.style.color = '#718096';
+            span.style.fontWeight = '500';
+        });
+    });
+    
+    createForm.addEventListener('submit', function () {
+        const timeValue = createForm.querySelector('input[name="duration_time"]').value;
+        createForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
+    });
+
+    // Edit Course Modal
+    const editModal = new bootstrap.Modal(document.getElementById('editCourseModal'));
+    const editForm = document.getElementById('editCourseForm');
+    
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            const card = e.target.closest('.course-row');
+            const courseId = card.dataset.courseId;
+
+            editForm.action = `{{ url_for('admin.edit_course', course_id=0) }}`.replace('0', courseId);
+
+            const modalTitle = editForm.querySelector('#editCourseModalLabel');
+            const courseTitle = card.dataset.courseTitle;
+            modalTitle.innerHTML = `<i class="bi bi-pencil-square"></i> Editar: <strong class="text-primary">${courseTitle}</strong>`;
+
+            editForm.querySelector('#edit-title').value = card.dataset.courseTitle;
+            editForm.querySelector('#edit-description').value = card.dataset.courseDescription;
+            editForm.querySelector('#edit-duration-time').value = secondsToHMS(parseInt(card.dataset.courseDuration, 10));
+
+            editForm.querySelectorAll('.file-name').forEach(span => {
+                const input = span.nextElementSibling;
+                const isVideo = input.name === 'video';
+                span.textContent = isVideo ? 'Alterar arquivo de vídeo...' : 'Alterar imagem da capa...';
+                span.style.color = '#718096';
+                span.style.fontWeight = '500';
+            });
+
+            editModal.show();
+        });
+    });
+    
+    editForm.addEventListener('submit', function () {
+        const timeValue = editForm.querySelector('input[name="duration_time"]').value;
+        editForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
+    });
+
+    // Filter functionality
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+
+    function applyFilters() {
+        const urlParams = new URLSearchParams();
+        
+        if (searchInput.value.trim()) {
+            urlParams.set('search', searchInput.value.trim());
+        }
+        
+        if (statusFilter.value) {
+            urlParams.set('status', statusFilter.value);
+        }
+        
+        if (sortFilter.value && sortFilter.value !== 'date_desc') {
+            urlParams.set('sort', sortFilter.value);
+        }
+
+        const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.location.href = newUrl;
+    }
+
+    // Event listeners for filters
+    applyFiltersBtn.addEventListener('click', applyFilters);
+
+    clearFiltersBtn.addEventListener('click', function() {
+        window.location.href = window.location.pathname;
+    });
+
+    // Allow Enter key to trigger filter in search input
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            applyFilters();
+        }
+    });
+
+    // Smooth scroll animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.manage-course-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+});
 </script>
 {% endblock %}

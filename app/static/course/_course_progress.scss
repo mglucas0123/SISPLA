@@ -1,0 +1,605 @@
+
+// ==========================================
+// COURSE PROGRESS - MODERN DASHBOARD DESIGN
+// ==========================================
+
+.course-progress-page {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+
+    .container {
+        max-width: 1400px;
+    }
+}
+
+// ==========================================
+// HEADER SECTION
+// ==========================================
+.course-progress-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    margin-bottom: 3rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: rotate(45deg);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .course-progress-header-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .course-progress-title-section {
+            .course-progress-main-title {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.5rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+
+                i {
+                    font-size: 2.2rem;
+                    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+                }
+            }
+
+            .course-progress-subtitle {
+                font-size: 1.2rem;
+                opacity: 0.9;
+                font-weight: 500;
+            }
+        }
+
+        .course-progress-back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: rgba(255, 255, 255, 0.5);
+                transform: translateY(-2px);
+                color: white;
+            }
+        }
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            gap: 2rem;
+            text-align: center;
+
+            .course-progress-main-title {
+                font-size: 2rem;
+            }
+        }
+    }
+}
+
+// ==========================================
+// STATISTICS CARDS
+// ==========================================
+.course-progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+
+    .course-progress-stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--stat-color, linear-gradient(90deg, #667eea, #764ba2));
+        }
+
+        &:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        &.stat-primary { --stat-color: linear-gradient(90deg, #667eea, #764ba2); }
+        &.stat-success { --stat-color: linear-gradient(90deg, #56ab2f, #a8e6cf); }
+        &.stat-info { --stat-color: linear-gradient(90deg, #00c6ff, #0072ff); }
+        &.stat-warning { --stat-color: linear-gradient(90deg, #ffb347, #ffcc33); }
+
+        .course-progress-stat-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+
+            .course-progress-stat-icon {
+                width: 80px;
+                height: 80px;
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2.5rem;
+                background: var(--stat-color);
+                color: white;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            .course-progress-stat-details {
+                flex-grow: 1;
+
+                .course-progress-stat-label {
+                    font-size: 0.9rem;
+                    color: #718096;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 0.5rem;
+                }
+
+                .course-progress-stat-value {
+                    font-size: 2.5rem;
+                    font-weight: 800;
+                    color: #2d3748;
+                    line-height: 1;
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// CHART SECTION
+// ==========================================
+.course-progress-chart-section {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    margin-bottom: 3rem;
+    overflow: hidden;
+
+    .course-progress-chart-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+        .course-progress-chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+
+            i {
+                font-size: 1.3rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+        }
+    }
+
+    .course-progress-chart-body {
+        padding: 2rem;
+        height: 350px;
+
+        canvas {
+            max-height: 100% !important;
+        }
+    }
+}
+
+// ==========================================
+// STUDENT PERFORMANCE TABLE
+// ==========================================
+.course-progress-table-section {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+
+    .course-progress-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+        .course-progress-table-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+
+            i {
+                font-size: 1.3rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+        }
+    }
+
+    .course-progress-table-wrapper {
+        overflow-x: auto;
+
+        .course-progress-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+
+            thead {
+                tr {
+                    th {
+                        background: #f8f9fa;
+                        padding: 1.5rem 1rem;
+                        font-weight: 700;
+                        color: #2d3748;
+                        font-size: 0.9rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        border-bottom: 2px solid #e2e8f0;
+
+                        &:first-child {
+                            padding-left: 2rem;
+                        }
+                        &:last-child {
+                            padding-right: 2rem;
+                        }
+                    }
+                }
+            }
+
+            tbody {
+                tr {
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background: #f8f9fa;
+                    }
+
+                    td {
+                        padding: 1.5rem 1rem;
+                        border-bottom: 1px solid #e2e8f0;
+                        vertical-align: middle;
+
+                        &:first-child {
+                            padding-left: 2rem;
+                            font-weight: 600;
+                            color: #2d3748;
+                        }
+                        &:last-child {
+                            padding-right: 2rem;
+                        }
+                    }
+
+                    &:last-child td {
+                        border-bottom: none;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// PROGRESS BAR COMPONENT
+// ==========================================
+.course-progress-bar-container {
+    .course-progress-bar-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .course-progress-bar {
+            flex-grow: 1;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+
+            .course-progress-bar-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #56ab2f, #a8e6cf);
+                border-radius: 10px;
+                transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+                    animation: shimmer 2s infinite;
+                }
+            }
+
+            &.progress-completed .course-progress-bar-fill {
+                background: linear-gradient(90deg, #198754, #20c997);
+            }
+        }
+
+        .course-progress-bar-text {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #2d3748;
+            min-width: 45px;
+            text-align: right;
+        }
+    }
+}
+
+// ==========================================
+// STATUS BADGES
+// ==========================================
+.course-progress-status {
+    &.status-completed {
+        background: linear-gradient(135deg, #198754, #20c997);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+
+        i {
+            font-size: 1rem;
+        }
+    }
+
+    &.status-in-progress {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+
+        i {
+            font-size: 1rem;
+        }
+    }
+
+    &.status-not-started {
+        background: linear-gradient(135deg, #6c757d, #adb5bd);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+
+        i {
+            font-size: 1rem;
+        }
+    }
+}
+
+// ==========================================
+// ACTION BUTTONS
+// ==========================================
+.course-progress-action-btn {
+    background: linear-gradient(135deg, #ffc107, #ff8c00);
+    border: none;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 193, 7, 0.4);
+        color: white;
+    }
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+// ==========================================
+// SCORE DISPLAY
+// ==========================================
+.course-progress-score {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+// ==========================================
+// EMPTY STATE
+// ==========================================
+.course-progress-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #718096;
+
+    .course-progress-empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .course-progress-empty-text {
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+}
+
+// ==========================================
+// RESPONSIVE DESIGN
+// ==========================================
+@media (max-width: 768px) {
+    .course-progress-page {
+        padding: 1rem 0;
+
+        .container {
+            padding: 0 1rem;
+        }
+    }
+
+    .course-progress-header {
+        padding: 2rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .course-progress-stats {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+
+        .course-progress-stat-card {
+            padding: 1.5rem;
+
+            .course-progress-stat-content {
+                gap: 1rem;
+
+                .course-progress-stat-icon {
+                    width: 60px;
+                    height: 60px;
+                    font-size: 2rem;
+                }
+
+                .course-progress-stat-value {
+                    font-size: 2rem;
+                }
+            }
+        }
+    }
+
+    .course-progress-chart-section,
+    .course-progress-table-section {
+        margin-bottom: 2rem;
+
+        .course-progress-chart-header,
+        .course-progress-table-header {
+            padding: 1.5rem;
+        }
+
+        .course-progress-chart-body {
+            padding: 1.5rem;
+            height: 280px;
+        }
+    }
+
+    .course-progress-table-wrapper {
+        .course-progress-table {
+            thead th,
+            tbody td {
+                padding: 1rem 0.75rem;
+                font-size: 0.85rem;
+
+                &:first-child {
+                    padding-left: 1.5rem;
+                }
+                &:last-child {
+                    padding-right: 1.5rem;
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// ANIMATIONS
+// ==========================================
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+// Fade in animation for cards
+.course-progress-stat-card,
+.course-progress-chart-section,
+.course-progress-table-section {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -382,14 +382,52 @@ def delete_repository(repo_id):
 @login_required
 @admin_required
 def manage_courses():
-    query = select(Course).order_by(Course.date_registry.desc())
-
+    # Filtros
+    search_query = request.args.get('search', '').strip()
+    status_filter = request.args.get('status', '')
+    sort_option = request.args.get('sort', 'date_desc')
+    
+    # Query base
+    query = db.session.query(Course)
+    
+    # Aplicar filtro de busca
+    if search_query:
+        query = query.filter(
+            db.or_(
+                Course.title.ilike(f'%{search_query}%'),
+                Course.description.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # Aplicar filtro de status
+    if status_filter == 'active':
+        query = query.filter(Course.is_active == True)
+    elif status_filter == 'inactive':
+        query = query.filter(Course.is_active == False)
+    
+    # Aplicar ordenação
+    if sort_option == 'date_asc':
+        query = query.order_by(Course.date_registry.asc())
+    elif sort_option == 'title_asc':
+        query = query.order_by(Course.title.asc())
+    elif sort_option == 'title_desc':
+        query = query.order_by(Course.title.desc())
+    else:  # date_desc (padrão)
+        query = query.order_by(Course.date_registry.desc())
+    
+    # Paginação
     page_get = request.args.get('page', 1, type=int)
-    pagination = db.paginate(query, page=page_get, per_page=10, error_out=False)
+    pagination = db.paginate(
+        query, 
+        page=page_get, 
+        per_page=12, 
+        error_out=False
+    )
 
     return render_template(
         "training/manage_courses.html",
-        courses=pagination.items, pagination=pagination
+        courses=pagination.items, 
+        pagination=pagination
     )
 
 

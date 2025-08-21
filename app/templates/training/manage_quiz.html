@@ -1,176 +1,208 @@
+
 {% extends "navbar.html" %}
 {% block title %}Editor de Avaliação: {{ course.title }}{% endblock %}
 
 {% block styles %}
 {{ super() }}
-<style>
-    .question-card {
-        border-left: 4px solid var(--bs-primary);
-        transition: box-shadow 0.2s ease-in-out;
-    }
-
-    .question-card:hover {
-        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-    }
-
-    .options-container h6 {
-        font-size: 0.9rem;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .grab-handle {
-        cursor: grab;
-    }
-</style>
 {% endblock %}
 
-
 {% block content %}
-<div class="container py-4">
-    {% include 'partials/_flash_messages.html' %}
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <div>
-            <h1 class="h2 mb-0"><i class="bi bi-ui-checks-grid me-2"></i>Editor de Avaliação</h1>
-            <p class="text-muted mb-0">Para o curso: <strong class="text-primary">{{ course.title }}</strong></p>
-        </div>
-        <div>
-            <a href="{{ url_for('admin.manage_courses') }}" class="btn btn-outline-secondary"><i
-                    class="bi bi-arrow-left me-1"></i>Voltar</a>
-            <button type="submit" form="quizForm" class="btn btn-primary px-4 ms-2"><i
-                    class="bi bi-check-circle-fill me-2"></i>Salvar Avaliação</button>
-        </div>
-    </div>
-
-    <form method="POST" id="quizForm" enctype="multipart/form-data">
-        <input type="hidden" name="questions_data" id="questions_data_input">
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="bi bi-paperclip me-2"></i>Texto e Material de Apoio</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="support_text_editor" class="form-label fw-bold">Texto Principal da Avaliação</label>
-                    <textarea id="support_text_editor" name="support_text" class="form-control"
-                        rows="8">{{ quiz.support_text or '' }}</textarea>
+<div class="manage-quiz-page">
+    <div class="container">
+        {% include 'partials/_flash_messages.html' %}
+        
+        <!-- Header Section -->
+        <div class="manage-quiz-header">
+            <div class="manage-quiz-header-content">
+                <div class="manage-quiz-title-section">
+                    <h1 class="manage-quiz-main-title">
+                        <i class="bi bi-ui-checks-grid"></i>
+                        Editor de Avaliação
+                    </h1>
+                    <p class="manage-quiz-subtitle">
+                        Configure questões e material de apoio para seu curso
+                    </p>
+                    <div class="manage-quiz-course-name">
+                        <i class="bi bi-camera-reels me-2"></i>{{ course.title }}
+                    </div>
                 </div>
+                <div class="manage-quiz-actions">
+                    <a href="{{ url_for('admin.manage_courses') }}" class="manage-quiz-back-btn">
+                        <i class="bi bi-arrow-left"></i>
+                        Voltar
+                    </a>
+                    <button type="submit" form="quizForm" class="manage-quiz-save-btn">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Salvar Avaliação
+                    </button>
+                </div>
+            </div>
+        </div>
 
-                <hr>
+        <form method="POST" id="quizForm" enctype="multipart/form-data">
+            <input type="hidden" name="questions_data" id="questions_data_input">
 
-                <div class="mb-2">
-                    <label class="form-label fw-bold">Materiais Anexados</label>
-                    <ul id="attachment-list" class="list-group">
-                        {% for attachment in quiz.attachments %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center"
-                            data-attachment-id="{{ attachment.id }}">
-                            <div>
-                                <i class="bi bi-file-earmark-text me-2"></i>
-                                <a href="{{ url_for('training.download_attachment', attachment_id=attachment.id) }}" target="_blank">{{ attachment.filename }}</a>
+            <!-- Support Material Section -->
+            <div class="manage-quiz-support-section">
+                <div class="manage-quiz-section-header">
+                    <h5 class="manage-quiz-section-title">
+                        <i class="bi bi-paperclip"></i>
+                        Texto e Material de Apoio
+                    </h5>
+                </div>
+                <div class="manage-quiz-section-content">
+                    <div class="manage-quiz-text-editor">
+                        <label for="support_text_editor" class="form-label">Texto Principal da Avaliação</label>
+                        <textarea id="support_text_editor" name="support_text" class="form-control">{{ quiz.support_text or '' }}</textarea>
+                    </div>
+
+                    <div class="manage-quiz-attachments">
+                        <h6 class="manage-quiz-attachments-title">Materiais Anexados</h6>
+                        <ul id="attachment-list" class="manage-quiz-attachment-list list-group">
+                            {% for attachment in quiz.attachments %}
+                            <li class="list-group-item" data-attachment-id="{{ attachment.id }}">
+                                <div class="attachment-info">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    <a href="{{ url_for('training.download_attachment', attachment_id=attachment.id) }}" target="_blank">{{ attachment.filename }}</a>
+                                </div>
+                                <button type="button" class="delete-attachment-btn" title="Excluir anexo">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="manage-quiz-file-upload">
+                            <label for="file-input" class="form-label">Adicionar Novos Materiais</label>
+                            <input class="form-control" type="file" id="file-input" multiple>
+                            <div class="form-text">Você pode selecionar múltiplos arquivos. Eles serão enviados automaticamente.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Section -->
+            <div class="manage-quiz-questions-section">
+                <div class="manage-quiz-questions-header">
+                    <h5 class="manage-quiz-questions-title">
+                        <i class="bi bi-question-circle"></i>
+                        Questões da Avaliação
+                    </h5>
+                    <button type="button" id="addQuestionBtn" class="manage-quiz-add-question-btn">
+                        <i class="bi bi-plus-lg"></i>
+                        Adicionar Nova Questão
+                    </button>
+                </div>
+                <div class="manage-quiz-questions-content">
+                    <div id="questions-container" class="manage-quiz-questions-container">
+                        {% if not quiz.questions %}
+                        <div class="manage-quiz-empty-state">
+                            <div class="manage-quiz-empty-icon">
+                                <i class="bi bi-question-circle-fill"></i>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger delete-attachment-btn"
-                                title="Excluir anexo">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </li>
+                            <h6 class="manage-quiz-empty-title">Nenhuma questão adicionada</h6>
+                            <p class="manage-quiz-empty-text">
+                                Clique no botão "Adicionar Nova Questão" para começar a criar sua avaliação.
+                            </p>
+                        </div>
+                        {% else %}
+                        {% for q in quiz.questions | sort(attribute='id') %}
+                        <div class="manage-quiz-question-card question-card" data-question-id="{{ q.id }}">
+                            <div class="manage-quiz-question-header grab-handle">
+                                <span class="manage-quiz-question-number">
+                                    <i class="bi bi-grip-vertical grip-handle"></i>
+                                    Questão {{ loop.index }}
+                                </span>
+                                <button type="button" class="remove-question-btn" aria-label="Remover Questão">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <div class="manage-quiz-question-content">
+                                <div class="manage-quiz-question-input">
+                                    <label class="form-label">Texto da Questão</label>
+                                    <textarea class="form-control question-text" rows="3" placeholder="Digite o enunciado da questão...">{{ q.text }}</textarea>
+                                </div>
+                                <div class="manage-quiz-question-type">
+                                    <label class="form-label">Tipo de Questão</label>
+                                    <select class="form-select question-type">
+                                        <option value="MULTIPLE_CHOICE" {% if q.question_type=='MULTIPLE_CHOICE' %}selected{% endif %}>Múltipla Escolha</option>
+                                        <option value="TEXT_INPUT" {% if q.question_type=='TEXT_INPUT' %}selected{% endif %}>Resposta de Texto</option>
+                                    </select>
+                                </div>
+                                <div class="manage-quiz-options-container options-container">
+                                    <!-- Options will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
                         {% endfor %}
-                    </ul>
-                </div>
-
-                <div class="mt-4 border-top pt-3">
-                    <label for="file-input" class="form-label">Adicionar Novos Materiais</label>
-                    <input class="form-control" type="file" id="file-input" multiple>
-                    <div class="form-text">Você pode selecionar múltiplos arquivos. Eles aparecerão na fila abaixo para
-                        serem nomeados e enviados.</div>
-
-                    <div id="upload-queue" class="mt-3"></div>
-                </div>
-            </div>
-        </div>
-
-        <h5 class="mb-3">Questões da Avaliação</h5>
-        <div id="questions-container" class="d-grid gap-3">
-            {% for q in quiz.questions | sort(attribute='id') %}
-            <div class="card shadow-sm question-card" data-question-id="{{ q.id }}">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center grab-handle">
-                    <span class="fw-bold text-muted"><i class="bi bi-grip-vertical me-2"></i>Questão {{ loop.index
-                        }}</span>
-                    <button type="button" class="btn-close remove-question-btn" aria-label="Remover Questão"></button>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3"><label class="form-label">Texto da Questão</label><textarea
-                            class="form-control question-text" rows="2">{{ q.text }}</textarea></div>
-                    <div class="mb-3"><label class="form-label">Tipo de Questão</label>
-                        <select class="form-select question-type">
-                            <option value="MULTIPLE_CHOICE" {% if q.question_type=='MULTIPLE_CHOICE' %}selected{% endif
-                                %}>Múltipla Escolha</option>
-                            <option value="TEXT_INPUT" {% if q.question_type=='TEXT_INPUT' %}selected{% endif %}>
-                                Resposta de Texto</option>
-                        </select>
-                    </div>
-                    <div class="options-container mt-3 pt-3 border-top">
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-
-        <div class="d-flex justify-content-center mt-4">
-            <button type="button" id="addQuestionBtn" class="btn btn-outline-primary"><i
-                    class="bi bi-plus-lg me-2"></i>Adicionar Nova Questão</button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
+<!-- Templates -->
 <template id="question-template">
-    <div class="card shadow-sm question-card" data-question-id="">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center grab-handle">
-            <span class="fw-bold text-muted"><i class="bi bi-grip-vertical me-2"></i>Nova Questão</span>
-            <button type="button" class="btn-close remove-question-btn"></button>
+    <div class="manage-quiz-question-card question-card" data-question-id="">
+        <div class="manage-quiz-question-header grab-handle">
+            <span class="manage-quiz-question-number">
+                <i class="bi bi-grip-vertical grip-handle"></i>
+                Nova Questão
+            </span>
+            <button type="button" class="remove-question-btn">
+                <i class="bi bi-x"></i>
+            </button>
         </div>
-        <div class="card-body">
-            <div class="mb-3"><label class="form-label">Texto da Questão</label><textarea
-                    class="form-control question-text" rows="2"
-                    placeholder="Digite o enunciado da questão..."></textarea></div>
-            <div class="mb-3"><label class="form-label">Tipo de Questão</label><select
-                    class="form-select question-type">
+        <div class="manage-quiz-question-content">
+            <div class="manage-quiz-question-input">
+                <label class="form-label">Texto da Questão</label>
+                <textarea class="form-control question-text" rows="3" placeholder="Digite o enunciado da questão..."></textarea>
+            </div>
+            <div class="manage-quiz-question-type">
+                <label class="form-label">Tipo de Questão</label>
+                <select class="form-select question-type">
                     <option value="MULTIPLE_CHOICE" selected>Múltipla Escolha</option>
                     <option value="TEXT_INPUT">Resposta de Texto</option>
-                </select></div>
-            <div class="options-container mt-3 pt-3 border-top"></div>
+                </select>
+            </div>
+            <div class="manage-quiz-options-container options-container"></div>
         </div>
     </div>
 </template>
 
 <template id="multiple-choice-options-template">
-    <h6>Opções de Resposta (marque a correta):</h6>
-    <div class="options-list"></div>
-    <button type="button" class="btn btn-sm btn-outline-secondary add-option-btn mt-2"><i
-            class="bi bi-plus-circle me-1"></i>Adicionar Opção</button>
+    <h6 class="manage-quiz-options-title">Opções de Resposta (marque a correta):</h6>
+    <div class="manage-quiz-options-list options-list"></div>
+    <button type="button" class="manage-quiz-add-option-btn add-option-btn">
+        <i class="bi bi-plus-circle"></i>
+        Adicionar Opção
+    </button>
 </template>
 
 <template id="multiple-choice-option-item-template">
-    <div class="input-group mb-2">
-        <div class="input-group-text"><input class="form-check-input mt-0" type="radio"></div>
+    <div class="manage-quiz-option-item">
+        <input class="form-check-input option-radio" type="radio">
         <input type="text" class="form-control option-text" placeholder="Texto da opção...">
-        <button type="button" class="btn btn-sm btn-outline-danger remove-option-btn" aria-label="Remover Opção"><i
-                class="bi bi-trash"></i></button>
+        <button type="button" class="remove-option-btn" aria-label="Remover Opção">
+            <i class="bi bi-trash"></i>
+        </button>
     </div>
 </template>
 
 <template id="text-input-answer-template">
-    <h6>Resposta Correta:</h6>
-    <input type="text" class="form-control option-text" placeholder="Digite a resposta exata esperada...">
+    <h6 class="manage-quiz-options-title">Resposta Correta:</h6>
+    <div class="manage-quiz-text-answer">
+        <input type="text" class="form-control option-text" placeholder="Digite a resposta exata esperada...">
+    </div>
 </template>
 {% endblock %}
-
 
 {% block scripts %}
 {{ super() }}
 
 <script src="https://cdn.tiny.cloud/1/b4pqlx299weaeap6l3vesk9o2upzittw60sza0j94vxdewc2/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
-
 
 <script>
     tinymce.init({
@@ -181,19 +213,29 @@
             'link image | code | help',
         height: 300,
         menubar: false,
-        language: 'pt_BR'
+        language: 'pt_BR',
+        skin: 'oxide',
+        content_css: 'default'
     });
 
     document.addEventListener('DOMContentLoaded', function () {
-
         const questionsContainer = document.getElementById('questions-container');
         const quizForm = document.getElementById('quizForm');
         const addQuestionBtn = document.getElementById('addQuestionBtn');
         const initialQuizData = JSON.parse('{{ quiz.to_dict() | tojson | safe }}');
         const attachmentList = document.getElementById('attachment-list');
         const fileInput = document.getElementById('file-input');
-        const noAttachmentsMsg = document.getElementById('no-attachments-msg');
         const quizId = '{{ quiz.id }}';
+
+        // Hide empty state if there are questions
+        function toggleEmptyState() {
+            const emptyState = document.querySelector('.manage-quiz-empty-state');
+            const hasQuestions = questionsContainer.querySelectorAll('.manage-quiz-question-card').length > 0;
+            
+            if (emptyState) {
+                emptyState.style.display = hasQuestions ? 'none' : 'block';
+            }
+        }
 
         function renderQuestion(questionData) {
             const card = questionsContainer.querySelector(`[data-question-id="${questionData.id}"]`);
@@ -223,16 +265,28 @@
             }
         }
 
+        function updateQuestionNumbers() {
+            document.querySelectorAll('.manage-quiz-question-card').forEach((card, index) => {
+                const numberSpan = card.querySelector('.manage-quiz-question-number');
+                const gripHandle = numberSpan.querySelector('.grip-handle');
+                const gripHTML = gripHandle ? gripHandle.outerHTML : '<i class="bi bi-grip-vertical grip-handle"></i>';
+                numberSpan.innerHTML = gripHTML + ` Questão ${index + 1}`;
+            });
+        }
+
         function addQuestion() {
             const template = document.getElementById('question-template');
             const clone = template.content.cloneNode(true);
-            const card = clone.querySelector('.question-card');
+            const card = clone.querySelector('.manage-quiz-question-card');
             const uniqueId = `new_${Date.now()}`;
             card.dataset.questionId = uniqueId;
             questionsContainer.appendChild(clone);
+            
             const newCardElement = questionsContainer.querySelector(`[data-question-id="${uniqueId}"]`);
             const select = newCardElement.querySelector('.question-type');
             updateOptionsUI(newCardElement.querySelector('.options-container'), select.value, [], uniqueId);
+            updateQuestionNumbers();
+            toggleEmptyState();
         }
 
         function prepareAndSubmit(event) {
@@ -240,17 +294,21 @@
             tinymce.triggerSave();
             let questionsData = [];
             let isValid = true;
-            document.querySelectorAll('.question-card').forEach(card => {
+
+            document.querySelectorAll('.manage-quiz-question-card').forEach(card => {
                 const questionText = card.querySelector('.question-text').value;
                 const questionType = card.querySelector('.question-type').value;
                 let options = [];
+
                 if (!questionText.trim()) {
                     alert('Atenção: Uma questão está sem o texto do enunciado.');
                     isValid = false;
+                    return;
                 }
+
                 if (questionType === 'MULTIPLE_CHOICE') {
                     let hasCorrect = false;
-                    card.querySelectorAll('.options-list .input-group').forEach(optGroup => {
+                    card.querySelectorAll('.manage-quiz-option-item').forEach(optGroup => {
                         const text = optGroup.querySelector('.option-text').value.trim();
                         const isCorrect = optGroup.querySelector('input[type="radio"]').checked;
                         if (isCorrect) hasCorrect = true;
@@ -259,6 +317,7 @@
                     if (!hasCorrect && options.length > 0) {
                         alert('Atenção: Uma questão de múltipla escolha não tem resposta correta marcada.');
                         isValid = false;
+                        return;
                     }
                 } else if (questionType === 'TEXT_INPUT') {
                     const answerText = card.querySelector('.option-text').value.trim();
@@ -267,18 +326,25 @@
                     } else {
                         alert('Atenção: Uma questão de texto não tem resposta definida.');
                         isValid = false;
+                        return;
                     }
                 }
-                questionsData.push({ id: card.dataset.questionId, text: questionText, question_type: questionType, options: options });
+
+                questionsData.push({
+                    id: card.dataset.questionId,
+                    text: questionText,
+                    question_type: questionType,
+                    options: options
+                });
             });
-            if (!isValid) {
-                alert('Por favor, corrija os erros na avaliação antes de salvar.');
-                return;
-            }
+
+            if (!isValid) return;
+
             document.getElementById('questions_data_input').value = JSON.stringify(questionsData);
             quizForm.submit();
         }
 
+        // Attachment management
         attachmentList.addEventListener('click', function (e) {
             const deleteBtn = e.target.closest('.delete-attachment-btn');
             if (!deleteBtn) return;
@@ -294,9 +360,6 @@
                 .then(data => {
                     if (data.success) {
                         listItem.remove();
-                        if (attachmentList.getElementsByTagName('li').length === 0 && noAttachmentsMsg) {
-                            noAttachmentsMsg.style.display = 'block';
-                        }
                     } else {
                         alert('Erro ao excluir: ' + data.message);
                     }
@@ -322,18 +385,17 @@
                     if (data.success) {
                         const newAttachment = data.attachment;
                         const newListItem = document.createElement('li');
-                        newListItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        newListItem.className = 'list-group-item';
                         newListItem.dataset.attachmentId = newAttachment.id;
                         newListItem.innerHTML = `
-                            <div>
-                                <i class="bi bi-file-earmark-text me-2"></i>
+                            <div class="attachment-info">
+                                <i class="bi bi-file-earmark-text"></i>
                                 <a href="${newAttachment.url}" target="_blank">${newAttachment.filename}</a>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger delete-attachment-btn" title="Excluir anexo">
+                            <button type="button" class="delete-attachment-btn" title="Excluir anexo">
                                 <i class="bi bi-trash"></i>
                             </button>`;
                         attachmentList.appendChild(newListItem);
-                        if(noAttachmentsMsg) noAttachmentsMsg.style.display = 'none';
                     } else {
                         alert(`Erro no upload de "${file.name}": ${data.message}`);
                     }
@@ -346,33 +408,45 @@
             e.target.value = '';
         });
 
+        // Initialize existing questions
         if (initialQuizData && initialQuizData.questions) {
             initialQuizData.questions.forEach(renderQuestion);
         }
 
+        // Event listeners
         questionsContainer.addEventListener('click', function (e) {
             if (e.target.closest('.remove-question-btn')) {
-                e.target.closest('.question-card').remove();
+                if (confirm('Tem certeza que deseja remover esta questão?')) {
+                    e.target.closest('.manage-quiz-question-card').remove();
+                    updateQuestionNumbers();
+                    toggleEmptyState();
+                }
             } else if (e.target.closest('.add-option-btn')) {
-                const questionCard = e.target.closest('.question-card');
-                const optionsList = questionCard.querySelector('.options-list');
+                const questionCard = e.target.closest('.manage-quiz-question-card');
+                const optionsList = questionCard.querySelector('.manage-quiz-options-list');
                 const itemTemplate = document.getElementById('multiple-choice-option-item-template').content.cloneNode(true);
                 itemTemplate.querySelector('input[type="radio"]').name = `correct_option_${questionCard.dataset.questionId}`;
                 optionsList.appendChild(itemTemplate);
             } else if (e.target.closest('.remove-option-btn')) {
-                e.target.closest('.input-group').remove();
+                if (confirm('Remover esta opção?')) {
+                    e.target.closest('.manage-quiz-option-item').remove();
+                }
             }
         });
 
         questionsContainer.addEventListener('change', function (e) {
             if (e.target.classList.contains('question-type')) {
-                const card = e.target.closest('.question-card');
+                const card = e.target.closest('.manage-quiz-question-card');
                 updateOptionsUI(card.querySelector('.options-container'), e.target.value, [], card.dataset.questionId);
             }
         });
 
         addQuestionBtn.addEventListener('click', addQuestion);
         quizForm.addEventListener('submit', prepareAndSubmit);
+
+        // Initial setup
+        toggleEmptyState();
+        updateQuestionNumbers();
     });
 </script>
 {% endblock %}

@@ -1,232 +1,399 @@
+
 {% extends "navbar.html" %}
 
 {% block title %}Gerenciar Usuários{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    {% include 'partials/_flash_messages.html' %}
+<div class="manage-users-page">
+    <div class="container">
+        {% include 'partials/_flash_messages.html' %}
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Gerenciar Usuários</h1>
-        <div>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#criarUsuarioModal">
-                <i class="bi bi-plus-circle me-2"></i>Novo Usuário
-            </button>
-            <a href="{{ url_for('main.panel') }}" class="btn btn-primary ms-2">
-                <i class="bi bi-arrow-left-circle me-2"></i>Voltar para o Painel
-            </a>
+        <!-- Header Section -->
+        <div class="manage-users-header">
+            <div class="manage-users-header-content">
+                <div class="manage-users-title-section">
+                    <h1 class="manage-users-main-title">
+                        <i class="bi bi-people-fill"></i>
+                        Gerenciar Usuários
+                    </h1>
+                    <p class="manage-users-subtitle">
+                        Administre usuários e suas permissões no sistema
+                    </p>
+                </div>
+                <div class="manage-users-actions">
+                    <button class="manage-users-create-btn" data-bs-toggle="modal" data-bs-target="#criarUsuarioModal">
+                        <i class="bi bi-plus-circle"></i>
+                        Novo Usuário
+                    </button>
+                    <a href="{{ url_for('main.panel') }}" class="manage-users-back-btn">
+                        <i class="bi bi-arrow-left-circle"></i>
+                        Voltar ao Painel
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+        <!-- Users Table Section -->
+        <div class="manage-users-section">
+            <div class="manage-users-table-container">
+                {% if users %}
+                <table class="manage-users-table table table-hover align-middle mb-0">
+                    <thead>
                         <tr>
-                            <th>Nome</th>
-                            <th>Usuário</th>
-                            <th class="text-center" style="width: 15%;">Status</th>
+                            <th>
+                                <i class="bi bi-person-badge me-2"></i>
+                                Usuário
+                            </th>
+                            <th>
+                                <i class="bi bi-at me-2"></i>
+                                Login
+                            </th>
+                            <th style="width: 20%; text-align: center;">
+                                <i class="bi bi-shield-check me-2"></i>
+                                Status
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
                         <tr class="user-row" data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
-                            data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
-                            data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
+                            data-user-id="{{ user.id }}" 
+                            data-user-nome="{{ user.name }}"
+                            data-user-usuario="{{ user.username }}" 
+                            data-user-email="{{ user.email | default('') }}"
                             data-user-profile="{{ user.profile | join(',') if user.profile is iterable and user.profile is not string else (user.profile if user.profile else '') }}"
-                            data-user-is-active="{{ user.is_active | tojson }}" style="cursor: pointer;">
+                            data-user-is-active="{{ user.is_active | tojson }}">
 
-                            <td><i class="bi bi-person-circle me-2 text-secondary"></i>{{ user.name }}</td>
-                            <td>{{ user.username }}</td>
-                            <td class="text-center">
+                            <td class="user-name-cell">
+                                <div class="user-info-container">
+                                    <div class="user-avatar">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="user-details">
+                                        <p class="user-name">{{ user.name }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="user-username-cell">
+                                <span class="user-username">{{ user.username }}</span>
+                            </td>
+                            <td class="user-status-cell">
                                 {% if user.is_active %}
-                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill p-2"><i class="bi bi-check-circle-fill me-1"></i>Liberado</span>
+                                <span class="user-status-badge status-active">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Liberado
+                                </span>
                                 {% else %}
-                                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill p-2"><i class="bi bi-slash-circle-fill me-1"></i>Bloqueado</span>
+                                <span class="user-status-badge status-inactive">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    Bloqueado
+                                </span>
                                 {% endif %}
                             </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted fst-italic py-4">Nenhum usuário cadastrado.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                {% else %}
+                <div class="manage-users-empty">
+                    <div class="manage-users-empty-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h3 class="manage-users-empty-title">Nenhum usuário encontrado</h3>
+                    <p class="manage-users-empty-text">Comece adicionando o primeiro usuário ao sistema.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
+
+        <!-- Pagination -->
+        {% if pagination %}
+        <div class="manage-users-pagination">
+            <nav aria-label="Navegação de usuários">
+                <ul class="pagination">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num) }}">
+                            <i class="bi bi-chevron-left me-1"></i>
+                            Anterior
+                        </a>
+                    </li>
+                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=p) }}">{{ p }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num) }}">
+                            Próxima
+                            <i class="bi bi-chevron-right ms-1"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
-
-    {% if pagination %}
-    <nav aria-label="Navegação de usuários">
-        <ul class="pagination justify-content-center mt-4">
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num) }}">Anterior</a>
-            </li>
-            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-            {% if p %}
-            <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('admin.users', page=p) }}">{{ p }}</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
-            {% endif %}
-            {% endfor %}
-
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num) }}">Próxima</a>
-            </li>
-        </ul>
-    </nav>
-    {% endif %}
 </div>
 
+<!-- Modal Criar Usuário -->
 <div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ url_for('admin.users') }}" class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="criarUsuarioModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Criar Novo Usuário</h5>
+                <h5 class="modal-title" id="criarUsuarioModalLabel">
+                    <i class="bi bi-person-plus-fill"></i>
+                    Criar Novo Usuário
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label">Nome completo <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <label for="name" class="form-label">
+                            <i class="bi bi-person-fill"></i>
+                            Nome completo 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="Digite o nome completo">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="username" class="form-label">Nome de usuário<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <label for="username" class="form-label">
+                            <i class="bi bi-at"></i>
+                            Nome de usuário
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Digite o username">
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                    <label for="email" class="form-label">
+                        <i class="bi bi-envelope-fill"></i>
+                        E-mail 
+                        <span class="text-danger">*</span>
+                    </label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com" required>
+                        <span class="input-group-text">
+                            <i class="bi bi-envelope-fill"></i>
+                        </span>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               placeholder="email@dominio.com" required>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="password" class="form-label">Senha <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control" id="password" name="password" required>
+                    <label for="password" class="form-label">
+                        <i class="bi bi-key-fill"></i>
+                        Senha 
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" class="form-control" id="password" name="password" required 
+                           placeholder="Digite uma senha segura">
                 </div>
-                <fieldset class="mt-3">
-                    <legend class="h6 mb-2">Permissões</legend>
+                <fieldset>
+                    <legend>
+                        <i class="bi bi-shield-check"></i>
+                        Permissões do Usuário
+                    </legend>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="profile" value="ADMIN" id="perm_admin_criar">
-                                <label class="form-check-label" for="perm_admin_criar"><i class="bi bi-shield-lock-fill text-danger me-1"></i>Administrador</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="profile" 
+                                       value="ADMIN" id="perm_admin_criar">
+                                <label class="form-check-label" for="perm_admin_criar">
+                                    <i class="bi bi-shield-lock-fill text-danger"></i>
+                                    Administrador
+                                </label>
                             </div>
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="profile" value="CRIAR_RELATORIOS" id="perm_criar_criar">
-                                <label class="form-check-label" for="perm_criar_criar"><i class="bi bi-pencil-fill text-success me-1"></i>Criar relatórios</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="profile" 
+                                       value="CRIAR_RELATORIOS" id="perm_criar_criar">
+                                <label class="form-check-label" for="perm_criar_criar">
+                                    <i class="bi bi-pencil-fill text-success"></i>
+                                    Criar relatórios
+                                </label>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="profile" value="VER_RELATORIOS" id="perm_ver_criar">
-                                <label class="form-check-label" for="perm_ver_criar"><i class="bi bi-eye-fill text-info me-1"></i>Ver relatórios</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="profile" 
+                                       value="VER_RELATORIOS" id="perm_ver_criar">
+                                <label class="form-check-label" for="perm_ver_criar">
+                                    <i class="bi bi-eye-fill text-info"></i>
+                                    Ver relatórios
+                                </label>
                             </div>
                         </div>
                     </div>
                 </fieldset>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle-fill me-2"></i>Criar Usuário</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i>
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Criar Usuário
+                </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Modal Detalhes do Usuário -->
 <div class="modal fade" id="infoUsuarioModal" tabindex="-1" aria-labelledby="infoUsuarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header bg-light border-bottom">
-                <h5 class="modal-title" id="infoUsuarioModalLabel"><i class="bi bi-person-badge me-2 text-primary"></i>Detalhes do Usuário</h5>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoUsuarioModalLabel">
+                    <i class="bi bi-person-badge"></i>
+                    Detalhes do Usuário
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body p-4">
-                <div class="p-3 mb-4 border rounded bg-light-subtle">
-                    <h6 class="text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Informações Atuais</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <small class="text-muted d-block">Nome Completo:</small>
-                            <p class="mb-0 fs-5" id="modalUserName">-</p>
+            <div class="modal-body">
+                <!-- Informações Atuais -->
+                <div class="user-info-section">
+                    <h6 class="section-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informações Atuais
+                    </h6>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Nome Completo:</div>
+                            <p class="info-value" id="modalUserName">-</p>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <small class="text-muted d-block">Login:</small>
-                            <p class="mb-0 fs-5" id="modalUserLogin">-</p>
+                        <div class="info-item">
+                            <div class="info-label">Login:</div>
+                            <p class="info-value" id="modalUserLogin">-</p>
                         </div>
-                        <div class="col-md-6 mt-2">
-                            <small class="text-muted d-block">E-mail:</small>
-                            <p class="mb-0 fs-5" id="modalUserEmail">-</p>
+                        <div class="info-item">
+                            <div class="info-label">E-mail:</div>
+                            <p class="info-value" id="modalUserEmail">-</p>
                         </div>
-                        <div class="col-md-6 mt-2">
-                            <small class="text-muted d-block">Status do Usuário:</small>
-                            <div id="modalUserStatusDisplay" class="mt-1">
-                                <span class="badge bg-light text-dark rounded-pill p-2">Carregando...</span>
+                        <div class="info-item">
+                            <div class="info-label">Status do Usuário:</div>
+                            <div id="modalUserStatusDisplay">
+                                <span class="permission-badge badge-none">Carregando...</span>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <small class="text-muted d-block">Permissões Atuais:</small>
-                        <div id="modalUserPermissions" class="mt-1">
-                            <span class="badge bg-light text-dark rounded-pill p-2">Carregando...</span>
+                    <div class="permissions-display">
+                        <div class="permissions-label">Permissões Atuais:</div>
+                        <div class="permissions-list" id="modalUserPermissions">
+                            <span class="permission-badge badge-none">Carregando...</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Editar Permissões -->
                 <div class="mb-4">
-                    <h6 class="mb-3"><i class="bi bi-shield-check me-2 text-success"></i>Editar Permissões</h6>
+                    <h6 class="section-title">
+                        <i class="bi bi-shield-check"></i>
+                        Editar Permissões
+                    </h6>
                     <form id="formEditarPermissoes" method="POST" action="">
                         <fieldset>
+                            <legend>
+                                <i class="bi bi-gear-wide-connected"></i>
+                                Configurar Permissões
+                            </legend>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit" value="ADMIN" id="perm_admin_edit" role="switch">
-                                        <label class="form-check-label" for="perm_admin_edit"><i class="bi bi-shield-lock-fill text-danger me-1"></i>Administrador</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="profile_edit" 
+                                               value="ADMIN" id="perm_admin_edit" role="switch">
+                                        <label class="form-check-label" for="perm_admin_edit">
+                                            <i class="bi bi-shield-lock-fill text-danger"></i>
+                                            Administrador
+                                        </label>
                                     </div>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit" value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
-                                        <label class="form-check-label" for="perm_criar_edit"><i class="bi bi-pencil-fill text-success me-1"></i>Criar relatórios</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="profile_edit" 
+                                               value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
+                                        <label class="form-check-label" for="perm_criar_edit">
+                                            <i class="bi bi-pencil-fill text-success"></i>
+                                            Criar relatórios
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit" value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
-                                        <label class="form-check-label" for="perm_ver_edit"><i class="bi bi-eye-fill text-info me-1"></i>Ver relatórios</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="profile_edit" 
+                                               value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
+                                        <label class="form-check-label" for="perm_ver_edit">
+                                            <i class="bi bi-eye-fill text-info"></i>
+                                            Ver relatórios
+                                        </label>
                                     </div>
                                 </div>
                             </div>
                         </fieldset>
-                        <button type="submit" class="btn btn-success mt-3 w-100"><i class="bi bi-check-circle-fill me-2"></i>Salvar Permissões</button>
-                    </form>
-                </div>
-                <hr class="my-4">
-                <div>
-                    <h6 class="mb-3"><i class="bi bi-gear-wide-connected me-2 text-secondary"></i>Outras Ações</h6>
-                    <form id="formAlterarSenhaAdmin" method="POST" action="" class="mb-3">
-                        <label for="novaSenhaAdminInput" class="form-label small text-muted">Redefinir Senha do Usuário:</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" name="nova_senha" id="novaSenhaAdminInput" placeholder="Digite a nova senha" required>
-                            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-key-fill me-1"></i>Redefinir Senha</button>
-                        </div>
-                    </form>
-                    <form id="formToggleUserStatus" method="POST" action="" class="mb-3">
-                        <button id="btnToggleUserStatus" type="submit" class="btn w-100">
-                            Carregando Status...
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Salvar Permissões
                         </button>
                     </form>
-                    <form id="formDeletarUsuario" method="POST" action=""
-                        onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
-                        <button class="btn btn-danger w-100" type="submit"><i class="bi bi-trash3-fill me-1"></i>Deletar Usuário</button>
-                    </form>
+                </div>
+
+                <!-- Outras Ações -->
+                <div class="actions-section">
+                    <h6 class="section-title">
+                        <i class="bi bi-gear-wide-connected"></i>
+                        Outras Ações
+                    </h6>
+                    
+                    <div class="action-item">
+                        <div class="action-label">Redefinir Senha do Usuário:</div>
+                        <form id="formAlterarSenhaAdmin" method="POST" action="">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-key-fill"></i>
+                                </span>
+                                <input type="password" class="form-control" name="nova_senha" 
+                                       id="novaSenhaAdminInput" placeholder="Digite a nova senha" required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="bi bi-key-fill"></i>
+                                    Redefinir
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-label">Status da Conta:</div>
+                        <form id="formToggleUserStatus" method="POST" action="">
+                            <button id="btnToggleUserStatus" type="submit" class="btn w-100">
+                                <i class="bi bi-hourglass-split"></i>
+                                Carregando Status...
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-label">Remover Usuário:</div>
+                        <form id="formDeletarUsuario" method="POST" action=""
+                              onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
+                            <button class="btn btn-danger w-100" type="submit">
+                                <i class="bi bi-trash3-fill"></i>
+                                Deletar Usuário
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light border-top">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Fechar</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i>
+                    Fechar
+                </button>
             </div>
         </div>
     </div>
@@ -255,6 +422,7 @@
         var modalUserStatusDisplay = infoUsuarioModalElement.querySelector('#modalUserStatusDisplay');
         var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
         var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
+        
         infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
 
             var triggeringRow = event.relatedTarget;
@@ -262,6 +430,7 @@
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
                 return;
             }
+            
             var userId = triggeringRow.dataset.userId;
             var userNameData = triggeringRow.dataset.userNome;
             var userLoginData = triggeringRow.dataset.userUsuario;
@@ -269,21 +438,24 @@
             var userProfileStrData = triggeringRow.dataset.userProfile;
             var userIsActiveStr = triggeringRow.dataset.userIsActive;
             var userIsActive = (userIsActiveStr === 'true');
-            if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-badge me-2"></i>Detalhes de ' + (userNameData || 'Usuário');
+            
+            if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-badge"></i>Detalhes de ' + (userNameData || 'Usuário');
             if (modalUserNameSpan) modalUserNameSpan.textContent = userNameData || 'Não informado';
             if (modalUserLoginSpan) modalUserLoginSpan.textContent = userLoginData || 'Não informado';
             if (modalUserEmail) modalUserEmail.textContent = userEmailData || 'Não cadastrado';
+            
             if (modalUserStatusDisplay && btnToggleUserStatus) {
                 if (userIsActive) {
-                    modalUserStatusDisplay.innerHTML = '<span class="badge fs-6 bg-success-subtle text-success-emphasis rounded-pill p-2 mt-1"><i class="bi bi-check-circle-fill me-1"></i>Liberado</span>';
-                    btnToggleUserStatus.innerHTML = '<i class="bi bi-slash-circle-fill me-2"></i>Bloquear Conta';
+                    modalUserStatusDisplay.innerHTML = '<span class="permission-badge badge-create"><i class="bi bi-check-circle-fill"></i>Liberado</span>';
+                    btnToggleUserStatus.innerHTML = '<i class="bi bi-x-circle-fill"></i>Bloquear Conta';
                     btnToggleUserStatus.className = 'btn btn-warning w-100';
                 } else {
-                    modalUserStatusDisplay.innerHTML = '<span class="badge fs-6 bg-danger-subtle text-danger-emphasis rounded-pill p-2 mt-1"><i class="bi bi-slash-circle-fill me-1"></i>Bloqueado</span>';
-                    btnToggleUserStatus.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Liberar Conta';
+                    modalUserStatusDisplay.innerHTML = '<span class="permission-badge badge-admin"><i class="bi bi-x-circle-fill"></i>Bloqueado</span>';
+                    btnToggleUserStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i>Liberar Conta';
                     btnToggleUserStatus.className = 'btn btn-info w-100';
                 }
             }
+            
             var permissoesAtuaisArray = [];
             if (modalUserPermissionsDiv) {
                 modalUserPermissionsDiv.innerHTML = '';
@@ -293,20 +465,36 @@
                         p = p.trim();
                         if (!p) return;
                         permissoesAtuaisArray.push(p);
-                        var badgeClass = 'bg-secondary-subtle text-secondary-emphasis';
-                        var iconClass = ''; var permText = p;
-                        if (p === 'ADMIN') { badgeClass = 'bg-danger-subtle text-danger-emphasis'; iconClass = 'bi bi-shield-lock-fill me-1'; }
-                        else if (p === 'CRIAR_RELATORIOS') { badgeClass = 'bg-success-subtle text-success-emphasis'; iconClass = 'bi bi-pencil-fill me-1'; permText = 'Criar Relatórios'; }
-                        else if (p === 'VER_RELATORIOS') { badgeClass = 'bg-info-subtle text-info-emphasis'; iconClass = 'bi bi-eye-fill me-1'; permText = 'Ver Relatórios'; }
-                        var badge = '<span class="badge ' + badgeClass + ' rounded-pill me-1 mb-1 p-2">';
+                        var badgeClass = 'badge-none';
+                        var iconClass = '';
+                        var permText = p;
+                        
+                        if (p === 'ADMIN') { 
+                            badgeClass = 'badge-admin'; 
+                            iconClass = 'bi bi-shield-lock-fill'; 
+                            permText = 'Administrador';
+                        }
+                        else if (p === 'CRIAR_RELATORIOS') { 
+                            badgeClass = 'badge-create'; 
+                            iconClass = 'bi bi-pencil-fill'; 
+                            permText = 'Criar Relatórios'; 
+                        }
+                        else if (p === 'VER_RELATORIOS') { 
+                            badgeClass = 'badge-view'; 
+                            iconClass = 'bi bi-eye-fill'; 
+                            permText = 'Ver Relatórios'; 
+                        }
+                        
+                        var badge = '<span class="permission-badge ' + badgeClass + '">';
                         if (iconClass) badge += '<i class="' + iconClass + '"></i>';
                         badge += permText + '</span>';
                         modalUserPermissionsDiv.innerHTML += badge;
                     });
                 } else {
-                    modalUserPermissionsDiv.innerHTML = '<span class="badge bg-light-subtle text-light-emphasis rounded-pill p-2">Nenhuma permissão definida</span>';
+                    modalUserPermissionsDiv.innerHTML = '<span class="permission-badge badge-none">Nenhuma permissão definida</span>';
                 }
             }
+            
             if (permCheckboxesEdit) {
                 for (var permValue in permCheckboxesEdit) {
                     if (permCheckboxesEdit[permValue]) {
@@ -314,6 +502,7 @@
                     }
                 }
             }
+            
             if (userId && String(userId).trim() !== "") {
                 if (formAlterarSenhaAdmin) {
                     var urlAlterarSenha = "{{ url_for('admin.admin_change_password', user_id=0) }}".replace('0', userId);
