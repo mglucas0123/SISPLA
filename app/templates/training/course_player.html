@@ -1,149 +1,246 @@
+
 {% extends "navbar.html" %}
 {% block title %}{{ course.title }}{% endblock %}
 
-{% block styles %}
-{{ super() }}
-<style>
-    .video-container {
-        position: relative;
-        padding-bottom: 56.25%;
-        height: 0;
-        overflow: hidden;
-        max-width: 100%;
-        background: #000;
-        border-radius: 0 0 .25rem .25rem;
-    }
-    .video-container video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 0 0 .25rem .25rem;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-{% include 'partials/_flash_messages.html' %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="mb-4">
-                <h1 class="h2">{{ course.title }}</h1>
-                <p class="text-muted">{{ course.description }}</p>
-            </div>
-
-            <div id="video-wrapper" class="card shadow-sm mb-4">
-                <div class="card-header bg-dark text-white">
-                    <i class="bi bi-play-circle-fill me-2"></i>Módulo de Vídeo
+<div class="course-page">
+    <div class="container py-4">
+        {% include 'partials/_flash_messages.html' %}
+        
+        <div class="course-player-container">
+            <div class="course-player-header">
+                <div class="course-player-breadcrumb">
+                    <a href="{{ url_for('training.course_list_page') }}" class="course-breadcrumb-link">
+                        <i class="bi bi-arrow-left"></i>
+                        Voltar aos Cursos
+                    </a>
                 </div>
-                <div class="card-body p-0">
-                    <div class="video-container">
-                        <video id="course-video" controls controlsList="nodownload">
-                            <source src="{{ url_for('training.serve_video', course_id=course.id) }}" type="video/mp4">
-                            Seu navegador não suporta o player de vídeo.
-                        </video>
+                <div class="course-player-info">
+                    <h1 class="course-player-title">{{ course.title }}</h1>
+                    <p class="course-player-description">{{ course.description }}</p>
+                    <div class="course-player-meta">
+                        <div class="course-meta-item">
+                            <i class="bi bi-clock"></i>
+                            <span>{{ (course.duration_seconds / 60)|round|int }} min</span>
+                        </div>
+                        <div class="course-meta-item">
+                            <i class="bi bi-mortarboard"></i>
+                            <span>Curso Técnico</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="quiz-container" class="card shadow-sm" {% if not is_completed %}style="display: none;"{% endif %}>
-                <div class="card-header bg-primary text-white">
-                    <i class="bi bi-patch-check-fill me-2"></i>
-                    Status do Curso
+            <div id="video-wrapper" class="course-video-card">
+                <div class="course-video-header">
+                    <div class="course-video-title">
+                        <i class="bi bi-play-circle-fill"></i>
+                        Vídeo Principal
+                    </div>
+                    <div class="course-video-status">
+                        {% if is_completed %}
+                            <span class="course-status-badge course-status-completed">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Concluído
+                            </span>
+                        {% else %}
+                            <span class="course-status-badge course-status-progress">
+                                <i class="bi bi-play-circle"></i>
+                                Em Progresso
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    {% if quiz and quiz.questions|length > 0 %}
+                <div class="course-video-container">
+                    <video id="course-video" class="course-video" controls controlsList="nodownload">
+                        <source src="{{ url_for('training.serve_video', course_id=course.id) }}" type="video/mp4">
+                        <div class="course-video-error">
+                            <div class="course-error-icon">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <p>Seu navegador não suporta o player de vídeo.</p>
+                        </div>
+                    </video>
+                </div>
+            </div>
 
-                        <div class="support-materials mb-4">
-                            {% if quiz.support_text %}<div class="support-text-content p-3 border rounded bg-light">{{ quiz.support_text | safe }}</div>{% endif %}
+            <div id="quiz-container" class="course-quiz-card" {% if not is_completed %}style="display: none;"{% endif %}>
+                <div class="course-quiz-header">
+                    <div class="course-quiz-title">
+                        <i class="bi bi-patch-question-fill"></i>
+                        Avaliação do Curso
+                    </div>
+                </div>
+                <div class="course-quiz-body">
+                    {% if quiz and quiz.questions|length > 0 %}
+                        {% if quiz.support_text or quiz.attachments %}
+                        <div class="course-support-materials">
+                            <div class="course-support-header">
+                                <h5 class="course-support-title">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    Material de Apoio
+                                </h5>
+                            </div>
+                            
+                            {% if quiz.support_text %}
+                            <div class="course-support-text">
+                                {{ quiz.support_text | safe }}
+                            </div>
+                            {% endif %}
+                            
                             {% if quiz.attachments %}
-                            <div class="attachments-list mt-3">
-                                <h6 class="text-muted">Materiais de Apoio:</h6>
-                                <ul class="list-group">
+                            <div class="course-attachments">
+                                <h6 class="course-attachments-title">Arquivos para Download:</h6>
+                                <div class="course-attachments-grid">
                                     {% for attachment in quiz.attachments %}
-                                    <li class="list-group-item list-group-item-action">
-                                        <a href="{{ url_for('training.download_attachment', attachment_id=attachment.id) }}" target="_blank" class="text-decoration-none">
-                                            <i class="bi bi-file-earmark-arrow-down me-2"></i>{{ attachment.filename }}
-                                        </a>
-                                    </li>
+                                    <a href="{{ url_for('training.download_attachment', attachment_id=attachment.id) }}" 
+                                       target="_blank" class="course-attachment-item">
+                                        <div class="course-attachment-icon">
+                                            <i class="bi bi-file-earmark-arrow-down"></i>
+                                        </div>
+                                        <div class="course-attachment-info">
+                                            <span class="course-attachment-name">{{ attachment.filename }}</span>
+                                            <span class="course-attachment-action">Baixar arquivo</span>
+                                        </div>
+                                    </a>
                                     {% endfor %}
-                                </ul>
+                                </div>
                             </div>
                             {% endif %}
                         </div>
-                        {% if quiz.support_text or quiz.attachments %}<hr class="my-4">{% endif %}
+                        {% endif %}
                         
                         {% if is_completed and user_attempt %}
-                        <form>
-                            {% for question in quiz.questions | sort(attribute='id') %}
-                            <div class="mb-4 pb-3 border-bottom">
-                                <p class="fw-bold">{{ loop.index }}. {{ question.text }}</p>
-                                {% set user_answer_data = user_attempt.answers_dict.get(question.id|string) %}
-                                
-                                {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
-                                {% for option in question.options %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ option.id }}" disabled {% if user_answer_data and option.id == user_answer_data.answer %}checked{% endif %}>
-                                    <label class="form-check-label" for="option_{{ option.id }}">
-                                        {{ option.text }}
-                                        {% if user_answer_data and option.id == user_answer_data.answer %}
-                                            {% if user_answer_data.is_correct %}<i class="bi bi-check-circle-fill text-success ms-1"></i>
-                                            {% else %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>
-                                            {% endif %}
-                                        {% elif option.is_correct %}
-                                            <span class="text-success small ms-2">(Resposta Correta)</span>
-                                        {% endif %}
-                                    </label>
+                        <div class="course-quiz-results">
+                            <div class="course-results-header">
+                                <h5 class="course-results-title">
+                                    <i class="bi bi-clipboard-check"></i>
+                                    Suas Respostas
+                                </h5>
+                                {% if user_attempt.score is not none %}
+                                <div class="course-results-score">
+                                    <span class="course-score-label">Nota Final:</span>
+                                    <span class="course-score-value">{{ "%.0f"|format(user_attempt.score) }}%</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <form class="course-quiz-form course-quiz-review">
+                                {% for question in quiz.questions | sort(attribute='id') %}
+                                <div class="course-question-item course-question-answered">
+                                    <div class="course-question-header">
+                                        <span class="course-question-number">{{ loop.index }}</span>
+                                        <p class="course-question-text">{{ question.text }}</p>
+                                    </div>
+                                    
+                                    {% set user_answer_data = user_attempt.answers_dict.get(question.id|string) %}
+                                    
+                                    {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
+                                    <div class="course-question-options">
+                                        {% for option in question.options %}
+                                        <div class="course-option-item {% if user_answer_data and option.id == user_answer_data.answer %}course-option-selected{% endif %} {% if option.is_correct %}course-option-correct-answer{% endif %}">
+                                            <div class="course-option-content">
+                                                <input class="course-option-input" type="radio" name="question_{{ question.id }}" 
+                                                       value="{{ option.id }}" id="option_{{ option.id }}" disabled 
+                                                       {% if user_answer_data and option.id == user_answer_data.answer %}checked{% endif %}>
+                                                <label class="course-option-label" for="option_{{ option.id }}">
+                                                    {{ option.text }}
+                                                </label>
+                                            </div>
+                                            <div class="course-option-feedback">
+                                                {% if user_answer_data and option.id == user_answer_data.answer %}
+                                                    {% if user_answer_data.is_correct %}
+                                                    <i class="bi bi-check-circle-fill course-feedback-correct"></i>
+                                                    {% else %}
+                                                    <i class="bi bi-x-circle-fill course-feedback-incorrect"></i>
+                                                    {% endif %}
+                                                {% elif option.is_correct %}
+                                                    <span class="course-correct-indicator">Resposta Correta</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% elif question.question_type.name == 'TEXT_INPUT' %}
+                                    <div class="course-text-answer">
+                                        <textarea class="course-text-input course-text-readonly" rows="3" readonly>{% if user_answer_data %}{{ user_answer_data.answer }}{% endif %}</textarea>
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 {% endfor %}
-                                {% elif question.question_type.name == 'TEXT_INPUT' %}
-                                    <textarea class="form-control" rows="2" readonly>{% if user_answer_data %}{{ user_answer_data.answer }}{% endif %}</textarea>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                            <div class="d-grid mt-4">
-                                <a href="{{ url_for('training.course_list_page') }}" class="btn btn-primary mt-3">
-                                <i class="bi bi-collection-play-fill me-2"></i>Voltar para a lista de cursos
-                            </a>
-                            </div>
-                        </form>
+                                
+                                <div class="course-form-actions">
+                                    <a href="{{ url_for('training.course_list_page') }}" class="course-btn course-btn-primary course-btn-lg">
+                                        <i class="bi bi-collection-play-fill"></i>
+                                        Voltar aos Cursos
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
                         {% else %}
-                        <form method="POST" action="{{ url_for('training.submit_quiz', quiz_id=quiz.id) }}">
-                            {% for question in quiz.questions | sort(attribute='id') %}
-                            <div class="mb-4 pb-3 border-bottom">
-                                <p class="fw-bold">{{ loop.index }}. {{ question.text }}</p>
-                                {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
-                                    {% for option in question.options %}
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="option_{{ option.id }}" value="{{ option.id }}" required>
-                                        <label class="form-check-label" for="option_{{ option.id }}">{{ option.text }}</label>
+                        <div class="course-quiz-form-container">
+                            <div class="course-quiz-form-header">
+                                <h5 class="course-quiz-form-title">
+                                    <i class="bi bi-pencil-square"></i>
+                                    Responda às Questões
+                                </h5>
+                                <p class="course-quiz-form-description">Complete a avaliação para finalizar o curso</p>
+                            </div>
+                            
+                            <form method="POST" action="{{ url_for('training.submit_quiz', quiz_id=quiz.id) }}" class="course-quiz-form">
+                                {% for question in quiz.questions | sort(attribute='id') %}
+                                <div class="course-question-item">
+                                    <div class="course-question-header">
+                                        <span class="course-question-number">{{ loop.index }}</span>
+                                        <p class="course-question-text">{{ question.text }}</p>
                                     </div>
-                                    {% endfor %}
-                                {% elif question.question_type.name == 'TEXT_INPUT' %}
-                                    <textarea name="question_{{ question.id }}" class="form-control" rows="2" required></textarea>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-success btn-lg">Finalizar e Enviar Respostas</button>
-                            </div>
-                        </form>
+                                    
+                                    {% if question.question_type.name == 'MULTIPLE_CHOICE' %}
+                                    <div class="course-question-options">
+                                        {% for option in question.options %}
+                                        <div class="course-option-item">
+                                            <div class="course-option-content">
+                                                <input class="course-option-input" type="radio" name="question_{{ question.id }}" 
+                                                       id="option_{{ option.id }}" value="{{ option.id }}" required>
+                                                <label class="course-option-label" for="option_{{ option.id }}">{{ option.text }}</label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% elif question.question_type.name == 'TEXT_INPUT' %}
+                                    <div class="course-text-answer">
+                                        <textarea name="question_{{ question.id }}" class="course-text-input" rows="3" 
+                                                  placeholder="Digite sua resposta aqui..." required></textarea>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                                
+                                <div class="course-form-actions">
+                                    <button type="submit" class="course-btn course-btn-success course-btn-lg">
+                                        <i class="bi bi-check2-circle"></i>
+                                        Enviar Respostas
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                         {% endif %}
 
                     {% else %}
-                        
-                        <div class="text-center">
-                            <i class="bi bi-check-circle-fill text-success display-4"></i>
-                            <h4 class="mt-3">Treinamento Concluído!</h4>
-                            <p class="text-muted">Parabéns, você finalizou o "{{ course.title }}".</p>
-                            <a href="{{ url_for('training.course_list_page') }}" class="btn btn-primary mt-3">
-                                <i class="bi bi-collection-play-fill me-2"></i>Voltar para a lista de cursos
-                            </a>
+                        <div class="course-completion-state">
+                            <div class="course-completion-icon">
+                                <i class="bi bi-trophy-fill"></i>
+                            </div>
+                            <h4 class="course-completion-title">Parabéns!</h4>
+                            <h5 class="course-completion-subtitle">Curso Concluído com Sucesso</h5>
+                            <p class="course-completion-text">Você finalizou o curso "{{ course.title }}" e está pronto para aplicar os conhecimentos adquiridos.</p>
+                            <div class="course-completion-actions">
+                                <a href="{{ url_for('training.course_list_page') }}" class="course-btn course-btn-primary course-btn-lg">
+                                    <i class="bi bi-collection-play-fill"></i>
+                                    Explorar Mais Cursos
+                                </a>
+                            </div>
                         </div>
-
                     {% endif %}
                 </div>
             </div>
@@ -151,6 +248,7 @@
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 {{ super() }}
 <script>

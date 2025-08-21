@@ -1,49 +1,62 @@
+
 {% macro render_course_card(course, status, progress=None, attempt=None) %}
-<div class="col">
-    <div class="card h-100 shadow-sm course-card">
-        <div class="position-relative">
-            <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" class="card-img-top course-card-img-top" alt="Capa do curso">
+<div class="course-card-container">
+    <div class="course-card">
+        <div class="course-card-image">
+            <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" alt="Capa do curso">
             
             {% if status == 'completed' %}
-                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center text-white text-center" style="background-color: rgba(25,135,84,0.75);">
-                    <i class="bi bi-patch-check-fill display-4"></i>
-                    <h5 class="mt-2">Concluído</h5>
-                    {% if attempt and attempt.score is not none %}
-                        <span class="badge bg-light text-success fs-6">Nota: {{ "%.0f"|format(attempt.score) }}%</span>
-                    {% endif %}
+            <div class="course-card-status-overlay">
+                <div class="course-card-status-icon">
+                    <i class="bi bi-check-circle-fill"></i>
                 </div>
-            {% endif %} 
+                <div class="course-card-status-title">Concluído</div>
+                {% if attempt and attempt.score is not none %}
+                <div class="course-card-status-badge">{{ "%.0f"|format(attempt.score) }}%</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="course-card-duration">
+                <i class="bi bi-clock-fill"></i>
+                {{ (course.duration_seconds / 60)|round|int }} min
+            </div>
         </div>
 
-        <div class="card-body d-flex flex-column">
-            <h5 class="card-title">{{ course.title }}</h5>
-            <p class="card-text small text-muted flex-grow-1">{{ course.description|truncate(90) }}</p>
+        <div class="course-card-content">
+            <h5 class="course-card-title">{{ course.title }}</h5>
+            <p class="course-card-description">{{ course.description|truncate(120) if course.description else 'Descrição não disponível' }}</p>
             
-            <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
-                <span>
-                    <i class="bi bi-clock-fill me-1"></i>
-                    Duração: {{ (course.duration_seconds / 60)|round|int }} min
-                </span>
+            {% if status == 'in_progress' and progress %}
+            <div class="course-card-progress">
+                <div class="course-progress-bar">
+                    <div class="course-progress-fill" style="width: {{ progress }}%;"></div>
+                </div>
+                <div class="course-progress-text">{{ progress }}% concluído</div>
             </div>
-
-            {% if status == 'in_progress' %}
-            <div class="progress mb-2" style="height: 8px;">
-                <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuax="100"></div>
-            </div>
-            <small class="text-muted mb-3">{{ progress }}% concluído</small>
             {% endif %}
         </div>
 
-        <div class="card-footer bg-white border-0 p-3">
-            <div class="d-grid">
+        <div class="course-card-footer">
             {% if status == 'in_progress' %}
-                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-primary stretched-link">Continuar Curso</a>
+                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" 
+                   class="course-card-btn course-card-btn-primary">
+                    <i class="bi bi-play-circle-fill"></i>
+                    Continuar Curso
+                </a>
             {% elif status == 'completed' %}
-                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-outline-success stretched-link">Revisar Material</a>
+                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" 
+                   class="course-card-btn course-card-btn-success">
+                    <i class="bi bi-eye-fill"></i>
+                    Revisar Material
+                </a>
             {% else %}
-                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" class="btn btn-outline-secondary stretched-link">Iniciar Curso</a>
+                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" 
+                   class="course-card-btn course-card-btn-secondary">
+                    <i class="bi bi-play-fill"></i>
+                    Iniciar Curso
+                </a>
             {% endif %}
-            </div>
         </div>
     </div>
 </div>

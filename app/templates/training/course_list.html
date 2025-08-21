@@ -1,66 +1,82 @@
+
 {% extends "navbar.html" %}
 {% from 'partials/_macros.html' import render_course_card %}
 
 {% block title %}Plataforma de Treinamentos{% endblock %}
 
-{% block styles %}
-{{ super() }}
-<style>
-    .course-card {
-        border: none;
-        border-radius: 0.75rem;
-        transition: all 0.3s ease;
-        overflow: hidden;
-    }
-    .course-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 1rem 2rem rgba(0, 0, 0, .15) !important;
-    }
-    .course-card-img-top {
-        height: 160px;
-        object-fit: cover;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container py-5">
-    <div class="row mb-5">
-        <div class="col-12 text-center">
-            <h1 class="display-5 fw-bold">Plataforma de Treinamentos</h1>
-            <p class="lead text-muted">Aprimore seus conhecimentos com nossos cursos e treinamentos internos.</p>
-        </div>
-    </div>
-
-    {% if in_progress %}
-    <h3 class="mb-4 fw-light"><i class="bi bi-play-circle-fill text-primary me-2"></i>Continuar Assistindo</h3>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-        {% for course, progress in in_progress %}
-            {{ render_course_card(course, 'in_progress', progress=progress) }}
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <h3 class="mb-4 fw-light"><i class="bi bi-collection-play-fill text-secondary me-2"></i>Cursos Disponíveis</h3>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-        {% for course in available %}
-            {{ render_course_card(course, 'available') }}
-        {% else %}
-            <div class="col-12">
-                <div class="card card-body bg-light border-0 text-center text-muted">
-                    <p class="mb-0">Nenhum novo curso disponível no momento. Volte em breve!</p>
+<div class="course-page">
+    <div class="container-fluid py-4">
+        <div class="course-header">
+            <div class="course-header-content">
+                <div class="course-title-section">
+                    <h1 class="course-title">
+                        <i class="bi bi-mortarboard-fill"></i>
+                        Plataforma de Treinamentos
+                    </h1>
+                    <p class="course-subtitle">Desenvolva suas habilidades com nossos cursos especializados</p>
                 </div>
             </div>
-        {% endfor %}
-    </div>
+        </div>
 
-    {% if completed %}
-    <h3 class="mb-4 fw-light"><i class="bi bi-check-circle-fill text-success me-2"></i>Cursos Concluídos</h3>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for course, attempt in completed %}
-            {{ render_course_card(course, 'completed', attempt=attempt) }}
-        {% endfor %}
+        {% include 'partials/_flash_messages.html' %}
+
+        {% if in_progress %}
+        <div class="course-section">
+            <div class="course-section-header">
+                <h3 class="course-section-title">
+                    <i class="bi bi-play-circle-fill"></i>
+                    Em Andamento
+                </h3>
+                <span class="course-section-count">{{ in_progress|length }} curso(s)</span>
+            </div>
+            <div class="course-grid course-grid-progress">
+                {% for course, progress in in_progress %}
+                    {{ render_course_card(course, 'in_progress', progress=progress) }}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="course-section">
+            <div class="course-section-header">
+                <h3 class="course-section-title">
+                    <i class="bi bi-collection-play-fill"></i>
+                    Cursos Disponíveis
+                </h3>
+                <span class="course-section-count">{{ available|length }} curso(s)</span>
+            </div>
+            <div class="course-grid">
+                {% for course in available %}
+                    {{ render_course_card(course, 'available') }}
+                {% else %}
+                    <div class="course-empty-state">
+                        <div class="course-empty-icon">
+                            <i class="bi bi-collection-play"></i>
+                        </div>
+                        <h4 class="course-empty-title">Nenhum curso disponível</h4>
+                        <p class="course-empty-text">Novos cursos serão adicionados em breve. Fique atento!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if completed %}
+        <div class="course-section">
+            <div class="course-section-header">
+                <h3 class="course-section-title">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Concluídos
+                </h3>
+                <span class="course-section-count">{{ completed|length }} curso(s)</span>
+            </div>
+            <div class="course-grid course-grid-completed">
+                {% for course, attempt in completed %}
+                    {{ render_course_card(course, 'completed', attempt=attempt) }}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock %}
