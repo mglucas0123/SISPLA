@@ -1,0 +1,235 @@
+
+{% extends "navbar.html" %}
+{% block title %}Novo Registro NIR{% endblock %}
+
+{% block content %}
+<div class="nir-container">
+    {% include 'partials/_flash_messages.html' %}
+        <div class="container">
+            <!-- Header -->
+            <div class="nir-header">
+                <h1>
+                    <i class="bi bi-hospital"></i>
+                    Novo Registro NIR
+                </h1>
+                <p>Cadastre uma nova Notificação de Internação Regulatória</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="nir-card card shadow-lg border-0">
+                <div class="card-header">
+                    <h5>
+                        <i class="bi bi-plus-circle"></i>
+                        Formulário de Cadastro
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('nir.create_record') }}">
+                        <!-- Dados do Paciente -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-person-circle"></i>
+                                Dados do Paciente
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="nir-form-label">Nome do Paciente *</label>
+                                    <input type="text" class="form-control nir-form-control" name="patient_name" required placeholder="Nome completo do paciente">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data de Nascimento</label>
+                                    <input type="date" class="form-control nir-form-control" name="birth_date">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Sexo</label>
+                                    <select class="form-select nir-form-control" name="gender">
+                                        <option value="">Selecione</option>
+                                        <option value="M">Masculino</option>
+                                        <option value="F">Feminino</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="nir-form-label">SUSFacil</label>
+                                    <input type="text" class="form-control nir-form-control" name="susfacil" placeholder="Número SUSFacil">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Número SUS</label>
+                                    <input type="text" class="form-control nir-form-control" name="sus_number" placeholder="Cartão SUS">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dados da Internação -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-clipboard-data"></i>
+                                Dados da Internação
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data de Internação *</label>
+                                    <input type="date" class="form-control nir-form-control" name="admission_date" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Tipo de Entrada</label>
+                                    <select class="form-select nir-form-control" name="entry_type">
+                                        <option value="">Selecione</option>
+                                        <option value="URGENCIA">Urgência</option>
+                                        <option value="ELETIVO">Eletivo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Tipo de Internação</label>
+                                    <select class="form-select nir-form-control" name="admission_type">
+                                        <option value="">Selecione</option>
+                                        <option value="CLINICO">Clínico</option>
+                                        <option value="CIRURGICO">Cirúrgico</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">Internado na Origem</label>
+                                    <select class="form-select nir-form-control" name="admitted_from_origin">
+                                        <option value="">Selecione</option>
+                                        <option value="SIM">Sim</option>
+                                        <option value="NAO">Não</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">AIH</label>
+                                    <input type="text" class="form-control nir-form-control" name="aih" placeholder="Número da AIH">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Procedimento -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-activity"></i>
+                                Procedimento
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Código do Procedimento</label>
+                                    <input type="text" class="form-control nir-form-control" name="procedure_code" placeholder="Código SIGTAP">
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="nir-form-label">Descrição Cirúrgica</label>
+                                    <input type="text" class="form-control nir-form-control" name="surgical_description" placeholder="Descrição do procedimento">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Médicas -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-heart-pulse"></i>
+                                Informações Médicas
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">Médico Responsável</label>
+                                    <input type="text" class="form-control nir-form-control" name="responsible_doctor" placeholder="Nome do médico">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">CID Principal</label>
+                                    <input type="text" class="form-control nir-form-control" name="main_cid" placeholder="CID-10">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agendamento e Alta -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-calendar-check"></i>
+                                Agendamento e Alta
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data de Agendamento</label>
+                                    <input type="date" class="form-control nir-form-control" name="scheduling_date">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Tipo de Alta</label>
+                                    <select class="form-select nir-form-control" name="discharge_type">
+                                        <option value="">Selecione</option>
+                                        <option value="ALTA MELHORADA">Alta Melhorada</option>
+                                        <option value="ALTA A PEDIDO">Alta a Pedido</option>
+                                        <option value="TRANSFERENCIA">Transferência</option>
+                                        <option value="OBITO">Óbito</option>
+                                        <option value="EVASAO">Evasão</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data da Alta</label>
+                                    <input type="date" class="form-control nir-form-control" name="discharge_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status e Controle -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-gear"></i>
+                                Status e Controle
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Cancelado</label>
+                                    <select class="form-select nir-form-control" name="cancelled">
+                                        <option value="NAO">Não</option>
+                                        <option value="SIM">Sim</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-9">
+                                    <label class="nir-form-label">Motivo do Cancelamento</label>
+                                    <input type="text" class="form-control nir-form-control" name="cancellation_reason" placeholder="Descreva o motivo se cancelado">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Criticado</label>
+                                    <select class="form-select nir-form-control" name="criticized">
+                                        <option value="">Selecione</option>
+                                        <option value="SIM">Sim</option>
+                                        <option value="NAO">Não</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Faturado</label>
+                                    <select class="form-select nir-form-control" name="billed">
+                                        <option value="">Selecione</option>
+                                        <option value="SIM">Sim</option>
+                                        <option value="NAO">Não</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Status</label>
+                                    <select class="form-select nir-form-control" name="status">
+                                        <option value="PENDENTE">Pendente</option>
+                                        <option value="FINALIZADO">Finalizado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Regra</label>
+                                    <input type="text" class="form-control nir-form-control" name="rule" placeholder="Regra aplicada">
+                                </div>
+                                <div class="col-12">
+                                    <label class="nir-form-label">Observação</label>
+                                    <textarea class="form-control nir-form-control" name="observation" rows="3" placeholder="Observações adicionais"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="nir-action-buttons">
+                            <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Voltar
+                            </a>
+                            <button type="submit" class="btn nir-btn-primary">
+                                <i class="bi bi-save me-2"></i>Salvar Registro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

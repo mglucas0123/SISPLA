@@ -25,15 +25,65 @@ class User(db.Model, UserMixin):
     
     notices = db.relationship('Notice', back_populates='author')
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
+    nir_records = db.relationship('NIRRecord', back_populates='operator', lazy='dynamic')
     shared_repositories = db.relationship('Repository', secondary=repository_access, back_populates='shared_with_users')
     @property
-    def has_private_repository(self):
+    def has_private_repository(self): 
         return db.session.query(
             Repository.query.filter_by(owner_id=self.id, access_type='private').exists()
         ).scalar()
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+
+class NIRRecord(db.Model):
+    __tablename__ = 'nir_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    patient_name = db.Column(db.String(200), nullable=False)
+    birth_date = db.Column(db.Date, nullable=True)
+    gender = db.Column(db.String(1), nullable=True)
+    susfacil = db.Column(db.String(50), nullable=True)
+    
+    admission_date = db.Column(db.Date, nullable=False)
+    entry_type = db.Column(db.String(50), nullable=True)
+    admission_type = db.Column(db.String(50), nullable=True)
+    admitted_from_origin = db.Column(db.String(10), nullable=True)
+    
+    procedure_code = db.Column(db.String(20), nullable=True)
+    surgical_description = db.Column(db.Text, nullable=True)
+    
+    responsible_doctor = db.Column(db.String(100), nullable=True)
+    main_cid = db.Column(db.String(10), nullable=True)
+    sus_number = db.Column(db.String(50), nullable=True)
+    aih = db.Column(db.String(50), nullable=True)
+    
+    scheduling_date = db.Column(db.Date, nullable=True)
+    discharge_type = db.Column(db.String(50), nullable=True)
+    discharge_date = db.Column(db.Date, nullable=True)
+    total_days_admitted = db.Column(db.Integer, nullable=True)
+    
+    cancelled = db.Column(db.String(10), nullable=True)
+    cancellation_reason = db.Column(db.Text, nullable=True)
+    criticized = db.Column(db.String(10), nullable=True)
+    billed = db.Column(db.String(10), nullable=True)
+    status = db.Column(db.String(50), nullable=True)
+    observation = db.Column(db.Text, nullable=True)
+    rule = db.Column(db.String(100), nullable=True)
+    
+    day = db.Column(db.Integer, nullable=True)
+    month = db.Column(db.String(20), nullable=True)
+    operator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    last_modified = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    operator = db.relationship('User', back_populates='nir_records')
+    
+    def __repr__(self):
+        return f'<NIRRecord {self.id}: {self.patient_name}>'
     
         
 class Form(db.Model):

@@ -3,7 +3,6 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Hero Section -->
     <div class="row mb-5">
         <div class="col-12">
             <div class="hero-card bg-gradient-primary text-white rounded-4 shadow-lg">
@@ -32,7 +31,7 @@
                                     </div>
                                     <div class="col-4">
                                         <div class="stat-item">
-                                            <h3 class="fw-bold mb-0">3</h3>
+                                            <h3 class="fw-bold mb-0">4</h3>
                                             <small class="opacity-75">Módulos</small>
                                         </div>
                                     </div>
@@ -46,7 +45,6 @@
     </div>
     {% include 'partials/_flash_messages.html' %}
     
-    <!-- Quick Actions Section -->
     <div class="row mb-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -54,12 +52,44 @@
                     <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>
                     Módulos do Sistema
                 </h3>
-                <span class="badge bg-light text-dark px-3 py-2">3 módulos disponíveis</span>
+                <span class="badge bg-light text-dark px-3 py-2">4 módulos disponíveis</span>
             </div>
         </div>
     </div>
 
     <div class="row g-4 mb-5">
+        <!-- NIR -->
+        <div class="col-lg-4 col-md-6">
+            <div class="feature-card h-100 position-relative overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="feature-header mb-3">
+                        <div class="feature-icon bg-danger bg-opacity-10 rounded-3 p-3 mb-3 d-inline-flex">
+                            <i class="bi bi-hospital text-danger fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">NIR - Internações</h5>
+                        <p class="text-muted mb-3">Gerencie registros de Notificação de Internação Regulatória e controle hospitalar</p>
+                    </div>
+                    <div class="feature-actions">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('nir.new_record') }}" 
+                               class="btn btn-danger d-flex align-items-center justify-content-center">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Novo Registro
+                            </a>
+                            <a href="{{ url_for('nir.list_records') }}" 
+                               class="btn btn-outline-danger d-flex align-items-center justify-content-center">
+                                <i class="bi bi-list-ul me-2"></i>
+                                Ver Registros
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-decoration position-absolute top-0 end-0 opacity-10">
+                    <i class="bi bi-hospital" style="font-size: 8rem;"></i>
+                </div>
+            </div>
+        </div>
+
         <!-- Repositório de Arquivos -->
         <div class="col-lg-4 col-md-6">
             <div class="feature-card h-100 position-relative overflow-hidden">
@@ -144,7 +174,7 @@
             </div>
         </div>
     </div>
-    <!-- Notices Section -->
+    <!-- Notices -->
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -282,7 +312,6 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    // Enhanced animations for feature cards
     document.addEventListener('DOMContentLoaded', function () {
         const featureCards = document.querySelectorAll('.feature-card');
         const observerOptions = {

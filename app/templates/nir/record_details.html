@@ -1,0 +1,315 @@
+
+{% extends "navbar.html" %}
+{% block title %}Detalhes do Registro NIR #{{ record.id }}{% endblock %}
+
+{% block content %}
+<div class="nir-container">
+    {% include 'partials/_flash_messages.html' %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-10">
+                    <!-- Header -->
+                    <div class="nir-header">
+                        <h1>
+                            <i class="bi bi-hospital"></i>
+                            Registro NIR #{{ record.id }}
+                        </h1>
+                        <p>{{ record.patient_name }}</p>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-3">
+                            <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary me-2">
+                                <i class="bi bi-arrow-left me-2"></i>Voltar
+                            </a>
+                            <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" class="btn btn-warning me-2">
+                                <i class="bi bi-pencil me-2"></i>Editar
+                            </a>
+                            <button class="btn btn-danger" onclick="deleteRecord({{ record.id }})">
+                                <i class="bi bi-trash me-2"></i>Excluir
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Details Card -->
+                    <div class="nir-card card shadow-lg border-0">
+                        <div class="card-body">
+                            <!-- Dados do Paciente -->
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-person-circle"></i>Dados do Paciente
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Nome do Paciente</label>
+                                        <p class="fw-bold">{{ record.patient_name }}</p>
+                                    </div>
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Data de Nascimento</label>
+                                        <p>{{ record.birth_date.strftime('%d/%m/%Y') if record.birth_date else '-' }}</p>
+                                    </div>
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Sexo</label>
+                                        <p>
+                                            {% if record.gender == 'M' %}
+                                            <span class="nir-badge badge bg-primary">Masculino</span>
+                                            {% elif record.gender == 'F' %}
+                                            <span class="nir-badge badge bg-danger">Feminino</span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">SUSFacil</label>
+                                        <p class="text-monospace">{{ record.susfacil or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Número SUS</label>
+                                        <p class="text-monospace">{{ record.sus_number or '-' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dados da Internação -->
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-clipboard-data"></i>Dados da Internação
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Data de Internação</label>
+                                        <p class="fw-bold">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Tipo de Entrada</label>
+                                        <p>
+                                            {% if record.entry_type %}
+                                            <span class="nir-badge badge bg-{% if record.entry_type == 'URGENCIA' %}danger{% else %}primary{% endif %}">
+                                                {{ record.entry_type }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Tipo de Internação</label>
+                                        <p>
+                                            {% if record.admission_type %}
+                                            <span class="nir-badge badge bg-{% if record.admission_type == 'CIRURGICO' %}warning{% else %}info{% endif %}">
+                                                {{ record.admission_type }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Internado na Origem</label>
+                                        <p>
+                                            {% if record.admitted_from_origin %}
+                                            <span class="nir-badge badge bg-{% if record.admitted_from_origin == 'SIM' %}success{% else %}secondary{% endif %}">
+                                                {{ record.admitted_from_origin }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">AIH</label>
+                                        <p class="text-monospace">{{ record.aih or '-' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Procedimento -->
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-activity"></i>Procedimento
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Código do Procedimento</label>
+                                        <p class="text-monospace">{{ record.procedure_code or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-8 nir-detail-item">
+                                        <label class="form-label">Descrição Cirúrgica</label>
+                                        <p>{{ record.surgical_description or '-' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Informações Médicas -->
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-heart-pulse"></i>Informações Médicas
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Médico Responsável</label>
+                                        <p>{{ record.responsible_doctor or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">CID Principal</label>
+                                        <p class="text-monospace">{{ record.main_cid or '-' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Agendamento e Alta -->
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-calendar-check"></i>Agendamento e Alta
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Data de Agendamento</label>
+                                        <p>{{ record.scheduling_date.strftime('%d/%m/%Y') if record.scheduling_date else '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Tipo de Alta</label>
+                                        <p>
+                                            {% if record.discharge_type %}
+                                            <span class="nir-badge badge bg-{% if record.discharge_type == 'OBITO' %}dark{% else %}success{% endif %}">
+                                                {{ record.discharge_type }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Data da Alta</label>
+                                        <p>{{ record.discharge_date.strftime('%d/%m/%Y') if record.discharge_date else '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Total de Dias Internado</label>
+                                        <p>
+                                            {% if record.total_days_admitted %}
+                                            <span class="nir-badge badge bg-info">{{ record.total_days_admitted }} dias</span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status e Controle -->
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-gear"></i>Status e Controle
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Cancelado</label>
+                                        <p>
+                                            {% if record.cancelled == 'SIM' %}
+                                            <span class="nir-badge badge bg-danger">Sim</span>
+                                            {% else %}
+                                            <span class="nir-badge badge bg-success">Não</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    {% if record.cancelled == 'SIM' %}
+                                    <div class="col-md-9 nir-detail-item">
+                                        <label class="form-label">Motivo do Cancelamento</label>
+                                        <p>{{ record.cancellation_reason or '-' }}</p>
+                                    </div>
+                                    {% endif %}
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Criticado</label>
+                                        <p>
+                                            {% if record.criticized %}
+                                            <span class="nir-badge badge bg-{% if record.criticized == 'SIM' %}warning{% else %}success{% endif %}">
+                                                {{ record.criticized }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Faturado</label>
+                                        <p>
+                                            {% if record.billed %}
+                                            <span class="nir-badge badge bg-{% if record.billed == 'SIM' %}success{% else %}secondary{% endif %}">
+                                                {{ record.billed }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Status</label>
+                                        <p>
+                                            {% if record.status %}
+                                            <span class="nir-badge badge bg-{% if record.status == 'FINALIZADO' %}success{% else %}warning{% endif %}">
+                                                {{ record.status }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 nir-detail-item">
+                                        <label class="form-label">Regra</label>
+                                        <p>{{ record.rule or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-9 nir-detail-item">
+                                        <label class="form-label">Observação</label>
+                                        <p>{{ record.observation or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Operador</label>
+                                        <p class="fw-bold">{{ record.operator.name }}</p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Data de Criação</label>
+                                        <p>{{ record.creation_date.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function deleteRecord(recordId) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = `/nir/excluir/${recordId}`;
+
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

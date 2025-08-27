@@ -16,6 +16,7 @@ from app.routes.util import util_bp, format_date_filter
 from app.routes.form import form_bp
 from app.routes.repository import repository_bp
 from app.routes.training import training_bp
+from app.routes.nir import nir_bp
 
 load_dotenv()
 
@@ -44,6 +45,7 @@ def registry_routes(app):
     app.register_blueprint(form_bp)
     app.register_blueprint(repository_bp)
     app.register_blueprint(training_bp)
+    app.register_blueprint(nir_bp)
 
 def login_config(app):
     login_manager = LoginManager()

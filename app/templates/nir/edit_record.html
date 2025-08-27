@@ -1,0 +1,262 @@
+{% extends "navbar.html" %}
+{% block title %}Editar Registro NIR #{{ record.id }}{% endblock %}
+
+{% block content %}
+<div class="nir-container">
+    {% include 'partials/_flash_messages.html' %}
+        <div class="container">
+            <!-- Header -->
+            <div class="nir-header">
+                <h1>
+                    <i class="bi bi-hospital"></i>
+                    Editar Registro NIR
+                </h1>
+                <p>Atualize as informações do registro #{{ record.id }}</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="nir-card card shadow-lg border-0">
+                <div class="card-header">
+                    <h5>
+                        <i class="bi bi-pencil-square"></i>
+                        Formulário de Edição
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}">
+                        <!-- Dados do Paciente -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-person-circle"></i>
+                                Dados do Paciente
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="nir-form-label">Nome do Paciente *</label>
+                                    <input type="text" class="form-control nir-form-control" name="patient_name" value="{{ record.patient_name }}" required placeholder="Nome completo do paciente">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data de Nascimento</label>
+                                    <input type="date" class="form-control nir-form-control" name="birth_date" value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Sexo</label>
+                                    <select class="form-select nir-form-control" name="gender">
+                                        <option value="">Selecione</option>
+                                        <option value="M" {% if record.gender == 'M' %}selected{% endif %}>Masculino</option>
+                                        <option value="F" {% if record.gender == 'F' %}selected{% endif %}>Feminino</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="nir-form-label">SUSFacil</label>
+                                    <input type="text" class="form-control nir-form-control" name="susfacil" value="{{ record.susfacil or '' }}" placeholder="Número SUSFacil">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Número SUS</label>
+                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}" placeholder="Cartão SUS">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dados da Internação -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-clipboard-data"></i>
+                                Dados da Internação
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data de Internação *</label>
+                                    <input type="date" class="form-control nir-form-control" name="admission_date" value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Tipo de Entrada</label>
+                                    <select class="form-select nir-form-control" name="entry_type">
+                                        <option value="">Selecione</option>
+                                        <option value="URGENCIA" {% if record.entry_type == 'URGENCIA' %}selected{% endif %}>Urgência</option>
+                                        <option value="ELETIVO" {% if record.entry_type == 'ELETIVO' %}selected{% endif %}>Eletivo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Tipo de Internação</label>
+                                    <select class="form-select nir-form-control" name="admission_type">
+                                        <option value="">Selecione</option>
+                                        <option value="CLINICO" {% if record.admission_type == 'CLINICO' %}selected{% endif %}>Clínico</option>
+                                        <option value="CIRURGICO" {% if record.admission_type == 'CIRURGICO' %}selected{% endif %}>Cirúrgico</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">Internado na Origem</label>
+                                    <select class="form-select nir-form-control" name="admitted_from_origin">
+                                        <option value="">Selecione</option>
+                                        <option value="SIM" {% if record.admitted_from_origin == 'SIM' %}selected{% endif %}>Sim</option>
+                                        <option value="NAO" {% if record.admitted_from_origin == 'NAO' %}selected{% endif %}>Não</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">AIH</label>
+                                    <input type="text" class="form-control nir-form-control" name="aih" value="{{ record.aih or '' }}" placeholder="Número da AIH">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Procedimento -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-activity"></i>
+                                Procedimento
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Código do Procedimento</label>
+                                    <input type="text" class="form-control nir-form-control" name="procedure_code" value="{{ record.procedure_code or '' }}" placeholder="Código SIGTAP">
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="nir-form-label">Descrição Cirúrgica</label>
+                                    <input type="text" class="form-control nir-form-control" name="surgical_description" value="{{ record.surgical_description or '' }}" placeholder="Descrição do procedimento">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Médicas -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-heart-pulse"></i>
+                                Informações Médicas
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">Médico Responsável</label>
+                                    <input type="text" class="form-control nir-form-control" name="responsible_doctor" value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">CID Principal</label>
+                                    <input type="text" class="form-control nir-form-control" name="main_cid" value="{{ record.main_cid or '' }}" placeholder="CID-10">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agendamento e Alta -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-calendar-check"></i>
+                                Agendamento e Alta
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data de Agendamento</label>
+                                    <input type="date" class="form-control nir-form-control" name="scheduling_date" value="{{ record.scheduling_date.strftime('%Y-%m-%d') if record.scheduling_date else '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Tipo de Alta</label>
+                                    <select class="form-select nir-form-control" name="discharge_type">
+                                        <option value="">Selecione</option>
+                                        <option value="ALTA MELHORADA" {% if record.discharge_type == 'ALTA MELHORADA' %}selected{% endif %}>Alta Melhorada</option>
+                                        <option value="ALTA A PEDIDO" {% if record.discharge_type == 'ALTA A PEDIDO' %}selected{% endif %}>Alta a Pedido</option>
+                                        <option value="TRANSFERENCIA" {% if record.discharge_type == 'TRANSFERENCIA' %}selected{% endif %}>Transferência</option>
+                                        <option value="OBITO" {% if record.discharge_type == 'OBITO' %}selected{% endif %}>Óbito</option>
+                                        <option value="EVASAO" {% if record.discharge_type == 'EVASAO' %}selected{% endif %}>Evasão</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Data da Alta</label>
+                                    <input type="date" class="form-control nir-form-control" name="discharge_date" value="{{ record.discharge_date.strftime('%Y-%m-%d') if record.discharge_date else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status e Controle -->
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-gear"></i>
+                                Status e Controle
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Cancelado</label>
+                                    <select class="form-select nir-form-control" name="cancelled" id="cancelledSelect">
+                                        <option value="NAO" {% if record.cancelled == 'NAO' or not record.cancelled %}selected{% endif %}>Não</option>
+                                        <option value="SIM" {% if record.cancelled == 'SIM' %}selected{% endif %}>Sim</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-9" id="cancellationReasonDiv" {% if record.cancelled != 'SIM' %}style="display: none;"{% endif %}>
+                                    <label class="nir-form-label">Motivo do Cancelamento</label>
+                                    <input type="text" class="form-control nir-form-control" name="cancellation_reason" value="{{ record.cancellation_reason or '' }}" placeholder="Descreva o motivo do cancelamento">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Criticado</label>
+                                    <select class="form-select nir-form-control" name="criticized">
+                                        <option value="">Selecione</option>
+                                        <option value="SIM" {% if record.criticized == 'SIM' %}selected{% endif %}>Sim</option>
+                                        <option value="NAO" {% if record.criticized == 'NAO' %}selected{% endif %}>Não</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Faturado</label>
+                                    <select class="form-select nir-form-control" name="billed">
+                                        <option value="">Selecione</option>
+                                        <option value="SIM" {% if record.billed == 'SIM' %}selected{% endif %}>Sim</option>
+                                        <option value="NAO" {% if record.billed == 'NAO' %}selected{% endif %}>Não</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Status</label>
+                                    <select class="form-select nir-form-control" name="status">
+                                        <option value="PENDENTE" {% if record.status == 'PENDENTE' or not record.status %}selected{% endif %}>Pendente</option>
+                                        <option value="FINALIZADO" {% if record.status == 'FINALIZADO' %}selected{% endif %}>Finalizado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="nir-form-label">Regra</label>
+                                    <input type="text" class="form-control nir-form-control" name="rule" value="{{ record.rule or '' }}" placeholder="Regra aplicada">
+                                </div>
+                                <div class="col-12">
+                                    <label class="nir-form-label">Observação</label>
+                                    <textarea class="form-control nir-form-control" name="observation" rows="3" placeholder="Observações adicionais">{{ record.observation or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="nir-action-buttons">
+                            <a href="{{ url_for('nir.record_details', record_id=record.id) }}" class="btn nir-btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn nir-btn-primary">
+                                <i class="bi bi-save me-2"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cancelledSelect = document.getElementById('cancelledSelect');
+        const cancellationReasonDiv = document.getElementById('cancellationReasonDiv');
+        const cancellationReasonInput = cancellationReasonDiv.querySelector('input[name="cancellation_reason"]');
+        
+        function toggleCancellationReason() {
+            if (cancelledSelect.value === 'SIM') {
+                cancellationReasonDiv.style.display = 'block';
+                cancellationReasonInput.required = true;
+            } else {
+                cancellationReasonDiv.style.display = 'none';
+                cancellationReasonInput.required = false;
+                cancellationReasonInput.value = ''; // Limpa o campo quando oculto
+            }
+        }
+        
+        // Controlar mudanças no select
+        cancelledSelect.addEventListener('change', toggleCancellationReason);
+        
+        // Executar na inicialização
+        toggleCancellationReason();
+    });
+</script>
+{% endblock %}
