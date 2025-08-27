@@ -38,10 +38,8 @@
                 <div class="manage-users-filters-left">
                     <div class="manage-users-search-box">
                         <i class="bi bi-search"></i>
-                        <input type="text" 
-                               id="searchInput" 
-                               placeholder="Pesquisar por nome ou usuário..." 
-                               value="{{ request.args.get('search', '') }}">
+                        <input type="text" id="searchInput" placeholder="Pesquisar por nome ou usuário..."
+                            value="{{ request.args.get('search', '') }}">
                     </div>
                 </div>
                 <div class="manage-users-filters-right">
@@ -49,8 +47,10 @@
                         <label class="manage-users-filter-label">Status:</label>
                         <select id="statusFilter" class="form-select">
                             <option value="" {% if not request.args.get('status') %}selected{% endif %}>Todos</option>
-                            <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Liberados</option>
-                            <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Bloqueados</option>
+                            <option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>
+                                Liberados</option>
+                            <option value="inactive" {% if request.args.get('status')=='inactive' %}selected{% endif %}>
+                                Bloqueados</option>
                         </select>
                     </div>
 
@@ -58,19 +58,26 @@
                         <label class="manage-users-filter-label">Permissão:</label>
                         <select id="profileFilter" class="form-select">
                             <option value="" {% if not request.args.get('profile') %}selected{% endif %}>Todas</option>
-                            <option value="ADMIN" {% if request.args.get('profile') == 'ADMIN' %}selected{% endif %}>Administrador</option>
-                            <option value="CRIAR_RELATORIOS" {% if request.args.get('profile') == 'CRIAR_RELATORIOS' %}selected{% endif %}>Criar Relatórios</option>
-                            <option value="VER_RELATORIOS" {% if request.args.get('profile') == 'VER_RELATORIOS' %}selected{% endif %}>Ver Relatórios</option>
+                            <option value="ADMIN" {% if request.args.get('profile')=='ADMIN' %}selected{% endif %}>
+                                Administrador</option>
+                            <option value="CRIAR_RELATORIOS" {% if request.args.get('profile')=='CRIAR_RELATORIOS'
+                                %}selected{% endif %}>Criar Relatórios</option>
+                            <option value="VER_RELATORIOS" {% if request.args.get('profile')=='VER_RELATORIOS'
+                                %}selected{% endif %}>Ver Relatórios</option>
                         </select>
                     </div>
 
                     <div class="manage-users-filter-group">
                         <label class="manage-users-filter-label">Ordenar por:</label>
                         <select id="sortFilter" class="form-select">
-                            <option value="date_desc" {% if request.args.get('sort', 'date_desc') == 'date_desc' %}selected{% endif %}>Data (Mais recente)</option>
-                            <option value="date_asc" {% if request.args.get('sort') == 'date_asc' %}selected{% endif %}>Data (Mais antigo)</option>
-                            <option value="name_asc" {% if request.args.get('sort') == 'name_asc' %}selected{% endif %}>Nome (A-Z)</option>
-                            <option value="name_desc" {% if request.args.get('sort') == 'name_desc' %}selected{% endif %}>Nome (Z-A)</option>
+                            <option value="date_desc" {% if request.args.get('sort', 'date_desc' )=='date_desc'
+                                %}selected{% endif %}>Data (Mais recente)</option>
+                            <option value="date_asc" {% if request.args.get('sort')=='date_asc' %}selected{% endif %}>
+                                Data (Mais antigo)</option>
+                            <option value="name_asc" {% if request.args.get('sort')=='name_asc' %}selected{% endif %}>
+                                Nome (A-Z)</option>
+                            <option value="name_desc" {% if request.args.get('sort')=='name_desc' %}selected{% endif %}>
+                                Nome (Z-A)</option>
                         </select>
                     </div>
 
@@ -123,10 +130,8 @@
                     <tbody>
                         {% for user in users %}
                         <tr class="user-row" data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
-                            data-user-id="{{ user.id }}" 
-                            data-user-nome="{{ user.name }}"
-                            data-user-usuario="{{ user.username }}" 
-                            data-user-email="{{ user.email | default('') }}"
+                            data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
+                            data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
                             data-user-profile="{{ user.profile | join(',') if user.profile is iterable and user.profile is not string else (user.profile if user.profile else '') }}"
                             data-user-is-active="{{ user.is_active | tojson }}">
 
@@ -178,7 +183,8 @@
             <nav aria-label="Navegação de usuários">
                 <ul class="pagination">
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
+                        <a class="page-link"
+                            href="{{ url_for('admin.users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             <i class="bi bi-chevron-left me-1"></i>
                             Anterior
                         </a>
@@ -186,7 +192,9 @@
                     {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                     {% if p %}
                     <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">{{ p }}</a>
+                        <a class="page-link"
+                            href="{{ url_for('admin.users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">{{
+                            p }}</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -195,7 +203,8 @@
                     {% endif %}
                     {% endfor %}
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
+                        <a class="page-link"
+                            href="{{ url_for('admin.users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             Próxima
                             <i class="bi bi-chevron-right ms-1"></i>
                         </a>
@@ -208,7 +217,8 @@
 </div>
 
 <!-- Modal Criar Usuário -->
-<div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel" aria-hidden="true">
+<div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ url_for('admin.users') }}" class="modal-content">
             <div class="modal-header">
@@ -223,11 +233,11 @@
                     <div class="col-md-6 mb-3">
                         <label for="name" class="form-label">
                             <i class="bi bi-person-fill"></i>
-                            Nome completo 
+                            Nome completo
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control" id="name" name="name" required 
-                               placeholder="Digite o nome completo">
+                        <input type="text" class="form-control" id="name" name="name" required
+                            placeholder="Digite o nome completo">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="username" class="form-label">
@@ -235,32 +245,32 @@
                             Nome de usuário
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control" id="username" name="username" required 
-                               placeholder="Digite o username">
+                        <input type="text" class="form-control" id="username" name="username" required
+                            placeholder="Digite o username">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="email" class="form-label">
                         <i class="bi bi-envelope-fill"></i>
-                        E-mail 
+                        E-mail
                         <span class="text-danger">*</span>
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">
                             <i class="bi bi-envelope-fill"></i>
                         </span>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               placeholder="email@dominio.com" required>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com"
+                            required>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">
                         <i class="bi bi-key-fill"></i>
-                        Senha 
+                        Senha
                         <span class="text-danger">*</span>
                     </label>
-                    <input type="password" class="form-control" id="password" name="password" required 
-                           placeholder="Digite uma senha segura">
+                    <input type="password" class="form-control" id="password" name="password" required
+                        placeholder="Digite uma senha segura">
                 </div>
                 <fieldset>
                     <legend>
@@ -270,16 +280,16 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="profile" 
-                                       value="ADMIN" id="perm_admin_criar">
+                                <input class="form-check-input" type="checkbox" name="profile" value="ADMIN"
+                                    id="perm_admin_criar">
                                 <label class="form-check-label" for="perm_admin_criar">
                                     <i class="bi bi-shield-lock-fill text-danger"></i>
                                     Administrador
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="profile" 
-                                       value="CRIAR_RELATORIOS" id="perm_criar_criar">
+                                <input class="form-check-input" type="checkbox" name="profile" value="CRIAR_RELATORIOS"
+                                    id="perm_criar_criar">
                                 <label class="form-check-label" for="perm_criar_criar">
                                     <i class="bi bi-pencil-fill text-success"></i>
                                     Criar relatórios
@@ -288,8 +298,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="profile" 
-                                       value="VER_RELATORIOS" id="perm_ver_criar">
+                                <input class="form-check-input" type="checkbox" name="profile" value="VER_RELATORIOS"
+                                    id="perm_ver_criar">
                                 <label class="form-check-label" for="perm_ver_criar">
                                     <i class="bi bi-eye-fill text-info"></i>
                                     Ver relatórios
@@ -374,16 +384,16 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit" 
-                                               value="ADMIN" id="perm_admin_edit" role="switch">
+                                        <input class="form-check-input" type="checkbox" name="profile_edit"
+                                            value="ADMIN" id="perm_admin_edit" role="switch">
                                         <label class="form-check-label" for="perm_admin_edit">
                                             <i class="bi bi-shield-lock-fill text-danger"></i>
                                             Administrador
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit" 
-                                               value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
+                                        <input class="form-check-input" type="checkbox" name="profile_edit"
+                                            value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
                                         <label class="form-check-label" for="perm_criar_edit">
                                             <i class="bi bi-pencil-fill text-success"></i>
                                             Criar relatórios
@@ -392,8 +402,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit" 
-                                               value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
+                                        <input class="form-check-input" type="checkbox" name="profile_edit"
+                                            value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
                                         <label class="form-check-label" for="perm_ver_edit">
                                             <i class="bi bi-eye-fill text-info"></i>
                                             Ver relatórios
@@ -423,8 +433,8 @@
                                 <span class="input-group-text">
                                     <i class="bi bi-key-fill"></i>
                                 </span>
-                                <input type="password" class="form-control" name="nova_senha" 
-                                       id="novaSenhaAdminInput" placeholder="Digite a nova senha" required>
+                                <input type="password" class="form-control" name="nova_senha" id="novaSenhaAdminInput"
+                                    placeholder="Digite a nova senha" required>
                                 <button class="btn btn-primary" type="submit">
                                     <i class="bi bi-key-fill"></i>
                                     Redefinir
@@ -446,7 +456,7 @@
                     <div class="action-item">
                         <div class="action-label">Remover Usuário:</div>
                         <form id="formDeletarUsuario" method="POST" action=""
-                              onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
+                            onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
                             <button class="btn btn-danger w-100" type="submit">
                                 <i class="bi bi-trash3-fill"></i>
                                 Deletar Usuário
@@ -528,7 +538,7 @@
         }
 
         if (clearFiltersButton) {
-            clearFiltersButton.addEventListener('click', function() {
+            clearFiltersButton.addEventListener('click', function () {
                 searchInput.value = '';
                 statusFilter.value = '';
                 profileFilter.value = '';
@@ -539,15 +549,15 @@
 
         // Real-time search with server filtering but no page reload
         let searchTimeout;
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
+            searchTimeout = setTimeout(function () {
                 filterUsersWithAjax();
             }, 500); // Wait 500ms after user stops typing
         });
 
         // Allow pressing Enter to trigger filter immediately
-        searchInput.addEventListener('keypress', function(event) {
+        searchInput.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 clearTimeout(searchTimeout);
                 filterUsersWithAjax();
@@ -555,11 +565,11 @@
         });
 
         // Status and profile filters also trigger server search
-        statusFilter.addEventListener('change', function() {
+        statusFilter.addEventListener('change', function () {
             filterUsersWithAjax();
         });
-        
-        profileFilter.addEventListener('change', function() {
+
+        profileFilter.addEventListener('change', function () {
             filterUsersWithAjax();
         });
 
@@ -568,10 +578,10 @@
             const statusValue = statusFilter.value;
             const profileValue = profileFilter.value;
             const sortValue = sortFilter.value;
-            
+
             // Show loading state
             showLoadingState();
-            
+
             // Build URL with filters
             const params = new URLSearchParams();
             if (searchTerm) params.set('search', searchTerm);
@@ -579,69 +589,57 @@
             if (profileValue) params.set('profile', profileValue);
             if (sortValue) params.set('sort', sortValue);
             params.set('ajax', '1'); // Flag to indicate AJAX request
-            
+
             const url = "{{ url_for('admin.users') }}?" + params.toString();
-            
+
             fetch(url, {
                 method: 'GET',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.text())
-            .then(html => {
-                // Parse the response to extract table content
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                const newTableContainer = doc.querySelector('.manage-users-table-container');
-                const newResultsInfo = doc.querySelector('.manage-users-results-info');
-                const newPagination = doc.querySelector('.manage-users-pagination');
-                
-                // Replace current content
-                if (newTableContainer) {
-                    document.querySelector('.manage-users-table-container').innerHTML = newTableContainer.innerHTML;
-                }
-                
-                if (newResultsInfo) {
-                    const currentResultsInfo = document.querySelector('.manage-users-results-info');
-                    if (currentResultsInfo) {
-                        currentResultsInfo.innerHTML = newResultsInfo.innerHTML;
-                        currentResultsInfo.style.display = 'block';
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the response to extract table content
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    const newTableContainer = doc.querySelector('.manage-users-table-container');
+                    const newResultsInfo = doc.querySelector('.manage-users-results-info');
+                    const newPagination = doc.querySelector('.manage-users-pagination');
+
+                    // Replace current content
+                    if (newTableContainer) {
+                        document.querySelector('.manage-users-table-container').innerHTML = newTableContainer.innerHTML;
                     }
-                }
-                
-                // Update or hide pagination
-                const currentPagination = document.querySelector('.manage-users-pagination');
-                if (newPagination && currentPagination) {
-                    currentPagination.innerHTML = newPagination.innerHTML;
-                    currentPagination.style.display = 'block';
-                } else if (currentPagination) {
-                    currentPagination.style.display = 'none';
-                }
-                
-                // Reattach modal event listeners to new rows
-                reattachModalListeners();
-                
-                // Add smooth transition to new rows
-                document.querySelectorAll('.user-row').forEach(function(row) {
-                    row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    row.style.opacity = '0';
-                    row.style.transform = 'translateY(20px)';
-                    
-                    setTimeout(() => {
-                        row.style.opacity = '1';
-                        row.style.transform = 'translateY(0)';
-                    }, 100);
+
+                    if (newResultsInfo) {
+                        const currentResultsInfo = document.querySelector('.manage-users-results-info');
+                        if (currentResultsInfo) {
+                            currentResultsInfo.innerHTML = newResultsInfo.innerHTML;
+                            currentResultsInfo.style.display = 'block';
+                        }
+                    }
+
+                    // Update or hide pagination
+                    const currentPagination = document.querySelector('.manage-users-pagination');
+                    if (newPagination && currentPagination) {
+                        currentPagination.innerHTML = newPagination.innerHTML;
+                        currentPagination.style.display = 'block';
+                    } else if (currentPagination) {
+                        currentPagination.style.display = 'none';
+                    }
+
+                    // Reattach modal event listeners to new rows
+                    reattachModalListeners();
+
+                    hideLoadingState();
+                })
+                .catch(error => {
+                    console.error('Erro ao filtrar usuários:', error);
+                    hideLoadingState();
+                    showErrorMessage('Erro ao carregar os usuários. Tente novamente.');
                 });
-                
-                hideLoadingState();
-            })
-            .catch(error => {
-                console.error('Erro ao filtrar usuários:', error);
-                hideLoadingState();
-                showErrorMessage('Erro ao carregar os usuários. Tente novamente.');
-            });
         }
 
         function showLoadingState() {
@@ -675,7 +673,7 @@
                 ${message}
             `;
             tableContainer.appendChild(errorDiv);
-            
+
             setTimeout(() => {
                 errorDiv.remove();
             }, 5000);
@@ -684,9 +682,9 @@
         function reattachModalListeners() {
             // Reattach click listeners to user rows for modal
             document.querySelectorAll('.user-row').forEach(row => {
-                row.addEventListener('click', function() {
+                row.addEventListener('click', function () {
                     const modal = new bootstrap.Modal(document.getElementById('infoUsuarioModal'));
-                    
+
                     // Trigger the modal show event with the clicked row as relatedTarget
                     const modalElement = document.getElementById('infoUsuarioModal');
                     const event = new Event('show.bs.modal');
@@ -695,22 +693,17 @@
                         enumerable: true
                     });
                     modalElement.dispatchEvent(event);
-                    
+
                     modal.show();
                 });
             });
         }
-        
+
         // Sort filter still uses URL because it requires server-side sorting
-        sortFilter.addEventListener('change', function() {
+        sortFilter.addEventListener('change', function () {
             applyUrlFilters();
         });
 
-
-        // Add smooth transitions to table rows
-        document.querySelectorAll('.user-row').forEach(function(row) {
-            row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        });
 
         infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
 
@@ -758,20 +751,20 @@
                         var iconClass = '';
                         var permText = p;
 
-                        if (p === 'ADMIN') { 
-                            badgeClass = 'badge-admin'; 
-                            iconClass = 'bi bi-shield-lock-fill'; 
+                        if (p === 'ADMIN') {
+                            badgeClass = 'badge-admin';
+                            iconClass = 'bi bi-shield-lock-fill';
                             permText = 'Administrador';
                         }
-                        else if (p === 'CRIAR_RELATORIOS') { 
-                            badgeClass = 'badge-create'; 
-                            iconClass = 'bi bi-pencil-fill'; 
-                            permText = 'Criar Relatórios'; 
+                        else if (p === 'CRIAR_RELATORIOS') {
+                            badgeClass = 'badge-create';
+                            iconClass = 'bi bi-pencil-fill';
+                            permText = 'Criar Relatórios';
                         }
-                        else if (p === 'VER_RELATORIOS') { 
-                            badgeClass = 'badge-view'; 
-                            iconClass = 'bi bi-eye-fill'; 
-                            permText = 'Ver Relatórios'; 
+                        else if (p === 'VER_RELATORIOS') {
+                            badgeClass = 'badge-view';
+                            iconClass = 'bi bi-eye-fill';
+                            permText = 'Ver Relatórios';
                         }
 
                         var badge = '<span class="permission-badge ' + badgeClass + '">';
