@@ -59,8 +59,51 @@ def users():
         flash("Usuário cadastrado com sucesso!", "success")
         return redirect(url_for("admin.users"))
 
-    page_get = request.args.get('page', 1, type=int)
-    pagination = User.query.order_by(User.name).paginate(page=page_get, per_page=10, error_out=False)
+    # Filtros
+    search_query = request.args.get('search', '').strip()
+    status_filter = request.args.get('status', '')
+    profile_filter = request.args.get('profile', '')
+    sort_option = request.args.get('sort', 'date_desc')
+    is_ajax = request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    # Query base
+    query = User.query
+    
+    # Aplicar filtro de busca
+    if search_query:
+        query = query.filter(
+            db.or_(
+                User.name.ilike(f'%{search_query}%'),
+                User.username.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # Aplicar filtro de status
+    if status_filter == 'active':
+        query = query.filter(User.is_active == True)
+    elif status_filter == 'inactive':
+        query = query.filter(User.is_active == False)
+    
+    # Aplicar filtro de perfil/permissão
+    if profile_filter:
+        query = query.filter(User.profile.ilike(f'%{profile_filter}%'))
+    
+    # Aplicar ordenação
+    if sort_option == 'date_asc':
+        query = query.order_by(User.id.asc())  # Usando ID como proxy para data de criação
+    elif sort_option == 'name_asc':
+        query = query.order_by(User.name.asc())
+    elif sort_option == 'name_desc':
+        query = query.order_by(User.name.desc())
+    else:  # date_desc (padrão)
+        query = query.order_by(User.id.desc())
+    
+    # Para requisições AJAX com filtros, mostrar mais resultados por página
+    per_page = 50 if is_ajax and (search_query or status_filter or profile_filter) else 10
+    
+    # Paginação
+    page_get = request.args.get('page', 1, type=int) if not is_ajax else 1
+    pagination = query.paginate(page=page_get, per_page=per_page, error_out=False)
     users_in_page = pagination.items
     
     return render_template("users.html", users=users_in_page, pagination=pagination)

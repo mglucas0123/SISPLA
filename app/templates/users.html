@@ -1,4 +1,3 @@
-
 {% extends "navbar.html" %}
 
 {% block title %}Gerenciar Usuários{% endblock %}
@@ -33,6 +32,73 @@
             </div>
         </div>
 
+        <!-- Filters Section -->
+        <div class="manage-users-filters">
+            <div class="manage-users-filters-content">
+                <div class="manage-users-filters-left">
+                    <div class="manage-users-search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" 
+                               id="searchInput" 
+                               placeholder="Pesquisar por nome ou usuário..." 
+                               value="{{ request.args.get('search', '') }}">
+                    </div>
+                </div>
+                <div class="manage-users-filters-right">
+                    <div class="manage-users-filter-group">
+                        <label class="manage-users-filter-label">Status:</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="" {% if not request.args.get('status') %}selected{% endif %}>Todos</option>
+                            <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Liberados</option>
+                            <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Bloqueados</option>
+                        </select>
+                    </div>
+
+                    <div class="manage-users-filter-group">
+                        <label class="manage-users-filter-label">Permissão:</label>
+                        <select id="profileFilter" class="form-select">
+                            <option value="" {% if not request.args.get('profile') %}selected{% endif %}>Todas</option>
+                            <option value="ADMIN" {% if request.args.get('profile') == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                            <option value="CRIAR_RELATORIOS" {% if request.args.get('profile') == 'CRIAR_RELATORIOS' %}selected{% endif %}>Criar Relatórios</option>
+                            <option value="VER_RELATORIOS" {% if request.args.get('profile') == 'VER_RELATORIOS' %}selected{% endif %}>Ver Relatórios</option>
+                        </select>
+                    </div>
+
+                    <div class="manage-users-filter-group">
+                        <label class="manage-users-filter-label">Ordenar por:</label>
+                        <select id="sortFilter" class="form-select">
+                            <option value="date_desc" {% if request.args.get('sort', 'date_desc') == 'date_desc' %}selected{% endif %}>Data (Mais recente)</option>
+                            <option value="date_asc" {% if request.args.get('sort') == 'date_asc' %}selected{% endif %}>Data (Mais antigo)</option>
+                            <option value="name_asc" {% if request.args.get('sort') == 'name_asc' %}selected{% endif %}>Nome (A-Z)</option>
+                            <option value="name_desc" {% if request.args.get('sort') == 'name_desc' %}selected{% endif %}>Nome (Z-A)</option>
+                        </select>
+                    </div>
+
+                    <button id="applyFilters" class="manage-users-apply-btn" title="Aplicar filtros">
+                        <i class="bi bi-search"></i>
+                        Filtrar
+                    </button>
+
+                    <button id="clearFilters" class="manage-users-clear-btn" title="Limpar filtros">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Info -->
+            {% if users %}
+            <div class="manage-users-results-info">
+                <div class="manage-users-results-text">
+                    <i class="bi bi-info-circle"></i>
+                    Exibindo {{ users|length }} usuário(s)
+                    {% if request.args.get('search') or request.args.get('status') or request.args.get('profile') %}
+                    com os filtros aplicados
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Users Table Section -->
         <div class="manage-users-section">
             <div class="manage-users-table-container">
@@ -44,7 +110,7 @@
                                 <i class="bi bi-person-badge me-2"></i>
                                 Usuário
                             </th>
-                            <th>
+                            <th style="text-align: center;">
                                 <i class="bi bi-at me-2"></i>
                                 Login
                             </th>
@@ -112,7 +178,7 @@
             <nav aria-label="Navegação de usuários">
                 <ul class="pagination">
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num) }}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             <i class="bi bi-chevron-left me-1"></i>
                             Anterior
                         </a>
@@ -120,7 +186,7 @@
                     {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                     {% if p %}
                     <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=p) }}">{{ p }}</a>
+                        <a class="page-link" href="{{ url_for('admin.users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">{{ p }}</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -129,7 +195,7 @@
                     {% endif %}
                     {% endfor %}
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num) }}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             Próxima
                             <i class="bi bi-chevron-right ms-1"></i>
                         </a>
@@ -279,7 +345,7 @@
                             <p class="info-value" id="modalUserEmail">-</p>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Status do Usuário:</div>
+                            <div class="info-label">Status da Usuário:</div>
                             <div id="modalUserStatusDisplay">
                                 <span class="permission-badge badge-none">Carregando...</span>
                             </div>
@@ -349,7 +415,7 @@
                         <i class="bi bi-gear-wide-connected"></i>
                         Outras Ações
                     </h6>
-                    
+
                     <div class="action-item">
                         <div class="action-label">Redefinir Senha do Usuário:</div>
                         <form id="formAlterarSenhaAdmin" method="POST" action="">
@@ -405,6 +471,12 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var infoUsuarioModalElement = document.getElementById('infoUsuarioModal');
+        var searchInput = document.getElementById('searchInput');
+        var statusFilter = document.getElementById('statusFilter');
+        var profileFilter = document.getElementById('profileFilter');
+        var sortFilter = document.getElementById('sortFilter');
+        var applyFiltersButton = document.getElementById('applyFilters');
+        var clearFiltersButton = document.getElementById('clearFilters');
 
         var modalTitle = infoUsuarioModalElement.querySelector('#infoUsuarioModalLabel');
         var modalUserNameSpan = infoUsuarioModalElement.querySelector('#modalUserName');
@@ -422,7 +494,224 @@
         var modalUserStatusDisplay = infoUsuarioModalElement.querySelector('#modalUserStatusDisplay');
         var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
         var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
+
+        function applyUrlFilters() {
+            var url = "{{ url_for('admin.users') }}?";
+            var queryParams = [];
+
+            var searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                queryParams.push("search=" + encodeURIComponent(searchTerm));
+            }
+
+            var statusValue = statusFilter.value;
+            if (statusValue) {
+                queryParams.push("status=" + statusValue);
+            }
+
+            var profileValue = profileFilter.value;
+            if (profileValue) {
+                queryParams.push("profile=" + profileValue);
+            }
+
+            var sortValue = sortFilter.value;
+            if (sortValue) {
+                queryParams.push("sort=" + sortValue);
+            }
+
+            url += queryParams.join('&');
+            window.location.href = url;
+        }
+
+        if (applyFiltersButton) {
+            applyFiltersButton.addEventListener('click', applyUrlFilters);
+        }
+
+        if (clearFiltersButton) {
+            clearFiltersButton.addEventListener('click', function() {
+                searchInput.value = '';
+                statusFilter.value = '';
+                profileFilter.value = '';
+                sortFilter.value = 'date_desc'; // Reset to default sort
+                applyUrlFilters();
+            });
+        }
+
+        // Real-time search with server filtering but no page reload
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterUsersWithAjax();
+            }, 500); // Wait 500ms after user stops typing
+        });
+
+        // Allow pressing Enter to trigger filter immediately
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                filterUsersWithAjax();
+            }
+        });
+
+        // Status and profile filters also trigger server search
+        statusFilter.addEventListener('change', function() {
+            filterUsersWithAjax();
+        });
         
+        profileFilter.addEventListener('change', function() {
+            filterUsersWithAjax();
+        });
+
+        function filterUsersWithAjax() {
+            const searchTerm = searchInput.value.trim();
+            const statusValue = statusFilter.value;
+            const profileValue = profileFilter.value;
+            const sortValue = sortFilter.value;
+            
+            // Show loading state
+            showLoadingState();
+            
+            // Build URL with filters
+            const params = new URLSearchParams();
+            if (searchTerm) params.set('search', searchTerm);
+            if (statusValue) params.set('status', statusValue);
+            if (profileValue) params.set('profile', profileValue);
+            if (sortValue) params.set('sort', sortValue);
+            params.set('ajax', '1'); // Flag to indicate AJAX request
+            
+            const url = "{{ url_for('admin.users') }}?" + params.toString();
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Parse the response to extract table content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newTableContainer = doc.querySelector('.manage-users-table-container');
+                const newResultsInfo = doc.querySelector('.manage-users-results-info');
+                const newPagination = doc.querySelector('.manage-users-pagination');
+                
+                // Replace current content
+                if (newTableContainer) {
+                    document.querySelector('.manage-users-table-container').innerHTML = newTableContainer.innerHTML;
+                }
+                
+                if (newResultsInfo) {
+                    const currentResultsInfo = document.querySelector('.manage-users-results-info');
+                    if (currentResultsInfo) {
+                        currentResultsInfo.innerHTML = newResultsInfo.innerHTML;
+                        currentResultsInfo.style.display = 'block';
+                    }
+                }
+                
+                // Update or hide pagination
+                const currentPagination = document.querySelector('.manage-users-pagination');
+                if (newPagination && currentPagination) {
+                    currentPagination.innerHTML = newPagination.innerHTML;
+                    currentPagination.style.display = 'block';
+                } else if (currentPagination) {
+                    currentPagination.style.display = 'none';
+                }
+                
+                // Reattach modal event listeners to new rows
+                reattachModalListeners();
+                
+                // Add smooth transition to new rows
+                document.querySelectorAll('.user-row').forEach(function(row) {
+                    row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, 100);
+                });
+                
+                hideLoadingState();
+            })
+            .catch(error => {
+                console.error('Erro ao filtrar usuários:', error);
+                hideLoadingState();
+                showErrorMessage('Erro ao carregar os usuários. Tente novamente.');
+            });
+        }
+
+        function showLoadingState() {
+            const tableContainer = document.querySelector('.manage-users-table-container');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'manage-users-loading';
+            loadingDiv.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center" style="padding: 3rem;">
+                    <div class="spinner-border text-primary me-3" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <span class="text-muted">Buscando usuários...</span>
+                </div>
+            `;
+            tableContainer.appendChild(loadingDiv);
+        }
+
+        function hideLoadingState() {
+            const loadingDiv = document.querySelector('.manage-users-loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
+
+        function showErrorMessage(message) {
+            const tableContainer = document.querySelector('.manage-users-table-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'manage-users-error alert alert-warning';
+            errorDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${message}
+            `;
+            tableContainer.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function reattachModalListeners() {
+            // Reattach click listeners to user rows for modal
+            document.querySelectorAll('.user-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    const modal = new bootstrap.Modal(document.getElementById('infoUsuarioModal'));
+                    
+                    // Trigger the modal show event with the clicked row as relatedTarget
+                    const modalElement = document.getElementById('infoUsuarioModal');
+                    const event = new Event('show.bs.modal');
+                    Object.defineProperty(event, 'relatedTarget', {
+                        value: this,
+                        enumerable: true
+                    });
+                    modalElement.dispatchEvent(event);
+                    
+                    modal.show();
+                });
+            });
+        }
+        
+        // Sort filter still uses URL because it requires server-side sorting
+        sortFilter.addEventListener('change', function() {
+            applyUrlFilters();
+        });
+
+
+        // Add smooth transitions to table rows
+        document.querySelectorAll('.user-row').forEach(function(row) {
+            row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        });
+
         infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
 
             var triggeringRow = event.relatedTarget;
@@ -430,7 +719,7 @@
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
                 return;
             }
-            
+
             var userId = triggeringRow.dataset.userId;
             var userNameData = triggeringRow.dataset.userNome;
             var userLoginData = triggeringRow.dataset.userUsuario;
@@ -438,12 +727,12 @@
             var userProfileStrData = triggeringRow.dataset.userProfile;
             var userIsActiveStr = triggeringRow.dataset.userIsActive;
             var userIsActive = (userIsActiveStr === 'true');
-            
+
             if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-badge"></i>Detalhes de ' + (userNameData || 'Usuário');
             if (modalUserNameSpan) modalUserNameSpan.textContent = userNameData || 'Não informado';
             if (modalUserLoginSpan) modalUserLoginSpan.textContent = userLoginData || 'Não informado';
             if (modalUserEmail) modalUserEmail.textContent = userEmailData || 'Não cadastrado';
-            
+
             if (modalUserStatusDisplay && btnToggleUserStatus) {
                 if (userIsActive) {
                     modalUserStatusDisplay.innerHTML = '<span class="permission-badge badge-create"><i class="bi bi-check-circle-fill"></i>Liberado</span>';
@@ -455,7 +744,7 @@
                     btnToggleUserStatus.className = 'btn btn-info w-100';
                 }
             }
-            
+
             var permissoesAtuaisArray = [];
             if (modalUserPermissionsDiv) {
                 modalUserPermissionsDiv.innerHTML = '';
@@ -468,7 +757,7 @@
                         var badgeClass = 'badge-none';
                         var iconClass = '';
                         var permText = p;
-                        
+
                         if (p === 'ADMIN') { 
                             badgeClass = 'badge-admin'; 
                             iconClass = 'bi bi-shield-lock-fill'; 
@@ -484,7 +773,7 @@
                             iconClass = 'bi bi-eye-fill'; 
                             permText = 'Ver Relatórios'; 
                         }
-                        
+
                         var badge = '<span class="permission-badge ' + badgeClass + '">';
                         if (iconClass) badge += '<i class="' + iconClass + '"></i>';
                         badge += permText + '</span>';
@@ -494,7 +783,7 @@
                     modalUserPermissionsDiv.innerHTML = '<span class="permission-badge badge-none">Nenhuma permissão definida</span>';
                 }
             }
-            
+
             if (permCheckboxesEdit) {
                 for (var permValue in permCheckboxesEdit) {
                     if (permCheckboxesEdit[permValue]) {
@@ -502,7 +791,7 @@
                     }
                 }
             }
-            
+
             if (userId && String(userId).trim() !== "") {
                 if (formAlterarSenhaAdmin) {
                     var urlAlterarSenha = "{{ url_for('admin.admin_change_password', user_id=0) }}".replace('0', userId);
