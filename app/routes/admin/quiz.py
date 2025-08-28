@@ -40,7 +40,6 @@ def _create_or_update_quiz(course):
     """Criar ou atualizar quiz"""
     quiz_title = request.form.get("quiz_title", "").strip()
     support_text = request.form.get("support_text", "").strip()
-    questions_data = request.form.get("questions_data", "")
     
     if not quiz_title:
         flash("Título do quiz é obrigatório.", "warning")
@@ -60,62 +59,6 @@ def _create_or_update_quiz(course):
         )
         db.session.add(quiz)
         action = "criado"
-    
-    db.session.flush()  # Para obter o ID do quiz
-    
-    # Processar questões se enviadas
-    if questions_data:
-        try:
-            questions_list = json.loads(questions_data)
-            
-            # Remover questões existentes que não estão na nova lista
-            existing_questions = Question.query.filter_by(quiz_id=quiz.id).all()
-            existing_ids = [str(q.id) for q in existing_questions]
-            new_ids = [str(q['id']) for q in questions_list if not str(q['id']).startswith('new_')]
-            
-            for existing_q in existing_questions:
-                if str(existing_q.id) not in new_ids:
-                    db.session.delete(existing_q)
-            
-            # Processar cada questão
-            for q_data in questions_list:
-                question_id = str(q_data['id'])
-                question_text = q_data['text']
-                question_type = QuestionType[q_data['question_type']]
-                
-                if question_id.startswith('new_'):
-                    # Nova questão
-                    new_question = Question(
-                        quiz_id=quiz.id,
-                        text=question_text,
-                        question_type=question_type
-                    )
-                    db.session.add(new_question)
-                    db.session.flush()
-                    question = new_question
-                else:
-                    # Questão existente
-                    question = Question.query.get(int(question_id))
-                    if question:
-                        question.text = question_text
-                        question.question_type = question_type
-                        # Remover opções antigas
-                        for option in question.options:
-                            db.session.delete(option)
-                
-                # Adicionar novas opções
-                if question:
-                    for opt_data in q_data.get('options', []):
-                        option = AnswerOption(
-                            question_id=question.id,
-                            text=opt_data['text'],
-                            is_correct=opt_data['is_correct']
-                        )
-                        db.session.add(option)
-                        
-        except json.JSONDecodeError:
-            flash("Erro ao processar dados das questões.", "danger")
-            return redirect(url_for("admin.quiz.manage_quiz", course_id=course.id))
     
     db.session.commit()
     
