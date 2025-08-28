@@ -1,49 +1,73 @@
-<head>
-    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
-</head>
 {% set icon_map = {
     'success': 'bi-check-circle-fill',
     'danger': 'bi-exclamation-triangle-fill',
     'warning': 'bi-exclamation-triangle-fill',
-    'info': 'bi-info-circle-fill'
+    'info': 'bi-info-circle-fill',
+    'error': 'bi-exclamation-triangle-fill'
 } %}
 
-<div id="toast-container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% set category, message = messages[-1] %}
-            
-            <div class="toast-notification alert alert-{{ category }} d-flex align-items-center p-2" role="alert">
-                <i class="bi {{ icon_map.get(category, 'bi-info-circle-fill') }} me-3 fs-4"></i>
-                <div class="message-text">{{ message }}</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+{% set color_map = {
+    'success': 'success',
+    'danger': 'danger',
+    'warning': 'warning',
+    'info': 'info',
+    'error': 'danger'
+} %}
 
-        {% endif %}
-    {% endwith %}
-</div>
+<div id="toast-container"></div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const allToasts = document.querySelectorAll('.toast-notification');
-        allToasts.forEach(toast => {
-            setTimeout(() => {
-                toast.classList.add('fade-out');
-            }, 4500);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-
-            const closeButton = toast.querySelector('.btn-close');
-            if (closeButton) {
-                closeButton.addEventListener('click', () => {
-                    toast.classList.add('fade-out');
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 500);
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toastContainer = document.getElementById('toast-container');
+                const messages = {{ messages | tojson }};
+                const iconMap = {{ icon_map | tojson }};
+                const colorMap = {{ color_map | tojson }};
+                
+                messages.forEach(function(messageData, index) {
+                    setTimeout(function() {
+                        const category = messageData[0];
+                        const message = messageData[1];
+                        const toastColor = colorMap[category] || 'info';
+                        const toastIcon = iconMap[category] || 'bi-info-circle-fill';
+                        
+                        const toastElement = document.createElement('div');
+                        toastElement.className = `toast-notification alert alert-${toastColor} d-flex align-items-center`;
+                        toastElement.setAttribute('role', 'alert');
+                        
+                        toastElement.innerHTML = `
+                            <div class="toast-icon me-3">
+                                <i class="bi ${toastIcon} fs-4"></i>
+                            </div>
+                            <div class="message-text flex-grow-1">${message}</div>
+                            <button type="button" class="btn-close ms-2" aria-label="Fechar"></button>
+                        `;
+                        
+                        toastContainer.appendChild(toastElement);
+                        
+                        const autoDismissTimer = setTimeout(function() {
+                            dismissToast(toastElement);
+                        }, 5000);
+                        
+                        const closeBtn = toastElement.querySelector('.btn-close');
+                        closeBtn.addEventListener('click', function() {
+                            clearTimeout(autoDismissTimer);
+                            dismissToast(toastElement);
+                        });
+                        
+                        function dismissToast(toast) {
+                            toast.classList.add('fade-out');
+                            setTimeout(function() {
+                                if (toast && toast.parentNode) {
+                                    toast.remove();
+                                }
+                            }, 500);
+                        }
+                        
+                    }, index * 200);
                 });
-            }
-        });
-    });
-</script>
+            });
+        </script>
+    {% endif %}
+{% endwith %}

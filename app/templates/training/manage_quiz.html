@@ -1,4 +1,3 @@
-
 {% extends "navbar.html" %}
 {% block title %}Editor de Avaliação: {{ course.title }}{% endblock %}
 
@@ -10,8 +9,6 @@
 <div class="manage-quiz-page">
     <div class="container">
         {% include 'partials/_flash_messages.html' %}
-        
-        <!-- Header Section -->
         <div class="manage-quiz-header">
             <div class="manage-quiz-header-content">
                 <div class="manage-quiz-title-section">
@@ -27,7 +24,7 @@
                     </div>
                 </div>
                 <div class="manage-quiz-actions">
-                    <a href="{{ url_for('admin.manage_courses') }}" class="manage-quiz-back-btn">
+                    <a href="{{ url_for('admin.courses.manage_courses') }}" class="manage-quiz-back-btn">
                         <i class="bi bi-arrow-left"></i>
                         Voltar
                     </a>
@@ -42,7 +39,6 @@
         <form method="POST" id="quizForm" enctype="multipart/form-data">
             <input type="hidden" name="questions_data" id="questions_data_input">
 
-            <!-- Support Material Section -->
             <div class="manage-quiz-support-section">
                 <div class="manage-quiz-section-header">
                     <h5 class="manage-quiz-section-title">
@@ -81,7 +77,6 @@
                 </div>
             </div>
 
-            <!-- Questions Section -->
             <div class="manage-quiz-questions-section">
                 <div class="manage-quiz-questions-header">
                     <h5 class="manage-quiz-questions-title">
@@ -130,7 +125,6 @@
                                     </select>
                                 </div>
                                 <div class="manage-quiz-options-container options-container">
-                                    <!-- Options will be populated by JavaScript -->
                                 </div>
                             </div>
                         </div>
@@ -227,11 +221,10 @@
         const fileInput = document.getElementById('file-input');
         const quizId = '{{ quiz.id }}';
 
-        // Hide empty state if there are questions
         function toggleEmptyState() {
             const emptyState = document.querySelector('.manage-quiz-empty-state');
             const hasQuestions = questionsContainer.querySelectorAll('.manage-quiz-question-card').length > 0;
-            
+
             if (emptyState) {
                 emptyState.style.display = hasQuestions ? 'none' : 'block';
             }
@@ -281,7 +274,7 @@
             const uniqueId = `new_${Date.now()}`;
             card.dataset.questionId = uniqueId;
             questionsContainer.appendChild(clone);
-            
+
             const newCardElement = questionsContainer.querySelector(`[data-question-id="${uniqueId}"]`);
             const select = newCardElement.querySelector('.question-type');
             updateOptionsUI(newCardElement.querySelector('.options-container'), select.value, [], uniqueId);
@@ -344,7 +337,6 @@
             quizForm.submit();
         }
 
-        // Attachment management
         attachmentList.addEventListener('click', function (e) {
             const deleteBtn = e.target.closest('.delete-attachment-btn');
             if (!deleteBtn) return;
@@ -353,8 +345,8 @@
             const attachmentId = listItem.dataset.attachmentId;
 
             if (confirm('Tem certeza que deseja excluir este anexo permanentemente?')) {
-                fetch(`/admin/quiz/attachment/${attachmentId}`, {
-                    method: 'DELETE'
+                fetch(`{{ url_for('admin.quiz.delete_quiz_attachment', attachment_id=0) }}`.replace('/0/', `/${attachmentId}/`), {
+                    method: 'POST'
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -376,7 +368,7 @@
                 const formData = new FormData();
                 formData.append('file', file);
 
-                fetch(`/admin/quiz/${quizId}/attachment`, {
+                fetch(`{{ url_for('admin.quiz.upload_quiz_attachment', quiz_id=quiz.id) }}`, {
                     method: 'POST',
                     body: formData
                 })
@@ -408,12 +400,10 @@
             e.target.value = '';
         });
 
-        // Initialize existing questions
         if (initialQuizData && initialQuizData.questions) {
             initialQuizData.questions.forEach(renderQuestion);
         }
 
-        // Event listeners
         questionsContainer.addEventListener('click', function (e) {
             if (e.target.closest('.remove-question-btn')) {
                 if (confirm('Tem certeza que deseja remover esta questão?')) {
@@ -444,7 +434,6 @@
         addQuestionBtn.addEventListener('click', addQuestion);
         quizForm.addEventListener('submit', prepareAndSubmit);
 
-        // Initial setup
         toggleEmptyState();
         updateQuestionNumbers();
     });

@@ -23,22 +23,8 @@
             </div>
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="row mb-3">
-            <div class="col-12">
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        {% endwith %}
+        {% include 'partials/_flash_messages.html' %}
 
-        <!-- Filters Card -->
         <div class="forms-card forms-filters-card">
             <div class="forms-card-body forms-filters-body">
                 <form method="GET" action="{{ url_for('nir.list_records') }}" class="forms-filters-form">
@@ -128,7 +114,6 @@
             </div>
         </div>
 
-        <!-- Records Table -->
         <div class="forms-card">
             <div class="forms-card-header">
                 <div class="forms-card-title-section">
@@ -251,7 +236,6 @@
                 {% endif %}
             </div>
             
-            <!-- Pagination -->
             {% if records.pages > 1 %}
             <div class="card-footer bg-transparent">
                 <nav aria-label="Navegação de registros">
@@ -297,7 +281,6 @@
     </div>
 </div>
 
-<!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

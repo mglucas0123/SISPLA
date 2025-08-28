@@ -67,18 +67,18 @@
                             <i class="bi bi-hospital text-danger fs-3"></i>
                         </div>
                         <h5 class="fw-bold mb-2">NIR - Internações</h5>
-                        <p class="text-muted mb-3">Gerencie registros de Notificação de Internação Regulatória e controle hospitalar</p>
+                        <p class="text-muted mb-3">Registre e acompanhe as notificações de internação.</p>
                     </div>
                     <div class="feature-actions">
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('nir.new_record') }}" 
                                class="btn btn-danger d-flex align-items-center justify-content-center">
-                                <i class="bi bi-plus-circle me-2"></i>
+                                <i class="bi bi-journal-plus me-2"></i>
                                 Novo Registro
                             </a>
                             <a href="{{ url_for('nir.list_records') }}" 
                                class="btn btn-outline-danger d-flex align-items-center justify-content-center">
-                                <i class="bi bi-list-ul me-2"></i>
+                                <i class="bi bi-clipboard-data me-2"></i>
                                 Ver Registros
                             </a>
                         </div>
@@ -138,7 +138,7 @@
                             <a href="{{ url_for('form.forms') }}" 
                                class="btn btn-outline-success d-flex align-items-center justify-content-center">
                                 <i class="bi bi-clipboard-data me-2"></i>
-                                Ver Relatórios
+                                Ver Registros
                             </a>
                         </div>
                     </div>
@@ -204,8 +204,8 @@
                         <div class="notice-image-container">
                             <a href="#" class="d-block position-relative" data-bs-toggle="modal"
                                 data-bs-target="#imageNoticeModal"
-                                data-img-src="{{ url_for('admin.serve_notice_image', filename=n.image_filename) }}">
-                                <img src="{{ url_for('admin.serve_notice_image', filename=n.image_filename) }}"
+                                data-img-src="{{ url_for('admin.notices.serve_notice_image', filename=n.image_filename) }}">
+                                <img src="{{ url_for('admin.notices.serve_notice_image', filename=n.image_filename) }}"
                                     class="img-fluid rounded-3 shadow-sm notice-image" alt="Aviso em imagem">
                                 <div class="image-overlay">
                                     <i class="bi bi-arrows-fullscreen text-white fs-2"></i>
@@ -275,7 +275,7 @@
                     style="z-index: 10; background-color: rgba(0,0,0,0.5); border-radius: 50%;" data-bs-dismiss="modal"
                     aria-label="Fechar"></button>
 
-                <img src="{{ url_for('admin.serve_notice_image', filename=popup_aviso.image_filename) }}"
+                <img src="{{ url_for('admin.notices.serve_notice_image', filename=popup_aviso.image_filename) }}"
                     class="img-fluid rounded" alt="Imagem do Aviso" style="max-height: 90vh; object-fit: contain;">
             </div>
         </div>

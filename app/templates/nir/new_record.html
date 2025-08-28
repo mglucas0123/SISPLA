@@ -6,7 +6,6 @@
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
         <div class="container">
-            <!-- Header -->
             <div class="nir-header">
                 <h1>
                     <i class="bi bi-hospital"></i>
@@ -15,7 +14,6 @@
                 <p>Cadastre uma nova Notificação de Internação Regulatória</p>
             </div>
 
-            <!-- Form Card -->
             <div class="nir-card card shadow-lg border-0">
                 <div class="card-header">
                     <h5>
@@ -25,7 +23,6 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('nir.create_record') }}">
-                        <!-- Dados do Paciente -->
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-person-circle"></i>
@@ -59,7 +56,6 @@
                             </div>
                         </div>
 
-                        <!-- Dados da Internação -->
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-clipboard-data"></i>
@@ -101,7 +97,6 @@
                             </div>
                         </div>
 
-                        <!-- Procedimento -->
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-activity"></i>
@@ -119,7 +114,6 @@
                             </div>
                         </div>
 
-                        <!-- Informações Médicas -->
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-heart-pulse"></i>
@@ -137,7 +131,6 @@
                             </div>
                         </div>
 
-                        <!-- Agendamento e Alta -->
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-calendar-check"></i>
@@ -166,7 +159,6 @@
                             </div>
                         </div>
 
-                        <!-- Status e Controle -->
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-gear"></i>
@@ -207,10 +199,6 @@
                                         <option value="FINALIZADO">Finalizado</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="nir-form-label">Regra</label>
-                                    <input type="text" class="form-control nir-form-control" name="rule" placeholder="Regra aplicada">
-                                </div>
                                 <div class="col-12">
                                     <label class="nir-form-label">Observação</label>
                                     <textarea class="form-control nir-form-control" name="observation" rows="3" placeholder="Observações adicionais"></textarea>
@@ -218,7 +206,6 @@
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
                         <div class="nir-action-buttons">
                             <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary">
                                 <i class="bi bi-arrow-left me-2"></i>Voltar

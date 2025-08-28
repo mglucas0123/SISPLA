@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-4 repository-page">
-    <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="page-header">
             <div class="d-flex align-items-center">
@@ -19,7 +18,7 @@
         </div>
         {% if 'ADMIN' in current_user.profile %}
         <div class="header-actions">
-            <a href="{{ url_for('admin.manage_repositories') }}" class="btn btn-primary btn-modern">
+            <a href="{{ url_for('admin.repositories.manage_repositories') }}" class="btn btn-primary btn-modern">
                 <i class="bi bi-shield-lock-fill me-2"></i>
                 Gerenciar Todos
             </a>
@@ -29,7 +28,6 @@
 
     {% include 'partials/_flash_messages.html' %}
 
-    <!-- Repositories Grid -->
     <div class="repositories-grid">
         {% for repo in repositories %}
         <div class="repository-card-wrapper">

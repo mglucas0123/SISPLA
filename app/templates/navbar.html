@@ -30,7 +30,6 @@
                 </div>
             </a>
             
-            <!-- Status -->
             <div class="d-flex align-items-center ms-auto">
                 <div class="dropdown me-2">
                     <button class="btn dropdown-toggle access-dropdown-button" type="button" id="acessosDropdown"
@@ -99,23 +98,23 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.users') }}">
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.users.list_users') }}">
                                 <i class="bi bi-people-fill me-2"></i>Gerenciar Usuários
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.manage_notices') }}">
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.notices.manage_notices') }}">
                                 <i class="bi bi-megaphone-fill me-2"></i>Gerenciar Mural
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item dropdown-item-custom"
-                                href="{{ url_for('admin.manage_repositories') }}">
+                                href="{{ url_for('admin.repositories.manage_repositories') }}">
                                 <i class="bi bi-archive-fill me-2"></i>Gerenciar Repositórios
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.manage_courses') }}">
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.courses.manage_courses') }}">
                                 <i class="bi bi-mortarboard-fill me-2"></i>Gerenciar Treinamentos
                             </a>
                         </li>

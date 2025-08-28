@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 
 from app.models import db, User
-from app.routes.admin import admin_bp
+from app.routes.admin import create_admin_blueprint
 from app.routes.auth import auth_bp
 from app.routes.main import main_bp
 from app.routes.util import util_bp, format_date_filter
@@ -38,10 +38,11 @@ def create_app():
     return app
 
 def registry_routes(app):
+    admin_bp = create_admin_blueprint()
+    app.register_blueprint(admin_bp) 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(util_bp)
-    app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(form_bp)
     app.register_blueprint(repository_bp)
     app.register_blueprint(training_bp)

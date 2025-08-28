@@ -12,3 +12,5 @@ uploads/
 .vscode/
 
 database.db
+
+adminBKP.py

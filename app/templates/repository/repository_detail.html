@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-4 repository-page">
-    <!-- Breadcrumb and Header -->
     <div class="breadcrumb-section mb-4">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb modern-breadcrumb">
@@ -62,7 +61,6 @@
 
     {% include 'partials/_flash_messages.html' %}
 
-    <!-- File Explorer -->
     <div class="form-card file-explorer-card">
         <div class="form-card-header">
             <h3 class="form-title">
@@ -147,7 +145,6 @@
     </div>
 </div>
 
-<!-- Context Menu -->
 <ul class="dropdown-menu modern-context-menu" id="context-menu">
     <li><a class="dropdown-item" href="#" id="context-create-folder">
         <i class="bi bi-folder-plus me-2"></i>Criar Nova Pasta
@@ -171,7 +168,6 @@
     </a></li>
 </ul>
 
-<!-- Upload Modal -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content modern-modal">
@@ -219,7 +215,6 @@
     </div>
 </div>
 
-<!-- Preview Modal -->
 <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modern-modal">
@@ -235,7 +230,6 @@
     </div>
 </div>
 
-<!-- Move Modal -->
 <div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content modern-modal">
@@ -283,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let selectedRow = null;
     let moveModalInstance = null;
 
-    // Mapeamento de ícones por extensão
     const iconMap = { 
         '.pdf': 'bi-file-earmark-pdf-fill text-danger', 
         '.doc': 'bi-file-earmark-word-fill text-primary', 
@@ -340,7 +333,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const isFolder = row && row.classList.contains('is-folder');
         const isItemSelected = isFile || isFolder;
 
-        // Controlar visibilidade dos itens do menu
         document.getElementById('context-preview').style.display = isFile ? 'block' : 'none';
         document.getElementById('context-download').style.display = isFile ? 'block' : 'none';
         document.getElementById('context-rename').style.display = isItemSelected ? 'block' : 'none';
@@ -350,11 +342,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('context-divider-2').style.display = isItemSelected ? 'block' : 'none';
         document.getElementById('context-create-folder').style.display = 'block';
         
-        // Configurar ações para o item selecionado
         if (row) {
             const fileId = row.dataset.fileId;
             
-            // Configurar eventos
             document.getElementById('context-rename').onclick = (e) => {
                 e.preventDefault();
                 renameItemFromRow(row);
@@ -378,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 const downloadLink = document.getElementById('context-download');
                 downloadLink.href = `/file/download/${fileId}`;
-                downloadLink.onclick = null; // Permitir navegação normal do link
+                downloadLink.onclick = null;
             }
         }
     }
@@ -387,7 +377,6 @@ document.addEventListener('DOMContentLoaded', function () {
     //                      EVENT LISTENERS PRINCIPAIS
     // ====================================================================
 
-    // Context menu para toda a área do explorador
     const fileExplorerCard = document.querySelector('.file-explorer-card');
     if (fileExplorerCard) {
         fileExplorerCard.addEventListener('contextmenu', function(e) {
@@ -398,14 +387,12 @@ document.addEventListener('DOMContentLoaded', function () {
             selectRow(row);
             updateContextMenuActions(row);
             
-            // Posicionar o menu de contexto
             contextMenu.style.position = 'fixed';
             contextMenu.style.display = 'block';
             contextMenu.style.left = `${e.clientX}px`;
             contextMenu.style.top = `${e.clientY}px`;
             contextMenu.style.zIndex = '9999';
             
-            // Garantir que o menu fique dentro da viewport
             const rect = contextMenu.getBoundingClientRect();
             if (rect.right > window.innerWidth) {
                 contextMenu.style.left = `${e.clientX - rect.width}px`;
@@ -416,7 +403,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Área vazia para context menu
     const emptyFolderContainer = document.querySelector('.empty-folder-container');
     if (emptyFolderContainer) {
         emptyFolderContainer.addEventListener('contextmenu', function(e) {
@@ -442,30 +428,25 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Double click para arquivos e pastas
     if (tableBody) {
         tableBody.addEventListener('dblclick', e => {
             const row = e.target.closest('.file-row');
             if (!row) return;
             
             if (row.classList.contains('is-folder')) {
-                // Para pastas, navegar
                 const link = row.querySelector('a');
                 if (link) link.click();
             } else {
-                // Para arquivos, fazer preview
                 previewFileFromRow(row);
             }
         });
     }
 
-    // Fechar context menu ao clicar fora
     document.addEventListener('click', e => {
         if (!contextMenu.contains(e.target)) {
             contextMenu.style.display = 'none';
         }
         
-        // Desselecionar se clicou fora da tabela
         if (tableBody && !tableBody.parentElement.contains(e.target)) {
             selectRow(null);
         }
@@ -475,7 +456,6 @@ document.addEventListener('DOMContentLoaded', function () {
     //                       FUNCIONALIDADES DO MENU
     // ====================================================================
 
-    // Criar nova pasta
     document.getElementById('context-create-folder').addEventListener('click', function(e) {
         e.preventDefault();
         createNewFolder();
@@ -511,7 +491,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Preview de arquivo
     function previewFileFromRow(row) {
         const fileId = row.dataset.fileId;
         const extension = row.dataset.fileExt;
@@ -547,20 +526,17 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Modal(document.getElementById('previewModal')).show();
     }
 
-    // Renomear item
     function renameItemFromRow(rowElement) {
         const fileId = rowElement.dataset.fileId;
         const currentName = rowElement.dataset.fileName;
         const fileNameSpan = rowElement.querySelector('.file-name');
         
-        // Criar input de edição
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'form-control modern-input';
         input.style.width = '70%';
         input.value = currentName;
         
-        // Substituir texto por input
         fileNameSpan.style.display = 'none';
         fileNameSpan.parentNode.insertBefore(input, fileNameSpan.nextSibling);
         input.focus();
@@ -610,7 +586,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Deletar item
     function deleteItemFromRow(rowElement) {
         const fileId = rowElement.dataset.fileId;
         const fileName = rowElement.dataset.fileName;
@@ -672,13 +647,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ====================================================================
-    //                      DRAG AND DROP
+    //                      DRAG & DROP
     // ====================================================================
 
     let draggedItem = null;
     
     if (tableBody) {
-        // Início do drag
         tableBody.addEventListener('dragstart', e => {
             const row = e.target.closest('.file-row');
             if (row) {
@@ -687,30 +661,25 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Fim do drag
         tableBody.addEventListener('dragend', () => {
             if (draggedItem) {
                 draggedItem.classList.remove('is-dragging');
             }
         });
 
-        // Drag over
         tableBody.addEventListener('dragover', e => {
             e.preventDefault();
             const targetRow = e.target.closest('.is-folder');
             
-            // Remove highlight de todas as pastas
             document.querySelectorAll('.is-folder.drag-over').forEach(folder => 
                 folder.classList.remove('drag-over')
             );
             
-            // Adiciona highlight na pasta alvo
             if (targetRow && targetRow !== draggedItem) {
                 targetRow.classList.add('drag-over');
             }
         });
 
-        // Drag leave
         tableBody.addEventListener('dragleave', e => {
             if (!tableBody.contains(e.relatedTarget)) {
                 document.querySelectorAll('.is-folder.drag-over').forEach(folder => 
@@ -719,12 +688,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Drop
         tableBody.addEventListener('drop', e => {
             e.preventDefault();
             const targetRow = e.target.closest('.is-folder');
             
-            // Remove todos os highlights
             document.querySelectorAll('.is-folder.drag-over').forEach(folder => 
                 folder.classList.remove('drag-over')
             );
@@ -767,17 +734,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const previewList = previewListContainer.querySelector('.preview-list');
         const submitBtn = uploadModal.querySelector('#submit-btn');
 
-        // Botão para selecionar arquivos
         browseBtn.addEventListener('click', () => fileInput.click());
         
-        // Clique na zona de upload
         uploadZone.addEventListener('click', (e) => {
             if (e.target.id !== 'browse-btn') {
                 fileInput.click();
             }
         });
 
-        // Eventos de drag and drop para upload
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             uploadZone.addEventListener(eventName, e => {
                 e.preventDefault();
@@ -797,13 +761,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }, false);
         });
 
-        // Drop de arquivos
         uploadZone.addEventListener('drop', e => {
             fileInput.files = e.dataTransfer.files;
             handleFiles(fileInput.files);
         });
 
-        // Seleção de arquivos
         fileInput.addEventListener('change', () => {
             handleFiles(fileInput.files);
         });
@@ -839,8 +801,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // ====================================================================
     //                         INICIALIZAÇÃO
     // ====================================================================
-
-    // Aplicar ícones aos arquivos
     applyFileIcons();
 });
 </script>

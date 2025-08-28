@@ -75,7 +75,7 @@
             </div>
             <div class="forms-card-body forms-danger-body">
                 <p class="forms-danger-text">Esta ação é irreversível e irá apagar permanentemente o registro.</p>
-                <form method="POST" action="{{ url_for('form.delet_form', form_id=formulario.id) }}"
+                <form method="POST" action="{{ url_for('admin.duty.delete_form', form_id=formulario.id) }}"
                     onsubmit="return confirm('TEM CERTEZA ABSOLUTA que deseja deletar esta solicitação?');">
                     <button type="submit" class="forms-btn forms-btn-danger">
                         <i class="bi bi-trash3-fill"></i>

@@ -7,7 +7,6 @@
 
     {% include 'partials/_flash_messages.html' %}
     <div class="container-fluid px-4 py-4 repository-page">
-        <!-- Header Section -->
         <div class="manage-repositories-header">
             <div class="manage-repositories-header-content">
                 <div class="manage-repositories-title-section">
@@ -33,7 +32,6 @@
             </div>
         </div>
     </div>
-    <!-- Repositories Table -->
     <div class="form-card">
         <div class="form-card-header">
             <h3 class="form-title">
@@ -105,16 +103,25 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="action-buttons">
-                                    <a href="{{ url_for('admin.edit_repository', repo_id=repo.id) }}"
-                                        class="btn btn-sm btn-outline-primary action-btn">
+                                    <button class="btn btn-sm btn-outline-primary action-btn" 
+                                            data-bs-toggle="modal" data-bs-target="#editRepoModal"
+                                            data-repo-id="{{ repo.id }}"
+                                            data-repo-name="{{ repo.name }}"
+                                            data-repo-description="{{ repo.description or '' }}"
+                                            data-repo-access-type="{{ repo.access_type }}"
+                                            data-repo-owner-id="{{ repo.owner_id }}"
+                                            data-shared-users="{{ repo.shared_with_users|map(attribute='id')|join(',') }}"
+                                            data-repo-creation-date="{{ repo.date_created.strftime('%d/%m/%Y') }}"
+                                            data-repo-files-count="{{ repo.files|length }}"
+                                            data-repo-folder-name="{{ repo.folder_name }}">
                                         <i class="bi bi-pencil-fill me-1"></i> Editar
-                                    </a>
+                                    </button>
                                     <form method="POST"
-                                        action="{{ url_for('admin.delete_repository', repo_id=repo.id) }}"
+                                        action="{{ url_for('admin.repositories.delete_repository', repo_id=repo.id) }}"
                                         style="display: inline-block;"
-                                        onsubmit="return confirm('ATENÇÃO: Você tem certeza que deseja excluir o repositório \'{{ repo.name }}\'? Todos os arquivos dentro dele serão apagados permanentemente.');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger action-btn ms-1">
-                                            <i class="bi bi-trash3-fill me-1"></i> Excluir
+                                        onsubmit="return confirm('Tem certeza que deseja excluir este repositório? Todos os arquivos serão perdidos!');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger action-btn">
+                                            <i class="bi bi-trash-fill me-1"></i> Excluir
                                         </button>
                                     </form>
                                 </div>
@@ -138,10 +145,9 @@
     </div>
 </div>
 
-<!-- Create Repository Modal -->
 <div class="modal fade" id="createRepoModal" tabindex="-1" aria-labelledby="createRepoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form method="POST" action="{{ url_for('admin.create_repository') }}" class="modal-content modern-modal">
+        <form method="POST" action="{{ url_for('admin.repositories.create_repository') }}" class="modal-content modern-modal">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createRepoModalLabel">
                     <i class="bi bi-plus-circle-fill me-2 text-primary"></i>
@@ -174,6 +180,21 @@
                         placeholder="Descreva o propósito deste repositório..."></textarea>
                 </div>
 
+                <div id="shared-users-selection-div" class="form-group full-width" style="display: none;">
+                    <label class="form-label">Usuários com Acesso Compartilhado</label>
+                    <div class="shared-users-container">
+                        {% for user in all_users %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="shared_users" 
+                                   value="{{ user.id }}" id="shared_user_{{ user.id }}">
+                            <label class="form-check-label" for="shared_user_{{ user.id }}">
+                                {{ user.name }} (@{{ user.username }})
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
                 <div id="owner-selection-div" class="form-group full-width">
                     <label for="owner_id" class="form-label">Proprietário do Repositório</label>
                     <select class="form-select modern-select" id="owner_id" name="owner_id">
@@ -196,6 +217,186 @@
         </form>
     </div>
 </div>
+
+<div class="modal fade" id="editRepoModal" tabindex="-1" aria-labelledby="editRepoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <form method="POST" action="" id="editRepoForm" class="modal-content professional-modal">
+            <div class="modal-header professional-header">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                    <div class="header-text">
+                        <h4 class="modal-title" id="editRepoModalLabel">Editar Repositório</h4>
+                        <p class="modal-subtitle">Atualize as informações e configurações do repositório</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close professional-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body professional-body">
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </div>
+                        <div class="section-title">
+                            <h5>Informações Básicas</h5>
+                            <p>Configure o nome e descrição do repositório</p>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="row g-4">
+                            <div class="col-md-8">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control professional-input" id="edit_name" name="name"
+                                        placeholder="Nome do repositório" required>
+                                    <label for="edit_name">
+                                        <i class="bi bi-folder-fill me-2"></i>Nome do Repositório *
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <select class="form-select professional-select" id="edit_access_type" name="access_type">
+                                        <option value="private">🔒 Privado</option>
+                                        <option value="public">🌐 Público</option>
+                                        <option value="shared">👥 Compartilhado</option>
+                                    </select>
+                                    <label for="edit_access_type">
+                                        <i class="bi bi-shield-lock me-2"></i>Tipo de Acesso
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-4 mt-2">
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control professional-textarea" id="edit_description" name="description" 
+                                        style="height: 100px;" placeholder="Descrição do repositório"></textarea>
+                                    <label for="edit_description">
+                                        <i class="bi bi-card-text me-2"></i>Descrição
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="section-title">
+                            <h5>Controle de Acesso</h5>
+                            <p>Gerencie proprietário e usuários com acesso</p>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div id="edit-owner-selection-div" class="row g-4">
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <select class="form-select professional-select" id="edit_owner_id" name="owner_id">
+                                        {% for user in all_users %}
+                                        <option value="{{ user.id }}">
+                                            {{ user.name }} (@{{ user.username }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="edit_owner_id">
+                                        <i class="bi bi-person-fill-gear me-2"></i>Proprietário do Repositório
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="edit-shared-users-selection-div" class="shared-users-section mt-4" style="display: none;">
+                            <div class="shared-users-header">
+                                <h6><i class="bi bi-people me-2"></i>Usuários com Acesso Compartilhado</h6>
+                                <p class="text-muted">Selecione os usuários que terão acesso a este repositório</p>
+                            </div>
+                            <div class="shared-users-grid">
+                                {% for user in all_users %}
+                                <div class="user-card">
+                                    <input class="form-check-input user-checkbox" type="checkbox" name="shared_users" 
+                                           value="{{ user.id }}" id="edit_shared_user_{{ user.id }}">
+                                    <label class="user-label" for="edit_shared_user_{{ user.id }}">
+                                        <div class="user-avatar">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div class="user-info">
+                                            <div class="user-name">{{ user.name }}</div>
+                                            <div class="user-username">@{{ user.username }}</div>
+                                        </div>
+                                        <div class="selection-indicator">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                        </div>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <div class="section-title">
+                            <h5>Status do Repositório</h5>
+                            <p>Informações sobre o estado atual</p>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="status-cards">
+                            <div class="status-card">
+                                <div class="status-icon">
+                                    <i class="bi bi-calendar-check"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Data de Criação</div>
+                                    <div class="status-value" id="repo-creation-date">-</div>
+                                </div>
+                            </div>
+                            <div class="status-card">
+                                <div class="status-icon">
+                                    <i class="bi bi-files"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Arquivos</div>
+                                    <div class="status-value" id="repo-files-count">-</div>
+                                </div>
+                            </div>
+                            <div class="status-card">
+                                <div class="status-icon">
+                                    <i class="bi bi-hdd"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Pasta do Sistema</div>
+                                    <div class="status-value" id="repo-folder-name">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer professional-footer">
+                <div class="footer-actions">
+                    <button type="button" class="btn btn-outline-secondary professional-btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary professional-btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -205,19 +406,96 @@
         const accessTypeSelect = document.getElementById('create_access_type_select');
         const ownerSelectionDiv = document.getElementById('owner-selection-div');
         const ownerSelect = document.getElementById('owner_id');
+        const sharedUsersDiv = document.getElementById('shared-users-selection-div');
 
-        function toggleOwnerSelection() {
-            if (accessTypeSelect.value === 'private') {
+        function toggleCreateFormSections() {
+            const accessType = accessTypeSelect.value;
+            
+            if (accessType === 'private') {
                 ownerSelectionDiv.style.display = 'block';
                 ownerSelect.required = true;
+                sharedUsersDiv.style.display = 'none';
+                document.querySelectorAll('input[name="shared_users"]').forEach(cb => cb.checked = false);
+            } else if (accessType === 'shared') {
+                ownerSelectionDiv.style.display = 'block';
+                ownerSelect.required = true;
+                sharedUsersDiv.style.display = 'block';
             } else {
-                ownerSelectionDiv.style.display = 'none';
-                ownerSelect.required = false;
+                ownerSelectionDiv.style.display = 'block';
+                ownerSelect.required = true;
+                sharedUsersDiv.style.display = 'none';
+                document.querySelectorAll('input[name="shared_users"]').forEach(cb => cb.checked = false);
             }
         }
 
-        toggleOwnerSelection();
-        accessTypeSelect.addEventListener('change', toggleOwnerSelection);
+        toggleCreateFormSections();
+        accessTypeSelect.addEventListener('change', toggleCreateFormSections);
+
+        const editRepoModal = document.getElementById('editRepoModal');
+        const editRepoForm = document.getElementById('editRepoForm');
+        const editAccessTypeSelect = document.getElementById('edit_access_type');
+        const editOwnerSelectionDiv = document.getElementById('edit-owner-selection-div');
+        const editOwnerSelect = document.getElementById('edit_owner_id');
+        const editSharedUsersDiv = document.getElementById('edit-shared-users-selection-div');
+
+        function toggleEditFormSections() {
+            const accessType = editAccessTypeSelect.value;
+            
+            if (accessType === 'private') {
+                editOwnerSelectionDiv.style.display = 'block';
+                editOwnerSelect.required = true;
+                editSharedUsersDiv.style.display = 'none';
+                document.querySelectorAll('input[name="shared_users"][id^="edit_"]').forEach(cb => cb.checked = false);
+            } else if (accessType === 'shared') {
+                editOwnerSelectionDiv.style.display = 'block';
+                editOwnerSelect.required = true;
+                editSharedUsersDiv.style.display = 'block';
+            } else {
+                editOwnerSelectionDiv.style.display = 'block';
+                editOwnerSelect.required = true;
+                editSharedUsersDiv.style.display = 'none';
+                document.querySelectorAll('input[name="shared_users"][id^="edit_"]').forEach(cb => cb.checked = false);
+            }
+        }
+
+        editAccessTypeSelect.addEventListener('change', toggleEditFormSections);
+
+        editRepoModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const repoId = button.getAttribute('data-repo-id');
+            const repoName = button.getAttribute('data-repo-name');
+            const repoDescription = button.getAttribute('data-repo-description');
+            const repoAccessType = button.getAttribute('data-repo-access-type');
+            const repoOwnerId = button.getAttribute('data-repo-owner-id');
+            const sharedUserIds = button.getAttribute('data-shared-users') || '';
+            const repoCreationDate = button.getAttribute('data-repo-creation-date') || '';
+            const repoFilesCount = button.getAttribute('data-repo-files-count') || '0';
+            const repoFolderName = button.getAttribute('data-repo-folder-name') || '';
+
+            editRepoForm.action = `{{ url_for('admin.repositories.edit_repository', repo_id=0) }}`.replace('0', repoId);
+
+            document.getElementById('edit_name').value = repoName;
+            document.getElementById('edit_description').value = repoDescription;
+            document.getElementById('edit_access_type').value = repoAccessType;
+            document.getElementById('edit_owner_id').value = repoOwnerId;
+
+            document.getElementById('repo-creation-date').textContent = repoCreationDate || 'N/A';
+            document.getElementById('repo-files-count').textContent = repoFilesCount + ' arquivo(s)';
+            document.getElementById('repo-folder-name').textContent = repoFolderName || 'N/A';
+
+            document.querySelectorAll('input[name="shared_users"][id^="edit_"]').forEach(cb => cb.checked = false);
+            if (sharedUserIds) {
+                const userIds = sharedUserIds.split(',');
+                userIds.forEach(userId => {
+                    const checkbox = document.getElementById('edit_shared_user_' + userId.trim());
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+
+            toggleEditFormSections();
+        });
     });
 </script>
 {% endblock %}

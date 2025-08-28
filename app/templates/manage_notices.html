@@ -1,4 +1,3 @@
-
 {% extends "navbar.html" %}
 {% block title %}Gerenciar Mural de Avisos{% endblock %}
 
@@ -7,7 +6,6 @@
     <div class="container">
         {% include 'partials/_flash_messages.html' %}
 
-        <!-- Header Section -->
         <div class="manage-notices-header">
             <div class="manage-notices-header-content">
                 <div class="manage-notices-title-section">
@@ -32,7 +30,6 @@
             </div>
         </div>
 
-        <!-- Notices Table Section -->
         <div class="manage-notices-section">
             <div class="manage-notices-table-container">
                 {% if notices %}
@@ -99,7 +96,7 @@
                                     <i class="bi bi-eye-fill"></i>
                                     Ver
                                 </button>
-                                <form method="POST" action="{{ url_for('admin.delet_notice', notice_id=notice.id) }}" 
+                                <form method="POST" action="{{ url_for('admin.notices.delete_notice', notice_id=notice.id) }}" 
                                       onsubmit="return confirm('Tem certeza que deseja excluir este aviso?');" class="notice-delete-form" style="display: inline;">
                                     <button type="submit" class="notice-delete-btn" title="Deletar Aviso">
                                         <i class="bi bi-trash3-fill"></i>
@@ -125,7 +122,6 @@
     </div>
 </div>
 
-<!-- Modal Criar Aviso -->
 <div class="modal fade" id="criarAvisoModal" tabindex="-1" aria-labelledby="criarAvisoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -151,11 +147,10 @@
                 </div>
 
                 <div class="manage-notices-forms">
-                    <!-- Text Notice Form -->
                     <div class="manage-notices-form-container active" id="text-form">
-                        <form method="POST" action="{{ url_for('admin.manage_notices') }}" class="manage-notices-form">
+                        <form method="POST" action="{{ url_for('admin.notices.manage_notices') }}" class="manage-notices-form">
                             <input type="hidden" name="notice_type" value="TEXT">
-                            
+
                             <div class="mb-3">
                                 <label for="title" class="form-label">
                                     <i class="bi bi-type"></i>
@@ -165,7 +160,7 @@
                                 <input type="text" class="form-control" name="title" id="title" 
                                        placeholder="Digite um título chamativo para o aviso" required>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="content" class="form-label">
                                     <i class="bi bi-card-text"></i>
@@ -175,7 +170,7 @@
                                 <textarea class="form-control" name="content" id="content" 
                                           rows="6" placeholder="Digite o conteúdo detalhado do aviso..." required></textarea>
                             </div>
-                            
+
                             <button type="submit" class="btn btn-success w-100">
                                 <i class="bi bi-send-fill"></i>
                                 Publicar Aviso em Texto
@@ -183,12 +178,11 @@
                         </form>
                     </div>
 
-                    <!-- Image Notice Form -->
                     <div class="manage-notices-form-container" id="image-form">
-                        <form method="POST" action="{{ url_for('admin.manage_notices') }}" 
+                        <form method="POST" action="{{ url_for('admin.notices.manage_notices') }}" 
                               enctype="multipart/form-data" class="manage-notices-form">
                             <input type="hidden" name="notice_type" value="IMAGE">
-                            
+
                             <div class="mb-3">
                                 <label for="image_file" class="form-label">
                                     <i class="bi bi-image"></i>
@@ -203,7 +197,7 @@
                                     Formatos aceitos: JPEG, PNG, GIF (máximo 5MB)
                                 </div>
                             </div>
-                            
+
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="bi bi-image"></i>
                                 Publicar Aviso com Imagem
@@ -216,7 +210,6 @@
     </div>
 </div>
 
-<!-- Modal Visualizar Aviso -->
 <div class="modal fade" id="visualizarAvisoModal" tabindex="-1" aria-labelledby="visualizarAvisoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -229,7 +222,6 @@
             </div>
             <div class="modal-body">
                 <div id="avisoContent">
-                    <!-- Conteúdo será preenchido via JavaScript -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -247,19 +239,16 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching functionality
     const tabBtns = document.querySelectorAll('.manage-notices-tab-btn');
     const formContainers = document.querySelectorAll('.manage-notices-form-container');
-    
+
     tabBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
-            
-            // Update active tab button
+
             tabBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
-            // Update active form container
+
             formContainers.forEach(container => {
                 container.classList.remove('active');
                 if (container.id === targetTab + '-form') {
@@ -268,11 +257,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-    
-    // Modal visualization functionality
+
     var visualizarAvisoModal = document.getElementById('visualizarAvisoModal');
     var avisoContent = document.getElementById('avisoContent');
-    
+
     visualizarAvisoModal.addEventListener('show.bs.modal', function (event) {
         var button = event.relatedTarget;
         var noticeType = button.getAttribute('data-notice-type');
@@ -281,13 +269,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var noticeImage = button.getAttribute('data-notice-image');
         var noticeAuthor = button.getAttribute('data-notice-author');
         var noticeDate = button.getAttribute('data-notice-date');
-        
+
         var content = '';
-        
+
         if (noticeType === 'IMAGE' && noticeImage) {
             content = `
                 <div class="text-center mb-3">
-                    <img src="{{ url_for('admin.serve_notice_image', filename='') }}${noticeImage}" 
+                    <img src="{{ url_for('admin.notices.serve_notice_image', filename='') }}${noticeImage}" 
                          class="img-fluid rounded" alt="Aviso em imagem" style="max-height: 400px;">
                 </div>
             `;
@@ -299,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         }
-        
+
         content += `
             <hr>
             <div class="d-flex justify-content-between text-muted">
@@ -307,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <small><i class="bi bi-calendar3 me-1"></i> ${noticeDate}</small>
             </div>
         `;
-        
+
         avisoContent.innerHTML = content;
     });
 });

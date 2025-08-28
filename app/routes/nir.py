@@ -78,7 +78,6 @@ def create_record():
             billed=request.form.get('billed'),
             status=request.form.get('status'),
             observation=request.form.get('observation'),
-            rule=request.form.get('rule'),
             
             day=admission_date.day if admission_date else None,
             month=admission_date.strftime('%B').upper() if admission_date else None,
@@ -244,10 +243,9 @@ def update_record(record_id):
         record.billed = request.form.get('billed')
         record.status = request.form.get('status')
         record.observation = request.form.get('observation')
-        record.rule = request.form.get('rule')
         record.day = admission_date.day if admission_date else None
         record.month = admission_date.strftime('%B').upper() if admission_date else None
-        
+
         db.session.commit()
         
         flash('Registro NIR atualizado com sucesso!', 'success')

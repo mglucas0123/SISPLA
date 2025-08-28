@@ -8,7 +8,6 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-12 col-lg-10">
-                    <!-- Header -->
                     <div class="nir-header">
                         <h1>
                             <i class="bi bi-hospital"></i>
@@ -16,7 +15,6 @@
                         </h1>
                         <p>{{ record.patient_name }}</p>
 
-                        <!-- Action Buttons -->
                         <div class="mt-3">
                             <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary me-2">
                                 <i class="bi bi-arrow-left me-2"></i>Voltar
@@ -24,16 +22,14 @@
                             <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" class="btn btn-warning me-2">
                                 <i class="bi bi-pencil me-2"></i>Editar
                             </a>
-                            <button class="btn btn-danger" onclick="deleteRecord({{ record.id }})">
+                            <button class="btn btn-danger" onclick="deleteRecord('{{ record.id }}')">
                                 <i class="bi bi-trash me-2"></i>Excluir
                             </button>
                         </div>
                     </div>
 
-                    <!-- Details Card -->
                     <div class="nir-card card shadow-lg border-0">
                         <div class="card-body">
-                            <!-- Dados do Paciente -->
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-person-circle"></i>Dados do Paciente
@@ -70,7 +66,6 @@
                                 </div>
                             </div>
 
-                            <!-- Dados da Internação -->
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-clipboard-data"></i>Dados da Internação
@@ -123,7 +118,6 @@
                                 </div>
                             </div>
 
-                            <!-- Procedimento -->
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-activity"></i>Procedimento
@@ -140,7 +134,6 @@
                                 </div>
                             </div>
 
-                            <!-- Informações Médicas -->
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-heart-pulse"></i>Informações Médicas
@@ -157,7 +150,6 @@
                                 </div>
                             </div>
 
-                            <!-- Agendamento e Alta -->
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-calendar-check"></i>Agendamento e Alta
@@ -196,7 +188,6 @@
                                 </div>
                             </div>
 
-                            <!-- Status e Controle -->
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-gear"></i>Status e Controle
@@ -254,10 +245,6 @@
                                             {% endif %}
                                         </p>
                                     </div>
-                                    <div class="col-md-3 nir-detail-item">
-                                        <label class="form-label">Regra</label>
-                                        <p>{{ record.rule or '-' }}</p>
-                                    </div>
                                     <div class="col-md-9 nir-detail-item">
                                         <label class="form-label">Observação</label>
                                         <p>{{ record.observation or '-' }}</p>
@@ -279,7 +266,6 @@
         </div>
     </div>
 
-    <!-- Delete Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">

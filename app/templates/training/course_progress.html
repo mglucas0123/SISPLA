@@ -6,7 +6,6 @@
 {% block content %}
 <div class="course-progress-page">
     <div class="container">
-        <!-- Header Section -->
         <div class="course-progress-header">
             <div class="course-progress-header-content">
                 <div class="course-progress-title-section">
@@ -18,14 +17,13 @@
                         Análise de desempenho para o curso: <strong>{{ course.title }}</strong>
                     </p>
                 </div>
-                <a href="{{ url_for('admin.manage_courses') }}" class="course-progress-back-btn">
+                <a href="{{ url_for('admin.courses.manage_courses') }}" class="course-progress-back-btn">
                     <i class="bi bi-arrow-left"></i>
                     Voltar
                 </a>
             </div>
         </div>
 
-        <!-- Statistics Cards -->
         {% set total_users = progress_data|length %}
         {% set completed_users = progress_data|selectattr('completed_at')|list|length %}
         {% set completion_rate = (completed_users / total_users * 100)|round if total_users > 0 else 0 %}
@@ -80,7 +78,6 @@
             </div>
         </div>
 
-        <!-- Chart Section -->
         {% if course.quiz %}
         <div class="course-progress-chart-section">
             <div class="course-progress-chart-header">
@@ -95,7 +92,6 @@
         </div>
         {% endif %}
 
-        <!-- Student Performance Table -->
         <div class="course-progress-table-section">
             <div class="course-progress-table-header">
                 <h5 class="course-progress-table-title">

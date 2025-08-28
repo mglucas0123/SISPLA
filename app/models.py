@@ -71,7 +71,6 @@ class NIRRecord(db.Model):
     billed = db.Column(db.String(10), nullable=True)
     status = db.Column(db.String(50), nullable=True)
     observation = db.Column(db.Text, nullable=True)
-    rule = db.Column(db.String(100), nullable=True)
     
     day = db.Column(db.Integer, nullable=True)
     month = db.Column(db.String(20), nullable=True)

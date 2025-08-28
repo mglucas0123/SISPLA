@@ -12,22 +12,17 @@
 </head>
 
 <body class="login-body">
-    <!-- Background Animation -->
     <div class="login-bg-animation"></div>
     
-    <!-- Main Container -->
     <div class="login-main-container">
-        <!-- Left Panel - Branding -->
         <div class="login-brand-panel">
             <div class="login-brand-overlay"></div>
             <div class="login-brand-content">
-                <!-- Animated Brand Icon -->
                 <div class="login-brand-icon-wrapper">
                     <div class="login-heartbeat-effect"></div>
                     <i class="bi bi-hospital login-brand-icon"></i>
                 </div>
                 
-                <!-- Brand Information -->
                 <div class="login-brand-info">
                     <h1 class="login-brand-title">Central do Colaborador</h1>
                     <p class="login-brand-subtitle">Sistema Integrado de Planejamento e Aprendizagem</p>
@@ -37,13 +32,11 @@
                     </p>
                 </div>
 
-                <!-- Status Indicator -->
                 <div class="login-status-indicator">
                     <div class="login-status-dot"></div>
                     <span class="login-status-text">Sistema Online</span>
                 </div>
 
-                <!-- Features List -->
                 <div class="login-features">
                     <div class="login-feature-item">
                         <i class="bi bi-shield-check"></i>
@@ -61,10 +54,8 @@
             </div>
         </div>
 
-        <!-- Right Panel - Login Form -->
         <div class="login-form-panel">
             <div class="login-form-container">
-                <!-- Header -->
                 <div class="login-form-header">
                     <div class="login-form-icon">
                         <i class="bi bi-box-arrow-in-right"></i>
@@ -73,12 +64,9 @@
                     <p class="login-form-subtitle">Acesse sua conta para continuar</p>
                 </div>
 
-                <!-- Flash Messages -->
                 {% include 'partials/_flash_messages.html' %}
 
-                <!-- Login Form -->
                 <form class="login-form" method="POST" action="{{ url_for('auth.login') }}" novalidate>
-                    <!-- Username Field -->
                     <div class="login-form-group">
                         <label for="username" class="login-form-label">
                             <i class="bi bi-person"></i>
@@ -97,7 +85,6 @@
                         </div>
                     </div>
 
-                    <!-- Password Field -->
                     <div class="login-form-group">
                         <label for="password" class="login-form-label">
                             <i class="bi bi-lock"></i>
@@ -119,7 +106,6 @@
                         </div>
                     </div>
 
-                    <!-- Login Button -->
                     <button type="submit" class="login-submit-btn">
                         <span class="login-btn-content">
                             <i class="bi bi-box-arrow-in-right"></i>
@@ -129,7 +115,6 @@
                     </button>
                 </form>
 
-                <!-- Footer Info -->
                 <div class="login-form-footer">
                     <div class="login-security-info">
                         <i class="bi bi-shield-lock"></i>
@@ -142,7 +127,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Form validation
         (() => {
             'use strict';
             const form = document.querySelector('.login-form');
@@ -155,7 +139,6 @@
             }, false);
         })();
 
-        // Password toggle
         const togglePassword = document.querySelector('#togglePassword');
         const password = document.querySelector('#password');
 
@@ -172,7 +155,6 @@
             });
         }
 
-        // Input focus effects
         const inputs = document.querySelectorAll('.login-form-input');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {
@@ -186,7 +168,6 @@
             });
         });
 
-        // Button ripple effect
         const loginBtn = document.querySelector('.login-submit-btn');
         loginBtn.addEventListener('click', function(e) {
             const ripple = this.querySelector('.login-btn-ripple');

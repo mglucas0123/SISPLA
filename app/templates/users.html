@@ -7,7 +7,6 @@
     <div class="container">
         {% include 'partials/_flash_messages.html' %}
 
-        <!-- Header Section -->
         <div class="manage-users-header">
             <div class="manage-users-header-content">
                 <div class="manage-users-title-section">
@@ -32,7 +31,6 @@
             </div>
         </div>
 
-        <!-- Filters Section -->
         <div class="manage-users-filters">
             <div class="manage-users-filters-content">
                 <div class="manage-users-filters-left">
@@ -92,7 +90,6 @@
                 </div>
             </div>
 
-            <!-- Results Info -->
             {% if users %}
             <div class="manage-users-results-info">
                 <div class="manage-users-results-text">
@@ -106,7 +103,6 @@
             {% endif %}
         </div>
 
-        <!-- Users Table Section -->
         <div class="manage-users-section">
             <div class="manage-users-table-container">
                 {% if users %}
@@ -177,14 +173,13 @@
             </div>
         </div>
 
-        <!-- Pagination -->
         {% if pagination %}
         <div class="manage-users-pagination">
             <nav aria-label="Navegação de usuários">
                 <ul class="pagination">
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('admin.users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
+                            href="{{ url_for('admin.users.list_users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             <i class="bi bi-chevron-left me-1"></i>
                             Anterior
                         </a>
@@ -193,7 +188,7 @@
                     {% if p %}
                     <li class="page-item {% if p == pagination.page %}active{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('admin.users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">{{
+                            href="{{ url_for('admin.users.list_users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">{{
                             p }}</a>
                     </li>
                     {% else %}
@@ -204,7 +199,7 @@
                     {% endfor %}
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('admin.users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
+                            href="{{ url_for('admin.users.list_users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             Próxima
                             <i class="bi bi-chevron-right ms-1"></i>
                         </a>
@@ -216,11 +211,10 @@
     </div>
 </div>
 
-<!-- Modal Criar Usuário -->
 <div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form method="POST" action="{{ url_for('admin.users') }}" class="modal-content">
+        <form method="POST" action="{{ url_for('admin.users.list_users') }}" class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="criarUsuarioModalLabel">
                     <i class="bi bi-person-plus-fill"></i>
@@ -323,7 +317,6 @@
     </div>
 </div>
 
-<!-- Modal Detalhes do Usuário -->
 <div class="modal fade" id="infoUsuarioModal" tabindex="-1" aria-labelledby="infoUsuarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -335,7 +328,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <!-- Informações Atuais -->
                 <div class="user-info-section">
                     <h6 class="section-title">
                         <i class="bi bi-info-circle"></i>
@@ -369,7 +361,6 @@
                     </div>
                 </div>
 
-                <!-- Editar Permissões -->
                 <div class="mb-4">
                     <h6 class="section-title">
                         <i class="bi bi-shield-check"></i>
@@ -419,7 +410,6 @@
                     </form>
                 </div>
 
-                <!-- Outras Ações -->
                 <div class="actions-section">
                     <h6 class="section-title">
                         <i class="bi bi-gear-wide-connected"></i>
@@ -506,7 +496,7 @@
         var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
 
         function applyUrlFilters() {
-            var url = "{{ url_for('admin.users') }}?";
+            var url = "{{ url_for('admin.users.list_users') }}?";
             var queryParams = [];
 
             var searchTerm = searchInput.value.trim();
@@ -542,21 +532,19 @@
                 searchInput.value = '';
                 statusFilter.value = '';
                 profileFilter.value = '';
-                sortFilter.value = 'date_desc'; // Reset to default sort
+                sortFilter.value = 'date_desc';
                 applyUrlFilters();
             });
         }
 
-        // Real-time search with server filtering but no page reload
         let searchTimeout;
         searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function () {
                 filterUsersWithAjax();
-            }, 500); // Wait 500ms after user stops typing
+            }, 500);
         });
 
-        // Allow pressing Enter to trigger filter immediately
         searchInput.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 clearTimeout(searchTimeout);
@@ -564,7 +552,6 @@
             }
         });
 
-        // Status and profile filters also trigger server search
         statusFilter.addEventListener('change', function () {
             filterUsersWithAjax();
         });
@@ -579,18 +566,16 @@
             const profileValue = profileFilter.value;
             const sortValue = sortFilter.value;
 
-            // Show loading state
             showLoadingState();
 
-            // Build URL with filters
             const params = new URLSearchParams();
             if (searchTerm) params.set('search', searchTerm);
             if (statusValue) params.set('status', statusValue);
             if (profileValue) params.set('profile', profileValue);
             if (sortValue) params.set('sort', sortValue);
-            params.set('ajax', '1'); // Flag to indicate AJAX request
+            params.set('ajax', '1');
 
-            const url = "{{ url_for('admin.users') }}?" + params.toString();
+            const url = "{{ url_for('admin.users.list_users') }}?" + params.toString();
 
             fetch(url, {
                 method: 'GET',
@@ -600,7 +585,6 @@
             })
                 .then(response => response.text())
                 .then(html => {
-                    // Parse the response to extract table content
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
 
@@ -608,7 +592,6 @@
                     const newResultsInfo = doc.querySelector('.manage-users-results-info');
                     const newPagination = doc.querySelector('.manage-users-pagination');
 
-                    // Replace current content
                     if (newTableContainer) {
                         document.querySelector('.manage-users-table-container').innerHTML = newTableContainer.innerHTML;
                     }
@@ -621,7 +604,6 @@
                         }
                     }
 
-                    // Update or hide pagination
                     const currentPagination = document.querySelector('.manage-users-pagination');
                     if (newPagination && currentPagination) {
                         currentPagination.innerHTML = newPagination.innerHTML;
@@ -630,7 +612,6 @@
                         currentPagination.style.display = 'none';
                     }
 
-                    // Reattach modal event listeners to new rows
                     reattachModalListeners();
 
                     hideLoadingState();
@@ -680,12 +661,10 @@
         }
 
         function reattachModalListeners() {
-            // Reattach click listeners to user rows for modal
             document.querySelectorAll('.user-row').forEach(row => {
                 row.addEventListener('click', function () {
                     const modal = new bootstrap.Modal(document.getElementById('infoUsuarioModal'));
 
-                    // Trigger the modal show event with the clicked row as relatedTarget
                     const modalElement = document.getElementById('infoUsuarioModal');
                     const event = new Event('show.bs.modal');
                     Object.defineProperty(event, 'relatedTarget', {
@@ -699,7 +678,6 @@
             });
         }
 
-        // Sort filter still uses URL because it requires server-side sorting
         sortFilter.addEventListener('change', function () {
             applyUrlFilters();
         });
@@ -787,19 +765,19 @@
 
             if (userId && String(userId).trim() !== "") {
                 if (formAlterarSenhaAdmin) {
-                    var urlAlterarSenha = "{{ url_for('admin.admin_change_password', user_id=0) }}".replace('0', userId);
+                    var urlAlterarSenha = "{{ url_for('admin.users.change_password', user_id=0) }}".replace('0', userId);
                     formAlterarSenhaAdmin.action = urlAlterarSenha;
                 }
                 if (formDeletarUsuario) {
-                    var urlDeletarUsuario = "{{ url_for('admin.delete_user', user_id=0) }}".replace('0', userId);
+                    var urlDeletarUsuario = "{{ url_for('admin.users.delete_user', user_id=0) }}".replace('0', userId);
                     formDeletarUsuario.action = urlDeletarUsuario;
                 }
                 if (formEditarPermissoes) {
-                    var urlEditarPermissoes = "{{ url_for('admin.change_permissions', user_id_to_edit=0) }}".replace('0', userId);
+                    var urlEditarPermissoes = "{{ url_for('admin.users.change_permissions', user_id=0) }}".replace('0', userId);
                     formEditarPermissoes.action = urlEditarPermissoes;
                 }
                 if (formToggleUserStatus) {
-                    formToggleUserStatus.action = "{{ url_for('admin.toggle_user_status', user_id_to_toggle=0) }}".replace('0', userId);
+                    formToggleUserStatus.action = "{{ url_for('admin.users.toggle_status', user_id=0) }}".replace('0', userId);
                 }
             } else {
                 if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';

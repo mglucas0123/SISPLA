@@ -1,10 +1,8 @@
-
 {% extends "navbar.html" %}
 {% block title %}Editar Repositório{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-4 py-4 repository-page">
-    <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="page-header">
             <div class="d-flex align-items-center">
@@ -18,21 +16,20 @@
             </div>
         </div>
         <div class="header-actions">
-            <a href="{{ url_for('admin.manage_repositories') }}" class="btn btn-outline-secondary btn-modern">
+            <a href="{{ url_for('admin.repositories.manage_repositories') }}" class="btn btn-outline-secondary btn-modern">
                 <i class="bi bi-arrow-left me-2"></i>
                 Voltar
             </a>
         </div>
     </div>
 
-    <!-- Edit Form -->
     <div class="form-container">
         <div class="form-card">
-            <form method="POST" action="{{ url_for('admin.edit_repository', repo_id=repository.id) }}">
+            <form method="POST" action="{{ url_for('admin.repositories.update_repository', repo_id=repository.id) }}">
                 <div class="form-card-header">
                     <h2 class="form-title">Configurações do Repositório</h2>
                 </div>
-                
+
                 <div class="form-card-body">
                     <div class="form-grid">
                         <div class="form-group">
@@ -43,7 +40,7 @@
                             <input type="text" class="form-control modern-input" id="name" name="name" 
                                    value="{{ repository.name }}" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="access_type" class="form-label">Tipo de Acesso</label>
                             <select class="form-select modern-select" id="access_type_select" name="access_type">
@@ -58,7 +55,7 @@
                                 </option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group full-width">
                             <label for="description" class="form-label">Descrição</label>
                             <textarea class="form-control modern-textarea" id="description" name="description" 
@@ -66,7 +63,6 @@
                         </div>
                     </div>
 
-                    <!-- Shared Users Section -->
                     <div id="shared-users-section" class="shared-users-section {% if repository.access_type != 'shared' %}d-none{% endif %}">
                         <div class="section-header">
                             <h3 class="section-title">
@@ -76,7 +72,6 @@
                             <p class="section-subtitle">Selecione os usuários que terão acesso a este repositório</p>
                         </div>
 
-                        <!-- Filtro de Pesquisa -->
                         <div class="user-filter-section">
                             <div class="search-box">
                                 <i class="bi bi-search search-icon"></i>
@@ -87,7 +82,7 @@
                                 <span id="users-count">{{ all_users|length }}</span> usuários encontrados
                             </div>
                         </div>
-                        
+
                         <div class="users-list-container">
                             {% if all_users %}
                             <div class="users-list" id="users-list">
@@ -113,7 +108,6 @@
                                 {% endfor %}
                             </div>
 
-                            <!-- Paginação -->
                             <div class="pagination-section" id="pagination-section">
                                 <div class="pagination-info">
                                     <span id="pagination-info-text">Mostrando 1-10 de {{ all_users|length }} usuários</span>
@@ -139,7 +133,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-card-footer">
                     <button type="submit" class="btn btn-primary btn-modern btn-save">
                         <i class="bi bi-check-circle me-2"></i>
@@ -164,33 +158,30 @@
                 sharedUsersSection.classList.remove('d-none');
                 sharedUsersSection.style.opacity = '0';
                 sharedUsersSection.style.transform = 'translateY(-10px)';
-                
+
                 setTimeout(() => {
                     sharedUsersSection.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                     sharedUsersSection.style.opacity = '1';
                     sharedUsersSection.style.transform = 'translateY(0)';
-                    
-                    // Inicializar paginação quando a seção ficar visível
+
                     initializeUserPagination();
                 }, 10);
             } else {
                 sharedUsersSection.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 sharedUsersSection.style.opacity = '0';
                 sharedUsersSection.style.transform = 'translateY(-10px)';
-                
+
                 setTimeout(() => {
                     sharedUsersSection.classList.add('d-none');
                 }, 300);
             }
         });
 
-        // Inicializar paginação se a seção já estiver visível
         if (!sharedUsersSection.classList.contains('d-none')) {
             initializeUserPagination();
         }
     });
 
-    // Sistema de filtro e paginação de usuários
     function initializeUserPagination() {
         const searchInput = document.getElementById('user-search');
         const usersList = document.getElementById('users-list');
@@ -200,9 +191,9 @@
         const prevPageBtn = document.getElementById('prev-page');
         const nextPageBtn = document.getElementById('next-page');
         const pageNumbers = document.getElementById('page-numbers');
-        
+
         if (!usersList) return;
-        
+
         const allUserItems = Array.from(usersList.querySelectorAll('.user-item'));
         const itemsPerPage = 10;
         let currentPage = 1;
@@ -210,38 +201,32 @@
 
         function filterUsers() {
             const searchTerm = searchInput.value.toLowerCase().trim();
-            
+
             filteredItems = allUserItems.filter(item => {
                 const userName = item.dataset.userName || '';
                 const userUsername = item.dataset.userUsername || '';
-                
+
                 return userName.includes(searchTerm) || userUsername.includes(searchTerm);
             });
-            
-            // Atualizar contador
+
             usersCountSpan.textContent = filteredItems.length;
-            
-            // Resetar para primeira página
+
             currentPage = 1;
             updateDisplay();
         }
 
         function updateDisplay() {
-            // Esconder todos os itens
             allUserItems.forEach(item => item.classList.add('hidden'));
-            
-            // Calcular índices da página atual
+
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             const itemsToShow = filteredItems.slice(startIndex, endIndex);
-            
-            // Mostrar itens da página atual
+
             itemsToShow.forEach(item => item.classList.remove('hidden'));
-            
-            // Atualizar informações de paginação
+
             const totalItems = filteredItems.length;
             const totalPages = Math.ceil(totalItems / itemsPerPage);
-            
+
             if (totalItems === 0) {
                 paginationInfo.textContent = 'Nenhum usuário encontrado';
                 paginationSection.style.display = 'none';
@@ -251,43 +236,37 @@
                 paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${totalItems} usuários`;
                 paginationSection.style.display = totalPages > 1 ? 'flex' : 'none';
             }
-            
-            // Atualizar botões de navegação
+
             prevPageBtn.disabled = currentPage <= 1;
             nextPageBtn.disabled = currentPage >= totalPages;
-            
-            // Atualizar números das páginas
+
             updatePageNumbers(totalPages);
         }
 
         function updatePageNumbers(totalPages) {
             pageNumbers.innerHTML = '';
-            
+
             if (totalPages <= 1) return;
-            
+
             const maxVisiblePages = 5;
             let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
             let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-            
-            // Ajustar o início se necessário
+
             if (endPage - startPage + 1 < maxVisiblePages) {
                 startPage = Math.max(1, endPage - maxVisiblePages + 1);
             }
-            
-            // Primeira página se não estiver visível
+
             if (startPage > 1) {
                 addPageNumber(1);
                 if (startPage > 2) {
                     addEllipsis();
                 }
             }
-            
-            // Páginas visíveis
+
             for (let i = startPage; i <= endPage; i++) {
                 addPageNumber(i);
             }
-            
-            // Última página se não estiver visível
+
             if (endPage < totalPages) {
                 if (endPage < totalPages - 1) {
                     addEllipsis();
@@ -314,16 +293,15 @@
             pageNumbers.appendChild(ellipsis);
         }
 
-        // Event listeners
         searchInput.addEventListener('input', filterUsers);
-        
+
         prevPageBtn.addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
                 updateDisplay();
             }
         });
-        
+
         nextPageBtn.addEventListener('click', () => {
             const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
             if (currentPage < totalPages) {
@@ -332,7 +310,6 @@
             }
         });
 
-        // Inicializar display
         updateDisplay();
     }
 </script>

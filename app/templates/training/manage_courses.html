@@ -6,7 +6,6 @@
 {% block content %}
 <div class="manage-courses-page">
     <div class="container">
-        <!-- Header Section -->
         <div class="manage-courses-header">
             <div class="manage-courses-header-content">
                 <div class="manage-courses-title-section">
@@ -27,7 +26,6 @@
 
         {% include 'partials/_flash_messages.html' %}
 
-        <!-- Filters Section -->
         <div class="manage-courses-filters">
             <div class="manage-courses-filters-content">
                 <div class="manage-courses-filters-left">
@@ -71,16 +69,15 @@
             
             <div class="manage-courses-results-info">
                 <span class="manage-courses-results-text">
-                    Mostrando {{ courses|length }} de {{ pagination.total if pagination else courses|length }} cursos
+                    Mostrando {{ courses.items|length }} de {{ courses.total if courses.total else 0 }} cursos
                 </span>
             </div>
         </div>
 
-        <!-- Courses Grid Section -->
         <div class="manage-courses-section">
-            {% if courses %}
+            {% if courses.items %}
             <div class="manage-courses-grid">
-                {% for course in courses %}
+                {% for course in courses.items %}
                 <div class="manage-course-card course-row" data-course-id="{{ course.id }}" 
                      data-course-title="{{ course.title }}"
                      data-course-description="{{ course.description or '' }}"
@@ -127,7 +124,7 @@
                             <div class="manage-course-card-toggle">
                                 <div class="form-check form-switch" title="Ativar/Desativar Curso">
                                     <form method="POST" 
-                                          action="{{ url_for('admin.toggle_course_status', course_id=course.id) }}"
+                                          action="{{ url_for('admin.courses.toggle_course_status', course_id=course.id) }}"
                                           class="toggle-form">
                                         <input class="form-check-input" type="checkbox" role="switch" 
                                                {% if course.is_active %}checked{% endif %} 
@@ -138,7 +135,7 @@
                         </div>
 
                         <div class="manage-course-card-actions">
-                            <a href="{{ url_for('admin.view_course_progress', course_id=course.id) }}" 
+                            <a href="{{ url_for('admin.courses.view_course_progress', course_id=course.id) }}" 
                                class="manage-course-card-btn btn-primary">
                                 <i class="bi bi-graph-up-arrow"></i>
                                 Ver Progresso
@@ -164,7 +161,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" 
-                                           href="{{ url_for('admin.manage_quiz', course_id=course.id) }}">
+                                           href="{{ url_for('admin.quiz.manage_quiz', course_id=course.id) }}">
                                             <i class="bi bi-ui-checks-grid"></i>
                                             Gerenciar Avaliação
                                         </a>
@@ -172,7 +169,7 @@
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form method="POST" 
-                                              action="{{ url_for('admin.delete_course', course_id=course.id) }}"
+                                              action="{{ url_for('admin.courses.delete_course', course_id=course.id) }}"
                                               onsubmit="return confirm('Tem certeza que deseja excluir este curso e todo o seu conteúdo?');"
                                               style="margin: 0;">
                                             <button type="submit" class="dropdown-item text-danger">
@@ -205,22 +202,21 @@
             {% endif %}
         </div>
 
-        <!-- Pagination -->
-        {% if pagination and pagination.pages > 1 %}
+        {% if courses and courses.pages > 1 %}
         <div class="manage-courses-pagination">
             <nav aria-label="Navegação de cursos">
                 <ul class="pagination">
-                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.manage_courses', page=pagination.prev_num) }}">
+                    <li class="page-item {% if not courses.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.courses.manage_courses', page=courses.prev_num) }}">
                             <i class="bi bi-chevron-left"></i>
                             Anterior
                         </a>
                     </li>
                     
-                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% for p in courses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                         {% if p %}
-                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('admin.manage_courses', page=p) }}">{{ p }}</a>
+                        <li class="page-item {% if p == courses.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.courses.manage_courses', page=p) }}">{{ p }}</a>
                         </li>
                         {% else %}
                         <li class="page-item disabled">
@@ -229,8 +225,8 @@
                         {% endif %}
                     {% endfor %}
 
-                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.manage_courses', page=pagination.next_num) }}">
+                    <li class="page-item {% if not courses.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.courses.manage_courses', page=courses.next_num) }}">
                             Próxima
                             <i class="bi bi-chevron-right"></i>
                         </a>
@@ -242,10 +238,9 @@
     </div>
 </div>
 
-<!-- Create Course Modal -->
 <div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form id="createCourseForm" method="POST" action="{{ url_for('admin.create_course') }}" enctype="multipart/form-data" class="modal-content">
+        <form id="createCourseForm" method="POST" action="{{ url_for('admin.courses.create_course') }}" enctype="multipart/form-data" class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createCourseModalLabel">
                     <i class="bi bi-plus-circle-fill"></i>
@@ -308,7 +303,6 @@
     </div>
 </div>
 
-<!-- Edit Course Modal -->
 <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form id="editCourseForm" method="POST" action="" enctype="multipart/form-data" class="modal-content">
@@ -377,7 +371,6 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Utility functions
     const hmsToSeconds = (timeString) => {
         if (!timeString) return 0;
         const [hours, minutes, seconds] = timeString.split(':').map(Number);
@@ -392,7 +385,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
     };
 
-    // File upload styling
     document.querySelectorAll('.custom-file-upload input[type="file"]').forEach(input => {
         input.addEventListener('change', function () {
             const fileNameSpan = this.parentElement.querySelector('.file-name');
@@ -404,7 +396,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Create Course Modal
     const createModal = document.getElementById('createCourseModal');
     const createForm = document.getElementById('createCourseForm');
     
@@ -424,7 +415,6 @@ document.addEventListener('DOMContentLoaded', function () {
         createForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
     });
 
-    // Edit Course Modal
     const editModal = new bootstrap.Modal(document.getElementById('editCourseModal'));
     const editForm = document.getElementById('editCourseForm');
     
@@ -434,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const card = e.target.closest('.course-row');
             const courseId = card.dataset.courseId;
 
-            editForm.action = `{{ url_for('admin.edit_course', course_id=0) }}`.replace('0', courseId);
+            editForm.action = `{{ url_for('admin.courses.edit_course', course_id=0) }}`.replace('0', courseId);
 
             const modalTitle = editForm.querySelector('#editCourseModalLabel');
             const courseTitle = card.dataset.courseTitle;
@@ -461,7 +451,6 @@ document.addEventListener('DOMContentLoaded', function () {
         editForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
     });
 
-    // Filter functionality
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const sortFilter = document.getElementById('sortFilter');
@@ -487,21 +476,18 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.href = newUrl;
     }
 
-    // Event listeners for filters
     applyFiltersBtn.addEventListener('click', applyFilters);
 
     clearFiltersBtn.addEventListener('click', function() {
         window.location.href = window.location.pathname;
     });
 
-    // Allow Enter key to trigger filter in search input
     searchInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             applyFilters();
         }
     });
 
-    // Smooth scroll animations
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
