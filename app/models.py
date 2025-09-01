@@ -1,3 +1,4 @@
+
 import enum
 from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -6,10 +7,55 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+# Tabelas de associação para many-to-many
+user_roles = db.Table('user_roles',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True)
+)
+
+role_permissions = db.Table('role_permissions',
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
+    db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True)
+)
+
 repository_access = db.Table('repository_access',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('repository_id', db.Integer, db.ForeignKey('repositories.id'), primary_key=True)
 )
+
+class Permission(db.Model):
+    __tablename__ = 'permissions'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)  # ex: 'criar_nir'
+    description = db.Column(db.String(200), nullable=True)
+    module = db.Column(db.String(50), nullable=False)  # ex: 'nir', 'farmacia'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Permission {self.name}>'
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)  # ex: 'Enfermeiro'
+    description = db.Column(db.String(200), nullable=True)
+    sector = db.Column(db.String(50), nullable=True)  # setor principal
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relacionamentos
+    permissions = db.relationship('Permission', secondary=role_permissions, backref='roles')
+    
+    def has_permission(self, permission_name):
+        """Verifica se a role tem uma permissão específica"""
+        return any(perm.name == permission_name for perm in self.permissions)
+    
+    def has_module_access(self, module_name):
+        """Verifica se a role tem acesso a um módulo"""
+        return any(perm.module == module_name for perm in self.permissions)
+    
+    def __repr__(self):
+        return f'<Role {self.name}>'
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -18,37 +64,67 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     profile = db.Column(db.String(200), nullable=False)
-    sectors = db.Column(db.String(500), nullable=True)
+    
     email = db.Column(db.String(120), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
     
+    # Relacionamentos
+    roles = db.relationship('Role', secondary=user_roles, backref='users')
     notices = db.relationship('Notice', back_populates='author')
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
     nir = db.relationship('Nir', back_populates='operator', lazy='dynamic')
     shared_repositories = db.relationship('Repository', secondary=repository_access, back_populates='shared_with_users')
+    
     @property
     def has_private_repository(self): 
         return db.session.query(
             Repository.query.filter_by(owner_id=self.id, access_type='private').exists()
         ).scalar()
 
-    @property
-    def sectors_list(self):
-        """Retorna lista dos setores do usuário"""
-        if not self.sectors:
-            return []
-        return [sector.strip() for sector in self.sectors.split(',') if sector.strip()]
     
-    def has_sector(self, sector):
-        """Verifica se o usuário possui um setor específico"""
-        return sector in self.sectors_list
     
-    def has_any_sector(self, sector_list):
-        """Verifica se o usuário possui algum dos setores da lista"""
-        user_sectors = self.sectors_list
-        return any(sector in user_sectors for sector in sector_list)
+    # Novos métodos RBAC
+    def has_permission(self, permission_name):
+        """Verifica se o usuário tem uma permissão específica"""
+        # Admin sempre tem acesso
+        if 'ADMIN' in self.profile:
+            return True
+        
+        # Verifica através das roles
+        for role in self.roles:
+            if role.has_permission(permission_name):
+                return True
+        return False
+    
+    def has_module_access(self, module_name):
+        """Verifica se o usuário tem acesso a um módulo"""
+        # Admin sempre tem acesso
+        if 'ADMIN' in self.profile:
+            return True
+        
+        # Verifica através das roles
+        for role in self.roles:
+            if role.has_module_access(module_name):
+                return True
+        return False
+    
+    def get_permissions(self):
+        """Retorna todas as permissões do usuário"""
+        permissions = set()
+        for role in self.roles:
+            for permission in role.permissions:
+                permissions.add(permission.name)
+        return list(permissions)
+    
+    def get_modules(self):
+        """Retorna todos os módulos que o usuário pode acessar"""
+        modules = set()
+        for role in self.roles:
+            for permission in role.permissions:
+                modules.add(permission.module)
+        return list(modules)
 
     def __repr__(self):
         return f'<User {self.username}>'

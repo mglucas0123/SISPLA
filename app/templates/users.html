@@ -270,119 +270,6 @@
 
                 <fieldset class="mb-4">
                     <legend>
-                        <i class="bi bi-building"></i>
-                        Setores do Usuário
-                    </legend>
-                    <div class="sectors-selection">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="text-primary">Clínicos</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="ENFERMAGEM" id="sector_enfermagem_criar">
-                                    <label class="form-check-label" for="sector_enfermagem_criar">
-                                        <i class="bi bi-heart-pulse text-success"></i>
-                                        Enfermagem
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="MEDICINA" id="sector_medicina_criar">
-                                    <label class="form-check-label" for="sector_medicina_criar">
-                                        <i class="bi bi-stethoscope text-primary"></i>
-                                        Medicina
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="FISIOTERAPIA" id="sector_fisio_criar">
-                                    <label class="form-check-label" for="sector_fisio_criar">
-                                        <i class="bi bi-person-arms-up text-info"></i>
-                                        Fisioterapia
-                                    </label>
-                                </div>
-
-                                <h6 class="text-primary mt-3">Apoio Diagnóstico</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="LABORATORIO" id="sector_lab_criar">
-                                    <label class="form-check-label" for="sector_lab_criar">
-                                        <i class="bi bi-clipboard2-pulse text-purple"></i>
-                                        Laboratório
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="RADIOLOGIA" id="sector_radio_criar">
-                                    <label class="form-check-label" for="sector_radio_criar">
-                                        <i class="bi bi-camera-reels text-warning"></i>
-                                        Radiologia
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="FARMACIA" id="sector_farmacia_criar">
-                                    <label class="form-check-label" for="sector_farmacia_criar">
-                                        <i class="bi bi-capsule text-teal"></i>
-                                        Farmácia
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <h6 class="text-primary">Administrativos</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="FATURAMENTO" id="sector_faturamento_criar">
-                                    <label class="form-check-label" for="sector_faturamento_criar">
-                                        <i class="bi bi-receipt text-warning"></i>
-                                        Faturamento
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="RH" id="sector_rh_criar">
-                                    <label class="form-check-label" for="sector_rh_criar">
-                                        <i class="bi bi-people text-secondary"></i>
-                                        Recursos Humanos
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="TI" id="sector_ti_criar">
-                                    <label class="form-check-label" for="sector_ti_criar">
-                                        <i class="bi bi-laptop text-dark"></i>
-                                        T.I.
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="DIRETORIA" id="sector_diretoria_criar">
-                                    <label class="form-check-label" for="sector_diretoria_criar">
-                                        <i class="bi bi-building text-danger"></i>
-                                        Diretoria
-                                    </label>
-                                </div>
-
-                                <h6 class="text-primary mt-3">Operacionais</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="INTERNACAO" id="sector_internacao_criar">
-                                    <label class="form-check-label" for="sector_internacao_criar">
-                                        <i class="bi bi-house-heart text-pink"></i>
-                                        Internação
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="CENTRO_CIRURGICO" id="sector_cc_criar">
-                                    <label class="form-check-label" for="sector_cc_criar">
-                                        <i class="bi bi-scissors text-warning"></i>
-                                        Centro Cirúrgico
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="sectors" value="EMERGENCIA" id="sector_emergencia_criar">
-                                    <label class="form-check-label" for="sector_emergencia_criar">
-                                        <i class="bi bi-truck-front text-danger"></i>
-                                        Emergência
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <fieldset>
-                    <legend>
                         <i class="bi bi-shield-check"></i>
                         Permissões do Usuário
                     </legend>
@@ -531,6 +418,61 @@
                     </form>
                 </div>
 
+                <!-- Editar Setores -->
+                <div class="mb-4">
+                    <h6 class="section-title">
+                        <i class="bi bi-building"></i>
+                        Editar Setores
+                    </h6>
+                    <form id="formEditarSetores" method="POST" action="">
+                        <fieldset>
+                            <legend>
+                                <i class="bi bi-gear-wide-connected"></i>
+                                Configurar Setores
+                            </legend>
+                            <div class="mb-3">
+                                <label for="sectors_edit" class="form-label">
+                                    <i class="bi bi-building"></i>
+                                    Selecione os setores do usuário
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control" id="sectors_edit" name="sectors_edit" multiple size="8" required>
+                                    <optgroup label="Clínicos">
+                                        <option value="ENFERMAGEM">🏥 Enfermagem</option>
+                                        <option value="MEDICINA">🩺 Medicina</option>
+                                        <option value="FISIOTERAPIA">🏃 Fisioterapia</option>
+                                    </optgroup>
+                                    <optgroup label="Apoio Diagnóstico">
+                                        <option value="LABORATORIO">🧪 Laboratório</option>
+                                        <option value="RADIOLOGIA">📷 Radiologia</option>
+                                        <option value="FARMACIA">💊 Farmácia</option>
+                                    </optgroup>
+                                    <optgroup label="Administrativos">
+                                        <option value="FATURAMENTO">🧾 Faturamento</option>
+                                        <option value="RH">👥 Recursos Humanos</option>
+                                        <option value="TI">💻 T.I.</option>
+                                        <option value="DIRETORIA">🏢 Diretoria</option>
+                                    </optgroup>
+                                    <optgroup label="Operacionais">
+                                        <option value="INTERNACAO">🏠 Internação</option>
+                                        <option value="CENTRO_CIRURGICO">✂️ Centro Cirúrgico</option>
+                                        <option value="EMERGENCIA">🚑 Emergência</option>
+                                        <option value="UTI">❤️ UTI</option>
+                                    </optgroup>
+                                </select>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Mantenha pressionado Ctrl (ou Cmd no Mac) para selecionar múltiplos setores
+                                </div>
+                            </div>
+                        </fieldset>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Salvar Setores
+                        </button>
+                    </form>
+                </div>
+
                 <div class="actions-section">
                     <h6 class="section-title">
                         <i class="bi bi-gear-wide-connected"></i>
@@ -616,6 +558,10 @@
         var modalUserStatusDisplay = infoUsuarioModalElement.querySelector('#modalUserStatusDisplay');
         var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
         var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
+
+        // New variable for sector edit form
+        var formEditarSetores = infoUsuarioModalElement.querySelector('#formEditarSetores');
+
 
         function applyUrlFilters() {
             var url = "{{ url_for('admin.users.list_users') }}?";
@@ -810,6 +756,8 @@
             var triggeringRow = event.relatedTarget;
             if (!triggeringRow || !triggeringRow.classList.contains('user-row')) {
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
+                // Reset form actions for sectors if the form exists
+                if (formEditarSetores) formEditarSetores.action = '#';
                 return;
             }
 
@@ -903,6 +851,24 @@
                 }
             }
 
+            var sectorsSelectEdit = infoUsuarioModalElement.querySelector('#sectors_edit');
+            if (sectorsSelectEdit) {
+                Array.from(sectorsSelectEdit.options).forEach(option => {
+                    option.selected = false;
+                });
+
+                var tempSectorsArray = userSectorsStrData ? userSectorsStrData.split(',') : [];
+                tempSectorsArray.forEach(function(sector) {
+                    sector = sector.trim();
+                    if (sector) {
+                        var option = sectorsSelectEdit.querySelector(`option[value="${sector}"]`);
+                        if (option) {
+                            option.selected = true;
+                        }
+                    }
+                });
+            }
+
             if (userId && String(userId).trim() !== "") {
                 if (formAlterarSenhaAdmin) {
                     var urlAlterarSenha = "{{ url_for('admin.users.change_password', user_id=0) }}".replace('0', userId);
@@ -919,11 +885,16 @@
                 if (formToggleUserStatus) {
                     formToggleUserStatus.action = "{{ url_for('admin.users.toggle_status', user_id=0) }}".replace('0', userId);
                 }
+                if (formEditarSetores) {
+                    var urlEditarSetores = "{{ url_for('admin.users.change_sectors', user_id=0) }}".replace('0', userId); // Assuming a route for changing sectors
+                    formEditarSetores.action = urlEditarSetores;
+                }
             } else {
                 if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';
                 if (formDeletarUsuario) formDeletarUsuario.action = '#';
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
                 if (formToggleUserStatus) formToggleUserStatus.action = '#';
+                if (formEditarSetores) formEditarSetores.action = '#';
             }
         });
 
