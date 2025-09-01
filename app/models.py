@@ -25,7 +25,7 @@ class User(db.Model, UserMixin):
     
     notices = db.relationship('Notice', back_populates='author')
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
-    nir_records = db.relationship('NIRRecord', back_populates='operator', lazy='dynamic')
+    nir = db.relationship('Nir', back_populates='operator', lazy='dynamic')
     shared_repositories = db.relationship('Repository', secondary=repository_access, back_populates='shared_with_users')
     @property
     def has_private_repository(self): 
@@ -37,17 +37,17 @@ class User(db.Model, UserMixin):
         return f'<User {self.username}>'
 
 
-class NIRRecord(db.Model):
-    __tablename__ = 'nir_records'
+class Nir(db.Model):
+    __tablename__ = 'nir'
     
     id = db.Column(db.Integer, primary_key=True)
     
     patient_name = db.Column(db.String(200), nullable=False)
-    birth_date = db.Column(db.Date, nullable=True)
-    gender = db.Column(db.String(1), nullable=True)
+    birth_date = db.Column(db.Date, nullable=False)
+    gender = db.Column(db.String(1), nullable=False)
     susfacil = db.Column(db.String(50), nullable=True)
     
-    admission_date = db.Column(db.Date, nullable=False)
+    admission_date = db.Column(db.Date, nullable=True)
     entry_type = db.Column(db.String(50), nullable=True)
     admission_type = db.Column(db.String(50), nullable=True)
     admitted_from_origin = db.Column(db.String(10), nullable=True)
@@ -57,7 +57,7 @@ class NIRRecord(db.Model):
     
     responsible_doctor = db.Column(db.String(100), nullable=True)
     main_cid = db.Column(db.String(10), nullable=True)
-    sus_number = db.Column(db.String(50), nullable=True)
+    sus_number = db.Column(db.String(50), nullable=False)
     aih = db.Column(db.String(50), nullable=True)
     
     scheduling_date = db.Column(db.Date, nullable=True)
@@ -79,10 +79,10 @@ class NIRRecord(db.Model):
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    operator = db.relationship('User', back_populates='nir_records')
+    operator = db.relationship('User', back_populates='nir')
     
     def __repr__(self):
-        return f'<NIRRecord {self.id}: {self.patient_name}>'
+        return f'<Nir {self.id}: {self.patient_name}>'
     
         
 class Form(db.Model):

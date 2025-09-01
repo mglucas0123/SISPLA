@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, date
-from app.models import db, NIRRecord, User
+from app.models import db, Nir, User
 from sqlalchemy import or_, and_, desc
 
 nir_bp = Blueprint('nir', __name__, url_prefix='/nir')
@@ -15,11 +15,18 @@ def index():
 @nir_bp.route('/novo')
 @login_required
 def new_record():
+    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Você não tem permissão para criar novos registros NIR.", "danger")
+        return redirect(url_for("nir.list_records"))
     return render_template('nir/new_record.html')
 
 @nir_bp.route('/criar', methods=['POST'])
 @login_required
 def create_record():
+    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Você não tem permissão para criar registros NIR.", "danger")
+        return redirect(url_for("nir.list_records"))
+        
     try:
         birth_date = None
         if request.form.get('birth_date'):
@@ -28,7 +35,12 @@ def create_record():
             except ValueError:
                 pass
         
-        admission_date = datetime.strptime(request.form.get('admission_date'), '%Y-%m-%d').date()
+        admission_date = None
+        if request.form.get('admission_date'):
+            try:
+                admission_date = datetime.strptime(request.form.get('admission_date'), '%Y-%m-%d').date()
+            except ValueError:
+                pass
         
         scheduling_date = None
         if request.form.get('scheduling_date'):
@@ -48,7 +60,7 @@ def create_record():
         if admission_date and discharge_date:
             total_days = (discharge_date - admission_date).days
 
-        record = NIRRecord(
+        record = Nir(
             patient_name=request.form.get('patient_name'),
             birth_date=birth_date,
             gender=request.form.get('gender'),
@@ -110,51 +122,71 @@ def list_records():
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     
-    query = NIRRecord.query
+    query = Nir.query
     
     if patient_name:
-        query = query.filter(NIRRecord.patient_name.ilike(f'%{patient_name}%'))
+        query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
     
     if entry_type:
-        query = query.filter(NIRRecord.entry_type == entry_type)
+        query = query.filter(Nir.entry_type == entry_type)
         
     if admission_type:
-        query = query.filter(NIRRecord.admission_type == admission_type)
+        query = query.filter(Nir.admission_type == admission_type)
         
     if discharge_type:
-        query = query.filter(NIRRecord.discharge_type == discharge_type)
+        query = query.filter(Nir.discharge_type == discharge_type)
         
     if responsible_doctor:
-        query = query.filter(NIRRecord.responsible_doctor.ilike(f'%{responsible_doctor}%'))
+        query = query.filter(Nir.responsible_doctor.ilike(f'%{responsible_doctor}%'))
         
     if month_filter:
-        query = query.filter(NIRRecord.month == month_filter.upper())
+        query = query.filter(Nir.month == month_filter.upper())
         
     if start_date:
         try:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-            query = query.filter(NIRRecord.admission_date >= start_date_obj)
+            query = query.filter(Nir.admission_date >= start_date_obj)
         except ValueError:
             pass
             
     if end_date:
         try:
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-            query = query.filter(NIRRecord.admission_date <= end_date_obj)
+            query = query.filter(Nir.admission_date <= end_date_obj)
         except ValueError:
             pass
     
-    query = query.order_by(desc(NIRRecord.creation_date))
+    query = query.order_by(desc(Nir.creation_date))
     
     records = query.paginate(
         page=page, per_page=per_page, error_out=False
     )
     
-    entry_types = db.session.query(NIRRecord.entry_type).distinct().filter(NIRRecord.entry_type.isnot(None)).all()
-    admission_types = db.session.query(NIRRecord.admission_type).distinct().filter(NIRRecord.admission_type.isnot(None)).all()
-    discharge_types = db.session.query(NIRRecord.discharge_type).distinct().filter(NIRRecord.discharge_type.isnot(None)).all()
-    doctors = db.session.query(NIRRecord.responsible_doctor).distinct().filter(NIRRecord.responsible_doctor.isnot(None)).all()
-    months = db.session.query(NIRRecord.month).distinct().filter(NIRRecord.month.isnot(None)).all()
+    entry_types = db.session.query(Nir.entry_type).distinct().filter(Nir.entry_type.isnot(None)).all()
+    admission_types = db.session.query(Nir.admission_type).distinct().filter(Nir.admission_type.isnot(None)).all()
+    discharge_types = db.session.query(Nir.discharge_type).distinct().filter(Nir.discharge_type.isnot(None)).all()
+    doctors = db.session.query(Nir.responsible_doctor).distinct().filter(Nir.responsible_doctor.isnot(None)).all()
+    months = db.session.query(Nir.month).distinct().filter(Nir.month.isnot(None)).all()
+    
+    # Verificar se é uma requisição AJAX
+    if request.args.get('ajax') == '1':
+        return render_template('nir/list_records_ajax.html', 
+                             records=records,
+                             entry_types=[et[0] for et in entry_types],
+                             admission_types=[at[0] for at in admission_types],
+                             discharge_types=[dt[0] for dt in discharge_types],
+                             doctors=[d[0] for d in doctors],
+                             months=[m[0] for m in months],
+                             filters={
+                                 'patient_name': patient_name,
+                                 'entry_type': entry_type,
+                                 'admission_type': admission_type,
+                                 'discharge_type': discharge_type,
+                                 'responsible_doctor': responsible_doctor,
+                                 'month_filter': month_filter,
+                                 'start_date': start_date,
+                                 'end_date': end_date
+                             })
     
     return render_template('nir/list_records.html', 
                          records=records,
@@ -177,20 +209,28 @@ def list_records():
 @nir_bp.route('/detalhes/<int:record_id>')
 @login_required
 def record_details(record_id):
-    record = NIRRecord.query.get_or_404(record_id)
+    record = Nir.query.get_or_404(record_id)
     return render_template('nir/record_details.html', record=record)
 
 @nir_bp.route('/editar/<int:record_id>')
 @login_required
 def edit_record(record_id):
-    record = NIRRecord.query.get_or_404(record_id)
+    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Você não tem permissão para editar registros NIR.", "danger")
+        return redirect(url_for("nir.list_records"))
+        
+    record = Nir.query.get_or_404(record_id)
     return render_template('nir/edit_record.html', record=record)
 
 @nir_bp.route('/atualizar/<int:record_id>', methods=['POST'])
 @login_required
 def update_record(record_id):
+    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Você não tem permissão para atualizar registros NIR.", "danger")
+        return redirect(url_for("nir.list_records"))
+        
     try:
-        record = NIRRecord.query.get_or_404(record_id)
+        record = Nir.query.get_or_404(record_id)
         
         birth_date = None
         if request.form.get('birth_date'):
@@ -199,7 +239,12 @@ def update_record(record_id):
             except ValueError:
                 pass
         
-        admission_date = datetime.strptime(request.form.get('admission_date'), '%Y-%m-%d').date()
+        admission_date = None
+        if request.form.get('admission_date'):
+            try:
+                admission_date = datetime.strptime(request.form.get('admission_date'), '%Y-%m-%d').date()
+            except ValueError:
+                pass
         
         scheduling_date = None
         if request.form.get('scheduling_date'):
@@ -259,8 +304,12 @@ def update_record(record_id):
 @nir_bp.route('/excluir/<int:record_id>', methods=['POST'])
 @login_required
 def delete_record(record_id):
+    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Você não tem permissão para excluir registros NIR.", "danger")
+        return redirect(url_for("nir.list_records"))
+        
     try:
-        record = NIRRecord.query.get_or_404(record_id)
+        record = Nir.query.get_or_404(record_id)
         db.session.delete(record)
         db.session.commit()
         

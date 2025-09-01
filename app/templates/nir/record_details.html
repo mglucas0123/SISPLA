@@ -73,7 +73,7 @@
                                 <div class="row">
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Data de Internação</label>
-                                        <p class="fw-bold">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else '-' }}</p>
+                                        <p class="fw-bold">{{ record.admission_date or '-' | format_date_short }}</p>
                                     </div>
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Tipo de Entrada</label>
@@ -100,7 +100,7 @@
                                         </p>
                                     </div>
                                     <div class="col-md-6 nir-detail-item">
-                                        <label class="form-label">Internado na Origem</label>
+                                        <label class="form-label">Local de Origem</label>
                                         <p>
                                             {% if record.admitted_from_origin %}
                                             <span class="nir-badge badge bg-{% if record.admitted_from_origin == 'SIM' %}success{% else %}secondary{% endif %}">
@@ -255,7 +255,7 @@
                                     </div>
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Data de Criação</label>
-                                        <p>{{ record.creation_date.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                        <p>{{ record.creation_date | format_date_time }}</p>
                                     </div>
                                 </div>
                             </div>

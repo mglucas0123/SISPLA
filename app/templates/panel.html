@@ -71,11 +71,13 @@
                     </div>
                     <div class="feature-actions">
                         <div class="d-grid gap-2">
+                            {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
                             <a href="{{ url_for('nir.new_record') }}" 
                                class="btn btn-danger d-flex align-items-center justify-content-center">
                                 <i class="bi bi-journal-plus me-2"></i>
                                 Novo Registro
                             </a>
+                            {% endif %}
                             <a href="{{ url_for('nir.list_records') }}" 
                                class="btn btn-outline-danger d-flex align-items-center justify-content-center">
                                 <i class="bi bi-clipboard-data me-2"></i>

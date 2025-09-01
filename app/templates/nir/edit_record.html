@@ -33,12 +33,12 @@
                                     <input type="text" class="form-control nir-form-control" name="patient_name" value="{{ record.patient_name }}" required placeholder="Nome completo do paciente">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="nir-form-label">Data de Nascimento</label>
-                                    <input type="date" class="form-control nir-form-control" name="birth_date" value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}">
+                                    <label class="nir-form-label">Data de Nascimento *</label>
+                                    <input type="date" class="form-control nir-form-control" name="birth_date" value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}" required>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="nir-form-label">Sexo</label>
-                                    <select class="form-select nir-form-control" name="gender">
+                                    <label class="nir-form-label">Sexo *</label>
+                                    <select class="form-select nir-form-control" name="gender" required>
                                         <option value="">Selecione</option>
                                         <option value="M" {% if record.gender == 'M' %}selected{% endif %}>Masculino</option>
                                         <option value="F" {% if record.gender == 'F' %}selected{% endif %}>Feminino</option>
@@ -46,11 +46,14 @@
                                 </div>
                                 <div class="col-md-5">
                                     <label class="nir-form-label">SUSFacil</label>
-                                    <input type="text" class="form-control nir-form-control" name="susfacil" value="{{ record.susfacil or '' }}" placeholder="Número SUSFacil">
+                                    <input type="text" class="form-control nir-form-control" name="susfacil" value="{{ record.susfacil or '' }}" 
+                                        placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="nir-form-label">Número SUS</label>
-                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}" placeholder="Cartão SUS">
+                                    <label class="nir-form-label">Cartão SUS *</label>
+                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}" required
+                                        placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
+                                        title="Formato: 000 0000 0000 0000">
                                 </div>
                             </div>
                         </div>
@@ -62,8 +65,8 @@
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="nir-form-label">Data de Internação *</label>
-                                    <input type="date" class="form-control nir-form-control" name="admission_date" value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}" required>
+                                    <label class="nir-form-label">Data de Internação</label>
+                                    <input type="date" class="form-control nir-form-control" name="admission_date" value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Tipo de Entrada</label>
@@ -82,11 +85,15 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="nir-form-label">Internado na Origem</label>
+                                    <label class="nir-form-label">Local de Origem</label>
                                     <select class="form-select nir-form-control" name="admitted_from_origin">
-                                        <option value="">Selecione</option>
-                                        <option value="SIM" {% if record.admitted_from_origin == 'SIM' %}selected{% endif %}>Sim</option>
-                                        <option value="NAO" {% if record.admitted_from_origin == 'NAO' %}selected{% endif %}>Não</option>
+                                        <option value="Iturama" {% if record.admitted_from_origin == 'Iturama' or not record.admitted_from_origin %}selected{% endif %}>Iturama</option>
+                                        <option value="São Francisco" {% if record.admitted_from_origin == 'São Francisco' %}selected{% endif %}>São Francisco</option>
+                                        <option value="União de Minas" {% if record.admitted_from_origin == 'União de Minas' %}selected{% endif %}>União de Minas</option>
+                                        <option value="Carneirinho" {% if record.admitted_from_origin == 'Carneirinho' %}selected{% endif %}>Carneirinho</option>
+                                        <option value="Limeira do Oeste" {% if record.admitted_from_origin == 'Limeira do Oeste' %}selected{% endif %}>Limeira do Oeste</option>
+                                        <option value="Outro" {% if record.admitted_from_origin == 'Outro' %}selected{% endif %}>Outro...</option>
+
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -227,6 +234,8 @@
         const cancelledSelect = document.getElementById('cancelledSelect');
         const cancellationReasonDiv = document.getElementById('cancellationReasonDiv');
         const cancellationReasonInput = cancellationReasonDiv.querySelector('input[name="cancellation_reason"]');
+        const susNumberInput = document.getElementById('sus-number-input');
+        const susfacilInput = document.querySelector('input[name="susfacil"]');
         
         function toggleCancellationReason() {
             if (cancelledSelect.value === 'SIM') {
@@ -238,10 +247,58 @@
                 cancellationReasonInput.value = '';
             }
         }
-        
+
+        function formatSusNumber(value) {
+            const numbers = value.replace(/\D/g, '');
+            
+            const limited = numbers.substring(0, 15);
+            
+            if (limited.length <= 3) {
+                return limited;
+            } else if (limited.length <= 7) {
+                return limited.substring(0, 3) + ' ' + limited.substring(3);
+            } else if (limited.length <= 11) {
+                return limited.substring(0, 3) + ' ' + limited.substring(3, 7) + ' ' + limited.substring(7);
+            } else {
+                return limited.substring(0, 3) + ' ' + limited.substring(3, 7) + ' ' + limited.substring(7, 11) + ' ' + limited.substring(11);
+            }
+        }
+
+        function validateNumbersOnly(value) {
+            return value.replace(/\D/g, '');
+        }
+
         cancelledSelect.addEventListener('change', toggleCancellationReason);
-        
         toggleCancellationReason();
+
+        if (susNumberInput) {
+            susNumberInput.value = formatSusNumber(susNumberInput.value);
+
+            susNumberInput.addEventListener('input', function(e) {
+                const formatted = formatSusNumber(e.target.value);
+                e.target.value = formatted;
+            });
+
+            susNumberInput.addEventListener('keypress', function(e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        if (susfacilInput) {
+            susfacilInput.addEventListener('input', function(e) {
+                e.target.value = validateNumbersOnly(e.target.value);
+            });
+
+            susfacilInput.addEventListener('keypress', function(e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
+                    e.preventDefault();
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
