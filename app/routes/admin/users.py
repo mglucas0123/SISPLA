@@ -31,6 +31,7 @@ def create_user():
     password = request.form.get("password", "")
     email = request.form.get("email", "").strip()
     profile_list = request.form.getlist("profile")
+    sectors_list = request.form.getlist("sectors")
     
     validation_errors = validate_user_data(name, username, email, profile_list)
     if validation_errors:
@@ -54,6 +55,7 @@ def create_user():
         return redirect(url_for("admin.users.list_users"))
     
     profile_str = ",".join(profile_list)
+    sectors_str = ",".join(sectors_list) if sectors_list else ""
     password_hash = generate_password_hash(password)
     
     new_user = User(
@@ -61,7 +63,8 @@ def create_user():
         username=username,
         password=password_hash,
         email=email,
-        profile=profile_str
+        profile=profile_str,
+        sectors=sectors_str
     )
     
     db.session.add(new_user)
@@ -198,6 +201,23 @@ def change_permissions(user_id):
     
     logger.info(f"Permissões alteradas para {user_to_edit.username}: {old_permissions} -> {user_to_edit.profile}")
     flash(f"Permissões do usuário '{user_to_edit.name}' foram atualizadas!", "success")
+    return redirect(url_for("admin.users.list_users"))
+
+@users_bp.route("/change_sectors/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+@handle_database_error("alterar setores")
+def change_sectors(user_id):
+    """Alterar setores do usuário"""
+    user_to_edit = User.query.get_or_404(user_id)
+    new_sectors_list = request.form.getlist("sectors_edit")
+    
+    old_sectors = user_to_edit.sectors or ""
+    user_to_edit.sectors = ",".join(new_sectors_list) if new_sectors_list else ""
+    db.session.commit()
+    
+    logger.info(f"Setores alterados para {user_to_edit.username}: {old_sectors} -> {user_to_edit.sectors}")
+    flash(f"Setores do usuário '{user_to_edit.name}' foram atualizados!", "success")
     return redirect(url_for("admin.users.list_users"))
 
 @users_bp.route("/toggle_status/<int:user_id>", methods=["POST"])

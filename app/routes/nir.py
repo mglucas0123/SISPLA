@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from datetime import datetime, date
 from app.models import db, Nir, User
+from app.utils.sector_permissions import user_has_module_access, create_sector_permission_decorator
 from sqlalchemy import or_, and_, desc
 
 nir_bp = Blueprint('nir', __name__, url_prefix='/nir')
@@ -15,16 +16,18 @@ def index():
 @nir_bp.route('/novo')
 @login_required
 def new_record():
-    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para criar novos registros NIR.", "danger")
+    allowed_sectors = ['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']
+    if not current_user.has_any_sector(allowed_sectors) and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Seu setor não possui permissão para acessar o módulo NIR.", "danger")
         return redirect(url_for("nir.list_records"))
     return render_template('nir/new_record.html')
 
 @nir_bp.route('/criar', methods=['POST'])
 @login_required
 def create_record():
-    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para criar registros NIR.", "danger")
+    allowed_sectors = ['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']
+    if not current_user.has_any_sector(allowed_sectors) and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Seu setor não possui permissão para acessar o módulo NIR.", "danger")
         return redirect(url_for("nir.list_records"))
         
     try:
@@ -110,6 +113,9 @@ def create_record():
 @nir_bp.route('/registros')
 @login_required
 def list_records():
+    if not user_has_module_access(current_user, 'nir'):
+        flash("Acesso negado! Seu setor não possui permissão para acessar o módulo NIR.", "danger")
+        return redirect(url_for("main.panel"))
     page = request.args.get('page', 1, type=int)
     per_page = 15
     
@@ -214,8 +220,9 @@ def record_details(record_id):
 @nir_bp.route('/editar/<int:record_id>')
 @login_required
 def edit_record(record_id):
-    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para editar registros NIR.", "danger")
+    allowed_sectors = ['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']
+    if not current_user.has_any_sector(allowed_sectors) and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Seu setor não possui permissão para acessar o módulo NIR.", "danger")
         return redirect(url_for("nir.list_records"))
         
     record = Nir.query.get_or_404(record_id)
@@ -224,8 +231,9 @@ def edit_record(record_id):
 @nir_bp.route('/atualizar/<int:record_id>', methods=['POST'])
 @login_required
 def update_record(record_id):
-    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para atualizar registros NIR.", "danger")
+    allowed_sectors = ['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']
+    if not current_user.has_any_sector(allowed_sectors) and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Seu setor não possui permissão para acessar o módulo NIR.", "danger")
         return redirect(url_for("nir.list_records"))
         
     try:
@@ -303,8 +311,9 @@ def update_record(record_id):
 @nir_bp.route('/excluir/<int:record_id>', methods=['POST'])
 @login_required
 def delete_record(record_id):
-    if "VER_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para excluir registros NIR.", "danger")
+    allowed_sectors = ['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']
+    if not current_user.has_any_sector(allowed_sectors) and "ADMIN" not in current_user.profile:
+        flash("Acesso negado! Seu setor não possui permissão para acessar o módulo NIR.", "danger")
         return redirect(url_for("nir.list_records"))
         
     try:

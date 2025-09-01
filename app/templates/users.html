@@ -129,6 +129,7 @@
                             data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
                             data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
                             data-user-profile="{{ user.profile | join(',') if user.profile is iterable and user.profile is not string else (user.profile if user.profile else '') }}"
+                            data-user-sectors="{{ user.sectors or '' }}"
                             data-user-is-active="{{ user.is_active | tojson }}">
 
                             <td class="user-name-cell">
@@ -266,6 +267,120 @@
                     <input type="password" class="form-control" id="password" name="password" required
                         placeholder="Digite uma senha segura">
                 </div>
+
+                <fieldset class="mb-4">
+                    <legend>
+                        <i class="bi bi-building"></i>
+                        Setores do Usuário
+                    </legend>
+                    <div class="sectors-selection">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Clínicos</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="ENFERMAGEM" id="sector_enfermagem_criar">
+                                    <label class="form-check-label" for="sector_enfermagem_criar">
+                                        <i class="bi bi-heart-pulse text-success"></i>
+                                        Enfermagem
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="MEDICINA" id="sector_medicina_criar">
+                                    <label class="form-check-label" for="sector_medicina_criar">
+                                        <i class="bi bi-stethoscope text-primary"></i>
+                                        Medicina
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="FISIOTERAPIA" id="sector_fisio_criar">
+                                    <label class="form-check-label" for="sector_fisio_criar">
+                                        <i class="bi bi-person-arms-up text-info"></i>
+                                        Fisioterapia
+                                    </label>
+                                </div>
+
+                                <h6 class="text-primary mt-3">Apoio Diagnóstico</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="LABORATORIO" id="sector_lab_criar">
+                                    <label class="form-check-label" for="sector_lab_criar">
+                                        <i class="bi bi-clipboard2-pulse text-purple"></i>
+                                        Laboratório
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="RADIOLOGIA" id="sector_radio_criar">
+                                    <label class="form-check-label" for="sector_radio_criar">
+                                        <i class="bi bi-camera-reels text-warning"></i>
+                                        Radiologia
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="FARMACIA" id="sector_farmacia_criar">
+                                    <label class="form-check-label" for="sector_farmacia_criar">
+                                        <i class="bi bi-capsule text-teal"></i>
+                                        Farmácia
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Administrativos</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="FATURAMENTO" id="sector_faturamento_criar">
+                                    <label class="form-check-label" for="sector_faturamento_criar">
+                                        <i class="bi bi-receipt text-warning"></i>
+                                        Faturamento
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="RH" id="sector_rh_criar">
+                                    <label class="form-check-label" for="sector_rh_criar">
+                                        <i class="bi bi-people text-secondary"></i>
+                                        Recursos Humanos
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="TI" id="sector_ti_criar">
+                                    <label class="form-check-label" for="sector_ti_criar">
+                                        <i class="bi bi-laptop text-dark"></i>
+                                        T.I.
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="DIRETORIA" id="sector_diretoria_criar">
+                                    <label class="form-check-label" for="sector_diretoria_criar">
+                                        <i class="bi bi-building text-danger"></i>
+                                        Diretoria
+                                    </label>
+                                </div>
+
+                                <h6 class="text-primary mt-3">Operacionais</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="INTERNACAO" id="sector_internacao_criar">
+                                    <label class="form-check-label" for="sector_internacao_criar">
+                                        <i class="bi bi-house-heart text-pink"></i>
+                                        Internação
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="CENTRO_CIRURGICO" id="sector_cc_criar">
+                                    <label class="form-check-label" for="sector_cc_criar">
+                                        <i class="bi bi-scissors text-warning"></i>
+                                        Centro Cirúrgico
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sectors" value="EMERGENCIA" id="sector_emergencia_criar">
+                                    <label class="form-check-label" for="sector_emergencia_criar">
+                                        <i class="bi bi-truck-front text-danger"></i>
+                                        Emergência
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
                 <fieldset>
                     <legend>
                         <i class="bi bi-shield-check"></i>
@@ -357,6 +472,12 @@
                         <div class="permissions-label">Permissões Atuais:</div>
                         <div class="permissions-list" id="modalUserPermissions">
                             <span class="permission-badge badge-none">Carregando...</span>
+                        </div>
+                    </div>
+                    <div class="sectors-display">
+                        <div class="sectors-label">Setores Atuais:</div>
+                        <div class="sectors-list" id="modalUserSectors">
+                            <span class="sector-badge sector-none">Carregando...</span>
                         </div>
                     </div>
                 </div>
@@ -482,6 +603,7 @@
         var modalUserNameSpan = infoUsuarioModalElement.querySelector('#modalUserName');
         var modalUserLoginSpan = infoUsuarioModalElement.querySelector('#modalUserLogin');
         var modalUserPermissionsDiv = infoUsuarioModalElement.querySelector('#modalUserPermissions');
+        var modalUserSectorsDiv = infoUsuarioModalElement.querySelector('#modalUserSectors');
         var formAlterarSenhaAdmin = infoUsuarioModalElement.querySelector('#formAlterarSenhaAdmin');
         var formDeletarUsuario = infoUsuarioModalElement.querySelector('#formDeletarUsuario');
         var modalUserEmail = infoUsuarioModalElement.querySelector('#modalUserEmail');
@@ -696,6 +818,7 @@
             var userLoginData = triggeringRow.dataset.userUsuario;
             var userEmailData = triggeringRow.dataset.userEmail;
             var userProfileStrData = triggeringRow.dataset.userProfile;
+            var userSectorsStrData = triggeringRow.dataset.userSectors;
             var userIsActiveStr = triggeringRow.dataset.userIsActive;
             var userIsActive = (userIsActiveStr === 'true');
 
@@ -755,6 +878,23 @@
                 }
             }
 
+            if (modalUserSectorsDiv) {
+                modalUserSectorsDiv.innerHTML = '';
+                var tempSectorsArray = userSectorsStrData ? userSectorsStrData.split(',') : [];
+                if (tempSectorsArray.length > 0 && tempSectorsArray.some(s => s.trim() !== '')) {
+                    tempSectorsArray.forEach(function (sector) {
+                        sector = sector.trim();
+                        if (!sector) return;
+                        var sectorInfo = getSectorInfo(sector);
+                        var badge = '<span class="sector-badge sector-' + sectorInfo.class + '">';
+                        badge += '<i class="' + sectorInfo.icon + '"></i>' + sectorInfo.text + '</span>';
+                        modalUserSectorsDiv.innerHTML += badge;
+                    });
+                } else {
+                    modalUserSectorsDiv.innerHTML = '<span class="sector-badge sector-none">Nenhum setor definido</span>';
+                }
+            }
+
             if (permCheckboxesEdit) {
                 for (var permValue in permCheckboxesEdit) {
                     if (permCheckboxesEdit[permValue]) {
@@ -786,6 +926,25 @@
                 if (formToggleUserStatus) formToggleUserStatus.action = '#';
             }
         });
+
+        function getSectorInfo(sector) {
+            switch (sector) {
+                case 'ENFERMAGEM': return { class: 'success', icon: 'bi bi-heart-pulse', text: 'Enfermagem' };
+                case 'MEDICINA': return { class: 'primary', icon: 'bi bi-stethoscope', text: 'Medicina' };
+                case 'FISIOTERAPIA': return { class: 'info', icon: 'bi bi-person-arms-up', text: 'Fisioterapia' };
+                case 'LABORATORIO': return { class: 'purple', icon: 'bi bi-clipboard2-pulse', text: 'Laboratório' };
+                case 'RADIOLOGIA': return { class: 'warning', icon: 'bi bi-camera-reels', text: 'Radiologia' };
+                case 'FARMACIA': return { class: 'teal', icon: 'bi bi-capsule', text: 'Farmácia' };
+                case 'FATURAMENTO': return { class: 'warning', icon: 'bi bi-receipt', text: 'Faturamento' };
+                case 'RH': return { class: 'secondary', icon: 'bi bi-people', text: 'Recursos Humanos' };
+                case 'TI': return { class: 'dark', icon: 'bi bi-laptop', text: 'T.I.' };
+                case 'DIRETORIA': return { class: 'danger', icon: 'bi bi-building', text: 'Diretoria' };
+                case 'INTERNACAO': return { class: 'pink', icon: 'bi bi-house-heart', text: 'Internação' };
+                case 'CENTRO_CIRURGICO': return { class: 'warning', icon: 'bi bi-scissors', text: 'Centro Cirúrgico' };
+                case 'EMERGENCIA': return { class: 'danger', icon: 'bi bi-truck-front', text: 'Emergência' };
+                default: return { class: 'none', icon: 'bi bi-question-circle', text: 'Desconhecido' };
+            }
+        }
     });
 </script>
 {% endblock %}

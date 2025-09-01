@@ -1,4 +1,3 @@
-
 {% extends "navbar.html" %}
 {% block title %}Registros NIR{% endblock %}
 
@@ -14,7 +13,7 @@
                     </h1>
                     <p class="forms-subtitle">Gerencie os registros de Notificação de Internação Regulatória</p>
                 </div>
-                {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
+                {% if current_user.has_any_sector(['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']) or 'ADMIN' in current_user.profile %}
                 <div class="forms-header-actions">
                     <a href="{{ url_for('nir.new_record') }}" class="btn btn-danger">
                         <i class="bi bi-plus-circle me-2"></i>
@@ -41,7 +40,7 @@
                                         placeholder="Nome do paciente" value="{{ filters.patient_name or '' }}">
                                 </div>
                             </div>
-                            
+
                             <div class="forms-filter-item">
                                 <div class="forms-input-group forms-input-compact">
                                     <span class="forms-input-icon">
@@ -55,7 +54,7 @@
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="forms-filter-item">
                                 <div class="forms-input-group forms-input-compact">
                                     <span class="forms-input-icon">
@@ -69,7 +68,7 @@
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="forms-filter-item">
                                 <div class="forms-input-group forms-input-compact">
                                     <span class="forms-input-icon">
@@ -79,7 +78,7 @@
                                         placeholder="Médico responsável" value="{{ filters.responsible_doctor or '' }}">
                                 </div>
                             </div>
-                            
+
                             <div class="forms-filter-item">
                                 <div class="forms-input-group forms-input-compact">
                                     <span class="forms-input-icon">
@@ -89,7 +88,7 @@
                                         value="{{ filters.start_date or '' }}" title="Data inicial">
                                 </div>
                             </div>
-                            
+
                             <div class="forms-filter-item">
                                 <div class="forms-input-group forms-input-compact">
                                     <span class="forms-input-icon">
@@ -241,7 +240,7 @@
                 </div>
                 {% endif %}
             </div>
-            
+
             {% if records.pages > 1 %}
             <div class="card-footer bg-transparent" id="paginationContainer">
                 <nav aria-label="Navegação de registros">
@@ -253,7 +252,7 @@
                             </a>
                         </li>
                         {% endif %}
-                        
+
                         {% for page_num in records.iter_pages() %}
                             {% if page_num %}
                                 {% if page_num != records.page %}
@@ -271,7 +270,7 @@
                             </li>
                             {% endif %}
                         {% endfor %}
-                        
+
                         {% if records.has_next %}
                         <li class="page-item">
                             <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ records.next_num }})">
@@ -364,7 +363,7 @@
                 if (newTableContainer) {
                     const currentContainer = document.querySelector('.forms-table-container');
                     currentContainer.innerHTML = newTableContainer.innerHTML;
-                    
+
                     const tooltipTriggerList = [].slice.call(currentContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
                     tooltipTriggerList.forEach(function (tooltipTriggerEl) {
                         new bootstrap.Tooltip(tooltipTriggerEl);
@@ -380,7 +379,7 @@
                 }
 
                 hideLoadingState();
-                
+
                 document.querySelector('.forms-table-container').scrollIntoView({ 
                     behavior: 'smooth',
                     block: 'start'

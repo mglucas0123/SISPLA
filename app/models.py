@@ -18,6 +18,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     profile = db.Column(db.String(200), nullable=False)
+    sectors = db.Column(db.String(500), nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -32,6 +33,22 @@ class User(db.Model, UserMixin):
         return db.session.query(
             Repository.query.filter_by(owner_id=self.id, access_type='private').exists()
         ).scalar()
+
+    @property
+    def sectors_list(self):
+        """Retorna lista dos setores do usuário"""
+        if not self.sectors:
+            return []
+        return [sector.strip() for sector in self.sectors.split(',') if sector.strip()]
+    
+    def has_sector(self, sector):
+        """Verifica se o usuário possui um setor específico"""
+        return sector in self.sectors_list
+    
+    def has_any_sector(self, sector_list):
+        """Verifica se o usuário possui algum dos setores da lista"""
+        user_sectors = self.sectors_list
+        return any(sector in user_sectors for sector in sector_list)
 
     def __repr__(self):
         return f'<User {self.username}>'
