@@ -19,11 +19,16 @@
                             <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary me-2">
                                 <i class="bi bi-arrow-left me-2"></i>Voltar
                             </a>
+                            {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
                             <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" class="btn btn-warning me-2">
                                 <i class="bi bi-pencil me-2"></i>Editar
                             </a>
                             <button class="btn btn-danger" onclick="deleteRecord('{{ record.id }}')">
                                 <i class="bi bi-trash me-2"></i>Excluir
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-info" onclick="printRecord()">
+                                <i class="bi bi-printer me-2"></i>Imprimir
                             </button>
                         </div>
                     </div>
@@ -297,5 +302,60 @@
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
         deleteModal.show();
     }
+
+    function printRecord() {
+        const printWindow = window.open('', '_blank');
+        
+        const cardContent = document.querySelector('.nir-card').innerHTML;
+        
+        const printHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Registro NIR #{{ record.id }}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .nir-details-section { margin-bottom: 20px; page-break-inside: avoid; }
+                    .nir-details-section h5 { color: #333; border-bottom: 2px solid #dc3545; padding-bottom: 5px; }
+                    .row { display: flex; flex-wrap: wrap; }
+                    .col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-9, .col-12 { flex: 1; min-width: 200px; margin-right: 15px; }
+                    .nir-detail-item { margin-bottom: 15px; }
+                    .form-label { font-weight: bold; color: #666; font-size: 12px; }
+                    .nir-badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; }
+                    .bg-primary { background: #007bff !important; color: white; }
+                    .bg-success { background: #28a745 !important; color: white; }
+                    .bg-danger { background: #dc3545 !important; color: white; }
+                    .bg-warning { background: #ffc107 !important; color: black; }
+                    .bg-info { background: #17a2b8 !important; color: white; }
+                    .bg-secondary { background: #6c757d !important; color: white; }
+                    .text-monospace { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; }
+                    @media print { .no-print { display: none; } }
+                </style>
+            </head>
+            <body>
+                <h1>Registro NIR #{{ record.id }}</h1>
+                <p><strong>Paciente:</strong> {{ record.patient_name }}</p>
+                <p><strong>Data de Impressão:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                <hr>
+                ${cardContent}
+            </body>
+            </html>
+        `;
+        
+        printWindow.document.write(printHTML);
+        printWindow.document.close();
+        
+        printWindow.onload = function() {
+            printWindow.print();
+            printWindow.close();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
 </script>
 {% endblock %}

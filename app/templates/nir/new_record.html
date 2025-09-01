@@ -240,19 +240,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancellationReasonInput = document.querySelector('input[name="cancellation_reason"]');
     const susNumberInput = document.getElementById('sus-number-input');
     const susfacilInput = document.querySelector('input[name="susfacil"]');
+    const admissionDateInput = document.querySelector('input[name="admission_date"]');
+    const dischargeDateInput = document.querySelector('input[name="discharge_date"]');
+    const birthDateInput = document.querySelector('input[name="birth_date"]');
+    const form = document.querySelector('form');
 
     function toggleCancellationReason() {
         if (cancelledSelect.value === 'SIM') {
             cancellationReasonField.style.display = 'block';
+            cancellationReasonInput.required = true;
         } else {
             cancellationReasonField.style.display = 'none';
+            cancellationReasonInput.required = false;
             cancellationReasonInput.value = '';
         }
     }
 
     function formatSusNumber(value) {
         const numbers = value.replace(/\D/g, '');
-        
         const limited = numbers.substring(0, 15);
         
         if (limited.length <= 3) {
@@ -270,6 +275,50 @@ document.addEventListener('DOMContentLoaded', function() {
         return value.replace(/\D/g, '');
     }
 
+    function validateDates() {
+        const birthDate = birthDateInput.value ? new Date(birthDateInput.value) : null;
+        const admissionDate = admissionDateInput.value ? new Date(admissionDateInput.value) : null;
+        const dischargeDate = dischargeDateInput.value ? new Date(dischargeDateInput.value) : null;
+        const today = new Date();
+
+        if (birthDate && birthDate > today) {
+            showValidationError(birthDateInput, 'Data de nascimento não pode ser futura');
+            return false;
+        }
+
+        if (admissionDate && dischargeDate && dischargeDate <= admissionDate) {
+            showValidationError(dischargeDateInput, 'Data de alta deve ser posterior à data de internação');
+            return false;
+        }
+
+        if (birthDate && admissionDate && admissionDate <= birthDate) {
+            showValidationError(admissionDateInput, 'Data de internação deve ser posterior ao nascimento');
+            return false;
+        }
+
+        clearValidationErrors();
+        return true;
+    }
+
+    function showValidationError(input, message) {
+        clearValidationErrors();
+        input.classList.add('is-invalid');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.textContent = message;
+        input.parentNode.appendChild(errorDiv);
+    }
+
+    function clearValidationErrors() {
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+    }
+
+    function validateSusNumber(susNumber) {
+        const numbers = susNumber.replace(/\D/g, '');
+        return numbers.length === 15;
+    }
+
     toggleCancellationReason();
     cancelledSelect.addEventListener('change', toggleCancellationReason);
 
@@ -277,6 +326,12 @@ document.addEventListener('DOMContentLoaded', function() {
         susNumberInput.addEventListener('input', function(e) {
             const formatted = formatSusNumber(e.target.value);
             e.target.value = formatted;
+            
+            if (formatted.replace(/\D/g, '').length > 0 && !validateSusNumber(formatted)) {
+                e.target.classList.add('is-invalid');
+            } else {
+                e.target.classList.remove('is-invalid');
+            }
         });
 
         susNumberInput.addEventListener('keypress', function(e) {
@@ -299,6 +354,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    [birthDateInput, admissionDateInput, dischargeDateInput].forEach(input => {
+        if (input) {
+            input.addEventListener('change', validateDates);
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+            return false;
+        }
+
+        if (susNumberInput && !validateSusNumber(susNumberInput.value)) {
+            e.preventDefault();
+            showValidationError(susNumberInput, 'Número SUS deve conter 15 dígitos');
+            return false;
+        }
+    });
 });
 </script>
 {% endblock %}

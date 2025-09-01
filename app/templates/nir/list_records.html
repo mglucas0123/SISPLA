@@ -166,6 +166,11 @@
                                     <div class="forms-date-info">
                                         {% if record.admission_date %}
                                         <span class="forms-date">{{ record.admission_date.strftime('%d/%m/%Y') }}</span>
+                                        <small class="text-muted d-block">
+                                            {% if record.total_days_admitted %}
+                                            {{ record.total_days_admitted }} dias
+                                            {% endif %}
+                                        </small>
                                         {% else %}
                                         <span class="forms-date">-</span>
                                         {% endif %}
@@ -204,16 +209,16 @@
                                 <td class="forms-table-cell forms-table-center">
                                     <div class="forms-action-buttons">
                                         <a href="{{ url_for('nir.record_details', record_id=record.id) }}" 
-                                           class="forms-action-btn forms-action-view" title="Visualizar">
+                                           class="forms-action-btn forms-action-view" title="Visualizar" data-bs-toggle="tooltip">
                                             <i class="bi bi-eye-fill"></i>
                                         </a>
                                         {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
                                         <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" 
-                                           class="forms-action-btn forms-action-edit" title="Editar">
+                                           class="forms-action-btn forms-action-edit" title="Editar" data-bs-toggle="tooltip">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
                                         <button class="forms-action-btn forms-action-delete" 
-                                                onclick="deleteRecord({{ record.id }})" title="Excluir">
+                                                onclick="deleteRecord({{ record.id }})" title="Excluir" data-bs-toggle="tooltip">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
                                         {% endif %}
@@ -229,7 +234,10 @@
                     <div class="forms-empty-icon">
                         <i class="bi bi-inbox"></i>
                     </div>
-                    <p class="forms-empty-text">Nenhum registro encontrado.</p>
+                    <p class="forms-empty-text">Nenhum registro encontrado com os filtros aplicados.</p>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters()">
+                        <i class="bi bi-eraser me-2"></i>Limpar Filtros
+                    </button>
                 </div>
                 {% endif %}
             </div>
@@ -240,7 +248,7 @@
                     <ul class="pagination justify-content-center mb-0">
                         {% if records.has_prev %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('nir.list_records', page=records.prev_num, **filters) }}">
+                            <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ records.prev_num }})">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
@@ -250,7 +258,7 @@
                             {% if page_num %}
                                 {% if page_num != records.page %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('nir.list_records', page=page_num, **filters) }}">{{ page_num }}</a>
+                                    <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ page_num }})">{{ page_num }}</a>
                                 </li>
                                 {% else %}
                                 <li class="page-item active">
@@ -266,7 +274,7 @@
                         
                         {% if records.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('nir.list_records', page=records.next_num, **filters) }}">
+                            <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ records.next_num }})">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>
@@ -313,23 +321,23 @@
         const applyFiltersButton = document.getElementById('applyFilters');
         const clearFiltersButton = document.getElementById('clearFilters');
 
-        function filterRecordsWithAjax() {
-            const patientName = searchPatientName.value.trim();
-            const entryType = entryTypeFilter.value;
-            const admissionType = admissionTypeFilter.value;
-            const responsibleDoctor = responsibleDoctorFilter.value.trim();
-            const startDate = startDateFilter.value;
-            const endDate = endDateFilter.value;
+        function filterRecordsWithAjax(customFilters = null, page = 1) {
+            const filters = customFilters || {
+                patient_name: searchPatientName.value.trim(),
+                entry_type: entryTypeFilter.value,
+                admission_type: admissionTypeFilter.value,
+                responsible_doctor: responsibleDoctorFilter.value.trim(),
+                start_date: startDateFilter.value,
+                end_date: endDateFilter.value
+            };
 
             showLoadingState();
 
             const params = new URLSearchParams();
-            if (patientName) params.set('patient_name', patientName);
-            if (entryType) params.set('entry_type', entryType);
-            if (admissionType) params.set('admission_type', admissionType);
-            if (responsibleDoctor) params.set('responsible_doctor', responsibleDoctor);
-            if (startDate) params.set('start_date', startDate);
-            if (endDate) params.set('end_date', endDate);
+            Object.keys(filters).forEach(key => {
+                if (filters[key]) params.set(key, filters[key]);
+            });
+            params.set('page', page);
             params.set('ajax', '1');
 
             const url = "{{ url_for('nir.list_records') }}?" + params.toString();
@@ -340,16 +348,27 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na resposta do servidor');
+                }
+                return response.text();
+            })
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                const newTableContainer = doc.querySelector('#recordsTableContainer');
+                const newTableContainer = doc.querySelector('.forms-table-container');
                 const newPagination = doc.querySelector('#paginationContainer');
 
                 if (newTableContainer) {
-                    document.getElementById('recordsTableContainer').innerHTML = newTableContainer.innerHTML;
+                    const currentContainer = document.querySelector('.forms-table-container');
+                    currentContainer.innerHTML = newTableContainer.innerHTML;
+                    
+                    const tooltipTriggerList = [].slice.call(currentContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
                 }
 
                 const currentPagination = document.getElementById('paginationContainer');
@@ -361,6 +380,11 @@
                 }
 
                 hideLoadingState();
+                
+                document.querySelector('.forms-table-container').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             })
             .catch(error => {
                 console.error('Erro ao filtrar registros:', error);
@@ -369,8 +393,36 @@
             });
         }
 
+        window.filterRecordsWithAjax = filterRecordsWithAjax;
+
+        function loadPage(pageNum) {
+            const currentFilters = getCurrentFilters();
+            filterRecordsWithAjax(currentFilters, pageNum);
+        }
+
+        function getCurrentFilters() {
+            return {
+                patient_name: searchPatientName.value.trim(),
+                entry_type: entryTypeFilter.value,
+                admission_type: admissionTypeFilter.value,
+                responsible_doctor: responsibleDoctorFilter.value.trim(),
+                start_date: startDateFilter.value,
+                end_date: endDateFilter.value
+            };
+        }
+
+        function clearAllFilters() {
+            searchPatientName.value = '';
+            entryTypeFilter.value = '';
+            admissionTypeFilter.value = '';
+            responsibleDoctorFilter.value = '';
+            startDateFilter.value = '';
+            endDateFilter.value = '';
+            filterRecordsWithAjax();
+        }
+
         function showLoadingState() {
-            const tableContainer = document.getElementById('recordsTableContainer');
+            const tableContainer = document.querySelector('.forms-table-container');
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'nir-loading';
             loadingDiv.innerHTML = `
@@ -392,7 +444,7 @@
         }
 
         function showErrorMessage(message) {
-            const tableContainer = document.getElementById('recordsTableContainer');
+            const tableContainer = document.querySelector('.forms-table-container');
             const errorDiv = document.createElement('div');
             errorDiv.className = 'nir-error alert alert-warning';
             errorDiv.innerHTML = `
@@ -405,6 +457,10 @@
                 errorDiv.remove();
             }, 5000);
         }
+
+        window.filterRecordsWithAjax = filterRecordsWithAjax;
+        window.loadPage = loadPage;
+        window.clearAllFilters = clearAllFilters;
 
         let searchTimeout;
 

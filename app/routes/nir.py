@@ -168,9 +168,8 @@ def list_records():
     doctors = db.session.query(Nir.responsible_doctor).distinct().filter(Nir.responsible_doctor.isnot(None)).all()
     months = db.session.query(Nir.month).distinct().filter(Nir.month.isnot(None)).all()
     
-    # Verificar se é uma requisição AJAX
     if request.args.get('ajax') == '1':
-        return render_template('nir/list_records_ajax.html', 
+        return render_template('nir/list_records.html', 
                              records=records,
                              entry_types=[et[0] for et in entry_types],
                              admission_types=[at[0] for at in admission_types],
