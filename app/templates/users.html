@@ -271,36 +271,76 @@
                 <fieldset class="mb-4">
                     <legend>
                         <i class="bi bi-shield-check"></i>
-                        Permissões do Usuário
+                        Roles do Usuário
                     </legend>
                     <div class="row">
-                        <div class="col-md-6">
+                        {% set available_roles = [
+                            {'name': 'Enfermeiro', 'description': 'Profissional de enfermagem'},
+                            {'name': 'Médico', 'description': 'Médico assistente'},
+                            {'name': 'Faturista', 'description': 'Responsável pelo faturamento'},
+                            {'name': 'Farmacêutico', 'description': 'Responsável pela farmácia'},
+                            {'name': 'Técnico Laboratório', 'description': 'Técnico de laboratório'},
+                            {'name': 'Recepcionista', 'description': 'Atendimento e recepção'},
+                            {'name': 'Gestor RH', 'description': 'Gestão de recursos humanos'},
+                            {'name': 'Administrador TI', 'description': 'Administrador do sistema'},
+                            {'name': 'Diretor', 'description': 'Direção hospitalar'}
+                        ] %}
+                        {% for role in available_roles %}
+                        <div class="col-md-6 mb-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="profile" value="ADMIN"
-                                    id="perm_admin_criar">
-                                <label class="form-check-label" for="perm_admin_criar">
-                                    <i class="bi bi-shield-lock-fill text-danger"></i>
-                                    Administrador
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="profile" value="CRIAR_RELATORIOS"
-                                    id="perm_criar_criar">
-                                <label class="form-check-label" for="perm_criar_criar">
-                                    <i class="bi bi-pencil-fill text-success"></i>
-                                    Criar relatórios
+                                <input class="form-check-input" type="checkbox" name="roles"
+                                       value="{{ role.name }}" id="role_criar_{{ role.name }}">
+                                <label class="form-check-label" for="role_criar_{{ role.name }}">
+                                    <i class="bi bi-person-badge text-primary"></i>
+                                    {{ role.name }}
+                                    {% if role.description %}
+                                    <small class="text-muted d-block">{{ role.description }}</small>
+                                    {% endif %}
                                 </label>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="profile" value="VER_RELATORIOS"
-                                    id="perm_ver_criar">
-                                <label class="form-check-label" for="perm_ver_criar">
-                                    <i class="bi bi-eye-fill text-info"></i>
-                                    Ver relatórios
-                                </label>
-                            </div>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                <fieldset class="mb-4">
+                    <legend>
+                        <i class="bi bi-building"></i>
+                        Setores do Usuário
+                    </legend>
+                    <div class="mb-3">
+                        <label for="sectors_criar" class="form-label">
+                            <i class="bi bi-building"></i>
+                            Selecione os setores do usuário
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" id="sectors_criar" name="sectors" multiple size="8" required>
+                            <optgroup label="Clínicos">
+                                <option value="ENFERMAGEM">🏥 Enfermagem</option>
+                                <option value="MEDICINA">🩺 Medicina</option>
+                                <option value="FISIOTERAPIA">🏃 Fisioterapia</option>
+                            </optgroup>
+                            <optgroup label="Apoio Diagnóstico">
+                                <option value="LABORATORIO">🧪 Laboratório</option>
+                                <option value="RADIOLOGIA">📷 Radiologia</option>
+                                <option value="FARMACIA">💊 Farmácia</option>
+                            </optgroup>
+                            <optgroup label="Administrativos">
+                                <option value="FATURAMENTO">🧾 Faturamento</option>
+                                <option value="RH">👥 Recursos Humanos</option>
+                                <option value="TI">💻 T.I.</option>
+                                <option value="DIRETORIA">🏢 Diretoria</option>
+                            </optgroup>
+                            <optgroup label="Operacionais">
+                                <option value="INTERNACAO">🏠 Internação</option>
+                                <option value="CENTRO_CIRURGICO">✂️ Centro Cirúrgico</option>
+                                <option value="EMERGENCIA">🚑 Emergência</option>
+                                <option value="UTI">❤️ UTI</option>
+                            </optgroup>
+                        </select>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Mantenha pressionado Ctrl (ou Cmd no Mac) para selecionar múltiplos setores
                         </div>
                     </div>
                 </fieldset>
@@ -355,6 +395,12 @@
                             </div>
                         </div>
                     </div>
+                    <div class="roles-display">
+                        <div class="roles-label">Roles Atuais:</div>
+                        <div class="roles-list" id="modalUserRoles">
+                            <span class="role-badge role-none">Carregando...</span>
+                        </div>
+                    </div>
                     <div class="permissions-display">
                         <div class="permissions-label">Permissões Atuais:</div>
                         <div class="permissions-list" id="modalUserPermissions">
@@ -372,40 +418,128 @@
                 <div class="mb-4">
                     <h6 class="section-title">
                         <i class="bi bi-shield-check"></i>
-                        Editar Permissões
+                        Gerenciar Permissões RBAC
                     </h6>
-                    <form id="formEditarPermissoes" method="POST" action="">
+                    <form id="formEditarPermissoesRBAC" method="POST" action="">
                         <fieldset>
                             <legend>
                                 <i class="bi bi-gear-wide-connected"></i>
-                                Configurar Permissões
+                                Atribuir Permissões Específicas
                             </legend>
                             <div class="row">
                                 <div class="col-md-6">
+                                    <h6 class="text-primary">NIR</h6>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit"
-                                            value="ADMIN" id="perm_admin_edit" role="switch">
-                                        <label class="form-check-label" for="perm_admin_edit">
-                                            <i class="bi bi-shield-lock-fill text-danger"></i>
-                                            Administrador
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="criar_nir" id="perm_criar_nir">
+                                        <label class="form-check-label" for="perm_criar_nir">
+                                            <i class="bi bi-plus-circle text-success"></i>
+                                            Criar NIR
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit"
-                                            value="CRIAR_RELATORIOS" id="perm_criar_edit" role="switch">
-                                        <label class="form-check-label" for="perm_criar_edit">
-                                            <i class="bi bi-pencil-fill text-success"></i>
-                                            Criar relatórios
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="editar_nir" id="perm_editar_nir">
+                                        <label class="form-check-label" for="perm_editar_nir">
+                                            <i class="bi bi-pencil text-warning"></i>
+                                            Editar NIR
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="excluir_nir" id="perm_excluir_nir">
+                                        <label class="form-check-label" for="perm_excluir_nir">
+                                            <i class="bi bi-trash text-danger"></i>
+                                            Excluir NIR
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="visualizar_nir" id="perm_visualizar_nir">
+                                        <label class="form-check-label" for="perm_visualizar_nir">
+                                            <i class="bi bi-eye text-info"></i>
+                                            Visualizar NIR
+                                        </label>
+                                    </div>
+
+                                    <h6 class="text-primary mt-3">Formulários</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="criar_formulario" id="perm_criar_formulario">
+                                        <label class="form-check-label" for="perm_criar_formulario">
+                                            <i class="bi bi-plus-circle text-success"></i>
+                                            Criar Formulário
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="editar_formulario" id="perm_editar_formulario">
+                                        <label class="form-check-label" for="perm_editar_formulario">
+                                            <i class="bi bi-pencil text-warning"></i>
+                                            Editar Formulário
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="visualizar_formulario" id="perm_visualizar_formulario">
+                                        <label class="form-check-label" for="perm_visualizar_formulario">
+                                            <i class="bi bi-eye text-info"></i>
+                                            Visualizar Formulário
                                         </label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
+                                    <h6 class="text-primary">Treinamentos</h6>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="profile_edit"
-                                            value="VER_RELATORIOS" id="perm_ver_edit" role="switch">
-                                        <label class="form-check-label" for="perm_ver_edit">
-                                            <i class="bi bi-eye-fill text-info"></i>
-                                            Ver relatórios
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="acessar_treinamentos" id="perm_acessar_treinamentos">
+                                        <label class="form-check-label" for="perm_acessar_treinamentos">
+                                            <i class="bi bi-book text-info"></i>
+                                            Acessar Treinamentos
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="gerenciar_cursos" id="perm_gerenciar_cursos">
+                                        <label class="form-check-label" for="perm_gerenciar_cursos">
+                                            <i class="bi bi-gear text-warning"></i>
+                                            Gerenciar Cursos
+                                        </label>
+                                    </div>
+
+                                    <h6 class="text-primary mt-3">Relatórios</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="visualizar_relatorios" id="perm_visualizar_relatorios">
+                                        <label class="form-check-label" for="perm_visualizar_relatorios">
+                                            <i class="bi bi-eye text-info"></i>
+                                            Visualizar Relatórios
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="gerar_relatorios" id="perm_gerar_relatorios">
+                                        <label class="form-check-label" for="perm_gerar_relatorios">
+                                            <i class="bi bi-plus-circle text-success"></i>
+                                            Gerar Relatórios
+                                        </label>
+                                    </div>
+
+                                    <h6 class="text-primary mt-3">Administração</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="gerenciar_usuarios" id="perm_gerenciar_usuarios">
+                                        <label class="form-check-label" for="perm_gerenciar_usuarios">
+                                            <i class="bi bi-people text-danger"></i>
+                                            Gerenciar Usuários
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
+                                               value="visualizar_usuarios" id="perm_visualizar_usuarios">
+                                        <label class="form-check-label" for="perm_visualizar_usuarios">
+                                            <i class="bi bi-eye text-info"></i>
+                                            Visualizar Usuários
                                         </label>
                                     </div>
                                 </div>
@@ -840,38 +974,40 @@
                 }
             }
 
-            var permissoesAtuaisArray = [];
+            // Display user roles
+            var modalUserRolesDiv = infoUsuarioModalElement.querySelector('#modalUserRoles');
+            if (modalUserRolesDiv) {
+                modalUserRolesDiv.innerHTML = '';
+                // Assuming user roles are stored in a data attribute - you'll need to add this to the row
+                var userRolesData = triggeringRow.dataset.userRoles || '';
+                var tempRolesArray = userRolesData ? userRolesData.split(',') : [];
+                if (tempRolesArray.length > 0 && tempRolesArray.some(r => r.trim() !== '')) {
+                    tempRolesArray.forEach(function (role) {
+                        role = role.trim();
+                        if (!role) return;
+                        var roleInfo = getRoleInfo(role);
+                        var badge = '<span class="role-badge role-' + roleInfo.class + '">';
+                        badge += '<i class="' + roleInfo.icon + '"></i>' + roleInfo.text + '</span>';
+                        modalUserRolesDiv.innerHTML += badge;
+                    });
+                } else {
+                    modalUserRolesDiv.innerHTML = '<span class="role-badge role-none">Nenhuma role definida</span>';
+                }
+            }
+
+            // Display user permissions (derived from roles)
             if (modalUserPermissionsDiv) {
                 modalUserPermissionsDiv.innerHTML = '';
-                var tempPermissoesArray = userProfileStrData ? userProfileStrData.split(',') : [];
-                if (tempPermissoesArray.length > 0 && tempPermissoesArray.some(p => p.trim() !== '')) {
-                    tempPermissoesArray.forEach(function (p) {
-                        p = p.trim();
-                        if (!p) return;
-                        permissoesAtuaisArray.push(p);
-                        var badgeClass = 'badge-none';
-                        var iconClass = '';
-                        var permText = p;
-
-                        if (p === 'ADMIN') {
-                            badgeClass = 'badge-admin';
-                            iconClass = 'bi bi-shield-lock-fill';
-                            permText = 'Administrador';
-                        }
-                        else if (p === 'CRIAR_RELATORIOS') {
-                            badgeClass = 'badge-create';
-                            iconClass = 'bi bi-pencil-fill';
-                            permText = 'Criar Relatórios';
-                        }
-                        else if (p === 'VER_RELATORIOS') {
-                            badgeClass = 'badge-view';
-                            iconClass = 'bi bi-eye-fill';
-                            permText = 'Ver Relatórios';
-                        }
-
-                        var badge = '<span class="permission-badge ' + badgeClass + '">';
-                        if (iconClass) badge += '<i class="' + iconClass + '"></i>';
-                        badge += permText + '</span>';
+                // Assuming user permissions are stored in a data attribute - you'll need to add this to the row
+                var userPermissionsData = triggeringRow.dataset.userPermissions || '';
+                var tempPermissionsArray = userPermissionsData ? userPermissionsData.split(',') : [];
+                if (tempPermissionsArray.length > 0 && tempPermissionsArray.some(p => p.trim() !== '')) {
+                    tempPermissionsArray.forEach(function (permission) {
+                        permission = permission.trim();
+                        if (!permission) return;
+                        var permissionInfo = getPermissionInfo(permission);
+                        var badge = '<span class="permission-badge ' + permissionInfo.class + '">';
+                        badge += '<i class="' + permissionInfo.icon + '"></i>' + permissionInfo.text + '</span>';
                         modalUserPermissionsDiv.innerHTML += badge;
                     });
                 } else {
@@ -896,12 +1032,13 @@
                 }
             }
 
-            if (permCheckboxesEdit) {
-                for (var permValue in permCheckboxesEdit) {
-                    if (permCheckboxesEdit[permValue]) {
-                        permCheckboxesEdit[permValue].checked = permissoesAtuaisArray.includes(permValue);
-                    }
-                }
+            // Handle RBAC permissions checkboxes
+            var permissionsCheckboxesEdit = infoUsuarioModalElement.querySelectorAll('input[name="permissions_edit"]');
+            var userPermissionsArray = userPermissionsData ? userPermissionsData.split(',') : [];
+            if (permissionsCheckboxesEdit) {
+                permissionsCheckboxesEdit.forEach(checkbox => {
+                    checkbox.checked = userPermissionsArray.includes(checkbox.value);
+                });
             }
 
             var sectorsSelectEdit = infoUsuarioModalElement.querySelector('#sectors_edit');
@@ -944,9 +1081,10 @@
                     var urlDeletarUsuario = "{{ url_for('admin.users.delete_user', user_id=0) }}".replace('0', userId);
                     formDeletarUsuario.action = urlDeletarUsuario;
                 }
-                if (formEditarPermissoes) {
-                    var urlEditarPermissoes = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
-                    formEditarPermissoes.action = urlEditarPermissoes;
+                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
+                if (formEditarPermissoesRBAC) {
+                    var urlEditarPermissoesRBAC = "{{ url_for('admin.users.change_rbac_permissions', user_id=0) }}".replace('0', userId);
+                    formEditarPermissoesRBAC.action = urlEditarPermissoesRBAC;
                 }
                 if (formEditarRoles) {
                     var urlEditarRoles = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
@@ -956,13 +1094,8 @@
                     formToggleUserStatus.action = "{{ url_for('admin.users.toggle_status', user_id=0) }}".replace('0', userId);
                 }
                 if (formEditarSetores) {
-                    var urlEditarSetores = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
+                    var urlEditarSetores = "{{ url_for('admin.users.change_sectors', user_id=0) }}".replace('0', userId);
                     formEditarSetores.action = urlEditarSetores;
-                }
-                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
-                if (formEditarPermissoesRBAC) {
-                    var urlEditarPermissoesRBAC = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
-                    formEditarPermissoesRBAC.action = urlEditarPermissoesRBAC;
                 }
             } else {
                 if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';
@@ -992,6 +1125,40 @@
                 case 'CENTRO_CIRURGICO': return { class: 'warning', icon: 'bi bi-scissors', text: 'Centro Cirúrgico' };
                 case 'EMERGENCIA': return { class: 'danger', icon: 'bi bi-truck-front', text: 'Emergência' };
                 default: return { class: 'none', icon: 'bi bi-question-circle', text: 'Desconhecido' };
+            }
+        }
+
+        function getRoleInfo(role) {
+            switch (role) {
+                case 'Enfermeiro': return { class: 'success', icon: 'bi bi-heart-pulse', text: 'Enfermeiro' };
+                case 'Médico': return { class: 'primary', icon: 'bi bi-stethoscope', text: 'Médico' };
+                case 'Faturista': return { class: 'warning', icon: 'bi bi-receipt', text: 'Faturista' };
+                case 'Farmacêutico': return { class: 'teal', icon: 'bi bi-capsule', text: 'Farmacêutico' };
+                case 'Técnico Laboratório': return { class: 'purple', icon: 'bi bi-clipboard2-pulse', text: 'Técnico Laboratório' };
+                case 'Recepcionista': return { class: 'info', icon: 'bi bi-person-check', text: 'Recepcionista' };
+                case 'Gestor RH': return { class: 'secondary', icon: 'bi bi-people', text: 'Gestor RH' };
+                case 'Administrador TI': return { class: 'dark', icon: 'bi bi-laptop', text: 'Administrador TI' };
+                case 'Diretor': return { class: 'danger', icon: 'bi bi-building', text: 'Diretor' };
+                default: return { class: 'none', icon: 'bi bi-person-badge', text: role };
+            }
+        }
+
+        function getPermissionInfo(permission) {
+            switch (permission) {
+                case 'criar_nir': return { class: 'badge-create', icon: 'bi bi-plus-circle', text: 'Criar NIR' };
+                case 'editar_nir': return { class: 'badge-edit', icon: 'bi bi-pencil', text: 'Editar NIR' };
+                case 'excluir_nir': return { class: 'badge-delete', icon: 'bi bi-trash', text: 'Excluir NIR' };
+                case 'visualizar_nir': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver NIR' };
+                case 'criar_formulario': return { class: 'badge-create', icon: 'bi bi-plus-circle', text: 'Criar Formulário' };
+                case 'editar_formulario': return { class: 'badge-edit', icon: 'bi bi-pencil', text: 'Editar Formulário' };
+                case 'visualizar_formulario': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver Formulário' };
+                case 'acessar_treinamentos': return { class: 'badge-training', icon: 'bi bi-book', text: 'Acessar Treinamentos' };
+                case 'gerenciar_cursos': return { class: 'badge-admin', icon: 'bi bi-gear', text: 'Gerenciar Cursos' };
+                case 'visualizar_relatorios': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver Relatórios' };
+                case 'gerar_relatorios': return { class: 'badge-create', icon: 'bi bi-plus-circle', text: 'Gerar Relatórios' };
+                case 'gerenciar_usuarios': return { class: 'badge-admin', icon: 'bi bi-people', text: 'Gerenciar Usuários' };
+                case 'visualizar_usuarios': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver Usuários' };
+                default: return { class: 'badge-none', icon: 'bi bi-shield', text: permission };
             }
         }
     });

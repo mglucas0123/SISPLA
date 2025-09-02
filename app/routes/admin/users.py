@@ -234,6 +234,30 @@ def change_sectors(user_id):
     """Endpoint de compatibilidade - redireciona para change_roles"""
     return change_roles(user_id)
 
+@users_bp.route("/change_rbac_permissions/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+@handle_database_error("alterar permissões RBAC")
+def change_rbac_permissions(user_id):
+    """Alterar permissões RBAC específicas do usuário"""
+    from app.models import Permission
+    
+    user_to_edit = User.query.get_or_404(user_id)
+    new_permissions_list = request.form.getlist("permissions_edit")
+    
+    user_to_edit.permissions.clear()
+    
+    for permission_name in new_permissions_list:
+        permission = Permission.query.filter_by(name=permission_name).first()
+        if permission:
+            user_to_edit.permissions.append(permission)
+    
+    db.session.commit()
+    
+    logger.info(f"Permissões RBAC alteradas para {user_to_edit.username}: {[p.name for p in user_to_edit.permissions]}")
+    flash(f"Permissões do usuário '{user_to_edit.name}' foram atualizadas!", "success")
+    return redirect(url_for("admin.users.list_users"))
+
 @users_bp.route("/create_private_repo/<int:user_id>", methods=['POST'])
 @login_required
 @admin_required
