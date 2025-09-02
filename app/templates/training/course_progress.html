@@ -72,7 +72,7 @@
                     </div>
                     <div class="course-progress-stat-details">
                         <div class="course-progress-stat-label">Média de Notas</div>
-                        <div class="course-progress-stat-value">{{ "%.1f"|format(average_score) }}%</div>
+                        <div class="course-progress-stat-value">{{ "%.1f"|format(average_score if average_score is defined else 0) }}%</div>
                     </div>
                 </div>
             </div>
@@ -133,7 +133,8 @@
                             </td>
                             <td>
                                 {% if attempt_data %}
-                                    <span class="course-progress-score">{{ "%.1f"|format(attempt_data.best_score) }}%</span>
+                                                                {% if attempt_data and attempt_data.score is not none %}
+                                <span class="course-progress-score">{{ "%.1f"|format(attempt_data.score) }}%</span>
                                 {% else %}
                                     <span class="text-muted">--</span>
                                 {% endif %}
@@ -164,7 +165,7 @@
                             </td>
                             <td>
                                 <form method="POST" 
-                                    action="{{ url_for('admin.reset_user_progress', course_id=course.id, user_id=p.user_id) }}" 
+                                    action="{{ url_for('admin.courses.reset_user_course_progress', course_id=course.id, user_id=p.user_id) }}" 
                                     onsubmit="return confirm('Tem certeza que deseja resetar todo o progresso deste aluno? Esta ação não pode ser desfeita.');"
                                     style="display: inline;">
                                     <button type="submit" class="course-progress-action-btn" title="Resetar Progresso">

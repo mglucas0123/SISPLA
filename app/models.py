@@ -64,7 +64,6 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     profile = db.Column(db.String(200), nullable=False)
-    
     email = db.Column(db.String(120), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -125,6 +124,31 @@ class User(db.Model, UserMixin):
             for permission in role.permissions:
                 modules.add(permission.module)
         return list(modules)
+    
+    def has_any_sector(self, sectors):
+        """Método de compatibilidade para verificar se usuário tem acesso a algum setor"""
+        if 'ADMIN' in self.profile:
+            return True
+        
+        # Mapeia setores para módulos/permissões
+        sector_module_map = {
+            'ENFERMAGEM': ['nir', 'forms'],
+            'INTERNACAO': ['nir', 'forms'],
+            'FATURAMENTO': ['nir', 'reports'],
+            'MEDICINA': ['nir', 'forms'],
+            'FARMACIA': ['farmacia'],
+            'LABORATORIO': ['laboratorio'],
+            'RH': ['admin', 'training'],
+            'TI': ['admin'],
+            'DIRETORIA': ['reports']
+        }
+        
+        for sector in sectors:
+            if sector in sector_module_map:
+                for module in sector_module_map[sector]:
+                    if self.has_module_access(module):
+                        return True
+        return False
 
     def __repr__(self):
         return f'<User {self.username}>'

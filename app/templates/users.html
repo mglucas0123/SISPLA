@@ -418,17 +418,64 @@
                     </form>
                 </div>
 
-                <!-- Editar Setores -->
+                <!-- Editar Roles RBAC -->
+                <div class="mb-4">
+                    <h6 class="section-title">
+                        <i class="bi bi-person-badge"></i>
+                        Gerenciar Roles
+                    </h6>
+                    <form id="formEditarRoles" method="POST" action="">
+                        <fieldset>
+                            <legend>
+                                <i class="bi bi-gear-wide-connected"></i>
+                                Atribuir Roles ao Usuário
+                            </legend>
+                            <div class="row">
+                                {% set available_roles = [
+                                    {'name': 'Enfermeiro', 'description': 'Profissional de enfermagem'},
+                                    {'name': 'Médico', 'description': 'Médico assistente'},
+                                    {'name': 'Faturista', 'description': 'Responsável pelo faturamento'},
+                                    {'name': 'Farmacêutico', 'description': 'Responsável pela farmácia'},
+                                    {'name': 'Técnico Laboratório', 'description': 'Técnico de laboratório'},
+                                    {'name': 'Recepcionista', 'description': 'Atendimento e recepção'},
+                                    {'name': 'Gestor RH', 'description': 'Gestão de recursos humanos'},
+                                    {'name': 'Administrador TI', 'description': 'Administrador do sistema'},
+                                    {'name': 'Diretor', 'description': 'Direção hospitalar'}
+                                ] %}
+                                {% for role in available_roles %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="roles_edit"
+                                               value="{{ role.name }}" id="role_{{ role.name }}">
+                                        <label class="form-check-label" for="role_{{ role.name }}">
+                                            <i class="bi bi-person-badge text-primary"></i>
+                                            {{ role.name }}
+                                            {% if role.description %}
+                                            <small class="text-muted d-block">{{ role.description }}</small>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Salvar Roles
+                        </button>
+                    </form>
+                </div>
+
                 <div class="mb-4">
                     <h6 class="section-title">
                         <i class="bi bi-building"></i>
-                        Editar Setores
+                        Gerenciar Setores
                     </h6>
                     <form id="formEditarSetores" method="POST" action="">
                         <fieldset>
                             <legend>
                                 <i class="bi bi-gear-wide-connected"></i>
-                                Configurar Setores
+                                Configurar Setores do Usuário
                             </legend>
                             <div class="mb-3">
                                 <label for="sectors_edit" class="form-label">
@@ -550,6 +597,7 @@
         var formDeletarUsuario = infoUsuarioModalElement.querySelector('#formDeletarUsuario');
         var modalUserEmail = infoUsuarioModalElement.querySelector('#modalUserEmail');
         var formEditarPermissoes = infoUsuarioModalElement.querySelector('#formEditarPermissoes');
+        var formEditarRoles = infoUsuarioModalElement.querySelector('#formEditarRoles');
         var permCheckboxesEdit = {
             'ADMIN': infoUsuarioModalElement.querySelector('#perm_admin_edit'),
             'CRIAR_RELATORIOS': infoUsuarioModalElement.querySelector('#perm_criar_edit'),
@@ -758,6 +806,8 @@
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
                 // Reset form actions for sectors if the form exists
                 if (formEditarSetores) formEditarSetores.action = '#';
+                // Reset form actions for roles if the form exists
+                if (formEditarRoles) formEditarRoles.action = '#';
                 return;
             }
 
@@ -869,6 +919,19 @@
                 });
             }
 
+            var rolesCheckboxesEdit = infoUsuarioModalElement.querySelectorAll('input[name="roles_edit"]');
+            var currentRoles = []; // Assuming you'll populate this with user's current roles
+            if (rolesCheckboxesEdit) {
+                // If user.roles is available and is a list/set
+                if (typeof user.roles !== 'undefined' && Array.isArray(user.roles)) {
+                    currentRoles = user.roles;
+                }
+                rolesCheckboxesEdit.forEach(checkbox => {
+                    checkbox.checked = currentRoles.includes(checkbox.value);
+                });
+            }
+
+
             if (userId && String(userId).trim() !== "") {
                 if (formAlterarSenhaAdmin) {
                     var urlAlterarSenha = "{{ url_for('admin.users.change_password', user_id=0) }}".replace('0', userId);
@@ -879,20 +942,25 @@
                     formDeletarUsuario.action = urlDeletarUsuario;
                 }
                 if (formEditarPermissoes) {
-                    var urlEditarPermissoes = "{{ url_for('admin.users.change_permissions', user_id=0) }}".replace('0', userId);
+                    var urlEditarPermissoes = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
                     formEditarPermissoes.action = urlEditarPermissoes;
+                }
+                if (formEditarRoles) {
+                    var urlEditarRoles = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
+                    formEditarRoles.action = urlEditarRoles;
                 }
                 if (formToggleUserStatus) {
                     formToggleUserStatus.action = "{{ url_for('admin.users.toggle_status', user_id=0) }}".replace('0', userId);
                 }
                 if (formEditarSetores) {
-                    var urlEditarSetores = "{{ url_for('admin.users.change_sectors', user_id=0) }}".replace('0', userId); // Assuming a route for changing sectors
+                    var urlEditarSetores = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
                     formEditarSetores.action = urlEditarSetores;
                 }
             } else {
                 if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';
                 if (formDeletarUsuario) formDeletarUsuario.action = '#';
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
+                if (formEditarRoles) formEditarRoles.action = '#';
                 if (formToggleUserStatus) formToggleUserStatus.action = '#';
                 if (formEditarSetores) formEditarSetores.action = '#';
             }

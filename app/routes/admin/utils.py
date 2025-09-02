@@ -53,21 +53,16 @@ def handle_database_error(operation_name):
 # ==========================================
 
 
-def validate_user_data(name, username, email, profile_list):
-    """Validar dados do usuário"""
+def validate_user_data(name, username, email):
+    """Valida dados do usuário"""
     errors = []
 
-    if not name or not name.strip():
+    if not name:
         errors.append("Nome é obrigatório.")
-
-    if not username or not username.strip():
+    if not username:
         errors.append("Nome de usuário é obrigatório.")
-
-    if not email or not email.strip():
-        errors.append("Email é obrigatório.")
-
-    if not profile_list:
-        errors.append("Pelo menos um perfil deve ser selecionado.")
+    if not email:
+        errors.append("E-mail é obrigatório.")
 
     return errors
 
@@ -179,7 +174,7 @@ def validate_file_extension(filename, allowed_extensions):
     """Valida se a extensão do arquivo está na lista de extensões permitidas"""
     if not filename:
         return False
-    
+
     file_extension = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
     return file_extension in allowed_extensions
 

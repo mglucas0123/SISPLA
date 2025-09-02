@@ -30,7 +30,7 @@ def create_app():
     app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
     db.init_app(app)
     Migrate(app, db)
-    
+
     login_config(app)
     registry_routes(app)
     registry_filters(app)
@@ -39,7 +39,7 @@ def create_app():
 
 def registry_routes(app):
     admin_bp = create_admin_blueprint()
-    app.register_blueprint(admin_bp) 
+    app.register_blueprint(admin_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(util_bp)
@@ -54,17 +54,17 @@ def login_config(app):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = "Por favor, realize o login para acessar esta página."
     login_manager.login_message_category = "info"
-    
+
     @login_manager.user_loader
     def load_user(id):
         return db.session.get(User, int(id))
-    
+
 def registry_filters(app):
     app.jinja_env.filters['format_date'] = format_date_filter
     app.jinja_env.filters['format_date_short'] = lambda val: format_date_filter(val, format_str='%d/%m/%Y')
     app.jinja_env.filters['format_date_time'] = lambda val: format_date_filter(val, format_str='%d/%m/%Y %H:%M')
     app.jinja_env.filters['format_time'] = lambda val: format_date_filter(val, format_str='%H:%M')
-    
+
 def initdb(app):
     @app.cli.command("init-db")
     def init_db_command():

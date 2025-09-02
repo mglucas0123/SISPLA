@@ -14,9 +14,8 @@
                     <p class="forms-subtitle">Gerencie os registros das passagens de plantão</p>
                 </div>
             </div>
-        </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
+        </div>  
+    {% include 'partials/_flash_messages.html' %}
     {% if messages %}
     <div class="row mb-3">
         <div class="col-12">
@@ -29,7 +28,6 @@
         </div>
     </div>
     {% endif %}
-    {% endwith %}
     <div class="forms-card forms-filters-card">
             <div class="forms-card-body forms-filters-body">
             <form method="GET" action="{{ url_for('form.forms') }}" class="forms-filters-form">

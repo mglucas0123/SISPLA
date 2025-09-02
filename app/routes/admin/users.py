@@ -30,10 +30,7 @@ def create_user():
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
     email = request.form.get("email", "").strip()
-    profile_list = request.form.getlist("profile")
-    sectors_list = request.form.getlist("sectors")
-    
-    validation_errors = validate_user_data(name, username, email, profile_list)
+    validation_errors = validate_user_data(name, username, email)
     if validation_errors:
         for error in validation_errors:
             flash(error, "warning")
@@ -54,17 +51,13 @@ def create_user():
             flash("E-mail já cadastrado no sistema.", "warning")
         return redirect(url_for("admin.users.list_users"))
     
-    profile_str = ",".join(profile_list)
-    sectors_str = ",".join(sectors_list) if sectors_list else ""
     password_hash = generate_password_hash(password)
     
     new_user = User(
         name=name,
         username=username,
         password=password_hash,
-        email=email,
-        profile=profile_str,
-        sectors=sectors_str
+        email=email
     )
     
     db.session.add(new_user)
@@ -122,10 +115,14 @@ def render_users_list():
             error_out=False
         )
         
+        from app.models import Role
+        available_roles = Role.query.filter_by(is_active=True).all()
+        
         return render_template(
             "users.html", 
             users=pagination.items, 
             pagination=pagination,
+            available_roles=available_roles,
             current_filters={
                 'search': search_query,
                 'status': status_filter,
@@ -182,42 +179,30 @@ def delete_user(user_id):
     flash("Usuário deletado com sucesso.", "success")
     return redirect(url_for("admin.users.list_users"))
 
-@users_bp.route("/change_permissions/<int:user_id>", methods=["POST"])
-@login_required
-@admin_required
-@handle_database_error("alterar permissões")
-def change_permissions(user_id):
-    """Alterar permissões do usuário"""
-    user_to_edit = User.query.get_or_404(user_id)
-    new_permissions_list = request.form.getlist("profile_edit")
-    
-    if user_to_edit.id == current_user.id and "ADMIN" not in new_permissions_list:
-        flash("Você não pode remover sua própria permissão de ADMIN.", "warning")
-        return redirect(url_for("admin.users.list_users"))
-    
-    old_permissions = user_to_edit.profile
-    user_to_edit.profile = ",".join(new_permissions_list) if new_permissions_list else ""
-    db.session.commit()
-    
-    logger.info(f"Permissões alteradas para {user_to_edit.username}: {old_permissions} -> {user_to_edit.profile}")
-    flash(f"Permissões do usuário '{user_to_edit.name}' foram atualizadas!", "success")
-    return redirect(url_for("admin.users.list_users"))
+# Função removida - substituída pelo sistema RBAC
 
-@users_bp.route("/change_sectors/<int:user_id>", methods=["POST"])
+@users_bp.route("/change_roles/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required
-@handle_database_error("alterar setores")
-def change_sectors(user_id):
-    """Alterar setores do usuário"""
-    user_to_edit = User.query.get_or_404(user_id)
-    new_sectors_list = request.form.getlist("sectors_edit")
+@handle_database_error("alterar roles")
+def change_roles(user_id):
+    """Alterar roles do usuário no sistema RBAC"""
+    from app.models import Role
     
-    old_sectors = user_to_edit.sectors or ""
-    user_to_edit.sectors = ",".join(new_sectors_list) if new_sectors_list else ""
+    user_to_edit = User.query.get_or_404(user_id)
+    new_roles_list = request.form.getlist("roles_edit")
+    
+    # Adiciona as novas roles
+    user_to_edit.roles.clear()
+    for role_name in new_roles_list:
+        role = Role.query.filter_by(name=role_name).first()
+        if role:
+            user_to_edit.roles.append(role)
+    
     db.session.commit()
     
-    logger.info(f"Setores alterados para {user_to_edit.username}: {old_sectors} -> {user_to_edit.sectors}")
-    flash(f"Setores do usuário '{user_to_edit.name}' foram atualizados!", "success")
+    logger.info(f"Roles alteradas para {user_to_edit.username}: {[r.name for r in user_to_edit.roles]}")
+    flash(f"Roles do usuário '{user_to_edit.name}' foram atualizadas!", "success")
     return redirect(url_for("admin.users.list_users"))
 
 @users_bp.route("/toggle_status/<int:user_id>", methods=["POST"])
@@ -240,6 +225,14 @@ def toggle_status(user_id):
     logger.info(f"Status do usuário {user_to_toggle.username} alterado: {old_status} -> {user_to_toggle.is_active}")
     flash(f"Usuário '{user_to_toggle.name}' foi {action_text} com sucesso.", "success")
     return redirect(url_for("admin.users.list_users"))
+
+@users_bp.route("/change_sectors/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+@handle_database_error("alterar setores")
+def change_sectors(user_id):
+    """Endpoint de compatibilidade - redireciona para change_roles"""
+    return change_roles(user_id)
 
 @users_bp.route("/create_private_repo/<int:user_id>", methods=['POST'])
 @login_required

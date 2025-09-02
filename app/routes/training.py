@@ -204,8 +204,18 @@ def submit_quiz(quiz_id):
 def serve_video(course_id):
     course = Course.query.get_or_404(course_id)
     
+    if not course.video_filename:
+        flash("Vídeo não encontrado.", "error")
+        return redirect(request.referrer or url_for('main.panel'))
+    
     course_folder_name = secure_filename(course.title)
     video_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    video_file_path = os.path.join(video_folder_path, course.video_filename)
+    
+    # Verificar se a pasta e o arquivo existem
+    if not os.path.exists(video_folder_path) or not os.path.exists(video_file_path):
+        flash("Vídeo não encontrado no servidor.", "error")
+        return redirect(request.referrer or url_for('main.panel'))
     
     return send_from_directory(video_folder_path, course.video_filename)
 
@@ -218,6 +228,11 @@ def serve_course_image(course_id):
 
     course_folder_name = secure_filename(course.title)
     course_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    image_file_path = os.path.join(course_folder_path, course.image_filename)
+    
+    # Verificar se a pasta e o arquivo existem
+    if not os.path.exists(course_folder_path) or not os.path.exists(image_file_path):
+        return redirect(url_for('static', filename='course_images/default_course.png'))
     
     return send_from_directory(course_folder_path, course.image_filename)
     
@@ -225,9 +240,23 @@ def serve_course_image(course_id):
 @login_required
 def download_attachment(attachment_id):
     attachment = QuizAttachment.query.get_or_404(attachment_id)
+    
+    # Construir o caminho completo do arquivo
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    full_path = os.path.join(upload_folder, attachment.filepath)
+    
+    # Verificar se o arquivo existe
+    if not os.path.exists(full_path):
+        flash("Arquivo não encontrado.", "error")
+        return redirect(request.referrer or url_for('main.panel'))
+    
+    # Como filepath inclui 'quiz_attachments/filename', precisamos separar
+    directory = os.path.dirname(full_path)
+    filename = os.path.basename(full_path)
+    
     return send_from_directory(
-        current_app.config['UPLOAD_FOLDER'],
-        attachment.filepath,
+        directory,
+        filename,
         as_attachment=True,
         download_name=attachment.filename
     )

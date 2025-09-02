@@ -13,7 +13,7 @@
                     </h1>
                     <p class="forms-subtitle">Gerencie os registros de Notificação de Internação Regulatória</p>
                 </div>
-                {% if current_user.has_any_sector(['ENFERMAGEM', 'INTERNACAO', 'FATURAMENTO']) or 'ADMIN' in current_user.profile %}
+                {% if current_user.has_module_access('nir') or 'ADMIN' in current_user.profile %}
                 <div class="forms-header-actions">
                     <a href="{{ url_for('nir.new_record') }}" class="btn btn-danger">
                         <i class="bi bi-plus-circle me-2"></i>
@@ -344,12 +344,13 @@
             fetch(url, {
                 method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Erro na resposta do servidor');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 return response.text();
             })
@@ -358,18 +359,21 @@
                 const doc = parser.parseFromString(html, 'text/html');
 
                 const newTableContainer = doc.querySelector('.forms-table-container');
-                const newPagination = doc.querySelector('#paginationContainer');
-
-                if (newTableContainer) {
-                    const currentContainer = document.querySelector('.forms-table-container');
-                    currentContainer.innerHTML = newTableContainer.innerHTML;
-
-                    const tooltipTriggerList = [].slice.call(currentContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-                        new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
+                if (!newTableContainer) {
+                    throw new Error('Resposta inválida do servidor');
                 }
 
+                const currentContainer = document.querySelector('.forms-table-container');
+                currentContainer.innerHTML = newTableContainer.innerHTML;
+
+                // Reinicializar tooltips
+                const tooltipTriggerList = [].slice.call(currentContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                    new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+
+                // Atualizar paginação
+                const newPagination = doc.querySelector('#paginationContainer');
                 const currentPagination = document.getElementById('paginationContainer');
                 if (newPagination && currentPagination) {
                     currentPagination.innerHTML = newPagination.innerHTML;
@@ -380,6 +384,7 @@
 
                 hideLoadingState();
 
+                // Scroll suave para a tabela
                 document.querySelector('.forms-table-container').scrollIntoView({ 
                     behavior: 'smooth',
                     block: 'start'
@@ -457,7 +462,6 @@
             }, 5000);
         }
 
-        window.filterRecordsWithAjax = filterRecordsWithAjax;
         window.loadPage = loadPage;
         window.clearAllFilters = clearAllFilters;
 

@@ -39,6 +39,23 @@
         <form method="POST" id="quizForm" enctype="multipart/form-data">
             <input type="hidden" name="questions_data" id="questions_data_input">
 
+            <div class="manage-quiz-basic-info">
+                <div class="manage-quiz-section-header">
+                    <h5 class="manage-quiz-section-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informações Básicas
+                    </h5>
+                </div>
+                <div class="manage-quiz-section-content">
+                    <div class="mb-3">
+                        <label for="quiz_title" class="form-label">Título da Avaliação</label>
+                        <input type="text" class="form-control" id="quiz_title" name="quiz_title" 
+                               value="{% if quiz %}{{ quiz.title }}{% else %}Avaliação - {{ course.title }}{% endif %}" 
+                               placeholder="Digite o título da avaliação..." required>
+                    </div>
+                </div>
+            </div>
+
             <div class="manage-quiz-support-section">
                 <div class="manage-quiz-section-header">
                     <h5 class="manage-quiz-section-title">
@@ -55,6 +72,7 @@
                     <div class="manage-quiz-attachments">
                         <h6 class="manage-quiz-attachments-title">Materiais Anexados</h6>
                         <ul id="attachment-list" class="manage-quiz-attachment-list list-group">
+                            {% if quiz %}
                             {% for attachment in quiz.attachments %}
                             <li class="list-group-item" data-attachment-id="{{ attachment.id }}">
                                 <div class="attachment-info">
@@ -66,11 +84,19 @@
                                 </button>
                             </li>
                             {% endfor %}
+                            {% endif %}
                         </ul>
 
                         <div class="manage-quiz-file-upload">
                             <label for="file-input" class="form-label">Adicionar Novos Materiais</label>
-                            <input class="form-control" type="file" id="file-input" multiple>
+                            {% if not quiz %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                Salve a avaliação primeiro para poder adicionar materiais de apoio.
+                            </div>
+                            {% endif %}
+                            <input class="form-control" type="file" id="file-input" multiple 
+                                   {% if not quiz %}disabled{% endif %}>
                             <div class="form-text">Você pode selecionar múltiplos arquivos. Eles serão enviados automaticamente.</div>
                         </div>
                     </div>
@@ -216,10 +242,10 @@
         const questionsContainer = document.getElementById('questions-container');
         const quizForm = document.getElementById('quizForm');
         const addQuestionBtn = document.getElementById('addQuestionBtn');
-        const initialQuizData = JSON.parse('{{ quiz.to_dict() | tojson | safe }}');
+        const initialQuizData = {% if quiz %}JSON.parse('{{ quiz.to_dict() | tojson | safe }}'){% else %}null{% endif %};
         const attachmentList = document.getElementById('attachment-list');
         const fileInput = document.getElementById('file-input');
-        const quizId = '{{ quiz.id }}';
+        const quizId = {% if quiz %}'{{ quiz.id }}'{% else %}null{% endif %};
 
         function toggleEmptyState() {
             const emptyState = document.querySelector('.manage-quiz-empty-state');
@@ -227,6 +253,19 @@
 
             if (emptyState) {
                 emptyState.style.display = hasQuestions ? 'none' : 'block';
+            }
+        }
+
+        function updateAttachmentUploadState() {
+            const fileInputSection = document.querySelector('.manage-quiz-file-upload');
+            if (!quizId) {
+                fileInput.disabled = true;
+                fileInputSection.style.opacity = '0.5';
+                fileInputSection.title = 'Salve o quiz primeiro para adicionar anexos';
+            } else {
+                fileInput.disabled = false;
+                fileInputSection.style.opacity = '1';
+                fileInputSection.title = '';
             }
         }
 
@@ -363,16 +402,31 @@
         fileInput.addEventListener('change', function (e) {
             const files = e.target.files;
             if (files.length === 0) return;
+            
+            // Verificar se existe um quiz antes de tentar fazer upload
+            if (!quizId) {
+                alert('Você precisa salvar o quiz primeiro antes de adicionar anexos.');
+                return;
+            }
 
             for (const file of files) {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                fetch(`{{ url_for('admin.quiz.upload_quiz_attachment', quiz_id=quiz.id) }}`, {
+                fetch(`{{ url_for('admin.quiz.upload_quiz_attachment', quiz_id=0) }}`.replace('/0/', `/${quizId}/`), {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Resposta não é JSON válido');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         const newAttachment = data.attachment;
@@ -403,6 +457,9 @@
         if (initialQuizData && initialQuizData.questions) {
             initialQuizData.questions.forEach(renderQuestion);
         }
+
+        // Atualizar estado do upload de anexos
+        updateAttachmentUploadState();
 
         questionsContainer.addEventListener('click', function (e) {
             if (e.target.closest('.remove-question-btn')) {

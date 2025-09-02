@@ -5,7 +5,7 @@ class Config:
     """Configuração base para todas as configurações."""
     
     # Configurações básicas
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-sispla-2024-rbac-system'
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
     DEBUG = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     
