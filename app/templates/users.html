@@ -808,6 +808,9 @@
                 if (formEditarSetores) formEditarSetores.action = '#';
                 // Reset form actions for roles if the form exists
                 if (formEditarRoles) formEditarRoles.action = '#';
+
+                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
+                if (formEditarPermissoesRBAC) formEditarPermissoesRBAC.action = '#';
                 return;
             }
 
@@ -956,6 +959,11 @@
                     var urlEditarSetores = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
                     formEditarSetores.action = urlEditarSetores;
                 }
+                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
+                if (formEditarPermissoesRBAC) {
+                    var urlEditarPermissoesRBAC = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
+                    formEditarPermissoesRBAC.action = urlEditarPermissoesRBAC;
+                }
             } else {
                 if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';
                 if (formDeletarUsuario) formDeletarUsuario.action = '#';
@@ -963,6 +971,8 @@
                 if (formEditarRoles) formEditarRoles.action = '#';
                 if (formToggleUserStatus) formToggleUserStatus.action = '#';
                 if (formEditarSetores) formEditarSetores.action = '#';
+                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
+                if (formEditarPermissoesRBAC) formEditarPermissoesRBAC.action = '#';
             }
         });
 

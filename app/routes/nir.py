@@ -12,6 +12,7 @@ nir_bp = Blueprint('nir', __name__, template_folder='../templates')
 def list_records():
     page = request.args.get('page', 1, type=int)
     per_page = 15
+    is_ajax = request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     # Filtros
     patient_name = request.args.get('patient_name', '').strip()
@@ -29,10 +30,10 @@ def list_records():
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
 
     if entry_type:
-        query = query.filter(Nir.entry_type == entry_type)
+        query = query.filter(Nir.entry_type.ilike(entry_type))
 
     if admission_type:
-        query = query.filter(Nir.admission_type == admission_type)
+        query = query.filter(Nir.admission_type.ilike(admission_type))
 
     if responsible_doctor:
         query = query.filter(Nir.responsible_doctor.ilike(f'%{responsible_doctor}%'))
@@ -42,14 +43,14 @@ def list_records():
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
             query = query.filter(Nir.admission_date >= start_date_obj)
         except ValueError:
-            pass
+            flash('Data inicial inválida', 'warning')
 
     if end_date:
         try:
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
             query = query.filter(Nir.admission_date <= end_date_obj)
         except ValueError:
-            pass
+            flash('Data final inválida', 'warning')
 
     records = query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -68,6 +69,15 @@ def list_records():
         'start_date': start_date,
         'end_date': end_date
     }
+
+    # Se for requisição AJAX, retornar apenas o conteúdo necessário
+    if is_ajax:
+        return render_template('nir/list_records.html', 
+                             records=records, 
+                             entry_types=entry_types,
+                             admission_types=admission_types,
+                             filters=filters,
+                             ajax_request=True)
 
     return render_template('nir/list_records.html', 
                          records=records, 
@@ -98,10 +108,10 @@ def filter_records_ajax():
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
 
     if entry_type:
-        query = query.filter(Nir.entry_type == entry_type)
+        query = query.filter(Nir.entry_type.ilike(entry_type))
 
     if admission_type:
-        query = query.filter(Nir.admission_type == admission_type)
+        query = query.filter(Nir.admission_type.ilike(admission_type))
 
     if responsible_doctor:
         query = query.filter(Nir.responsible_doctor.ilike(f'%{responsible_doctor}%'))

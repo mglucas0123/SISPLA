@@ -330,6 +330,7 @@
                 end_date: endDateFilter.value
             };
 
+            console.log('Filtros aplicados:', filters);
             showLoadingState();
 
             const params = new URLSearchParams();
@@ -344,8 +345,7 @@
             fetch(url, {
                 method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
             .then(response => {
@@ -359,21 +359,21 @@
                 const doc = parser.parseFromString(html, 'text/html');
 
                 const newTableContainer = doc.querySelector('.forms-table-container');
-                if (!newTableContainer) {
-                    throw new Error('Resposta inválida do servidor');
+                const newCardTitle = doc.querySelector('.forms-card-title-section');
+                const newPagination = doc.querySelector('#paginationContainer');
+
+                if (newTableContainer) {
+                    const currentContainer = document.querySelector('.forms-table-container');
+                    currentContainer.innerHTML = newTableContainer.innerHTML;
                 }
 
-                const currentContainer = document.querySelector('.forms-table-container');
-                currentContainer.innerHTML = newTableContainer.innerHTML;
+                if (newCardTitle) {
+                    const currentCardTitle = document.querySelector('.forms-card-title-section');
+                    if (currentCardTitle) {
+                        currentCardTitle.innerHTML = newCardTitle.innerHTML;
+                    }
+                }
 
-                // Reinicializar tooltips
-                const tooltipTriggerList = [].slice.call(currentContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-                    new bootstrap.Tooltip(tooltipTriggerEl);
-                });
-
-                // Atualizar paginação
-                const newPagination = doc.querySelector('#paginationContainer');
                 const currentPagination = document.getElementById('paginationContainer');
                 if (newPagination && currentPagination) {
                     currentPagination.innerHTML = newPagination.innerHTML;
@@ -382,6 +382,7 @@
                     currentPagination.style.display = 'none';
                 }
 
+                reattachEventListeners();
                 hideLoadingState();
 
                 // Scroll suave para a tabela
@@ -394,6 +395,27 @@
                 console.error('Erro ao filtrar registros:', error);
                 hideLoadingState();
                 showErrorMessage('Erro ao carregar os registros. Tente novamente.');
+            });
+        }
+
+        function reattachEventListeners() {
+            // Reinicializar tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Reatachar eventos de paginação
+            document.querySelectorAll('.page-link').forEach(link => {
+                if (link.getAttribute('href') === 'javascript:void(0)') {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const pageText = this.textContent.trim();
+                        if (!isNaN(pageText)) {
+                            loadPage(parseInt(pageText));
+                        }
+                    });
+                }
             });
         }
 
@@ -488,10 +510,25 @@
             }, 500);
         });
 
-        entryTypeFilter.addEventListener('change', filterRecordsWithAjax);
-        admissionTypeFilter.addEventListener('change', filterRecordsWithAjax);
-        startDateFilter.addEventListener('change', filterRecordsWithAjax);
-        endDateFilter.addEventListener('change', filterRecordsWithAjax);
+        entryTypeFilter.addEventListener('change', function() {
+            console.log('Entry type filter changed:', this.value);
+            filterRecordsWithAjax();
+        });
+        
+        admissionTypeFilter.addEventListener('change', function() {
+            console.log('Admission type filter changed:', this.value);
+            filterRecordsWithAjax();
+        });
+        
+        startDateFilter.addEventListener('change', function() {
+            console.log('Start date filter changed:', this.value);
+            filterRecordsWithAjax();
+        });
+        
+        endDateFilter.addEventListener('change', function() {
+            console.log('End date filter changed:', this.value);
+            filterRecordsWithAjax();
+        });
 
         applyFiltersButton.addEventListener('click', filterRecordsWithAjax);
 
