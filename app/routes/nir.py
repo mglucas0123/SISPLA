@@ -14,7 +14,6 @@ def list_records():
     per_page = 15
     is_ajax = request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
-    # Filtros
     patient_name = request.args.get('patient_name', '').strip()
     entry_type = request.args.get('entry_type', '').strip()
     admission_type = request.args.get('admission_type', '').strip()
@@ -22,10 +21,8 @@ def list_records():
     start_date = request.args.get('start_date', '').strip()
     end_date = request.args.get('end_date', '').strip()
 
-    # Query base
     query = Nir.query.order_by(Nir.creation_date.desc())
 
-    # Aplicar filtros
     if patient_name:
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
 
@@ -54,7 +51,6 @@ def list_records():
 
     records = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Dados para os filtros
     entry_types = db.session.query(Nir.entry_type).distinct().filter(Nir.entry_type.isnot(None)).all()
     entry_types = [et[0] for et in entry_types if et[0]]
 
@@ -70,7 +66,6 @@ def list_records():
         'end_date': end_date
     }
 
-    # Se for requisição AJAX, retornar apenas o conteúdo necessário
     if is_ajax:
         return render_template('nir/list_records.html', 
                              records=records, 
@@ -92,7 +87,6 @@ def filter_records_ajax():
     page = request.form.get('page', 1, type=int)
     per_page = 15
 
-    # Filtros
     patient_name = request.form.get('patient_name', '').strip()
     entry_type = request.form.get('entry_type', '').strip()
     admission_type = request.form.get('admission_type', '').strip()
@@ -100,10 +94,8 @@ def filter_records_ajax():
     start_date = request.form.get('start_date', '').strip()
     end_date = request.form.get('end_date', '').strip()
 
-    # Query base
     query = Nir.query.order_by(Nir.creation_date.desc())
 
-    # Aplicar filtros
     if patient_name:
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
 
@@ -223,28 +215,22 @@ def update_record(record_id):
     record = Nir.query.get_or_404(record_id)
 
     try:
-        # Processar data de nascimento
         birth_date_str = request.form.get('birth_date')
         birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date() if birth_date_str else None
 
-        # Processar data de internação
         admission_date_str = request.form.get('admission_date')
         admission_date = datetime.strptime(admission_date_str, '%Y-%m-%d').date() if admission_date_str else None
 
-        # Processar data de agendamento
         scheduling_date_str = request.form.get('scheduling_date')
         scheduling_date = datetime.strptime(scheduling_date_str, '%Y-%m-%d').date() if scheduling_date_str else None
 
-        # Processar data de alta
         discharge_date_str = request.form.get('discharge_date')
         discharge_date = datetime.strptime(discharge_date_str, '%Y-%m-%d').date() if discharge_date_str else None
 
-        # Calcular total de dias internado
         total_days = None
         if admission_date and discharge_date:
             total_days = (discharge_date - admission_date).days
 
-        # Atualizar campos
         record.patient_name = request.form.get('patient_name')
         record.birth_date = birth_date
         record.gender = request.form.get('gender')

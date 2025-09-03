@@ -7,7 +7,6 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# Tabelas de associação para many-to-many
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True)
@@ -26,9 +25,9 @@ repository_access = db.Table('repository_access',
 class Permission(db.Model):
     __tablename__ = 'permissions'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)  # ex: 'criar_nir'
+    name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.String(200), nullable=True)
-    module = db.Column(db.String(50), nullable=False)  # ex: 'nir', 'farmacia'
+    module = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
@@ -37,21 +36,18 @@ class Permission(db.Model):
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)  # ex: 'Enfermeiro'
+    name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.String(200), nullable=True)
-    sector = db.Column(db.String(50), nullable=True)  # setor principal
+    sector = db.Column(db.String(50), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relacionamentos
     permissions = db.relationship('Permission', secondary=role_permissions, backref='roles')
     
     def has_permission(self, permission_name):
-        """Verifica se a role tem uma permissão específica"""
         return any(perm.name == permission_name for perm in self.permissions)
     
     def has_module_access(self, module_name):
-        """Verifica se a role tem acesso a um módulo"""
         return any(perm.module == module_name for perm in self.permissions)
     
     def __repr__(self):
@@ -69,7 +65,6 @@ class User(db.Model, UserMixin):
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
     
-    # Relacionamentos
     roles = db.relationship('Role', secondary=user_roles, backref='users')
     notices = db.relationship('Notice', back_populates='author')
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
@@ -81,36 +76,26 @@ class User(db.Model, UserMixin):
         return db.session.query(
             Repository.query.filter_by(owner_id=self.id, access_type='private').exists()
         ).scalar()
-
     
-    
-    # Novos métodos RBAC
     def has_permission(self, permission_name):
-        """Verifica se o usuário tem uma permissão específica"""
-        # Admin sempre tem acesso
         if 'ADMIN' in self.profile:
             return True
         
-        # Verifica através das roles
         for role in self.roles:
             if role.has_permission(permission_name):
                 return True
         return False
     
     def has_module_access(self, module_name):
-        """Verifica se o usuário tem acesso a um módulo"""
-        # Admin sempre tem acesso
         if 'ADMIN' in self.profile:
             return True
         
-        # Verifica através das roles
         for role in self.roles:
             if role.has_module_access(module_name):
                 return True
         return False
     
     def get_permissions(self):
-        """Retorna todas as permissões do usuário"""
         permissions = set()
         for role in self.roles:
             for permission in role.permissions:
@@ -118,7 +103,6 @@ class User(db.Model, UserMixin):
         return list(permissions)
     
     def get_modules(self):
-        """Retorna todos os módulos que o usuário pode acessar"""
         modules = set()
         for role in self.roles:
             for permission in role.permissions:
@@ -126,11 +110,9 @@ class User(db.Model, UserMixin):
         return list(modules)
     
     def has_any_sector(self, sectors):
-        """Método de compatibilidade para verificar se usuário tem acesso a algum setor"""
         if 'ADMIN' in self.profile:
             return True
         
-        # Mapeia setores para módulos/permissões
         sector_module_map = {
             'ENFERMAGEM': ['nir', 'forms'],
             'INTERNACAO': ['nir', 'forms'],
@@ -200,7 +182,6 @@ class Nir(db.Model):
     
     def __repr__(self):
         return f'<Nir {self.id}: {self.patient_name}>'
-    
         
 class Form(db.Model):
     __tablename__ = 'forms'

@@ -13,4 +13,6 @@ uploads/
 
 database.db
 
+.github/
+
 adminBKP.py
