@@ -57,7 +57,8 @@ def create_user():
         name=name,
         username=username,
         password=password_hash,
-        email=email
+        email=email,
+        profile="USER"
     )
     
     db.session.add(new_user)
@@ -112,14 +113,20 @@ def render_users_list():
             error_out=False
         )
         
-        from app.models import Role
+        from app.models import Role, Permission
         available_roles = Role.query.filter_by(is_active=True).all()
+        # Monta agrupamento de permissões por módulo de forma dinâmica
+        permissions = Permission.query.order_by(Permission.module.asc(), Permission.name.asc()).all()
+        grouped_permissions = {}
+        for perm in permissions:
+            grouped_permissions.setdefault(perm.module, []).append(perm)
         
         return render_template(
             "users.html", 
             users=pagination.items, 
             pagination=pagination,
             available_roles=available_roles,
+            grouped_permissions=grouped_permissions,
             current_filters={
                 'search': search_query,
                 'status': status_filter,
@@ -231,6 +238,7 @@ def change_rbac_permissions(user_id):
     user_to_edit = User.query.get_or_404(user_id)
     new_permissions_list = request.form.getlist("permissions_edit")
     
+    # Limpa permissões diretas atuais
     user_to_edit.permissions.clear()
     
     for permission_name in new_permissions_list:
@@ -240,9 +248,56 @@ def change_rbac_permissions(user_id):
     
     db.session.commit()
     
-    logger.info(f"Permissões RBAC alteradas para {user_to_edit.username}: {[p.name for p in user_to_edit.permissions]}")
+    logger.info(f"Permissões RBAC (diretas) alteradas para {user_to_edit.username}: {[p.name for p in user_to_edit.permissions]}")
     flash(f"Permissões do usuário '{user_to_edit.name}' foram atualizadas!", "success")
     return redirect(url_for("admin.users.list_users"))
+
+@users_bp.route("/edit_basic_data/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+@handle_database_error("editar dados básicos")
+def edit_basic_data(user_id):
+    """Editar dados básicos do usuário (nome, username, email)"""
+    from app.routes.admin.utils import validate_user_data
+    
+    user_to_edit = User.query.get_or_404(user_id)
+    
+    name = request.form.get("name", "").strip()
+    username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip()
+    
+    validation_errors = validate_user_data(name, username, email)
+    if validation_errors:
+        for error in validation_errors:
+            flash(error, "warning")
+        return redirect(url_for("admin.users.list_users"))
+    
+    from sqlalchemy import and_, or_
+    existing_user = User.query.filter(
+        and_(
+            User.id != user_id,
+            or_(User.username == username, User.email == email)
+        )
+    ).first()
+    
+    if existing_user:
+        if existing_user.username == username:
+            flash("Nome de usuário já cadastrado para outro usuário.", "warning")
+        else:
+            flash("E-mail já cadastrado para outro usuário.", "warning")
+        return redirect(url_for("admin.users.list_users"))
+    
+    old_username = user_to_edit.username
+    user_to_edit.name = name
+    user_to_edit.username = username
+    user_to_edit.email = email
+    
+    db.session.commit()
+    
+    logger.info(f"Dados básicos atualizados para usuário {old_username} -> {username} por {current_user.username}")
+    flash(f"Dados do usuário '{name}' foram atualizados com sucesso!", "success")
+    return redirect(url_for("admin.users.list_users"))
+
 
 @users_bp.route("/create_private_repo/<int:user_id>", methods=['POST'])
 @login_required

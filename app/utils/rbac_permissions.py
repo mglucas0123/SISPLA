@@ -8,7 +8,9 @@ class RBACManager:
     @staticmethod
     def init_default_permissions():
         default_permissions = [
-            {'name': 'criar_nir', 'description': 'Criar registros NIR', 'module': 'nir'},
+            {'name': 'new_registry_nir', 'description': 'Criar registros NIR', 'module': 'nir'},
+            {'name': 'new_registry_on_duty', 'description': 'Criar registro Plantão', 'module': 'forms'},
+
             {'name': 'editar_nir', 'description': 'Editar registros NIR', 'module': 'nir'},
             {'name': 'excluir_nir', 'description': 'Excluir registros NIR', 'module': 'nir'},
             {'name': 'visualizar_nir', 'description': 'Visualizar registros NIR', 'module': 'nir'},
@@ -90,8 +92,8 @@ class RBACManager:
                 'permissions': ['gerenciar_usuarios', 'visualizar_usuarios', 'gerenciar_cursos', 'acessar_treinamentos', 'visualizar_relatorios', 'gerar_relatorios']
             },
             {
-                'name': 'Administrador TI',
-                'description': 'Administrador do sistema',
+                'name': 'Administrador',
+                'description': 'Administrador do Sistema',
                 'sector': 'TI',
                 'permissions': ['gerenciar_usuarios', 'visualizar_usuarios', 'gerenciar_cursos', 'acessar_treinamentos', 'visualizar_relatorios', 'gerar_relatorios', 'admin_users']
             },
@@ -177,7 +179,7 @@ def require_any_permission(permission_list):
     return decorator
 
 def get_user_permissions(user):
-    if 'ADMIN' in user.profile:
+    if user.has_permission('admin_users'):
         return Permission.query.all()
     
     permissions = set()
@@ -187,7 +189,7 @@ def get_user_permissions(user):
     return list(permissions)
 
 def get_user_modules(user):
-    if 'ADMIN' in user.profile:
+    if user.has_permission('admin_users'):
         return ['all']
     
     modules = set()

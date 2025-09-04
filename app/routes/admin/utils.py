@@ -5,6 +5,7 @@ from flask import flash, redirect, url_for, request
 from flask_login import current_user
 from sqlalchemy import or_
 from app.models import db, User
+from app.utils.rbac_permissions import require_permission
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,15 +17,7 @@ logger = logging.getLogger(__name__)
 
 def admin_required(f):
     """Decorator para verificar se o usuário é admin"""
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'ADMIN' not in current_user.profile:
-            flash("Acesso negado. Ação restrita a administradores.", "danger")
-            return redirect(url_for('main.panel'))
-        return f(*args, **kwargs)
-
-    return decorated_function
+    return require_permission('admin_users')(f)
 
 
 def handle_database_error(operation_name):
@@ -116,17 +109,19 @@ def get_user_statistics():
     inactive_users = total_users - active_users
 
     profile_stats = {}
-    profiles = ['ADMIN', 'CREATE', 'VIEW']
+    from app.models import Role
+    roles = Role.query.all()
+    role_stats = {}
 
-    for profile in profiles:
-        count = User.query.filter(User.profile.like(f'%{profile}%')).count()
-        profile_stats[profile] = count
+    for role in roles:
+        count = len(role.users)
+        role_stats[role.name] = count
 
     return {
         'total': total_users,
         'active': active_users,
         'inactive': inactive_users,
-        'profiles': profile_stats
+        'roles': role_stats
     }
 
 

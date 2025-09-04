@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.models import AnswerOption, QuestionType, Quiz, QuizAttachment, UserQuizAttempt, db, Course, UserCourseProgress
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from app.utils.rbac_permissions import require_permission
 
 training_bp = Blueprint('training', __name__, template_folder='../templates')
 
@@ -95,7 +96,7 @@ def course_list_page():
 def course_player_page(course_id):
     course = Course.query.get_or_404(course_id)
     
-    if not course.is_active and 'ADMIN' not in current_user.profile:
+    if not course.is_active and not current_user.has_permission('admin_users'):
         flash("Este curso não está disponível no momento.", "warning")
         return redirect(url_for('main.panel'))
 
@@ -212,7 +213,6 @@ def serve_video(course_id):
     video_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
     video_file_path = os.path.join(video_folder_path, course.video_filename)
     
-    # Verificar se a pasta e o arquivo existem
     if not os.path.exists(video_folder_path) or not os.path.exists(video_file_path):
         flash("Vídeo não encontrado no servidor.", "error")
         return redirect(request.referrer or url_for('main.panel'))
@@ -230,7 +230,6 @@ def serve_course_image(course_id):
     course_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
     image_file_path = os.path.join(course_folder_path, course.image_filename)
     
-    # Verificar se a pasta e o arquivo existem
     if not os.path.exists(course_folder_path) or not os.path.exists(image_file_path):
         return redirect(url_for('static', filename='course_images/default_course.png'))
     
@@ -241,16 +240,13 @@ def serve_course_image(course_id):
 def download_attachment(attachment_id):
     attachment = QuizAttachment.query.get_or_404(attachment_id)
     
-    # Construir o caminho completo do arquivo
     upload_folder = current_app.config['UPLOAD_FOLDER']
     full_path = os.path.join(upload_folder, attachment.filepath)
     
-    # Verificar se o arquivo existe
     if not os.path.exists(full_path):
         flash("Arquivo não encontrado.", "error")
         return redirect(request.referrer or url_for('main.panel'))
     
-    # Como filepath inclui 'quiz_attachments/filename', precisamos separar
     directory = os.path.dirname(full_path)
     filename = os.path.basename(full_path)
     

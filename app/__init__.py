@@ -8,8 +8,9 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 
-from app.models import db, User
+from app.models import db, User, Role
 from app.routes.admin import create_admin_blueprint
+from app.utils.rbac_permissions import initialize_rbac, assign_role_to_user
 from app.routes.auth import auth_bp
 from app.routes.main import main_bp
 from app.routes.util import util_bp, format_date_filter
@@ -70,6 +71,8 @@ def initdb(app):
     def init_db_command():
         with app.app_context():
             db.create_all()
+            initialize_rbac()
+            
             admin_usuario = db.session.execute(db.select(User).filter_by(username="admin")).scalar_one_or_none()
             if not admin_usuario:
                 admin_pass = os.getenv('ADMIN_DEFAULT_PASSWORD', "admin")
@@ -78,14 +81,21 @@ def initdb(app):
                     username="admin",
                     email="lucasiturama2013@gmail.com",
                     password=generate_password_hash(admin_pass),
-                    profile="ADMIN,CRIAR_RELATORIOS,VER_RELATORIOS"
+                    profile="LEGACY_ADMIN"
                 )
                 db.session.add(admin)
                 db.session.commit()
-                print("Usuário admin padrão criado com sucesso.")
+                
+                assign_role_to_user(admin, 'Administrador')
+                print("Usuário Administrador padrão criado com sucesso e papel RBac atribuído.")
             else:
-                print("Usuário admin padrão já existe.")
-        print("Banco de dados inicializado.")
+                admin_role = Role.query.filter_by(name='Administrador').first()
+                if admin_role and admin_role not in admin_usuario.roles:
+                    assign_role_to_user(admin_usuario, 'Administrador')
+                    print("Papel RBac atribuído ao usuário admin existente.")
+                else:
+                    print("Usuário admin padrão já existe com papel RBac.")
+        print("Banco de dados inicializado com sistema RBac.")
     @app.cli.command("migrate-upgrade")
     def migrate_upgrade():
         msg = f"Auto migration - {datetime.datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}"

@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from app.models import db, Nir, User
+from app.models import db, Nir, User, NirProcedure
+from app.config_procedures import search_procedures
 from app.utils.rbac_permissions import require_permission, require_module_access
 from datetime import datetime
 
@@ -162,8 +163,8 @@ def create_record():
             entry_type=request.form.get('entry_type'),
             admission_type=request.form.get('admission_type'),
             admitted_from_origin=request.form.get('admitted_from_origin'),
-            procedure_code=request.form.get('procedure_code'),
-            surgical_description=request.form.get('surgical_description'),
+            procedure_code=None,
+            surgical_description=None,
             responsible_doctor=request.form.get('responsible_doctor'),
             main_cid=request.form.get('main_cid'),
             sus_number=request.form.get('sus_number'),
@@ -184,6 +185,45 @@ def create_record():
         )
 
         db.session.add(new_nir)
+        db.session.flush()
+
+        codes = request.form.getlist('procedure_codes[]')
+        descs = request.form.getlist('procedure_descriptions[]')
+        seen = set()
+        for idx, (c, d) in enumerate(zip(codes, descs)):
+            c_norm = (c or '').strip()
+            d_norm = (d or '').strip()
+            if not c_norm or not d_norm:
+                continue
+            if c_norm in seen:
+                continue
+            seen.add(c_norm)
+            proc = NirProcedure(
+                nir_id=new_nir.id,
+                code=c_norm,
+                description=d_norm,
+                sequence=idx,
+                is_primary=(idx == 0)
+            )
+            db.session.add(proc)
+            if idx == 0:
+                new_nir.procedure_code = c_norm
+                new_nir.surgical_description = d_norm
+
+        if not seen:
+            single_code = request.form.get('procedure_code')
+            single_desc = request.form.get('surgical_description')
+            if single_code and single_desc:
+                new_nir.procedure_code = single_code
+                new_nir.surgical_description = single_desc
+                db.session.add(NirProcedure(
+                    nir_id=new_nir.id,
+                    code=single_code,
+                    description=single_desc,
+                    sequence=0,
+                    is_primary=True
+                ))
+
         db.session.commit()
 
         flash('Registro NIR criado com sucesso!', 'success')
@@ -239,8 +279,42 @@ def update_record(record_id):
         record.entry_type = request.form.get('entry_type')
         record.admission_type = request.form.get('admission_type')
         record.admitted_from_origin = request.form.get('admitted_from_origin')
-        record.procedure_code = request.form.get('procedure_code')
-        record.surgical_description = request.form.get('surgical_description')
+        record.procedures.clear()
+        db.session.flush()
+
+        codes = request.form.getlist('procedure_codes[]')
+        descs = request.form.getlist('procedure_descriptions[]')
+        seen = set()
+        for idx, (c, d) in enumerate(zip(codes, descs)):
+            c_norm = (c or '').strip()
+            d_norm = (d or '').strip()
+            if not c_norm or not d_norm:
+                continue
+            if c_norm in seen:
+                continue
+            seen.add(c_norm)
+            record.procedures.append(NirProcedure(
+                code=c_norm,
+                description=d_norm,
+                sequence=idx,
+                is_primary=(idx == 0)
+            ))
+            if idx == 0:
+                record.procedure_code = c_norm
+                record.surgical_description = d_norm
+
+        if not seen:
+            single_code = request.form.get('procedure_code')
+            single_desc = request.form.get('surgical_description')
+            record.procedure_code = single_code
+            record.surgical_description = single_desc
+            if single_code and single_desc:
+                record.procedures.append(NirProcedure(
+                    code=single_code,
+                    description=single_desc,
+                    sequence=0,
+                    is_primary=True
+                ))
         record.responsible_doctor = request.form.get('responsible_doctor')
         record.main_cid = request.form.get('main_cid')
         record.sus_number = request.form.get('sus_number')
@@ -284,3 +358,20 @@ def delete_record(record_id):
         flash(f'Erro ao excluir registro: {str(e)}', 'danger')
 
     return redirect(url_for('nir.list_records'))
+
+@nir_bp.route('/nir/procedures/search')
+@login_required
+@require_module_access('nir')
+def procedures_search():
+    """Endpoint para auto-complete de procedimentos.
+
+    Parâmetros:
+        q: termo de busca (código ou parte da descrição)
+        limit: máximo de resultados (default 15)
+    """
+    q = request.args.get('q', '').strip()
+    limit = request.args.get('limit', 15, type=int)
+    if limit > 50:
+        limit = 50
+    results = search_procedures(q, limit=limit)
+    return jsonify(results)

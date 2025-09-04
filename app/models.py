@@ -17,6 +17,11 @@ role_permissions = db.Table('role_permissions',
     db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True)
 )
 
+user_permissions = db.Table('user_permissions',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True)
+)
+
 repository_access = db.Table('repository_access',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('repository_id', db.Integer, db.ForeignKey('repositories.id'), primary_key=True)
@@ -66,6 +71,7 @@ class User(db.Model, UserMixin):
     last_login = db.Column(db.DateTime, nullable=True)
     
     roles = db.relationship('Role', secondary=user_roles, backref='users')
+    permissions = db.relationship('Permission', secondary=user_permissions, backref='users_direct')
     notices = db.relationship('Notice', back_populates='author')
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
     nir = db.relationship('Nir', back_populates='operator', lazy='dynamic')
@@ -78,12 +84,16 @@ class User(db.Model, UserMixin):
         ).scalar()
     
     def has_permission(self, permission_name):
+        if any(p.name == permission_name for p in self.permissions):
+            return True
         for role in self.roles:
             if role.has_permission(permission_name):
                 return True
         return False
     
     def has_module_access(self, module_name):
+        if any(p.module == module_name for p in self.permissions):
+            return True
         for role in self.roles:
             if role.has_module_access(module_name):
                 return True
@@ -91,6 +101,8 @@ class User(db.Model, UserMixin):
     
     def get_permissions(self):
         permissions = set()
+        for permission in self.permissions:
+            permissions.add(permission.name)
         for role in self.roles:
             for permission in role.permissions:
                 permissions.add(permission.name)
@@ -98,6 +110,8 @@ class User(db.Model, UserMixin):
     
     def get_modules(self):
         modules = set()
+        for permission in self.permissions:
+            modules.add(permission.module)
         for role in self.roles:
             for permission in role.permissions:
                 modules.add(permission.module)
@@ -154,6 +168,23 @@ class Nir(db.Model):
     
     def __repr__(self):
         return f'<Nir {self.id}: {self.patient_name}>'
+
+class NirProcedure(db.Model):
+    __tablename__ = 'nir_procedures'
+    id = db.Column(db.Integer, primary_key=True)
+    nir_id = db.Column(db.Integer, db.ForeignKey('nir.id', ondelete='CASCADE'), nullable=False, index=True)
+    code = db.Column(db.String(20), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    sequence = db.Column(db.Integer, nullable=True)
+    is_primary = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<NirProcedure {self.code}>'
+
+Nir.procedures = db.relationship(
+    'NirProcedure', backref='nir', cascade='all, delete-orphan', order_by='NirProcedure.sequence.asc()'
+)
         
 class Form(db.Model):
     __tablename__ = 'forms'

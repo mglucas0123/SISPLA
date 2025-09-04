@@ -83,7 +83,7 @@
                 <div class="manage-users-results-text">
                     <i class="bi bi-info-circle"></i>
                     Exibindo {{ users|length }} usuário(s)
-                    {% if request.args.get('search') or request.args.get('status') or request.args.get('profile') %}
+                    {% if request.args.get('search') or request.args.get('status') %}
                     com os filtros aplicados
                     {% endif %}
                 </div>
@@ -117,6 +117,7 @@
                             data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
                             data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
                             data-user-roles="{{ user.roles | map(attribute='name') | list | join(',') }}"
+                            data-user-permissions="{{ user.get_permissions() | join(',') }}"
                             data-user-is-active="{{ user.is_active | tojson }}">
 
                             <td class="user-name-cell">
@@ -167,7 +168,7 @@
                 <ul class="pagination">
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('admin.users.list_users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
+                            href="{{ url_for('admin.users.list_users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             <i class="bi bi-chevron-left me-1"></i>
                             Anterior
                         </a>
@@ -176,7 +177,7 @@
                     {% if p %}
                     <li class="page-item {% if p == pagination.page %}active{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('admin.users.list_users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">{{
+                            href="{{ url_for('admin.users.list_users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', 'date_desc')) }}">{{
                             p }}</a>
                     </li>
                     {% else %}
@@ -187,7 +188,7 @@
                     {% endfor %}
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('admin.users.list_users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), profile=request.args.get('profile', ''), sort=request.args.get('sort', 'date_desc')) }}">
+                            href="{{ url_for('admin.users.list_users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', 'date_desc')) }}">
                             Próxima
                             <i class="bi bi-chevron-right ms-1"></i>
                         </a>
@@ -255,29 +256,18 @@
                         placeholder="Digite uma senha segura">
                 </div>
 
+                {% if available_roles %}
                 <fieldset class="mb-4">
                     <legend>
                         <i class="bi bi-shield-check"></i>
                         Roles do Usuário
                     </legend>
                     <div class="row">
-                        {% set available_roles = [
-                            {'name': 'Enfermeiro', 'description': 'Profissional de enfermagem'},
-                            {'name': 'Médico', 'description': 'Médico assistente'},
-                            {'name': 'Faturista', 'description': 'Responsável pelo faturamento'},
-                            {'name': 'Farmacêutico', 'description': 'Responsável pela farmácia'},
-                            {'name': 'Técnico Laboratório', 'description': 'Técnico de laboratório'},
-                            {'name': 'Recepcionista', 'description': 'Atendimento e recepção'},
-                            {'name': 'Gestor RH', 'description': 'Gestão de recursos humanos'},
-                            {'name': 'Administrador TI', 'description': 'Administrador do sistema'},
-                            {'name': 'Diretor', 'description': 'Direção hospitalar'}
-                        ] %}
                         {% for role in available_roles %}
                         <div class="col-md-6 mb-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="roles"
-                                       value="{{ role.name }}" id="role_criar_{{ role.name }}">
-                                <label class="form-check-label" for="role_criar_{{ role.name }}">
+                                <input class="form-check-input" type="checkbox" name="roles" value="{{ role.name }}" id="role_criar_{{ role.id }}">
+                                <label class="form-check-label" for="role_criar_{{ role.id }}">
                                     <i class="bi bi-person-badge text-primary"></i>
                                     {{ role.name }}
                                     {% if role.description %}
@@ -289,6 +279,7 @@
                         {% endfor %}
                     </div>
                 </fieldset>
+                {% endif %}
 
             </div>
             <div class="modal-footer">
@@ -355,6 +346,51 @@
                     </div>
                 </div>
 
+                <!-- Editar Dados Básicos -->
+                <div class="mb-4">
+                    <h6 class="section-title">
+                        <i class="bi bi-person-gear"></i>
+                        Editar Dados Básicos
+                    </h6>
+                    <form id="formEditarDadosBasicos" method="POST" action="">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_name" class="form-label">
+                                    <i class="bi bi-person-fill"></i>
+                                    Nome completo
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="edit_name" name="name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_username" class="form-label">
+                                    <i class="bi bi-at"></i>
+                                    Nome de usuário
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="edit_username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_email" class="form-label">
+                                <i class="bi bi-envelope-fill"></i>
+                                E-mail
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-envelope-fill"></i>
+                                </span>
+                                <input type="email" class="form-control" id="edit_email" name="email" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Salvar Dados Básicos
+                        </button>
+                    </form>
+                </div>
+
                 <div class="mb-4">
                     <h6 class="section-title">
                         <i class="bi bi-shield-check"></i>
@@ -366,124 +402,25 @@
                                 <i class="bi bi-gear-wide-connected"></i>
                                 Atribuir Permissões Específicas
                             </legend>
+                            {% if grouped_permissions %}
                             <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="text-primary">NIR</h6>
+                                {% for module, perms in grouped_permissions.items() %}
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary text-uppercase">{{ module }}</h6>
+                                    {% for perm in perms %}
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="criar_nir" id="perm_criar_nir">
-                                        <label class="form-check-label" for="perm_criar_nir">
-                                            <i class="bi bi-plus-circle text-success"></i>
-                                            Criar NIR
+                                        <input class="form-check-input" type="checkbox" name="permissions_edit" value="{{ perm.name }}" id="perm_{{ perm.id }}">
+                                        <label class="form-check-label" for="perm_{{ perm.id }}">
+                                            {{ perm.description or perm.name }}
                                         </label>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="editar_nir" id="perm_editar_nir">
-                                        <label class="form-check-label" for="perm_editar_nir">
-                                            <i class="bi bi-pencil text-warning"></i>
-                                            Editar NIR
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="excluir_nir" id="perm_excluir_nir">
-                                        <label class="form-check-label" for="perm_excluir_nir">
-                                            <i class="bi bi-trash text-danger"></i>
-                                            Excluir NIR
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="visualizar_nir" id="perm_visualizar_nir">
-                                        <label class="form-check-label" for="perm_visualizar_nir">
-                                            <i class="bi bi-eye text-info"></i>
-                                            Visualizar NIR
-                                        </label>
-                                    </div>
-
-                                    <h6 class="text-primary mt-3">Formulários</h6>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="criar_formulario" id="perm_criar_formulario">
-                                        <label class="form-check-label" for="perm_criar_formulario">
-                                            <i class="bi bi-plus-circle text-success"></i>
-                                            Criar Formulário
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="editar_formulario" id="perm_editar_formulario">
-                                        <label class="form-check-label" for="perm_editar_formulario">
-                                            <i class="bi bi-pencil text-warning"></i>
-                                            Editar Formulário
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="visualizar_formulario" id="perm_visualizar_formulario">
-                                        <label class="form-check-label" for="perm_visualizar_formulario">
-                                            <i class="bi bi-eye text-info"></i>
-                                            Visualizar Formulário
-                                        </label>
-                                    </div>
+                                    {% endfor %}
                                 </div>
-                                <div class="col-md-6">
-                                    <h6 class="text-primary">Treinamentos</h6>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="acessar_treinamentos" id="perm_acessar_treinamentos">
-                                        <label class="form-check-label" for="perm_acessar_treinamentos">
-                                            <i class="bi bi-book text-info"></i>
-                                            Acessar Treinamentos
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="gerenciar_cursos" id="perm_gerenciar_cursos">
-                                        <label class="form-check-label" for="perm_gerenciar_cursos">
-                                            <i class="bi bi-gear text-warning"></i>
-                                            Gerenciar Cursos
-                                        </label>
-                                    </div>
-
-                                    <h6 class="text-primary mt-3">Relatórios</h6>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="visualizar_relatorios" id="perm_visualizar_relatorios">
-                                        <label class="form-check-label" for="perm_visualizar_relatorios">
-                                            <i class="bi bi-eye text-info"></i>
-                                            Visualizar Relatórios
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="gerar_relatorios" id="perm_gerar_relatorios">
-                                        <label class="form-check-label" for="perm_gerar_relatorios">
-                                            <i class="bi bi-plus-circle text-success"></i>
-                                            Gerar Relatórios
-                                        </label>
-                                    </div>
-
-                                    <h6 class="text-primary mt-3">Administração</h6>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="gerenciar_usuarios" id="perm_gerenciar_usuarios">
-                                        <label class="form-check-label" for="perm_gerenciar_usuarios">
-                                            <i class="bi bi-people text-danger"></i>
-                                            Gerenciar Usuários
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit"
-                                               value="visualizar_usuarios" id="perm_visualizar_usuarios">
-                                        <label class="form-check-label" for="perm_visualizar_usuarios">
-                                            <i class="bi bi-eye text-info"></i>
-                                            Visualizar Usuários
-                                        </label>
-                                    </div>
-                                </div>
+                                {% endfor %}
                             </div>
+                            {% else %}
+                            <p class="text-muted">Nenhuma permissão cadastrada.</p>
+                            {% endif %}
                         </fieldset>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-check-circle-fill"></i>
@@ -504,24 +441,13 @@
                                 <i class="bi bi-gear-wide-connected"></i>
                                 Atribuir Roles ao Usuário
                             </legend>
+                            {% if available_roles %}
                             <div class="row">
-                                {% set available_roles = [
-                                    {'name': 'Enfermeiro', 'description': 'Profissional de enfermagem'},
-                                    {'name': 'Médico', 'description': 'Médico assistente'},
-                                    {'name': 'Faturista', 'description': 'Responsável pelo faturamento'},
-                                    {'name': 'Farmacêutico', 'description': 'Responsável pela farmácia'},
-                                    {'name': 'Técnico Laboratório', 'description': 'Técnico de laboratório'},
-                                    {'name': 'Recepcionista', 'description': 'Atendimento e recepção'},
-                                    {'name': 'Gestor RH', 'description': 'Gestão de recursos humanos'},
-                                    {'name': 'Administrador TI', 'description': 'Administrador do sistema'},
-                                    {'name': 'Diretor', 'description': 'Direção hospitalar'}
-                                ] %}
                                 {% for role in available_roles %}
                                 <div class="col-md-6 mb-2">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="roles_edit"
-                                               value="{{ role.name }}" id="role_{{ role.name }}">
-                                        <label class="form-check-label" for="role_{{ role.name }}">
+                                        <input class="form-check-input" type="checkbox" name="roles_edit" value="{{ role.name }}" id="role_edit_{{ role.id }}">
+                                        <label class="form-check-label" for="role_edit_{{ role.id }}">
                                             <i class="bi bi-person-badge text-primary"></i>
                                             {{ role.name }}
                                             {% if role.description %}
@@ -532,6 +458,9 @@
                                 </div>
                                 {% endfor %}
                             </div>
+                            {% else %}
+                            <p class="text-muted">Nenhuma role cadastrada.</p>
+                            {% endif %}
                         </fieldset>
                         <button type="submit" class="btn btn-success w-100">
                             <i class="bi bi-check-circle-fill"></i>
@@ -540,59 +469,6 @@
                     </form>
                 </div>
 
-                <div class="mb-4">
-                    <h6 class="section-title">
-                        <i class="bi bi-building"></i>
-                        Gerenciar Setores
-                    </h6>
-                    <form id="formEditarSetores" method="POST" action="">
-                        <fieldset>
-                            <legend>
-                                <i class="bi bi-gear-wide-connected"></i>
-                                Configurar Setores do Usuário
-                            </legend>
-                            <div class="mb-3">
-                                <label for="sectors_edit" class="form-label">
-                                    <i class="bi bi-building"></i>
-                                    Selecione os setores do usuário
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-control" id="sectors_edit" name="sectors_edit" multiple size="8" required>
-                                    <optgroup label="Clínicos">
-                                        <option value="ENFERMAGEM">🏥 Enfermagem</option>
-                                        <option value="MEDICINA">🩺 Medicina</option>
-                                        <option value="FISIOTERAPIA">🏃 Fisioterapia</option>
-                                    </optgroup>
-                                    <optgroup label="Apoio Diagnóstico">
-                                        <option value="LABORATORIO">🧪 Laboratório</option>
-                                        <option value="RADIOLOGIA">📷 Radiologia</option>
-                                        <option value="FARMACIA">💊 Farmácia</option>
-                                    </optgroup>
-                                    <optgroup label="Administrativos">
-                                        <option value="FATURAMENTO">🧾 Faturamento</option>
-                                        <option value="RH">👥 Recursos Humanos</option>
-                                        <option value="TI">💻 T.I.</option>
-                                        <option value="DIRETORIA">🏢 Diretoria</option>
-                                    </optgroup>
-                                    <optgroup label="Operacionais">
-                                        <option value="INTERNACAO">🏠 Internação</option>
-                                        <option value="CENTRO_CIRURGICO">✂️ Centro Cirúrgico</option>
-                                        <option value="EMERGENCIA">🚑 Emergência</option>
-                                        <option value="UTI">❤️ UTI</option>
-                                    </optgroup>
-                                </select>
-                                <div class="form-text">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Mantenha pressionado Ctrl (ou Cmd no Mac) para selecionar múltiplos setores
-                                </div>
-                            </div>
-                        </fieldset>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Salvar Setores
-                        </button>
-                    </form>
-                </div>
 
                 <div class="actions-section">
                     <h6 class="section-title">
@@ -657,7 +533,6 @@
         var infoUsuarioModalElement = document.getElementById('infoUsuarioModal');
         var searchInput = document.getElementById('searchInput');
         var statusFilter = document.getElementById('statusFilter');
-        var profileFilter = document.getElementById('profileFilter');
         var sortFilter = document.getElementById('sortFilter');
         var applyFiltersButton = document.getElementById('applyFilters');
         var clearFiltersButton = document.getElementById('clearFilters');
@@ -666,11 +541,10 @@
         var modalUserNameSpan = infoUsuarioModalElement.querySelector('#modalUserName');
         var modalUserLoginSpan = infoUsuarioModalElement.querySelector('#modalUserLogin');
         var modalUserPermissionsDiv = infoUsuarioModalElement.querySelector('#modalUserPermissions');
-        var modalUserSectorsDiv = infoUsuarioModalElement.querySelector('#modalUserSectors');
         var formAlterarSenhaAdmin = infoUsuarioModalElement.querySelector('#formAlterarSenhaAdmin');
         var formDeletarUsuario = infoUsuarioModalElement.querySelector('#formDeletarUsuario');
         var modalUserEmail = infoUsuarioModalElement.querySelector('#modalUserEmail');
-        var formEditarPermissoes = infoUsuarioModalElement.querySelector('#formEditarPermissoes');
+        var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
         var formEditarRoles = infoUsuarioModalElement.querySelector('#formEditarRoles');
         var permCheckboxesEdit = {
         };
@@ -678,8 +552,6 @@
         var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
         var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
 
-        // New variable for sector edit form
-        var formEditarSetores = infoUsuarioModalElement.querySelector('#formEditarSetores');
 
 
         function applyUrlFilters() {
@@ -694,11 +566,6 @@
             var statusValue = statusFilter.value;
             if (statusValue) {
                 queryParams.push("status=" + statusValue);
-            }
-
-            var profileValue = profileFilter.value;
-            if (profileValue) {
-                queryParams.push("profile=" + profileValue);
             }
 
             var sortValue = sortFilter.value;
@@ -718,7 +585,6 @@
             clearFiltersButton.addEventListener('click', function () {
                 searchInput.value = '';
                 statusFilter.value = '';
-                profileFilter.value = '';
                 sortFilter.value = 'date_desc';
                 applyUrlFilters();
             });
@@ -743,14 +609,9 @@
             filterUsersWithAjax();
         });
 
-        profileFilter.addEventListener('change', function () {
-            filterUsersWithAjax();
-        });
-
         function filterUsersWithAjax() {
             const searchTerm = searchInput.value.trim();
             const statusValue = statusFilter.value;
-            const profileValue = profileFilter.value;
             const sortValue = sortFilter.value;
 
             showLoadingState();
@@ -758,7 +619,6 @@
             const params = new URLSearchParams();
             if (searchTerm) params.set('search', searchTerm);
             if (statusValue) params.set('status', statusValue);
-            if (profileValue) params.set('profile', profileValue);
             if (sortValue) params.set('sort', sortValue);
             params.set('ajax', '1');
 
@@ -871,17 +731,8 @@
 
 
         infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
-
             var triggeringRow = event.relatedTarget;
             if (!triggeringRow || !triggeringRow.classList.contains('user-row')) {
-                if (formEditarPermissoes) formEditarPermissoes.action = '#';
-                // Reset form actions for sectors if the form exists
-                if (formEditarSetores) formEditarSetores.action = '#';
-                // Reset form actions for roles if the form exists
-                if (formEditarRoles) formEditarRoles.action = '#';
-
-                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
-                if (formEditarPermissoesRBAC) formEditarPermissoesRBAC.action = '#';
                 return;
             }
 
@@ -890,9 +741,20 @@
             var userLoginData = triggeringRow.dataset.userUsuario;
             var userEmailData = triggeringRow.dataset.userEmail;
             var userProfileStrData = triggeringRow.dataset.userProfile;
-            var userSectorsStrData = triggeringRow.dataset.userSectors;
             var userIsActiveStr = triggeringRow.dataset.userIsActive;
             var userIsActive = (userIsActiveStr === 'true');
+
+            var editNameInput = infoUsuarioModalElement.querySelector('#edit_name');
+            var editUsernameInput = infoUsuarioModalElement.querySelector('#edit_username');
+            var editEmailInput = infoUsuarioModalElement.querySelector('#edit_email');
+            var formEditarDadosBasicos = infoUsuarioModalElement.querySelector('#formEditarDadosBasicos');
+
+            if (editNameInput) editNameInput.value = userNameData || '';
+            if (editUsernameInput) editUsernameInput.value = userLoginData || '';
+            if (editEmailInput) editEmailInput.value = userEmailData || '';
+            if (formEditarDadosBasicos) {
+                formEditarDadosBasicos.action = "{{ url_for('admin.users.edit_basic_data', user_id=0) }}".replace('0', userId);
+            }
 
             if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-badge"></i>Detalhes de ' + (userNameData || 'Usuário');
             if (modalUserNameSpan) modalUserNameSpan.textContent = userNameData || 'Não informado';
@@ -911,11 +773,9 @@
                 }
             }
 
-            // Display user roles
             var modalUserRolesDiv = infoUsuarioModalElement.querySelector('#modalUserRoles');
             if (modalUserRolesDiv) {
                 modalUserRolesDiv.innerHTML = '';
-                // Assuming user roles are stored in a data attribute - you'll need to add this to the row
                 var userRolesData = triggeringRow.dataset.userRoles || '';
                 var tempRolesArray = userRolesData ? userRolesData.split(',') : [];
                 if (tempRolesArray.length > 0 && tempRolesArray.some(r => r.trim() !== '')) {
@@ -932,10 +792,8 @@
                 }
             }
 
-            // Display user permissions (derived from roles)
             if (modalUserPermissionsDiv) {
                 modalUserPermissionsDiv.innerHTML = '';
-                // Assuming user permissions are stored in a data attribute - you'll need to add this to the row
                 var userPermissionsData = triggeringRow.dataset.userPermissions || '';
                 var tempPermissionsArray = userPermissionsData ? userPermissionsData.split(',') : [];
                 if (tempPermissionsArray.length > 0 && tempPermissionsArray.some(p => p.trim() !== '')) {
@@ -952,24 +810,7 @@
                 }
             }
 
-            if (modalUserSectorsDiv) {
-                modalUserSectorsDiv.innerHTML = '';
-                var tempSectorsArray = userSectorsStrData ? userSectorsStrData.split(',') : [];
-                if (tempSectorsArray.length > 0 && tempSectorsArray.some(s => s.trim() !== '')) {
-                    tempSectorsArray.forEach(function (sector) {
-                        sector = sector.trim();
-                        if (!sector) return;
-                        var sectorInfo = getSectorInfo(sector);
-                        var badge = '<span class="sector-badge sector-' + sectorInfo.class + '">';
-                        badge += '<i class="' + sectorInfo.icon + '"></i>' + sectorInfo.text + '</span>';
-                        modalUserSectorsDiv.innerHTML += badge;
-                    });
-                } else {
-                    modalUserSectorsDiv.innerHTML = '<span class="sector-badge sector-none">Nenhum setor definido</span>';
-                }
-            }
 
-            // Handle RBAC permissions checkboxes
             var permissionsCheckboxesEdit = infoUsuarioModalElement.querySelectorAll('input[name="permissions_edit"]');
             var userPermissionsArray = userPermissionsData ? userPermissionsData.split(',') : [];
             if (permissionsCheckboxesEdit) {
@@ -978,33 +819,13 @@
                 });
             }
 
-            var sectorsSelectEdit = infoUsuarioModalElement.querySelector('#sectors_edit');
-            if (sectorsSelectEdit) {
-                Array.from(sectorsSelectEdit.options).forEach(option => {
-                    option.selected = false;
-                });
-
-                var tempSectorsArray = userSectorsStrData ? userSectorsStrData.split(',') : [];
-                tempSectorsArray.forEach(function(sector) {
-                    sector = sector.trim();
-                    if (sector) {
-                        var option = sectorsSelectEdit.querySelector(`option[value="${sector}"]`);
-                        if (option) {
-                            option.selected = true;
-                        }
-                    }
-                });
-            }
 
             var rolesCheckboxesEdit = infoUsuarioModalElement.querySelectorAll('input[name="roles_edit"]');
-            var currentRoles = []; // Assuming you'll populate this with user's current roles
             if (rolesCheckboxesEdit) {
-                // If user.roles is available and is a list/set
-                if (typeof user.roles !== 'undefined' && Array.isArray(user.roles)) {
-                    currentRoles = user.roles;
-                }
+                var rolesDataStr = triggeringRow.dataset.userRoles || '';
+                var rolesArray = rolesDataStr ? rolesDataStr.split(',').map(r => r.trim()) : [];
                 rolesCheckboxesEdit.forEach(checkbox => {
-                    checkbox.checked = currentRoles.includes(checkbox.value);
+                    checkbox.checked = rolesArray.includes(checkbox.value);
                 });
             }
 

@@ -4,15 +4,14 @@ from flask_login import current_user, login_required
 from sqlalchemy import Date, cast, select
 from sqlalchemy.sql import func
 from app.models import db, Form, User
+from app.utils.rbac_permissions import require_permission
 
 form_bp = Blueprint('form', __name__, template_folder='../templates')
 
 @form_bp.route("/new_form", methods=["GET", "POST"])
 @login_required
+@require_permission('criar_formulario')
 def new_form():
-    if "CRIAR_RELATORIOS" not in current_user.profile and "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para criar novos formulários.", "danger")
-        return redirect(url_for("main.panel"))
 
     if request.method == "POST":
         try:
@@ -99,11 +98,8 @@ def details_form(form_id):
 
 @form_bp.route("/form/delet/<int:form_id>", methods=["POST"])
 @login_required
-def delet_form(form_id):
-
-    if "ADMIN" not in current_user.profile:
-        flash("Acesso negado! Você não tem permissão para deletar formulários.", "danger")
-        return redirect(url_for("form.details_form", form_id=form_id)) 
+@require_permission('admin_users')
+def delet_form(form_id): 
 
     formulario_para_deletar = db.session.get(Form, form_id)
 

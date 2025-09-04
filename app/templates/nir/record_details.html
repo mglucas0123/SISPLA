@@ -125,18 +125,49 @@
 
                             <div class="nir-details-section">
                                 <h5>
-                                    <i class="bi bi-activity"></i>Procedimento
+                                    <i class="bi bi-activity"></i>Procedimentos
                                 </h5>
-                                <div class="row">
-                                    <div class="col-md-4 nir-detail-item">
-                                        <label class="form-label">Código do Procedimento</label>
-                                        <p class="text-monospace">{{ record.procedure_code or '-' }}</p>
+                                {% if record.procedures and record.procedures|length > 0 %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th style="width:1%">#</th>
+                                                    <th style="width:12%">Código</th>
+                                                    <th>Descrição</th>
+                                                    <th style="width:12%">Principal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for p in record.procedures|sort(attribute='sequence') %}
+                                                <tr>
+                                                    <td class="text-muted small">{{ loop.index }}</td>
+                                                    <td class="text-monospace fw-semibold">{{ p.code }}</td>
+                                                    <td>{{ p.description }}</td>
+                                                    <td>
+                                                        {% if p.is_primary %}
+                                                            <span class="badge bg-primary">Sim</span>
+                                                        {% else %}
+                                                            <span class="text-muted small">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <div class="col-md-8 nir-detail-item">
-                                        <label class="form-label">Descrição Cirúrgica</label>
-                                        <p>{{ record.surgical_description or '-' }}</p>
+                                {% else %}
+                                    <div class="row">
+                                        <div class="col-md-4 nir-detail-item">
+                                            <label class="form-label">Código do Procedimento (Legado)</label>
+                                            <p class="text-monospace">{{ record.procedure_code or '-' }}</p>
+                                        </div>
+                                        <div class="col-md-8 nir-detail-item">
+                                            <label class="form-label">Descrição Cirúrgica (Legado)</label>
+                                            <p>{{ record.surgical_description or '-' }}</p>
+                                        </div>
                                     </div>
-                                </div>
+                                {% endif %}
                             </div>
 
                             <div class="nir-details-section">

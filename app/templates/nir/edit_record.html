@@ -106,16 +106,37 @@
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-activity"></i>
-                                Procedimento
+                                Procedimentos
                             </h6>
-                            <div class="row g-3">
+                            <div class="row g-3 align-items-end">
                                 <div class="col-md-4">
-                                    <label class="nir-form-label">Código do Procedimento</label>
-                                    <input type="text" class="form-control nir-form-control" name="procedure_code" value="{{ record.procedure_code or '' }}" placeholder="Código SIGTAP">
+                                    <label class="nir-form-label">Código</label>
+                                    <input type="text" class="form-control nir-form-control" name="procedure_code" id="procedure-code-input" value="" placeholder="Digite código ou parte da descrição">
                                 </div>
-                                <div class="col-md-8">
-                                    <label class="nir-form-label">Descrição Cirúrgica</label>
-                                    <input type="text" class="form-control nir-form-control" name="surgical_description" value="{{ record.surgical_description or '' }}" placeholder="Descrição do procedimento">
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">Descrição</label>
+                                    <input type="text" class="form-control nir-form-control bg-light" name="surgical_description" id="surgical-description-input" value="" readonly tabindex="-1" aria-readonly="true">
+                                </div>
+                                <div class="col-md-2 d-grid">
+                                    <button class="btn btn-outline-primary mt-2" id="add-procedure-btn" type="button">
+                                        <i class="bi bi-plus-circle"></i> Adicionar
+                                    </button>
+                                </div>
+                                <div class="col-12">
+                                    <div class="border rounded p-2 bg-body-tertiary" id="procedures-list" aria-live="polite">
+                                        {% for p in record.procedures %}
+                                            <div class="d-flex align-items-start gap-2 mb-1">
+                                                <div class="flex-grow-1 small border rounded p-2 bg-white">
+                                                    <strong>{{ p.code }}</strong><br>
+                                                    <span class="text-muted">{{ p.description }}</span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remover" data-index="{{ loop.index0 }}">&times;</button>
+                                                <input type="hidden" name="procedure_codes[]" value="{{ p.code }}">
+                                                <input type="hidden" name="procedure_descriptions[]" value="{{ p.description }}">
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">Adicione/remova procedimentos. O primeiro será considerado principal.</small>
                                 </div>
                             </div>
                         </div>
@@ -301,4 +322,5 @@
         }
     });
 </script>
+<script src="{{ url_for('static', filename='nir/nir_procedures.js') }}"></script>
 {% endblock %}
