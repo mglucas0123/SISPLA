@@ -52,18 +52,6 @@
                         </select>
                     </div>
 
-                    <div class="manage-users-filter-group">
-                        <label class="manage-users-filter-label">Permissão:</label>
-                        <select id="profileFilter" class="form-select">
-                            <option value="" {% if not request.args.get('profile') %}selected{% endif %}>Todas</option>
-                            <option value="ADMIN" {% if request.args.get('profile')=='ADMIN' %}selected{% endif %}>
-                                Administrador</option>
-                            <option value="CRIAR_RELATORIOS" {% if request.args.get('profile')=='CRIAR_RELATORIOS'
-                                %}selected{% endif %}>Criar Relatórios</option>
-                            <option value="VER_RELATORIOS" {% if request.args.get('profile')=='VER_RELATORIOS'
-                                %}selected{% endif %}>Ver Relatórios</option>
-                        </select>
-                    </div>
 
                     <div class="manage-users-filter-group">
                         <label class="manage-users-filter-label">Ordenar por:</label>
@@ -128,8 +116,7 @@
                         <tr class="user-row" data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
                             data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
                             data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
-                            data-user-profile="{{ user.profile | join(',') if user.profile is iterable and user.profile is not string else (user.profile if user.profile else '') }}"
-                            data-user-sectors="{{ user.sectors or '' }}"
+                            data-user-roles="{{ user.roles | map(attribute='name') | list | join(',') }}"
                             data-user-is-active="{{ user.is_active | tojson }}">
 
                             <td class="user-name-cell">
@@ -303,47 +290,6 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="mb-4">
-                    <legend>
-                        <i class="bi bi-building"></i>
-                        Setores do Usuário
-                    </legend>
-                    <div class="mb-3">
-                        <label for="sectors_criar" class="form-label">
-                            <i class="bi bi-building"></i>
-                            Selecione os setores do usuário
-                            <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-control" id="sectors_criar" name="sectors" multiple size="8" required>
-                            <optgroup label="Clínicos">
-                                <option value="ENFERMAGEM">🏥 Enfermagem</option>
-                                <option value="MEDICINA">🩺 Medicina</option>
-                                <option value="FISIOTERAPIA">🏃 Fisioterapia</option>
-                            </optgroup>
-                            <optgroup label="Apoio Diagnóstico">
-                                <option value="LABORATORIO">🧪 Laboratório</option>
-                                <option value="RADIOLOGIA">📷 Radiologia</option>
-                                <option value="FARMACIA">💊 Farmácia</option>
-                            </optgroup>
-                            <optgroup label="Administrativos">
-                                <option value="FATURAMENTO">🧾 Faturamento</option>
-                                <option value="RH">👥 Recursos Humanos</option>
-                                <option value="TI">💻 T.I.</option>
-                                <option value="DIRETORIA">🏢 Diretoria</option>
-                            </optgroup>
-                            <optgroup label="Operacionais">
-                                <option value="INTERNACAO">🏠 Internação</option>
-                                <option value="CENTRO_CIRURGICO">✂️ Centro Cirúrgico</option>
-                                <option value="EMERGENCIA">🚑 Emergência</option>
-                                <option value="UTI">❤️ UTI</option>
-                            </optgroup>
-                        </select>
-                        <div class="form-text">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Mantenha pressionado Ctrl (ou Cmd no Mac) para selecionar múltiplos setores
-                        </div>
-                    </div>
-                </fieldset>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -405,12 +351,6 @@
                         <div class="permissions-label">Permissões Atuais:</div>
                         <div class="permissions-list" id="modalUserPermissions">
                             <span class="permission-badge badge-none">Carregando...</span>
-                        </div>
-                    </div>
-                    <div class="sectors-display">
-                        <div class="sectors-label">Setores Atuais:</div>
-                        <div class="sectors-list" id="modalUserSectors">
-                            <span class="sector-badge sector-none">Carregando...</span>
                         </div>
                     </div>
                 </div>
@@ -733,9 +673,6 @@
         var formEditarPermissoes = infoUsuarioModalElement.querySelector('#formEditarPermissoes');
         var formEditarRoles = infoUsuarioModalElement.querySelector('#formEditarRoles');
         var permCheckboxesEdit = {
-            'ADMIN': infoUsuarioModalElement.querySelector('#perm_admin_edit'),
-            'CRIAR_RELATORIOS': infoUsuarioModalElement.querySelector('#perm_criar_edit'),
-            'VER_RELATORIOS': infoUsuarioModalElement.querySelector('#perm_ver_edit')
         };
         var modalUserStatusDisplay = infoUsuarioModalElement.querySelector('#modalUserStatusDisplay');
         var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
@@ -1093,17 +1030,12 @@
                 if (formToggleUserStatus) {
                     formToggleUserStatus.action = "{{ url_for('admin.users.toggle_status', user_id=0) }}".replace('0', userId);
                 }
-                if (formEditarSetores) {
-                    var urlEditarSetores = "{{ url_for('admin.users.change_sectors', user_id=0) }}".replace('0', userId);
-                    formEditarSetores.action = urlEditarSetores;
-                }
             } else {
                 if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';
                 if (formDeletarUsuario) formDeletarUsuario.action = '#';
                 if (formEditarPermissoes) formEditarPermissoes.action = '#';
                 if (formEditarRoles) formEditarRoles.action = '#';
                 if (formToggleUserStatus) formToggleUserStatus.action = '#';
-                if (formEditarSetores) formEditarSetores.action = '#';
                 var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
                 if (formEditarPermissoesRBAC) formEditarPermissoesRBAC.action = '#';
             }

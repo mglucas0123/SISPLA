@@ -78,18 +78,12 @@ class User(db.Model, UserMixin):
         ).scalar()
     
     def has_permission(self, permission_name):
-        if 'ADMIN' in self.profile:
-            return True
-        
         for role in self.roles:
             if role.has_permission(permission_name):
                 return True
         return False
     
     def has_module_access(self, module_name):
-        if 'ADMIN' in self.profile:
-            return True
-        
         for role in self.roles:
             if role.has_module_access(module_name):
                 return True
@@ -109,28 +103,6 @@ class User(db.Model, UserMixin):
                 modules.add(permission.module)
         return list(modules)
     
-    def has_any_sector(self, sectors):
-        if 'ADMIN' in self.profile:
-            return True
-        
-        sector_module_map = {
-            'ENFERMAGEM': ['nir', 'forms'],
-            'INTERNACAO': ['nir', 'forms'],
-            'FATURAMENTO': ['nir', 'reports'],
-            'MEDICINA': ['nir', 'forms'],
-            'FARMACIA': ['farmacia'],
-            'LABORATORIO': ['laboratorio'],
-            'RH': ['admin', 'training'],
-            'TI': ['admin'],
-            'DIRETORIA': ['reports']
-        }
-        
-        for sector in sectors:
-            if sector in sector_module_map:
-                for module in sector_module_map[sector]:
-                    if self.has_module_access(module):
-                        return True
-        return False
 
     def __repr__(self):
         return f'<User {self.username}>'

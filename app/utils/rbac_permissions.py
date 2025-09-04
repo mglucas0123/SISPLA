@@ -25,6 +25,7 @@ class RBACManager:
             
             {'name': 'gerenciar_usuarios', 'description': 'Gerenciar usuários', 'module': 'admin'},
             {'name': 'visualizar_usuarios', 'description': 'Visualizar usuários', 'module': 'admin'},
+            {'name': 'admin_users', 'description': 'Gerenciar usuários do sistema', 'module': 'admin'},
             
             {'name': 'gerenciar_farmacia', 'description': 'Gerenciar farmácia', 'module': 'farmacia'},
             {'name': 'dispensar_medicamento', 'description': 'Dispensar medicamentos', 'module': 'farmacia'},
@@ -92,13 +93,13 @@ class RBACManager:
                 'name': 'Administrador TI',
                 'description': 'Administrador do sistema',
                 'sector': 'TI',
-                'permissions': ['gerenciar_usuarios', 'visualizar_usuarios', 'gerenciar_cursos', 'acessar_treinamentos', 'visualizar_relatorios', 'gerar_relatorios']
+                'permissions': ['gerenciar_usuarios', 'visualizar_usuarios', 'gerenciar_cursos', 'acessar_treinamentos', 'visualizar_relatorios', 'gerar_relatorios', 'admin_users']
             },
             {
                 'name': 'Diretor',
                 'description': 'Direção hospitalar',
                 'sector': 'DIRETORIA',
-                'permissions': ['visualizar_relatorios', 'gerar_relatorios', 'visualizar_usuarios', 'acessar_treinamentos']
+                'permissions': ['visualizar_relatorios', 'gerar_relatorios', 'visualizar_usuarios', 'acessar_treinamentos', 'admin_users', 'gerenciar_usuarios']
             }
         ]
         
@@ -126,7 +127,7 @@ def require_permission(permission_name):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth.login'))
             
-            if 'ADMIN' in current_user.profile:
+            if current_user.has_permission('admin_users'):
                 return f(*args, **kwargs)
             
             if not current_user.has_permission(permission_name):
@@ -144,7 +145,7 @@ def require_module_access(module_name):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth.login'))
             
-            if 'ADMIN' in current_user.profile:
+            if current_user.has_permission('admin_users'):
                 return f(*args, **kwargs)
             
             if not current_user.has_module_access(module_name):
@@ -162,7 +163,7 @@ def require_any_permission(permission_list):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth.login'))
             
-            if 'ADMIN' in current_user.profile:
+            if current_user.has_permission('admin_users'):
                 return f(*args, **kwargs)
             
             has_permission = any(current_user.has_permission(perm) for perm in permission_list)

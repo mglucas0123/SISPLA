@@ -16,7 +16,7 @@
                 </div>
             </div>
         </div>
-        {% if 'ADMIN' in current_user.profile %}
+        {% if current_user.has_permission('admin_users') %}
         <div class="header-actions">
             <a href="{{ url_for('admin.repositories.manage_repositories') }}" class="btn btn-primary btn-modern">
                 <i class="bi bi-shield-lock-fill me-2"></i>

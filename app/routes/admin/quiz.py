@@ -62,18 +62,15 @@ def _create_or_update_quiz(course):
     
     db.session.commit()
     
-    # Processar questões se fornecidas
     questions_data_str = request.form.get("questions_data", "").strip()
     if questions_data_str:
         try:
             questions_data = json.loads(questions_data_str)
             
-            # Remover questões existentes
             existing_questions = Question.query.filter_by(quiz_id=quiz.id).all()
             for question in existing_questions:
                 db.session.delete(question)
             
-            # Adicionar novas questões
             for question_data in questions_data:
                 new_question = Question(
                     quiz_id=quiz.id,
@@ -81,9 +78,8 @@ def _create_or_update_quiz(course):
                     question_type=QuestionType[question_data.get('question_type', 'MULTIPLE_CHOICE')]
                 )
                 db.session.add(new_question)
-                db.session.flush()  # Para obter o ID da questão
+                db.session.flush()
                 
-                # Adicionar opções de resposta
                 for option_data in question_data.get('options', []):
                     option = AnswerOption(
                         question_id=new_question.id,

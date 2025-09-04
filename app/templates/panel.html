@@ -128,7 +128,7 @@
                     </div>
                     <div class="feature-actions">
                         <div class="d-grid gap-2">
-                            {% if 'CRIAR_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
+                            {% if current_user.has_permission('gerar_relatorios') %}
                             <a href="{{ url_for('form.new_form') }}" 
                                class="btn btn-success d-flex align-items-center justify-content-center">
                                 <i class="bi bi-journal-plus me-2"></i>

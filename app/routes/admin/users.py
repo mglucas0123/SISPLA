@@ -71,7 +71,6 @@ def render_users_list():
     """Renderiza lista de usuários com filtros"""
     search_query = request.args.get('search', '').strip()
     status_filter = request.args.get('status', '')
-    profile_filter = request.args.get('profile', '')
     sort_option = request.args.get('sort', 'date_desc')
     
     query = User.query
@@ -90,8 +89,6 @@ def render_users_list():
     elif status_filter == 'inactive':
         query = query.filter(User.is_active == False)
     
-    if profile_filter:
-        query = query.filter(User.profile.ilike(f'%{profile_filter}%'))
     
     sort_mapping = {
         'date_asc': User.id.asc(),
@@ -126,7 +123,6 @@ def render_users_list():
             current_filters={
                 'search': search_query,
                 'status': status_filter,
-                'profile': profile_filter,
                 'sort': sort_option
             }
         )
@@ -179,8 +175,6 @@ def delete_user(user_id):
     flash("Usuário deletado com sucesso.", "success")
     return redirect(url_for("admin.users.list_users"))
 
-# Função removida - substituída pelo sistema RBAC
-
 @users_bp.route("/change_roles/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -192,7 +186,6 @@ def change_roles(user_id):
     user_to_edit = User.query.get_or_404(user_id)
     new_roles_list = request.form.getlist("roles_edit")
     
-    # Adiciona as novas roles
     user_to_edit.roles.clear()
     for role_name in new_roles_list:
         role = Role.query.filter_by(name=role_name).first()
@@ -226,13 +219,6 @@ def toggle_status(user_id):
     flash(f"Usuário '{user_to_toggle.name}' foi {action_text} com sucesso.", "success")
     return redirect(url_for("admin.users.list_users"))
 
-@users_bp.route("/change_sectors/<int:user_id>", methods=["POST"])
-@login_required
-@admin_required
-@handle_database_error("alterar setores")
-def change_sectors(user_id):
-    """Endpoint de compatibilidade - redireciona para change_roles"""
-    return change_roles(user_id)
 
 @users_bp.route("/change_rbac_permissions/<int:user_id>", methods=["POST"])
 @login_required

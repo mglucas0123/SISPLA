@@ -3,7 +3,6 @@ from app.utils.rbac_permissions import initialize_rbac
 
 app = create_app()
 
-# Inicializa o sistema RBAC na primeira execução
 with app.app_context():
     initialize_rbac()
 

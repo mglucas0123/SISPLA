@@ -13,7 +13,7 @@
                     </h1>
                     <p class="forms-subtitle">Gerencie os registros de Notificação de Internação Regulatória</p>
                 </div>
-                {% if current_user.has_module_access('nir') or 'ADMIN' in current_user.profile %}
+                {% if current_user.has_module_access('nir') %}
                 <div class="forms-header-actions">
                     <a href="{{ url_for('nir.new_record') }}" class="btn btn-danger">
                         <i class="bi bi-plus-circle me-2"></i>
@@ -211,7 +211,7 @@
                                            class="forms-action-btn forms-action-view" title="Visualizar" data-bs-toggle="tooltip">
                                             <i class="bi bi-eye-fill"></i>
                                         </a>
-                                        {% if 'VER_RELATORIOS' in current_user.profile or 'ADMIN' in current_user.profile %}
+                                        {% if current_user.has_permission('visualizar_relatorios') %}
                                         <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" 
                                            class="forms-action-btn forms-action-edit" title="Editar" data-bs-toggle="tooltip">
                                             <i class="bi bi-pencil-square"></i>

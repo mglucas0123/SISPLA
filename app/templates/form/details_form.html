@@ -65,7 +65,7 @@
 
     </div>
 
-    {% if current_user.is_authenticated and 'ADMIN' in current_user.profile %}
+    {% if current_user.is_authenticated and current_user.has_permission('admin_users') %}
         <div class="forms-card forms-danger-card no-print">
             <div class="forms-card-header forms-danger-header">
                 <h6 class="forms-danger-title">

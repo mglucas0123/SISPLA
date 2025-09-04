@@ -113,18 +113,15 @@ def edit_course(course_id):
         flash('Título do curso é obrigatório.', 'warning')
         return redirect(url_for('admin.courses.manage_courses'))
 
-    # Atualizar dados básicos
     course.title = new_title
     course.description = request.form.get('description', '').strip()
     course.duration_seconds = request.form.get('duration_seconds', course.duration_seconds, type=int)
 
-    # Caminhos das pastas
     old_folder_name = secure_filename(old_title)
     new_folder_name = secure_filename(new_title)
     old_course_path = os.path.join(current_app.root_path, 'uploads', 'courses', old_folder_name)
     new_course_path = os.path.join(current_app.root_path, 'uploads', 'courses', new_folder_name)
 
-    # Renomear pasta se o título mudou
     if old_title != new_title and os.path.exists(old_course_path):
         try:
             os.makedirs(os.path.dirname(new_course_path), exist_ok=True)
@@ -134,14 +131,11 @@ def edit_course(course_id):
             logger.error(f"Erro ao renomear pasta do curso: {str(e)}")
             flash('Erro ao atualizar arquivos do curso.', 'warning')
     
-    # Garantir que a pasta existe
     os.makedirs(new_course_path, exist_ok=True)
 
-    # Processar novo vídeo se enviado
     if 'video' in request.files and request.files['video'].filename != '':
         video_file = request.files['video']
         if video_file:
-            # Remover vídeo antigo se existir
             if course.video_filename:
                 old_video_path = os.path.join(new_course_path, course.video_filename)
                 if os.path.exists(old_video_path):
@@ -150,16 +144,13 @@ def edit_course(course_id):
                     except Exception as e:
                         logger.warning(f"Não foi possível remover vídeo antigo: {str(e)}")
             
-            # Salvar novo vídeo
             video_filename = secure_filename(video_file.filename)
             video_file.save(os.path.join(new_course_path, video_filename))
             course.video_filename = video_filename
 
-    # Processar nova imagem se enviada
     if 'image' in request.files and request.files['image'].filename != '':
         image_file = request.files['image']
         if image_file:
-            # Remover imagem antiga se existir
             if course.image_filename:
                 old_image_path = os.path.join(new_course_path, course.image_filename)
                 if os.path.exists(old_image_path):
@@ -168,7 +159,6 @@ def edit_course(course_id):
                     except Exception as e:
                         logger.warning(f"Não foi possível remover imagem antiga: {str(e)}")
             
-            # Salvar nova imagem
             image_filename = secure_filename(image_file.filename)
             image_file.save(os.path.join(new_course_path, image_filename))
             course.image_filename = image_filename
@@ -226,7 +216,6 @@ def view_course_progress(course_id):
 
     progress_records = UserCourseProgress.query.filter_by(course_id=course_id).all()
 
-    # Análise de progresso geral
     total_users = UserCourseProgress.query.filter_by(course_id=course_id).count()
     users_completed = UserCourseProgress.query.filter(
         UserCourseProgress.course_id == course_id,
@@ -238,7 +227,6 @@ def view_course_progress(course_id):
         UserCourseProgress.last_watched_timestamp > 0
     ).count()
 
-    # Calcular pontuação média e mapear tentativas por usuário
     total_score = 0
     quiz_attempts = 0
     attempts_map = {}
@@ -251,7 +239,6 @@ def view_course_progress(course_id):
                 total_score += attempt.score
                 quiz_attempts += 1
             
-            # Mapear a melhor tentativa de cada usuário
             user_id = attempt.user_id
             if user_id not in attempts_map or (attempt.score and attempt.score > attempts_map[user_id].get('score', 0)):
                 attempts_map[user_id] = {
@@ -302,10 +289,8 @@ def reset_user_course_progress(course_id, user_id):
     from app.models import User
     user = User.query.get_or_404(user_id)
 
-    # Resetar progresso do curso
     UserCourseProgress.query.filter_by(course_id=course_id, user_id=user_id).delete()
     
-    # Resetar tentativas de quiz se existir
     if course.quiz:
         UserQuizAttempt.query.filter_by(quiz_id=course.quiz.id, user_id=user_id).delete()
     
