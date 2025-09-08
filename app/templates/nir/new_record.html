@@ -148,6 +148,47 @@
                                 <input type="text" class="form-control nir-form-control" name="main_cid"
                                     placeholder="CID-10">
                             </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Especialidade Cirúrgica</label>
+                                <select class="form-select nir-form-control" name="surgical_specialty">
+                                    <option value="">Selecione</option>
+                                    <option value="CIRURGIA GERAL">Cirurgia Geral</option>
+                                    <option value="CLINICO GERAL">Clínico Geral</option>
+                                    <option value="DENTISTA">Dentista</option>
+                                    <option value="DERMATO">Dermatologia</option>
+                                    <option value="OBSTETRICIA">Obstetrícia</option>
+                                    <option value="OFTALMOLOGISTA">Oftalmologia</option>
+                                    <option value="ORTOPEDISTA">Ortopedia</option>
+                                    <option value="UROLOGISTA">Urologia</option>
+                                    <option value="VASCULAR">Vascular</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Auxiliar</label>
+                                <input type="text" class="form-control nir-form-control" name="auxiliary" placeholder="Nome do auxiliar">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Anestesista</label>
+                                <input type="text" class="form-control nir-form-control" name="anesthetist" placeholder="Nome do anestesista">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Anestesia</label>
+                                <input type="text" class="form-control nir-form-control" name="anesthesia" placeholder="Tipo de anestesia">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Pediatria</label>
+                                <input type="text" class="form-control nir-form-control" name="pediatrics" placeholder="Pediatra (se aplicável)">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Classificação</label>
+                                <select class="form-select nir-form-control" name="surgical_type">
+                                    <option value="">Selecione</option>
+                                    <option value="CONTAMINADA">Contaminada</option>
+                                    <option value="INFECTADA">Infectada</option>
+                                    <option value="LIMPA">Limpa</option>
+                                    <option value="SUSPENSA">Suspensa</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -216,7 +257,8 @@
                                 <label class="nir-form-label">Status</label>
                                 <select class="form-select nir-form-control" name="status">
                                     <option value="PENDENTE">Pendente</option>
-                                    <option value="FINALIZADO">Finalizado</option>
+                                    <option value="EM_ANDAMENTO">Em Andamento</option>
+                                    <option value="CONCLUIDO">Concluído</option>
                                 </select>
                             </div>
                             <div class="col-12">

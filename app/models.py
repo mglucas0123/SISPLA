@@ -156,7 +156,13 @@ class Nir(db.Model):
     billed = db.Column(db.String(10), nullable=True)
     status = db.Column(db.String(50), nullable=True)
     observation = db.Column(db.Text, nullable=True)
-    
+    surgical_specialty = db.Column(db.String(100), nullable=True)
+    auxiliary = db.Column(db.String(100), nullable=True)
+    anesthetist = db.Column(db.String(100), nullable=True)
+    anesthesia = db.Column(db.String(100), nullable=True)
+    pediatrics = db.Column(db.String(100), nullable=True)
+    surgical_type = db.Column(db.String(100), nullable=True)
+
     day = db.Column(db.Integer, nullable=True)
     month = db.Column(db.String(20), nullable=True)
     operator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

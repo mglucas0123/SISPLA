@@ -179,6 +179,12 @@ def create_record():
             billed=request.form.get('billed'),
             status=request.form.get('status'),
             observation=request.form.get('observation'),
+            surgical_specialty=request.form.get('surgical_specialty'),
+            auxiliary=request.form.get('auxiliary'),
+            anesthetist=request.form.get('anesthetist'),
+            anesthesia=request.form.get('anesthesia'),
+            pediatrics=request.form.get('pediatrics'),
+            surgical_type=request.form.get('surgical_type'),
             day=admission_date.day if admission_date else None,
             month=admission_date.strftime('%B') if admission_date else None,
             operator_id=current_user.id
@@ -253,7 +259,6 @@ def edit_record(record_id):
 @require_permission('editar_nir')
 def update_record(record_id):
     record = Nir.query.get_or_404(record_id)
-
     try:
         birth_date_str = request.form.get('birth_date')
         birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date() if birth_date_str else None
@@ -281,7 +286,6 @@ def update_record(record_id):
         record.admitted_from_origin = request.form.get('admitted_from_origin')
         record.procedures.clear()
         db.session.flush()
-
         codes = request.form.getlist('procedure_codes[]')
         descs = request.form.getlist('procedure_descriptions[]')
         seen = set()
@@ -329,15 +333,20 @@ def update_record(record_id):
         record.billed = request.form.get('billed')
         record.status = request.form.get('status')
         record.observation = request.form.get('observation')
+        record.surgical_specialty = request.form.get('surgical_specialty')
+        record.auxiliary = request.form.get('auxiliary')
+        record.anesthetist = request.form.get('anesthetist')
+        record.anesthesia = request.form.get('anesthesia')
+        record.pediatrics = request.form.get('pediatrics')
+        record.surgical_type = request.form.get('surgical_type')
+
         record.day = admission_date.day if admission_date else None
         record.month = admission_date.strftime('%B') if admission_date else None
         record.last_modified = datetime.utcnow()
 
         db.session.commit()
-
         flash('Registro NIR atualizado com sucesso!', 'success')
         return redirect(url_for('nir.record_details', record_id=record.id))
-
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao atualizar registro: {str(e)}', 'danger')

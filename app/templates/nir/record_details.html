@@ -183,6 +183,42 @@
                                         <label class="form-label">CID Principal</label>
                                         <p class="text-monospace">{{ record.main_cid or '-' }}</p>
                                     </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Especialidade Cirúrgica</label>
+                                        <p>{{ record.surgical_specialty or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Auxiliar</label>
+                                        <p>{{ record.auxiliary or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Anestesista</label>
+                                        <p>{{ record.anesthetist or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Anestesia</label>
+                                        <p>{{ record.anesthesia or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Pediatria</label>
+                                        <p>{{ record.pediatrics or '-' }}</p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Classificação</label>
+                                        <p>
+                                            {% if record.surgical_type == 'CONTAMINADA' %}
+                                            <span class="nir-badge badge bg-success">Contáminada</span>
+                                            {% elif record.surgical_type == 'INFECTADA' %}
+                                            <span class="nir-badge badge bg-danger">Infectada</span>
+                                            {% elif record.surgical_type == 'LIMPA' %}
+                                            <span class="nir-badge badge bg-secondary">Limpa</span>
+                                            {% elif record.surgical_type == 'SUSPENSA' %}
+                                            <span class="nir-badge badge bg-warning">Suspensa</span>
+                                            {% else %}
+                                            <span class="nir-badge badge bg-secondary">-</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -260,12 +296,10 @@
                                     <div class="col-md-3 nir-detail-item">
                                         <label class="form-label">Faturado</label>
                                         <p>
-                                            {% if record.billed %}
-                                            <span class="nir-badge badge bg-{% if record.billed == 'SIM' %}success{% else %}secondary{% endif %}">
-                                                {{ record.billed }}
-                                            </span>
+                                            {% if record.billed == 'SIM' %}
+                                            <span class="nir-badge badge bg-success">Sim</span>
                                             {% else %}
-                                            -
+                                            <span class="nir-badge badge bg-danger">Não</span>
                                             {% endif %}
                                         </p>
                                     </div>

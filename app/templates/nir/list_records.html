@@ -141,6 +141,8 @@
                                 <th class="forms-table-header forms-table-center">Tipo Entrada</th>
                                 <th class="forms-table-header forms-table-center">Tipo Internação</th>
                                 <th class="forms-table-header forms-table-center">Médico</th>
+                                <th class="forms-table-header forms-table-center">Esp. Cirúrgica</th>
+                                <th class="forms-table-header forms-table-center">Tipo</th>
                                 <th class="forms-table-header forms-table-center">Status</th>
                                 <th class="forms-table-header forms-table-center forms-table-actions">Ações</th>
                             </tr>
@@ -195,6 +197,33 @@
                                 </td>
                                 <td class="forms-table-cell forms-table-center">
                                     <span class="forms-user-username">{{ record.responsible_doctor or '-' }}</span>
+                                </td>
+                                {% set spec_labels = {
+                                    'CIRURGIA GERAL':'Cirurgia Geral',
+                                    'CLINICO GERAL':'Clínico Geral',
+                                    'DENTISTA':'Dentista',
+                                    'DERMATO':'Dermatologia',
+                                    'OBSTETRICIA':'Obstetrícia',
+                                    'OFTALMOLOGISTA':'Oftalmologia',
+                                    'ORTOPEDISTA':'Ortopedia',
+                                    'UROLOGISTA':'Urologia',
+                                    'VASCULAR':'Vascular'
+                                } %}
+                                <td class="forms-table-cell forms-table-center">
+                                    {% if record.surgical_specialty %}
+                                    <span class="text-truncate d-inline-block" style="max-width:110px" title="{{ spec_labels.get(record.surgical_specialty, record.surgical_specialty) }}">{{ spec_labels.get(record.surgical_specialty, record.surgical_specialty) }}</span>
+                                    {% else %}-{% endif %}
+                                </td>
+                                {% set type_labels = {
+                                    'CONTAMINADA':'Contaminada',
+                                    'INFECTADA':'Infectada',
+                                    'LIMPA':'Limpa',
+                                    'SUSPENSA':'Suspensa'
+                                } %}
+                                <td class="forms-table-cell forms-table-center">
+                                    {% if record.surgical_type %}
+                                    <span class="badge bg-light text-dark border" title="{{ type_labels.get(record.surgical_type, record.surgical_type) }}">{{ type_labels.get(record.surgical_type, record.surgical_type) }}</span>
+                                    {% else %}-{% endif %}
                                 </td>
                                 <td class="forms-table-cell forms-table-center">
                                     {% if record.status %}
@@ -385,7 +414,6 @@
                 reattachEventListeners();
                 hideLoadingState();
 
-                // Scroll suave para a tabela
                 document.querySelector('.forms-table-container').scrollIntoView({ 
                     behavior: 'smooth',
                     block: 'start'
@@ -399,13 +427,11 @@
         }
 
         function reattachEventListeners() {
-            // Reinicializar tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.forEach(function (tooltipTriggerEl) {
                 new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            // Reatachar eventos de paginação
             document.querySelectorAll('.page-link').forEach(link => {
                 if (link.getAttribute('href') === 'javascript:void(0)') {
                     link.addEventListener('click', function(e) {

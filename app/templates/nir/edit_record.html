@@ -155,6 +155,59 @@
                                     <label class="nir-form-label">CID Principal</label>
                                     <input type="text" class="form-control nir-form-control" name="main_cid" value="{{ record.main_cid or '' }}" placeholder="CID-10">
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Especialidade Cirúrgica</label>
+                                    <select class="form-select nir-form-control" name="surgical_specialty">
+                                        <option value="">Selecione</option>
+                                        {% set spec = record.surgical_specialty or '' %}
+                                        {% set labels = {
+                                            'CIRURGIA GERAL':'Cirurgia Geral',
+                                            'CLINICO GERAL':'Clínico Geral',
+                                            'DENTISTA':'Dentista',
+                                            'DERMATO':'Dermatologia',
+                                            'OBSTETRICIA':'Obstetrícia',
+                                            'OFTALMOLOGISTA':'Oftalmologia',
+                                            'ORTOPEDISTA':'Ortopedia',
+                                            'UROLOGISTA':'Urologia',
+                                            'VASCULAR':'Vascular'
+                                        } %}
+                                        {% for opt, label in labels.items() %}
+                                        <option value="{{ opt }}" {% if spec == opt %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Auxiliar</label>
+                                    <input type="text" class="form-control nir-form-control" name="auxiliary" value="{{ record.auxiliary or '' }}" placeholder="Nome do auxiliar">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Anestesista</label>
+                                    <input type="text" class="form-control nir-form-control" name="anesthetist" value="{{ record.anesthetist or '' }}" placeholder="Nome do anestesista">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Anestesia</label>
+                                    <input type="text" class="form-control nir-form-control" name="anesthesia" value="{{ record.anesthesia or '' }}" placeholder="Tipo de anestesia">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Pediatria</label>
+                                    <input type="text" class="form-control nir-form-control" name="pediatrics" value="{{ record.pediatrics or '' }}" placeholder="Nome do Pediatra (se aplicável)">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="nir-form-label">Classificação</label>
+                                    {% set stype = record.surgical_type or '' %}
+                                    <select class="form-select nir-form-control" name="surgical_type">
+                                        <option value="">Selecione</option>
+                                        {% set type_labels = {
+                                            'CONTAMINADA':'Contaminada',
+                                            'INFECTADA':'Infectada',
+                                            'LIMPA':'Limpa',
+                                            'SUSPENSA':'Suspensa'
+                                        } %}
+                                        {% for opt, label in type_labels.items() %}
+                                        <option value="{{ opt }}" {% if stype == opt %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -214,7 +267,6 @@
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Faturado</label>
                                     <select class="form-select nir-form-control" name="billed">
-                                        <option value="">Selecione</option>
                                         <option value="SIM" {% if record.billed == 'SIM' %}selected{% endif %}>Sim</option>
                                         <option value="NAO" {% if record.billed == 'NAO' %}selected{% endif %}>Não</option>
                                     </select>
@@ -223,7 +275,8 @@
                                     <label class="nir-form-label">Status</label>
                                     <select class="form-select nir-form-control" name="status">
                                         <option value="PENDENTE" {% if record.status == 'PENDENTE' or not record.status %}selected{% endif %}>Pendente</option>
-                                        <option value="FINALIZADO" {% if record.status == 'FINALIZADO' %}selected{% endif %}>Finalizado</option>
+                                        <option value="EM_ANDAMENTO" {% if record.status == 'EM_ANDAMENTO' %}selected{% endif %}>Em Andamento</option>
+                                        <option value="CONCLUIDO" {% if record.status == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
                                     </select>
                                 </div>
                                 <div class="col-12">
