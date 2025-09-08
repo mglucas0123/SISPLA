@@ -70,12 +70,13 @@
                                 <input type="date" class="form-control nir-form-control" name="admission_date">
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Tipo de Entrada</label>
-                                <select class="form-select nir-form-control" name="entry_type">
+                                <label class="nir-form-label">Tipo de Entrada *</label>
+                                <select class="form-select nir-form-control" name="entry_type" id="entry_type" required onchange="updateSectionResponsibilities()">
                                     <option value="">Selecione</option>
-                                    <option value="URGENCIA">Urgência</option>
                                     <option value="ELETIVO">Eletivo</option>
+                                    <option value="URGENCIA">Urgência</option>
                                 </select>
+                                <small class="text-muted">Este campo determina quem pode preencher cada seção</small>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Tipo de Internação</label>

@@ -80,6 +80,12 @@ class RBACManager:
                 'permissions': ['gerenciar_laboratorio', 'liberar_exames', 'acessar_treinamentos', 'criar_formulario', 'visualizar_formulario']
             },
             {
+                'name': 'Centro Cirúrgico',
+                'description': 'Equipe do centro cirúrgico',
+                'sector': 'CENTRO_CIRURGICO',
+                'permissions': ['visualizar_nir', 'editar_nir', 'acessar_treinamentos', 'criar_formulario', 'visualizar_formulario']
+            },
+            {
                 'name': 'Recepcionista',
                 'description': 'Atendimento e recepção',
                 'sector': 'RECEPCAO',

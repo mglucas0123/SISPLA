@@ -84,7 +84,7 @@
                                         <label class="form-label">Tipo de Entrada</label>
                                         <p>
                                             {% if record.entry_type %}
-                                            <span class="nir-badge badge bg-{% if record.entry_type == 'URGENCIA' %}danger{% else %}primary{% endif %}">
+                                            <span class="nir-badge badge bg-{% if record.entry_type == 'URGENCIA' or record.entry_type == 'CIRURGICO' %}danger{% else %}primary{% endif %}">
                                                 {{ record.entry_type }}
                                             </span>
                                             {% else %}

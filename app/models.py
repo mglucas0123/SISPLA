@@ -122,6 +122,25 @@ class User(db.Model, UserMixin):
         return f'<User {self.username}>'
 
 
+class NirSectionStatus(db.Model):
+    """Controla o status de preenchimento de cada seção do NIR"""
+    __tablename__ = 'nir_section_status'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    nir_id = db.Column(db.Integer, db.ForeignKey('nir.id'), nullable=False)
+    section_name = db.Column(db.String(50), nullable=False)
+    responsible_sector = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='PENDENTE')
+    filled_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    filled_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    nir = db.relationship('Nir', back_populates='section_statuses')
+    filled_by = db.relationship('User')
+    
+    def __repr__(self):
+        return f'<NirSectionStatus {self.nir_id}:{self.section_name}:{self.status}>'
+
 class Nir(db.Model):
     __tablename__ = 'nir'
     
@@ -131,6 +150,7 @@ class Nir(db.Model):
     birth_date = db.Column(db.Date, nullable=False)
     gender = db.Column(db.String(1), nullable=False)
     susfacil = db.Column(db.String(50), nullable=True)
+    sus_number = db.Column(db.String(50), nullable=False)
     
     admission_date = db.Column(db.Date, nullable=True)
     entry_type = db.Column(db.String(50), nullable=True)
@@ -142,7 +162,6 @@ class Nir(db.Model):
     
     responsible_doctor = db.Column(db.String(100), nullable=True)
     main_cid = db.Column(db.String(10), nullable=True)
-    sus_number = db.Column(db.String(50), nullable=False)
     aih = db.Column(db.String(50), nullable=True)
     
     scheduling_date = db.Column(db.Date, nullable=True)
@@ -156,6 +175,7 @@ class Nir(db.Model):
     billed = db.Column(db.String(10), nullable=True)
     status = db.Column(db.String(50), nullable=True)
     observation = db.Column(db.Text, nullable=True)
+    
     surgical_specialty = db.Column(db.String(100), nullable=True)
     auxiliary = db.Column(db.String(100), nullable=True)
     anesthetist = db.Column(db.String(100), nullable=True)
@@ -171,7 +191,118 @@ class Nir(db.Model):
     last_modified = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     operator = db.relationship('User', back_populates='nir')
+    section_statuses = db.relationship('NirSectionStatus', back_populates='nir', cascade='all, delete-orphan')
     
+    def get_section_control_config(self):
+        """Retorna a configuração de controle baseada no tipo de entrada"""
+        effective_entry = 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
+
+        if effective_entry == 'ELETIVO':
+            return {
+                'dados_paciente': 'NIR',
+                'dados_internacao': 'NIR', 
+                'procedimentos': 'NIR',
+                'informacoes_medicas': 'NIR',
+                'agendamento_alta': 'NIR',
+                'status_controle': 'FATURAMENTO'
+            }
+        elif effective_entry == 'URGENCIA':
+            return {
+                'dados_paciente': 'NIR',
+                'dados_internacao': 'NIR',
+                'procedimentos': 'CENTRO_CIRURGICO', 
+                'informacoes_medicas': 'CENTRO_CIRURGICO',
+                'agendamento_alta': 'NIR',
+                'status_controle': 'FATURAMENTO'
+            }
+        else:
+            # Default: NIR preenche tudo exceto status_controle
+            return {
+                'dados_paciente': 'NIR',
+                'dados_internacao': 'NIR',
+                'procedimentos': 'NIR',
+                'informacoes_medicas': 'NIR', 
+                'agendamento_alta': 'NIR',
+                'status_controle': 'FATURAMENTO'
+            }
+    
+    def can_edit_section(self, section_name, user):
+        """Verifica se o usuário pode editar uma seção específica"""
+        from app.routes.nir import get_user_sector
+        
+        config = self.get_section_control_config()
+        responsible_sector = config.get(section_name)
+        
+        # Usar o setor real do usuário do RBAC
+        user_sector = get_user_sector(user)
+        return user_sector == responsible_sector
+    
+    def get_section_status(self, section_name):
+        """Retorna o objeto NirSectionStatus de uma seção específica"""
+        section_status = NirSectionStatus.query.filter_by(
+            nir_id=self.id,
+            section_name=section_name
+        ).first()
+        
+        return section_status
+    
+    def get_effective_entry_type(self):
+        """Retorna o tipo de entrada considerando valores legados."""
+        return 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
+
+    def get_sector_sections(self):
+        """Mapeia setores para as seções que são de responsabilidade deles."""
+        config = self.get_section_control_config()
+        sector_map = {}
+        for section, sector in config.items():
+            sector_map.setdefault(sector, []).append(section)
+        return sector_map
+
+    def get_sector_progress(self):
+        """Resumo de progresso por setor: total, preenchidos, pendentes e status."""
+        sector_sections = self.get_sector_sections()
+        # obter statuses existentes numa forma rápida
+        statuses = { (s.section_name, s.responsible_sector): s.status for s in self.section_statuses }
+        progress = {}
+        for sector, sections in sector_sections.items():
+            total = len(sections)
+            filled = 0
+            pending = 0
+            for sec in sections:
+                st = statuses.get((sec, sector), 'PENDENTE')
+                if st == 'PREENCHIDO':
+                    filled += 1
+                else:
+                    pending += 1
+            if total == 0:
+                status = 'PENDENTE'
+            elif filled == 0:
+                status = 'PENDENTE'
+            elif filled < total:
+                status = 'EM_ANDAMENTO'
+            else:
+                status = 'CONCLUIDO'
+            progress[sector] = {
+                'total': total,
+                'filled': filled,
+                'pending': pending,
+                'status': status,
+                'sections': sections
+            }
+        return progress
+
+    def compute_overall_status(self):
+        """Determina o status geral do registro baseado nos statuses das seções."""
+        if not self.section_statuses:
+            return 'PENDENTE'
+        total = len(self.section_statuses)
+        filled = sum(1 for s in self.section_statuses if s.status == 'PREENCHIDO')
+        if filled == 0:
+            return 'PENDENTE'
+        if filled < total:
+            return 'EM_ANDAMENTO'
+        return 'CONCLUIDO'
+
     def __repr__(self):
         return f'<Nir {self.id}: {self.patient_name}>'
 
