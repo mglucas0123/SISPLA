@@ -200,29 +200,28 @@ class Nir(db.Model):
         if effective_entry == 'ELETIVO':
             return {
                 'dados_paciente': 'NIR',
-                'dados_internacao': 'NIR', 
+                'dados_internacao_iniciais': 'NIR', 
                 'procedimentos': 'NIR',
                 'informacoes_medicas': 'NIR',
-                'agendamento_alta': 'NIR',
+                'dados_alta_finais': 'NIR', 
                 'status_controle': 'FATURAMENTO'
             }
         elif effective_entry == 'URGENCIA':
             return {
                 'dados_paciente': 'NIR',
-                'dados_internacao': 'NIR',
+                'dados_internacao_iniciais': 'NIR',
                 'procedimentos': 'CENTRO_CIRURGICO', 
                 'informacoes_medicas': 'CENTRO_CIRURGICO',
-                'agendamento_alta': 'NIR',
+                'dados_alta_finais': 'NIR',
                 'status_controle': 'FATURAMENTO'
             }
         else:
-            # Default: NIR preenche tudo exceto status_controle
             return {
                 'dados_paciente': 'NIR',
-                'dados_internacao': 'NIR',
+                'dados_internacao_iniciais': 'NIR',
                 'procedimentos': 'NIR',
                 'informacoes_medicas': 'NIR', 
-                'agendamento_alta': 'NIR',
+                'dados_alta_finais': 'NIR',
                 'status_controle': 'FATURAMENTO'
             }
     
@@ -233,7 +232,6 @@ class Nir(db.Model):
         config = self.get_section_control_config()
         responsible_sector = config.get(section_name)
         
-        # Usar o setor real do usuário do RBAC
         user_sector = get_user_sector(user)
         return user_sector == responsible_sector
     
@@ -261,7 +259,6 @@ class Nir(db.Model):
     def get_sector_progress(self):
         """Resumo de progresso por setor: total, preenchidos, pendentes e status."""
         sector_sections = self.get_sector_sections()
-        # obter statuses existentes numa forma rápida
         statuses = { (s.section_name, s.responsible_sector): s.status for s in self.section_statuses }
         progress = {}
         for sector, sections in sector_sections.items():
@@ -292,7 +289,6 @@ class Nir(db.Model):
         return progress
 
     def compute_overall_status(self):
-        """Determina o status geral do registro baseado nos statuses das seções."""
         if not self.section_statuses:
             return 'PENDENTE'
         total = len(self.section_statuses)
@@ -302,6 +298,77 @@ class Nir(db.Model):
         if filled < total:
             return 'EM_ANDAMENTO'
         return 'CONCLUIDO'
+    
+    def is_ready_for_sector(self, sector):
+        if sector == 'NIR':
+            return True
+
+        progress = self.get_sector_progress()
+
+        effective_entry = self.get_effective_entry_type()
+        config = self.get_section_control_config()
+
+        nir_sections = [s for s, sec in config.items() if sec == 'NIR']
+
+        initial_nir_sections = nir_sections
+        final_nir_sections = []
+        if effective_entry == 'URGENCIA':
+            final_nir_sections = [s for s in nir_sections if 'alta' in s] 
+            initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
+
+        section_status_map = { (s.section_name): s.status for s in self.section_statuses }
+
+        def sections_complete(section_list):
+            if not section_list:
+                return True
+            return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
+
+        if sector == 'CENTRO_CIRURGICO':
+            if effective_entry == 'URGENCIA':
+                return sections_complete(initial_nir_sections)
+            else:
+                nir_progress = progress.get('NIR', {})
+                return nir_progress.get('status') == 'CONCLUIDO'
+
+        if sector == 'FATURAMENTO':
+            if not sections_complete(nir_sections):
+                return False
+            surgery_progress = progress.get('CENTRO_CIRURGICO')
+            if surgery_progress and surgery_progress.get('status') != 'CONCLUIDO':
+                return False
+            return True
+
+        return False
+        
+    def get_next_available_sector(self):
+        """Retorna o próximo setor que pode trabalhar no registro."""
+        progress = self.get_sector_progress()
+        effective_entry = self.get_effective_entry_type()
+        config = self.get_section_control_config()
+
+        nir_sections = [s for s, sec in config.items() if sec == 'NIR']
+        final_nir_sections = []
+        if effective_entry == 'URGENCIA':
+            final_nir_sections = [s for s in nir_sections if 'alta' in s]
+
+        section_status_map = { (s.section_name): s.status for s in self.section_statuses }
+        def sections_complete(section_list):
+            if not section_list:
+                return True
+            return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
+
+        if not sections_complete(nir_sections):
+            return 'NIR'
+
+        surgery_progress = progress.get('CENTRO_CIRURGICO')
+        if surgery_progress and surgery_progress.get('status') != 'CONCLUIDO':
+            return 'CENTRO_CIRURGICO'
+
+        billing_progress = progress.get('FATURAMENTO', {})
+        if billing_progress.get('status') != 'CONCLUIDO':
+            return 'FATURAMENTO'
+
+        return None
 
     def __repr__(self):
         return f'<Nir {self.id}: {self.patient_name}>'

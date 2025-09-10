@@ -132,9 +132,8 @@
                                 </div>
                             </td>
                             <td>
-                                {% if attempt_data %}
-                                                                {% if attempt_data and attempt_data.score is not none %}
-                                <span class="course-progress-score">{{ "%.1f"|format(attempt_data.score) }}%</span>
+                                {% if attempt_data and attempt_data.score is not none %}
+                                    <span class="course-progress-score">{{ "%.1f"|format(attempt_data.score) }}%</span>
                                 {% else %}
                                     <span class="text-muted">--</span>
                                 {% endif %}

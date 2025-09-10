@@ -1,0 +1,350 @@
+{% extends "navbar.html" %}
+{% block title %}NIR - Formulário Setor NIR{% endblock %}
+
+{% block content %}
+<div class="nir-container">
+    {% include 'partials/_flash_messages.html' %}
+    <div class="container">
+        <div class="nir-header">
+            <h1>
+                <i class="bi bi-clipboard-heart"></i>
+                Setor NIR - Formulário Específico
+            </h1>
+            <p>
+                {% if phase_info %}
+                    {% if phase_info.locked and phase_info.waiting_for %}
+                        <span class="badge bg-warning text-dark">Aguardando {{ phase_info.waiting_for }}</span>
+                        Este registro está em fase de outro setor. Edição bloqueada.
+                    {% elif phase_info.locked %}
+                        <span class="badge bg-secondary">Fluxo Concluído</span>
+                        Registro finalizado para o NIR.
+                    {% elif final_phase %}
+                        Fase Final: preencha os dados restantes.
+                    {% else %}
+                        Preencha as seções de responsabilidade do setor NIR.
+                    {% endif %}
+                {% else %}
+                    Preencha as seções de responsabilidade do setor NIR.
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="alert alert-primary">
+                    <h6><i class="bi bi-person-circle"></i> Paciente: {{ record.patient_name }}</h6>
+                    <p class="mb-0">SUS: {{ record.sus_number or 'N/I' }} | 
+                       Nascimento: {{ record.birth_date.strftime('%d/%m/%Y') if record.birth_date else 'N/I' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-lg border-0">
+            <div class="card-header">
+                <h5>
+                    <i class="bi bi-pencil-square"></i>
+                    Seções de Responsabilidade do NIR
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}" {% if phase_info and phase_info.locked %}data-locked="1" onsubmit="return false;"{% endif %}>
+                    {% if 'dados_paciente' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'dados_paciente' in editable_sections) %}
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-person-circle text-danger"></i>
+                            Dados do Paciente
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="nir-form-label">Nome do Paciente *</label>
+                                <input type="text" class="form-control nir-form-control" name="patient_name" 
+                                       value="{{ record.patient_name }}" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}
+                                       placeholder="Nome completo do paciente">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Data de Nascimento *</label>
+                                <input type="date" class="form-control nir-form-control" name="birth_date" 
+                                       value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="nir-form-label">Sexo *</label>
+                                <select class="form-select nir-form-control" name="gender" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="M" {% if record.gender == 'M' %}selected{% endif %}>Masculino</option>
+                                    <option value="F" {% if record.gender == 'F' %}selected{% endif %}>Feminino</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="nir-form-label">SUSFacil</label>
+                                <input type="text" class="form-control nir-form-control" name="susfacil" 
+                                       value="{{ record.susfacil or '' }}"
+                                       placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Cartão SUS *</label>
+                                <input type="text" class="form-control nir-form-control" name="sus_number" 
+                                       value="{{ record.sus_number or '' }}" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}
+                                       placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input" title="Formato: 000 0000 0000 0000">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if 'dados_internacao_iniciais' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'dados_internacao_iniciais' in editable_sections) %}
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-clipboard-data text-danger"></i>
+                            Dados da Internação
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Data de Internação</label>
+                                <input type="date" class="form-control nir-form-control" name="admission_date"
+                                       value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Tipo de Entrada *</label>
+                                <select class="form-select nir-form-control" name="entry_type" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="ELETIVO" {% if record.entry_type == 'ELETIVO' %}selected{% endif %}>Eletivo</option>
+                                    <option value="URGENCIA" {% if record.entry_type == 'URGENCIA' %}selected{% endif %}>Urgência</option>
+                                </select>
+                                <small class="text-muted">Este campo determina o fluxo de trabalho</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Tipo de Internação</label>
+                                <select class="form-select nir-form-control" name="admission_type" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="CLINICO" {% if record.admission_type == 'CLINICO' %}selected{% endif %}>Clínico</option>
+                                    <option value="CIRURGICO" {% if record.admission_type == 'CIRURGICO' %}selected{% endif %}>Cirúrgico</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Local de Origem</label>
+                                <select class="form-select nir-form-control" name="admitted_from_origin" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    <option value="Iturama" {% if record.admitted_from_origin == 'Iturama' %}selected{% endif %}>Iturama</option>
+                                    <option value="São Francisco" {% if record.admitted_from_origin == 'São Francisco' %}selected{% endif %}>São Francisco</option>
+                                    <option value="União de Minas" {% if record.admitted_from_origin == 'União de Minas' %}selected{% endif %}>União de Minas</option>
+                                    <option value="Carneirinho" {% if record.admitted_from_origin == 'Carneirinho' %}selected{% endif %}>Carneirinho</option>
+                                    <option value="Limeira do Oeste" {% if record.admitted_from_origin == 'Limeira do Oeste' %}selected{% endif %}>Limeira do Oeste</option>
+                                    <option value="Outro" {% if record.admitted_from_origin == 'Outro' %}selected{% endif %}>Outro...</option>
+                                </select>
+                            </div>
+                            {% if not hide_aih_initial %}
+                            <div class="col-md-6">
+                                <label class="nir-form-label">AIH</label>
+                                <input type="text" class="form-control nir-form-control" name="aih" 
+                                       value="{{ record.aih or '' }}" placeholder="Número da AIH" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% set config = record.get_section_control_config() %}
+                    {% if config.get('procedimentos') == 'NIR' and 'procedimentos' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'procedimentos' in editable_sections) %}
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-activity text-primary"></i>
+                            Procedimentos
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Caso Eletivo:</strong> Como o tipo de entrada é Eletivo, você deve preencher os procedimentos.
+                        </div>
+                        <div id="procedures-container">
+                            {% if record.procedures %}
+                                {% for procedure in record.procedures %}
+                                <div class="procedure-row row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="procedure_codes[]" 
+                                               value="{{ procedure.code }}" placeholder="Código" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" name="procedure_descriptions[]" 
+                                               value="{{ procedure.description }}" placeholder="Descrição" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    </div>
+                                    <div class="col-md-2">
+                                        {% if section_editable %}
+                                        <button type="button" class="btn btn-outline-danger remove-procedure" onclick="removeProcedureRow(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="procedure-row row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="procedure_codes[]" 
+                                               placeholder="Código do procedimento" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" name="procedure_descriptions[]" 
+                                               placeholder="Descrição do procedimento" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    </div>
+                                    <div class="col-md-2">
+                                        {% if section_editable %}
+                                        <button type="button" class="btn btn-outline-danger remove-procedure" onclick="removeProcedureRow(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if section_editable %}
+                        <button type="button" class="btn btn-outline-primary" onclick="addProcedureRow()">
+                            <i class="bi bi-plus-circle"></i> Adicionar Procedimento
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if config.get('informacoes_medicas') == 'NIR' and 'informacoes_medicas' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'informacoes_medicas' in editable_sections) %}
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-heart-pulse text-danger"></i>
+                            Informações Médicas
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Caso Eletivo:</strong> Você deve preencher as informações médicas.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Médico Responsável</label>
+                                <input type="text" class="form-control nir-form-control" name="responsible_doctor" 
+                                       value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">CID Principal</label>
+                                <input type="text" class="form-control nir-form-control" name="main_cid" 
+                                       value="{{ record.main_cid or '' }}" placeholder="Ex: A00.0" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if 'dados_alta_finais' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'dados_alta_finais' in editable_sections) %}
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-calendar-check text-danger"></i>
+                            Dados de Alta
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="row g-3">
+                            {% if not final_phase %}
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Data de Agendamento</label>
+                                <input type="date" class="form-control nir-form-control" name="scheduling_date"
+                                       value="{{ record.scheduling_date.strftime('%Y-%m-%d') if record.scheduling_date else '' }}" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Tipo de Alta</label>
+                                <select class="form-select nir-form-control" name="discharge_type" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="CURA" {% if record.discharge_type == 'CURA' %}selected{% endif %}>Cura</option>
+                                    <option value="MELHORA" {% if record.discharge_type == 'MELHORA' %}selected{% endif %}>Melhora</option>
+                                    <option value="TRANSFERENCIA" {% if record.discharge_type == 'TRANSFERENCIA' %}selected{% endif %}>Transferência</option>
+                                    <option value="OBITO" {% if record.discharge_type == 'OBITO' %}selected{% endif %}>Óbito</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Data de Alta</label>
+                                <input type="date" class="form-control nir-form-control" name="discharge_date"
+                                       value="{{ record.discharge_date.strftime('%Y-%m-%d') if record.discharge_date else '' }}" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">AIH</label>
+                                <input type="text" class="form-control nir-form-control" name="aih_final"
+                                       value="{{ record.aih or '' }}" placeholder="Número da AIH" {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-4">
+                        <div class="flex-grow-1">
+                            <a href="{{ url_for('nir.sector_nir_list') }}" class="btn btn-outline-secondary" id="btn-voltar-lista">
+                                <i class="bi bi-arrow-left"></i> Voltar
+                            </a>
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if phase_info and phase_info.locked %}
+                                <button type="button" class="btn btn-secondary" disabled>
+                                    <i class="bi bi-lock"></i> Bloqueado
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle"></i> Salvar e Marcar como Concluído
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addProcedureRow() {
+    const container = document.getElementById('procedures-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'procedure-row row g-2 mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-4">
+            <input type="text" class="form-control" name="procedure_codes[]" placeholder="Código do procedimento">
+        </div>
+        <div class="col-md-6">
+            <input type="text" class="form-control" name="procedure_descriptions[]" placeholder="Descrição do procedimento">
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-danger remove-procedure" onclick="removeProcedureRow(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+
+function removeProcedureRow(button) {
+    const row = button.closest('.procedure-row');
+    row.remove();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const lockedForm = document.querySelector('form[data-locked="1"]');
+  if(lockedForm){
+    lockedForm.querySelectorAll('[data-readonly]')?.forEach(el => {
+      el.classList.add('nir-readonly-field');
+    });
+  }
+});
+</script>
+
+<style>
+.section-title {
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+.nir-readonly-field, .nir-readonly-field:disabled {
+  background-color:#f1f3f5 !important;
+  color:#6c757d !important;
+  cursor:not-allowed;
+  opacity:1 !important;
+}
+</style>
+{% endblock %}

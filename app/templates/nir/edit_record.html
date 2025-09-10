@@ -1,34 +1,6 @@
 {% extends "navbar.html" %}
 {% block title %}Editar Registro NIR #{{ record.id }}{% endblock %}
 
-{% block head %}
-<style>
-    .section-disabled {
-        opacity: 0.6;
-        background-color: #f8f9fa !important;
-    }
-    
-    .section-disabled input:not([readonly]),
-    .section-disabled select:not([disabled]),
-    .section-disabled textarea:not([readonly]),
-    .section-disabled button:not([disabled]) {
-        background-color: #e9ecef !important;
-        cursor: not-allowed !important;
-    }
-    
-    .section-control-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-    
-    .nir-section-header {
-        border-bottom: 2px solid #dee2e6;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
@@ -49,58 +21,24 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Painel de Controle de Seções -->
-                    <div class="alert alert-info mb-4">
-                        <h6><i class="bi bi-info-circle"></i> Controle de Seções</h6>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <strong>Tipo de Entrada:</strong> 
-                                <span class="badge {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' or record.entry_type == 'CIRURGICO' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                                    {{ record.entry_type or 'Não definido' }}
-                                </span>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Seu Setor:</strong> 
-                                <span class="badge bg-success">{{ user_sector }}</span>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Status:</strong>
-                                <span class="badge bg-warning text-dark">Em Andamento</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}">
-                        <!-- DADOS DO PACIENTE -->
-                        <div class="nir-form-section {% if not editable_sections.get('dados_paciente', True) %}section-disabled{% endif %}">
-                            <h6 class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-person-circle"></i>
-                                    Dados do Paciente
-                                </span>
-                                {% if editable_sections.get('dados_paciente', True) %}
-                                    <span class="badge bg-success">Você pode editar</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Somente {{ config.get('dados_paciente', 'NIR') }}</span>
-                                {% endif %}
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-person-circle"></i>
+                                Dados do Paciente
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-8">
                                     <label class="nir-form-label">Nome do Paciente *</label>
-                                    <input type="text" class="form-control nir-form-control" name="patient_name" value="{{ record.patient_name }}" 
-                                           {% if not editable_sections.get('dados_paciente', True) %}readonly{% else %}required{% endif %}
-                                           placeholder="Nome completo do paciente">
+                                    <input type="text" class="form-control nir-form-control" name="patient_name" value="{{ record.patient_name }}" required placeholder="Nome completo do paciente">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Data de Nascimento *</label>
-                                    <input type="date" class="form-control nir-form-control" name="birth_date" 
-                                           value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}" 
-                                           {% if not editable_sections.get('dados_paciente', True) %}readonly{% else %}required{% endif %}>
+                                    <input type="date" class="form-control nir-form-control" name="birth_date" value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Sexo *</label>
-                                    <select class="form-select nir-form-control" name="gender" 
-                                            {% if not editable_sections.get('dados_paciente', True) %}disabled{% else %}required{% endif %}>
+                                    <select class="form-select nir-form-control" name="gender" required>
                                         <option value="">Selecione</option>
                                         <option value="M" {% if record.gender == 'M' %}selected{% endif %}>Masculino</option>
                                         <option value="F" {% if record.gender == 'F' %}selected{% endif %}>Feminino</option>
@@ -109,52 +47,38 @@
                                 <div class="col-md-5">
                                     <label class="nir-form-label">SUSFacil</label>
                                     <input type="text" class="form-control nir-form-control" name="susfacil" value="{{ record.susfacil or '' }}" 
-                                           {% if not editable_sections.get('dados_paciente', True) %}readonly{% endif %}
-                                           placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números">
+                                        placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Cartão SUS *</label>
-                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}" 
-                                           {% if not editable_sections.get('dados_paciente', True) %}readonly{% else %}required{% endif %}
-                                           placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
-                                           title="Formato: 000 0000 0000 0000">
+                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}" required
+                                        placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
+                                        title="Formato: 000 0000 0000 0000">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- DADOS DA INTERNAÇÃO -->
-                        <div class="nir-form-section {% if not editable_sections.get('dados_internacao', True) %}section-disabled{% endif %}">
-                            <h6 class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-clipboard-data"></i>
-                                    Dados da Internação
-                                </span>
-                                {% if editable_sections.get('dados_internacao', True) %}
-                                    <span class="badge bg-success">Você pode editar</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Somente {{ config.get('dados_internacao', 'NIR') }}</span>
-                                {% endif %}
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-clipboard-data"></i>
+                                Dados da Internação
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Data de Internação</label>
-                                    <input type="date" class="form-control nir-form-control" name="admission_date" 
-                                           {% if not editable_sections.get('dados_internacao', True) %}readonly{% endif %}
-                                           value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}">
+                                    <input type="date" class="form-control nir-form-control" name="admission_date" value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Tipo de Entrada</label>
-                                    <select class="form-select nir-form-control" name="entry_type"
-                                            {% if not editable_sections.get('dados_internacao', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="entry_type">
                                         <option value="">Selecione</option>
-                                        <option value="ELETIVO" {% if record.entry_type == 'ELETIVO' %}selected{% endif %}>Eletivo</option>
                                         <option value="URGENCIA" {% if record.entry_type == 'URGENCIA' %}selected{% endif %}>Urgência</option>
+                                        <option value="ELETIVO" {% if record.entry_type == 'ELETIVO' %}selected{% endif %}>Eletivo</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Tipo de Internação</label>
-                                    <select class="form-select nir-form-control" name="admission_type"
-                                            {% if not editable_sections.get('dados_internacao', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="admission_type">
                                         <option value="">Selecione</option>
                                         <option value="CLINICO" {% if record.admission_type == 'CLINICO' %}selected{% endif %}>Clínico</option>
                                         <option value="CIRURGICO" {% if record.admission_type == 'CIRURGICO' %}selected{% endif %}>Cirúrgico</option>
@@ -162,52 +86,39 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="nir-form-label">Local de Origem</label>
-                                    <select class="form-select nir-form-control" name="admitted_from_origin"
-                                            {% if not editable_sections.get('dados_internacao', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="admitted_from_origin">
                                         <option value="Iturama" {% if record.admitted_from_origin == 'Iturama' or not record.admitted_from_origin %}selected{% endif %}>Iturama</option>
                                         <option value="São Francisco" {% if record.admitted_from_origin == 'São Francisco' %}selected{% endif %}>São Francisco</option>
                                         <option value="União de Minas" {% if record.admitted_from_origin == 'União de Minas' %}selected{% endif %}>União de Minas</option>
                                         <option value="Carneirinho" {% if record.admitted_from_origin == 'Carneirinho' %}selected{% endif %}>Carneirinho</option>
                                         <option value="Limeira do Oeste" {% if record.admitted_from_origin == 'Limeira do Oeste' %}selected{% endif %}>Limeira do Oeste</option>
                                         <option value="Outro" {% if record.admitted_from_origin == 'Outro' %}selected{% endif %}>Outro...</option>
+
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="nir-form-label">AIH</label>
-                                    <input type="text" class="form-control nir-form-control" name="aih" 
-                                           {% if not editable_sections.get('dados_internacao', True) %}readonly{% endif %}
-                                           value="{{ record.aih or '' }}" placeholder="Número da AIH">
+                                    <input type="text" class="form-control nir-form-control" name="aih" value="{{ record.aih or '' }}" placeholder="Número da AIH">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- PROCEDIMENTOS -->
-                        <div class="nir-form-section {% if not editable_sections.get('procedimentos', True) %}section-disabled{% endif %}">
-                            <h6 class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-activity"></i>
-                                    Procedimentos
-                                </span>
-                                {% if editable_sections.get('procedimentos', True) %}
-                                    <span class="badge bg-success">Você pode editar</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Somente {{ config.get('procedimentos', 'NIR') }}</span>
-                                {% endif %}
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-activity"></i>
+                                Procedimentos
                             </h6>
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Código</label>
-                                    <input type="text" class="form-control nir-form-control" name="procedure_code" id="procedure-code-input" value="" 
-                                           {% if not editable_sections.get('procedimentos', True) %}readonly{% endif %}
-                                           placeholder="Digite código ou parte da descrição">
+                                    <input type="text" class="form-control nir-form-control" name="procedure_code" id="procedure-code-input" value="" placeholder="Digite código ou parte da descrição">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="nir-form-label">Descrição</label>
                                     <input type="text" class="form-control nir-form-control bg-light" name="surgical_description" id="surgical-description-input" value="" readonly tabindex="-1" aria-readonly="true">
                                 </div>
                                 <div class="col-md-2 d-grid">
-                                    <button class="btn btn-outline-primary mt-2" id="add-procedure-btn" type="button"
-                                            {% if not editable_sections.get('procedimentos', True) %}disabled{% endif %}>
+                                    <button class="btn btn-outline-primary mt-2" id="add-procedure-btn" type="button">
                                         <i class="bi bi-plus-circle"></i> Adicionar
                                     </button>
                                 </div>
@@ -230,31 +141,19 @@
                             </div>
                         </div>
 
-                        <!-- INFORMAÇÕES MÉDICAS -->
-                        <div class="nir-form-section {% if not editable_sections.get('informacoes_medicas', True) %}section-disabled{% endif %}">
-                            <h6 class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-heart-pulse"></i>
-                                    Informações Médicas
-                                </span>
-                                {% if editable_sections.get('informacoes_medicas', True) %}
-                                    <span class="badge bg-success">Você pode editar</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Somente {{ config.get('informacoes_medicas', 'NIR') }}</span>
-                                {% endif %}
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-heart-pulse"></i>
+                                Informações Médicas
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="nir-form-label">Médico Responsável</label>
-                                    <input type="text" class="form-control nir-form-control" name="responsible_doctor" 
-                                           {% if not editable_sections.get('informacoes_medicas', True) %}readonly{% endif %}
-                                           value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico">
+                                    <input type="text" class="form-control nir-form-control" name="responsible_doctor" value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="nir-form-label">CID Principal</label>
-                                    <input type="text" class="form-control nir-form-control" name="main_cid" 
-                                           {% if not editable_sections.get('informacoes_medicas', True) %}readonly{% endif %}
-                                           value="{{ record.main_cid or '' }}" placeholder="CID-10">
+                                    <input type="text" class="form-control nir-form-control" name="main_cid" value="{{ record.main_cid or '' }}" placeholder="CID-10">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Especialidade Cirúrgica</label>
@@ -312,30 +211,19 @@
                             </div>
                         </div>
 
-                        <!-- AGENDAMENTO E ALTA -->
-                        <div class="nir-form-section {% if not editable_sections.get('agendamento_alta', True) %}section-disabled{% endif %}">
-                            <h6 class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-calendar-check"></i>
-                                    Agendamento e Alta
-                                </span>
-                                {% if editable_sections.get('agendamento_alta', True) %}
-                                    <span class="badge bg-success">Você pode editar</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Somente {{ config.get('agendamento_alta', 'NIR') }}</span>
-                                {% endif %}
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-calendar-check"></i>
+                                Dados de Alta
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Data de Agendamento</label>
-                                    <input type="date" class="form-control nir-form-control" name="scheduling_date" 
-                                           {% if not editable_sections.get('agendamento_alta', True) %}readonly{% endif %}
-                                           value="{{ record.scheduling_date.strftime('%Y-%m-%d') if record.scheduling_date else '' }}">
+                                    <input type="date" class="form-control nir-form-control" name="scheduling_date" value="{{ record.scheduling_date.strftime('%Y-%m-%d') if record.scheduling_date else '' }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Tipo de Alta</label>
-                                    <select class="form-select nir-form-control" name="discharge_type"
-                                            {% if not editable_sections.get('agendamento_alta', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="discharge_type">
                                         <option value="">Selecione</option>
                                         <option value="ALTA MELHORADA" {% if record.discharge_type == 'ALTA MELHORADA' %}selected{% endif %}>Alta Melhorada</option>
                                         <option value="ALTA A PEDIDO" {% if record.discharge_type == 'ALTA A PEDIDO' %}selected{% endif %}>Alta a Pedido</option>
@@ -346,45 +234,31 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Data da Alta</label>
-                                    <input type="date" class="form-control nir-form-control" name="discharge_date" 
-                                           {% if not editable_sections.get('agendamento_alta', True) %}readonly{% endif %}
-                                           value="{{ record.discharge_date.strftime('%Y-%m-%d') if record.discharge_date else '' }}">
+                                    <input type="date" class="form-control nir-form-control" name="discharge_date" value="{{ record.discharge_date.strftime('%Y-%m-%d') if record.discharge_date else '' }}">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- STATUS E CONTROLE -->
-                        <div class="nir-form-section {% if not editable_sections.get('status_controle', True) %}section-disabled{% endif %}">
-                            <h6 class="d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-gear"></i>
-                                    Status e Controle
-                                </span>
-                                {% if editable_sections.get('status_controle', True) %}
-                                    <span class="badge bg-success">Você pode editar</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Somente {{ config.get('status_controle', 'FATURAMENTO') }}</span>
-                                {% endif %}
+                        <div class="nir-form-section">
+                            <h6>
+                                <i class="bi bi-gear"></i>
+                                Status e Controle
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Cancelado</label>
-                                    <select class="form-select nir-form-control" name="cancelled" id="cancelledSelect"
-                                            {% if not editable_sections.get('status_controle', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="cancelled" id="cancelledSelect">
                                         <option value="NAO" {% if record.cancelled == 'NAO' or not record.cancelled %}selected{% endif %}>Não</option>
                                         <option value="SIM" {% if record.cancelled == 'SIM' %}selected{% endif %}>Sim</option>
                                     </select>
                                 </div>
                                 <div class="col-md-9" id="cancellationReasonDiv" {% if record.cancelled != 'SIM' %}style="display: none;"{% endif %}>
                                     <label class="nir-form-label">Motivo do Cancelamento</label>
-                                    <input type="text" class="form-control nir-form-control" name="cancellation_reason" 
-                                           {% if not editable_sections.get('status_controle', True) %}readonly{% endif %}
-                                           value="{{ record.cancellation_reason or '' }}" placeholder="Descreva o motivo do cancelamento">
+                                    <input type="text" class="form-control nir-form-control" name="cancellation_reason" value="{{ record.cancellation_reason or '' }}" placeholder="Descreva o motivo do cancelamento">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Criticado</label>
-                                    <select class="form-select nir-form-control" name="criticized"
-                                            {% if not editable_sections.get('status_controle', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="criticized">
                                         <option value="">Selecione</option>
                                         <option value="SIM" {% if record.criticized == 'SIM' %}selected{% endif %}>Sim</option>
                                         <option value="NAO" {% if record.criticized == 'NAO' %}selected{% endif %}>Não</option>
@@ -392,16 +266,14 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Faturado</label>
-                                    <select class="form-select nir-form-control" name="billed"
-                                            {% if not editable_sections.get('status_controle', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="billed">
                                         <option value="SIM" {% if record.billed == 'SIM' %}selected{% endif %}>Sim</option>
                                         <option value="NAO" {% if record.billed == 'NAO' %}selected{% endif %}>Não</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Status</label>
-                                    <select class="form-select nir-form-control" name="status"
-                                            {% if not editable_sections.get('status_controle', True) %}disabled{% endif %}>
+                                    <select class="form-select nir-form-control" name="status">
                                         <option value="PENDENTE" {% if record.status == 'PENDENTE' or not record.status %}selected{% endif %}>Pendente</option>
                                         <option value="EM_ANDAMENTO" {% if record.status == 'EM_ANDAMENTO' %}selected{% endif %}>Em Andamento</option>
                                         <option value="CONCLUIDO" {% if record.status == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
@@ -409,9 +281,7 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="nir-form-label">Observação</label>
-                                    <textarea class="form-control nir-form-control" name="observation" rows="3" 
-                                              {% if not editable_sections.get('status_controle', True) %}readonly{% endif %}
-                                              placeholder="Observações adicionais">{{ record.observation or '' }}</textarea>
+                                    <textarea class="form-control nir-form-control" name="observation" rows="3" placeholder="Observações adicionais">{{ record.observation or '' }}</textarea>
                                 </div>
                             </div>
                         </div>

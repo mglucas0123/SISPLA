@@ -13,14 +13,6 @@
                     </h1>
                     <p class="forms-subtitle">Gerencie os registros de Notificação de Internação Regulatória</p>
                 </div>
-                {% if current_user.has_module_access('nir') %}
-                <div class="forms-header-actions">
-                    <a href="{{ url_for('nir.new_record') }}" class="btn btn-danger">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Novo Registro
-                    </a>
-                </div>
-                {% endif %}
             </div>
         </div>
 
@@ -123,7 +115,7 @@
                         Lista de Registros
                     </h5>
                     {% if records.items is defined and records.total is defined %}
-                    <span class="forms-card-subtitle">Exibindo {{ records.items|length }} de {{ records.total }} resultados</span>
+                    <span class="forms-card-subtitle">Exibindo {{ records.items|length }} de {{ records.total }} resultados — página {{ records.page }} de {{ records.pages }}</span>
                     {% elif records|length > 0 %}
                     <span class="forms-card-subtitle">Exibindo {{ records|length }} resultado(s)</span>
                     {% endif %}
@@ -346,8 +338,9 @@
         const responsibleDoctorFilter = document.getElementById('responsibleDoctorFilter');
         const startDateFilter = document.getElementById('startDateFilter');
         const endDateFilter = document.getElementById('endDateFilter');
-        const applyFiltersButton = document.getElementById('applyFilters');
+    const applyFiltersButton = document.getElementById('applyFilters');
         const clearFiltersButton = document.getElementById('clearFilters');
+    const perPageSelect = document.getElementById('perPage');
 
         function filterRecordsWithAjax(customFilters = null, page = 1) {
             const filters = customFilters || {
@@ -356,7 +349,8 @@
                 admission_type: admissionTypeFilter.value,
                 responsible_doctor: responsibleDoctorFilter.value.trim(),
                 start_date: startDateFilter.value,
-                end_date: endDateFilter.value
+                end_date: endDateFilter.value,
+                per_page: perPageSelect ? perPageSelect.value : undefined
             };
 
             console.log('Filtros aplicados:', filters);
@@ -367,6 +361,9 @@
                 if (filters[key]) params.set(key, filters[key]);
             });
             params.set('page', page);
+            if (perPageSelect && perPageSelect.value) {
+                params.set('per_page', perPageSelect.value);
+            }
             params.set('ajax', '1');
 
             const url = "{{ url_for('nir.list_records') }}?" + params.toString();
@@ -452,14 +449,15 @@
             filterRecordsWithAjax(currentFilters, pageNum);
         }
 
-        function getCurrentFilters() {
+    function getCurrentFilters() {
             return {
                 patient_name: searchPatientName.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
                 responsible_doctor: responsibleDoctorFilter.value.trim(),
-                start_date: startDateFilter.value,
-                end_date: endDateFilter.value
+        start_date: startDateFilter.value,
+        end_date: endDateFilter.value,
+        per_page: perPageSelect ? perPageSelect.value : undefined
             };
         }
 
@@ -567,6 +565,14 @@
             endDateFilter.value = '';
             filterRecordsWithAjax();
         });
+
+        if (perPageSelect) {
+            perPageSelect.addEventListener('change', function() {
+                // Sempre voltar para página 1 quando muda o tamanho
+                const currentFilters = getCurrentFilters();
+                filterRecordsWithAjax(currentFilters, 1);
+            });
+        }
     });
 
     function deleteRecord(recordId) {

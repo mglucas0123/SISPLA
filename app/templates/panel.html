@@ -67,20 +67,57 @@
                             <i class="bi bi-hospital text-danger fs-3"></i>
                         </div>
                         <h5 class="fw-bold mb-2">NIR - Internações</h5>
-                        <p class="text-muted mb-3">Registre e acompanhe as notificações de internação.</p>
+                        <p class="text-muted mb-3">Registre e acompanhe as notificações de internação por setor.</p>
                     </div>
                     <div class="feature-actions">
                         <div class="d-grid gap-2">
-                            <a href="{{ url_for('nir.new_record') }}" 
-                               class="btn btn-danger d-flex align-items-center justify-content-center">
-                                <i class="bi bi-journal-plus me-2"></i>
-                                Novo Registro
-                            </a>
-                            <a href="{{ url_for('nir.list_records') }}" 
-                               class="btn btn-outline-danger d-flex align-items-center justify-content-center">
-                                <i class="bi bi-clipboard-data me-2"></i>
-                                Ver Registros
-                            </a>
+                            <!-- Acessos específicos por setor -->
+                            {% if current_user.has_permission('admin_users') or current_user.has_module_access('nir') %}
+                                {% set user_sector = '' %}
+                                {% for role in current_user.roles %}
+                                    {% if role.sector == 'CENTRO_CIRURGICO' %}
+                                        {% set user_sector = 'CENTRO_CIRURGICO' %}
+                                    {% elif role.sector == 'FATURAMENTO' %}
+                                        {% set user_sector = 'FATURAMENTO' %}
+                                    {% elif role.sector in ['ENFERMAGEM', 'MEDICINA', 'RECEPCAO'] %}
+                                        {% set user_sector = 'NIR' %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if not user_sector %}
+                                    {% set user_sector = 'NIR' %}
+                                {% endif %}
+                                
+                                {% if user_sector == 'NIR' %}
+                                <a href="{{ url_for('nir.sector_nir_list') }}" 
+                                   class="btn btn-danger w-100">
+                                    <i class="bi bi-journal-plus me-2"></i>
+                                    Meus Trabalhos
+                                </a>
+                                {% elif user_sector == 'CENTRO_CIRURGICO' %}
+                                <a href="{{ url_for('nir.sector_surgery_list') }}" 
+                                   class="btn btn-danger w-100">
+                                    <i class="bi bi-journal-plus me-2"></i>
+                                    Meus Trabalhos
+                                </a>
+                                {% elif user_sector == 'FATURAMENTO' %}
+                                <a href="{{ url_for('nir.sector_billing_list') }}" 
+                                   class="btn btn-danger w-100">
+                                    <i class="bi bi-journal-plus me-2"></i>
+                                    Meus Trabalhos
+                                </a>
+                                {% endif %}
+                                
+                                <a href="{{ url_for('nir.list_records') }}" 
+                                   class="btn btn-outline-danger d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-clipboard-data me-2"></i>
+                                    Ver Registros
+                                </a>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <small>Sem acesso ao módulo NIR</small>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

@@ -12,10 +12,19 @@
   container.style.zIndex = '2000';
   container.style.maxHeight = '260px';
   container.style.overflowY = 'auto';
-  container.style.width = codeInput.offsetWidth + 'px';
+  container.style.width = '100%';
   container.style.display = 'none';
   codeInput.parentNode.style.position = 'relative';
   codeInput.parentNode.appendChild(container);
+
+  function updateWidth(){
+    const w = codeInput.offsetWidth || codeInput.getBoundingClientRect().width || (codeInput.parentElement && codeInput.parentElement.offsetWidth) || 0;
+    if(w) {
+      container.style.width = w + 'px';
+    } else {
+      container.style.width = '100%';
+    }
+  }
 
   let lastQuery = '';
   let debounceTimer = null;
@@ -47,7 +56,7 @@
   }
 
   function fetchSuggestions(q){
-    if(!q || q.length < 2){
+    if(!q || q.length < 1){
       hide();
       return;
     }
@@ -130,6 +139,7 @@
   }
 
   function show(){
+    updateWidth();
     container.style.display = 'block';
   }
   function hide(){
@@ -194,6 +204,9 @@
   descInput.addEventListener('focus', ()=>{
     codeInput.focus();
   });
+
+  window.addEventListener('resize', updateWidth);
+  codeInput.addEventListener('focus', updateWidth);
 
   if(addBtn){
     addBtn.addEventListener('click', (e)=>{

@@ -224,7 +224,7 @@
 
                             <div class="nir-details-section">
                                 <h5>
-                                    <i class="bi bi-calendar-check"></i>Agendamento e Alta
+                                    <i class="bi bi-calendar-check"></i>Dados de Alta
                                 </h5>
                                 <div class="row">
                                     <div class="col-md-4 nir-detail-item">
@@ -284,12 +284,12 @@
                                     <div class="col-md-3 nir-detail-item">
                                         <label class="form-label">Criticado</label>
                                         <p>
-                                            {% if record.criticized %}
-                                            <span class="nir-badge badge bg-{% if record.criticized == 'SIM' %}warning{% else %}success{% endif %}">
-                                                {{ record.criticized }}
-                                            </span>
+                                            {% if record.criticized == 'SIM' %}
+                                                <span class="nir-badge badge bg-warning text-dark">Sim</span>
+                                            {% elif record.criticized == 'NAO' or record.criticized == 'NÃO' %}
+                                                <span class="nir-badge badge bg-success">Não</span>
                                             {% else %}
-                                            -
+                                                <span class="text-muted">-</span>
                                             {% endif %}
                                         </p>
                                     </div>
@@ -297,9 +297,11 @@
                                         <label class="form-label">Faturado</label>
                                         <p>
                                             {% if record.billed == 'SIM' %}
-                                            <span class="nir-badge badge bg-success">Sim</span>
+                                                <span class="nir-badge badge bg-success">Sim</span>
+                                            {% elif record.billed == 'NAO' or record.billed == 'NÃO' %}
+                                                <span class="nir-badge badge bg-danger">Não</span>
                                             {% else %}
-                                            <span class="nir-badge badge bg-danger">Não</span>
+                                                <span class="text-muted">-</span>
                                             {% endif %}
                                         </p>
                                     </div>

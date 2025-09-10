@@ -1,0 +1,203 @@
+{% extends "navbar.html" %}
+{% block title %}NIR - Formulário Centro Cirúrgico{% endblock %}
+
+{% block content %}
+<div class="nir-container">
+    {% include 'partials/_flash_messages.html' %}
+    <div class="container">
+        <div class="nir-header">
+            <h1>
+                <i class="bi bi-scissors"></i>
+                Centro Cirúrgico - Formulário Específico
+            </h1>
+            <p>Preencha as seções de responsabilidade do Centro Cirúrgico</p>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('nir.sector_surgery_list') }}">Meus Trabalhos</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Formulário NIR #{{ record.id }}</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="alert alert-success">
+                    <h6><i class="bi bi-check-circle"></i> NIR Completado</h6>
+                    <p class="mb-0">O setor NIR já completou a primeira parte - você pode trabalhar neste registro</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-primary">
+                    <h6><i class="bi bi-person-circle"></i> Paciente: {{ record.patient_name }}</h6>
+                    <p class="mb-0">SUS: {{ record.sus_number or 'N/I' }} | 
+                       Entrada: {{ record.entry_type or 'N/D' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4" style="background-color: #f8f9fa;">
+            <div class="card-header">
+                <h6><i class="bi bi-info-circle"></i> Informações já Preenchidas pelo NIR</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Data de Internação:</strong><br>
+                        {{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Tipo de Entrada:</strong><br>
+                        <span class="badge {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-dark{% endif %}">
+                            {{ record.entry_type or 'N/D' }}
+                        </span>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Local de Origem:</strong><br>
+                        {{ record.admitted_from_origin or 'N/I' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-lg border-0">
+            <div class="card-header">
+                <h5>
+                    <i class="bi bi-scissors"></i>
+                    Seções de Responsabilidade do Centro Cirúrgico
+                </h5>
+                <small class="text-muted">Apenas para casos de Urgência</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}">
+                    
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-activity text-danger"></i>
+                            Procedimentos
+                        </h6>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Código</label>
+                                <input type="text" class="form-control nir-form-control" id="procedure-code-input" name="procedure_code" placeholder="Digite código ou parte da descrição">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Descrição</label>
+                                <input type="text" class="form-control nir-form-control bg-light" id="surgical-description-input" name="surgical_description" readonly tabindex="-1" aria-readonly="true">
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button class="btn btn-outline-primary mt-2" id="add-procedure-btn" type="button">
+                                    <i class="bi bi-plus-circle"></i> Adicionar
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <div class="border rounded p-2 bg-body-tertiary" id="procedures-list" aria-live="polite">
+                                    {% for procedure in record.procedures %}
+                                      <input type="hidden" name="procedure_codes[]" value="{{ procedure.code }}">
+                                      <input type="hidden" name="procedure_descriptions[]" value="{{ procedure.description }}">
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">Adicione/remova procedimentos. O primeiro será considerado principal.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-heart-pulse text-danger"></i>
+                            Informações Médicas e Cirúrgicas
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Médico Responsável *</label>
+                                <input type="text" class="form-control nir-form-control" name="responsible_doctor" 
+                                       value="{{ record.responsible_doctor or '' }}" 
+                                       placeholder="Nome do médico responsável" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">CID Principal *</label>
+                                <input type="text" class="form-control nir-form-control" name="main_cid" 
+                                       value="{{ record.main_cid or '' }}" 
+                                       placeholder="Ex: A00.0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Especialidade Cirúrgica</label>
+                                <select class="form-select nir-form-control" name="surgical_specialty">
+                                    <option value="">Selecione</option>
+                                    <option value="GERAL" {% if record.surgical_specialty == 'GERAL' %}selected{% endif %}>Cirurgia Geral</option>
+                                    <option value="ORTOPEDIA" {% if record.surgical_specialty == 'ORTOPEDIA' %}selected{% endif %}>Ortopedia</option>
+                                    <option value="GINECOLOGIA" {% if record.surgical_specialty == 'GINECOLOGIA' %}selected{% endif %}>Ginecologia</option>
+                                    <option value="UROLOGIA" {% if record.surgical_specialty == 'UROLOGIA' %}selected{% endif %}>Urologia</option>
+                                    <option value="OFTALMOLOGIA" {% if record.surgical_specialty == 'OFTALMOLOGIA' %}selected{% endif %}>Oftalmologia</option>
+                                    <option value="OTORRINOLARINGOLOGIA" {% if record.surgical_specialty == 'OTORRINOLARINGOLOGIA' %}selected{% endif %}>Otorrinolaringologia</option>
+                                    <option value="CARDIOLOGIA" {% if record.surgical_specialty == 'CARDIOLOGIA' %}selected{% endif %}>Cardiologia</option>
+                                    <option value="NEUROCIRURGIA" {% if record.surgical_specialty == 'NEUROCIRURGIA' %}selected{% endif %}>Neurocirurgia</option>
+                                    <option value="PLASTICA" {% if record.surgical_specialty == 'PLASTICA' %}selected{% endif %}>Cirurgia Plástica</option>
+                                    <option value="VASCULAR" {% if record.surgical_specialty == 'VASCULAR' %}selected{% endif %}>Cirurgia Vascular</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Tipo de Cirurgia</label>
+                                <select class="form-select nir-form-control" name="surgical_type">
+                                    <option value="">Selecione</option>
+                                    <option value="ELETIVA" {% if record.surgical_type == 'ELETIVA' %}selected{% endif %}>Eletiva</option>
+                                    <option value="URGENCIA" {% if record.surgical_type == 'URGENCIA' %}selected{% endif %}>Urgência</option>
+                                    <option value="EMERGENCIA" {% if record.surgical_type == 'EMERGENCIA' %}selected{% endif %}>Emergência</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Médico Auxiliar</label>
+                                <input type="text" class="form-control nir-form-control" name="auxiliary" 
+                                       value="{{ record.auxiliary or '' }}" placeholder="Nome do auxiliar">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Anestesista</label>
+                                <input type="text" class="form-control nir-form-control" name="anesthetist" 
+                                       value="{{ record.anesthetist or '' }}" placeholder="Nome do anestesista">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Tipo de Anestesia</label>
+                                <select class="form-select nir-form-control" name="anesthesia">
+                                    <option value="">Selecione</option>
+                                    <option value="LOCAL" {% if record.anesthesia == 'LOCAL' %}selected{% endif %}>Local</option>
+                                    <option value="REGIONAL" {% if record.anesthesia == 'REGIONAL' %}selected{% endif %}>Regional</option>
+                                    <option value="GERAL" {% if record.anesthesia == 'GERAL' %}selected{% endif %}>Geral</option>
+                                    <option value="SEDACAO" {% if record.anesthesia == 'SEDACAO' %}selected{% endif %}>Sedação</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="nir-form-label">Pediatria (se aplicável)</label>
+                                <input type="text" class="form-control nir-form-control" name="pediatrics" 
+                                       value="{{ record.pediatrics or '' }}" placeholder="Informações pediátricas">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('nir.sector_surgery_list') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Voltar à Lista
+                        </a>
+                        <div>
+                            <button type="submit" class="btn btn-danger btn-lg text-dark">
+                                <i class="bi bi-check-circle"></i> Salvar e Marcar como Concluído
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='nir/nir_procedures.js') }}"></script>
+{% endblock %}
+
+<style>
+.section-title {
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
