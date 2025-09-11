@@ -28,8 +28,9 @@
                                     <span class="forms-input-icon">
                                         <i class="bi bi-person-search"></i>
                                     </span>
-                                    <input type="text" id="searchPatientName" name="patient_name" class="forms-input forms-input-sm"
-                                        placeholder="Nome do paciente" value="{{ filters.patient_name or '' }}">
+                                    <input type="text" id="searchPatientName" name="patient_name"
+                                        class="forms-input forms-input-sm" placeholder="Nome do paciente"
+                                        value="{{ filters.patient_name or '' }}">
                                 </div>
                             </div>
 
@@ -41,7 +42,8 @@
                                     <select id="entryTypeFilter" name="entry_type" class="forms-select forms-input-sm">
                                         <option value="">Tipo de Entrada</option>
                                         {% for entry_type in entry_types %}
-                                        <option value="{{ entry_type }}" {% if filters.entry_type == entry_type %}selected{% endif %}>{{ entry_type }}</option>
+                                        <option value="{{ entry_type }}" {% if filters.entry_type==entry_type
+                                            %}selected{% endif %}>{{ entry_type }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -52,10 +54,13 @@
                                     <span class="forms-input-icon">
                                         <i class="bi bi-activity"></i>
                                     </span>
-                                    <select id="admissionTypeFilter" name="admission_type" class="forms-select forms-input-sm">
+                                    <select id="admissionTypeFilter" name="admission_type"
+                                        class="forms-select forms-input-sm">
                                         <option value="">Tipo de Internação</option>
                                         {% for admission_type in admission_types %}
-                                        <option value="{{ admission_type }}" {% if filters.admission_type == admission_type %}selected{% endif %}>{{ admission_type }}</option>
+                                        <option value="{{ admission_type }}" {% if
+                                            filters.admission_type==admission_type %}selected{% endif %}>{{
+                                            admission_type }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -66,8 +71,9 @@
                                     <span class="forms-input-icon">
                                         <i class="bi bi-person-badge"></i>
                                     </span>
-                                    <input type="text" id="responsibleDoctorFilter" name="responsible_doctor" class="forms-input forms-input-sm"
-                                        placeholder="Médico responsável" value="{{ filters.responsible_doctor or '' }}">
+                                    <input type="text" id="responsibleDoctorFilter" name="responsible_doctor"
+                                        class="forms-input forms-input-sm" placeholder="Médico responsável"
+                                        value="{{ filters.responsible_doctor or '' }}">
                                 </div>
                             </div>
 
@@ -76,8 +82,9 @@
                                     <span class="forms-input-icon">
                                         <i class="bi bi-calendar-date"></i>
                                     </span>
-                                    <input type="date" id="startDateFilter" name="start_date" class="forms-input forms-input-sm"
-                                        value="{{ filters.start_date or '' }}" title="Data inicial">
+                                    <input type="date" id="startDateFilter" name="start_date"
+                                        class="forms-input forms-input-sm" value="{{ filters.start_date or '' }}"
+                                        title="Data inicial">
                                 </div>
                             </div>
 
@@ -86,17 +93,20 @@
                                     <span class="forms-input-icon">
                                         <i class="bi bi-calendar-date"></i>
                                     </span>
-                                    <input type="date" id="endDateFilter" name="end_date" class="forms-input forms-input-sm"
-                                        value="{{ filters.end_date or '' }}" title="Data final">
+                                    <input type="date" id="endDateFilter" name="end_date"
+                                        class="forms-input forms-input-sm" value="{{ filters.end_date or '' }}"
+                                        title="Data final">
                                 </div>
                             </div>
 
                             <div class="forms-filter-actions">
-                                <button type="button" id="applyFilters" class="forms-btn forms-btn-primary forms-btn-sm">
+                                <button type="button" id="applyFilters"
+                                    class="forms-btn forms-btn-primary forms-btn-sm">
                                     <i class="bi bi-search"></i>
                                     Filtrar
                                 </button>
-                                <button type="button" id="clearFilters" class="forms-btn forms-btn-secondary forms-btn-sm">
+                                <button type="button" id="clearFilters"
+                                    class="forms-btn forms-btn-secondary forms-btn-sm">
                                     <i class="bi bi-eraser"></i>
                                     Limpar
                                 </button>
@@ -115,7 +125,8 @@
                         Lista de Registros
                     </h5>
                     {% if records.items is defined and records.total is defined %}
-                    <span class="forms-card-subtitle">Exibindo {{ records.items|length }} de {{ records.total }} resultados — página {{ records.page }} de {{ records.pages }}</span>
+                    <span class="forms-card-subtitle">Exibindo {{ records.items|length }} de {{ records.total }}
+                        resultados — página {{ records.page }} de {{ records.pages }}</span>
                     {% elif records|length > 0 %}
                     <span class="forms-card-subtitle">Exibindo {{ records|length }} resultado(s)</span>
                     {% endif %}
@@ -127,14 +138,11 @@
                     <table class="forms-table">
                         <thead class="forms-table-head">
                             <tr>
-                                <th class="forms-table-header">ID</th>
+                                <th class="forms-table-header">#</th>
                                 <th class="forms-table-header">Paciente</th>
-                                <th class="forms-table-header forms-table-center">Data Internação</th>
+                                <th class="forms-table-header forms-table-center">Admissão</th>
                                 <th class="forms-table-header forms-table-center">Tipo Entrada</th>
                                 <th class="forms-table-header forms-table-center">Tipo Internação</th>
-                                <th class="forms-table-header forms-table-center">Médico</th>
-                                <th class="forms-table-header forms-table-center">Esp. Cirúrgica</th>
-                                <th class="forms-table-header forms-table-center">Tipo</th>
                                 <th class="forms-table-header forms-table-center">Status</th>
                                 <th class="forms-table-header forms-table-center forms-table-actions">Ações</th>
                             </tr>
@@ -147,11 +155,13 @@
                                 </td>
                                 <td class="forms-table-cell">
                                     <div class="forms-user-info">
-                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}" class="forms-user-name">
+                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                            class="forms-user-name">
                                             {{ record.patient_name | truncate(35, False) }}
                                         </a>
                                         {% if record.susfacil %}
-                                        <span class="forms-user-username">SUSFacil: {{ record.susfacil | truncate(25, False) }}</span>
+                                        <span class="forms-user-username">SUSFacil: {{ record.susfacil | truncate(25,
+                                            False) }}</span>
                                         {% endif %}
                                     </div>
                                 </td>
@@ -188,39 +198,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="forms-table-cell forms-table-center">
-                                    <span class="forms-user-username">{{ record.responsible_doctor or '-' }}</span>
-                                </td>
-                                {% set spec_labels = {
-                                    'CIRURGIA GERAL':'Cirurgia Geral',
-                                    'CLINICO GERAL':'Clínico Geral',
-                                    'DENTISTA':'Dentista',
-                                    'DERMATO':'Dermatologia',
-                                    'OBSTETRICIA':'Obstetrícia',
-                                    'OFTALMOLOGISTA':'Oftalmologia',
-                                    'ORTOPEDISTA':'Ortopedia',
-                                    'UROLOGISTA':'Urologia',
-                                    'VASCULAR':'Vascular'
-                                } %}
-                                <td class="forms-table-cell forms-table-center">
-                                    {% if record.surgical_specialty %}
-                                    <span class="text-truncate d-inline-block" style="max-width:110px" title="{{ spec_labels.get(record.surgical_specialty, record.surgical_specialty) }}">{{ spec_labels.get(record.surgical_specialty, record.surgical_specialty) }}</span>
-                                    {% else %}-{% endif %}
-                                </td>
-                                {% set type_labels = {
-                                    'CONTAMINADA':'Contaminada',
-                                    'INFECTADA':'Infectada',
-                                    'LIMPA':'Limpa',
-                                    'SUSPENSA':'Suspensa'
-                                } %}
-                                <td class="forms-table-cell forms-table-center">
-                                    {% if record.surgical_type %}
-                                    <span class="badge bg-light text-dark border" title="{{ type_labels.get(record.surgical_type, record.surgical_type) }}">{{ type_labels.get(record.surgical_type, record.surgical_type) }}</span>
-                                    {% else %}-{% endif %}
-                                </td>
-                                <td class="forms-table-cell forms-table-center">
-                                    {% if record.status %}
-                                    <span class="forms-sector-badge nir-status-{{ record.status.lower() }}">
-                                        {{ record.status }}
+                                    {% set display_status = record._global_status or record.status %}
+                                    {% if display_status %}
+                                    <span class="forms-sector-badge nir-status-{{ display_status.lower() }}">
+                                        {{ display_status.replace('_',' ') }}
                                     </span>
                                     {% else %}
                                     <span class="text-muted">-</span>
@@ -228,17 +209,20 @@
                                 </td>
                                 <td class="forms-table-cell forms-table-center">
                                     <div class="forms-action-buttons">
-                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}" 
-                                           class="forms-action-btn forms-action-view" title="Visualizar" data-bs-toggle="tooltip">
+                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                            class="forms-action-btn forms-action-view" title="Visualizar"
+                                            data-bs-toggle="tooltip">
                                             <i class="bi bi-eye-fill"></i>
                                         </a>
                                         {% if current_user.has_permission('visualizar_relatorios') %}
-                                        <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" 
-                                           class="forms-action-btn forms-action-edit" title="Editar" data-bs-toggle="tooltip">
+                                        <a href="{{ url_for('nir.edit_record', record_id=record.id) }}"
+                                            class="forms-action-btn forms-action-edit" title="Editar"
+                                            data-bs-toggle="tooltip">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
-                                        <button class="forms-action-btn forms-action-delete" 
-                                                onclick="deleteRecord({{ record.id }})" title="Excluir" data-bs-toggle="tooltip">
+                                        <button class="forms-action-btn forms-action-delete"
+                                            onclick="deleteRecord({{ record.id }})" title="Excluir"
+                                            data-bs-toggle="tooltip">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
                                         {% endif %}
@@ -275,21 +259,22 @@
                         {% endif %}
 
                         {% for page_num in records.iter_pages() %}
-                            {% if page_num %}
-                                {% if page_num != records.page %}
-                                <li class="page-item">
-                                    <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ page_num }})">{{ page_num }}</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ page_num }}</span>
-                                </li>
-                                {% endif %}
-                            {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">…</span>
-                            </li>
-                            {% endif %}
+                        {% if page_num %}
+                        {% if page_num != records.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ page_num }})">{{
+                                page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
                         {% endfor %}
 
                         {% if records.has_next %}
@@ -331,16 +316,16 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchPatientName = document.getElementById('searchPatientName');
         const entryTypeFilter = document.getElementById('entryTypeFilter');
         const admissionTypeFilter = document.getElementById('admissionTypeFilter');
         const responsibleDoctorFilter = document.getElementById('responsibleDoctorFilter');
         const startDateFilter = document.getElementById('startDateFilter');
         const endDateFilter = document.getElementById('endDateFilter');
-    const applyFiltersButton = document.getElementById('applyFilters');
+        const applyFiltersButton = document.getElementById('applyFilters');
         const clearFiltersButton = document.getElementById('clearFilters');
-    const perPageSelect = document.getElementById('perPage');
+        const perPageSelect = document.getElementById('perPage');
 
         function filterRecordsWithAjax(customFilters = null, page = 1) {
             const filters = customFilters || {
@@ -374,53 +359,53 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.text();
-            })
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                const newTableContainer = doc.querySelector('.forms-table-container');
-                const newCardTitle = doc.querySelector('.forms-card-title-section');
-                const newPagination = doc.querySelector('#paginationContainer');
-
-                if (newTableContainer) {
-                    const currentContainer = document.querySelector('.forms-table-container');
-                    currentContainer.innerHTML = newTableContainer.innerHTML;
-                }
-
-                if (newCardTitle) {
-                    const currentCardTitle = document.querySelector('.forms-card-title-section');
-                    if (currentCardTitle) {
-                        currentCardTitle.innerHTML = newCardTitle.innerHTML;
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
-                }
+                    return response.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
 
-                const currentPagination = document.getElementById('paginationContainer');
-                if (newPagination && currentPagination) {
-                    currentPagination.innerHTML = newPagination.innerHTML;
-                    currentPagination.style.display = 'block';
-                } else if (currentPagination) {
-                    currentPagination.style.display = 'none';
-                }
+                    const newTableContainer = doc.querySelector('.forms-table-container');
+                    const newCardTitle = doc.querySelector('.forms-card-title-section');
+                    const newPagination = doc.querySelector('#paginationContainer');
 
-                reattachEventListeners();
-                hideLoadingState();
+                    if (newTableContainer) {
+                        const currentContainer = document.querySelector('.forms-table-container');
+                        currentContainer.innerHTML = newTableContainer.innerHTML;
+                    }
 
-                document.querySelector('.forms-table-container').scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
+                    if (newCardTitle) {
+                        const currentCardTitle = document.querySelector('.forms-card-title-section');
+                        if (currentCardTitle) {
+                            currentCardTitle.innerHTML = newCardTitle.innerHTML;
+                        }
+                    }
+
+                    const currentPagination = document.getElementById('paginationContainer');
+                    if (newPagination && currentPagination) {
+                        currentPagination.innerHTML = newPagination.innerHTML;
+                        currentPagination.style.display = 'block';
+                    } else if (currentPagination) {
+                        currentPagination.style.display = 'none';
+                    }
+
+                    reattachEventListeners();
+                    hideLoadingState();
+
+                    document.querySelector('.forms-table-container').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao filtrar registros:', error);
+                    hideLoadingState();
+                    showErrorMessage('Erro ao carregar os registros. Tente novamente.');
                 });
-            })
-            .catch(error => {
-                console.error('Erro ao filtrar registros:', error);
-                hideLoadingState();
-                showErrorMessage('Erro ao carregar os registros. Tente novamente.');
-            });
         }
 
         function reattachEventListeners() {
@@ -431,7 +416,7 @@
 
             document.querySelectorAll('.page-link').forEach(link => {
                 if (link.getAttribute('href') === 'javascript:void(0)') {
-                    link.addEventListener('click', function(e) {
+                    link.addEventListener('click', function (e) {
                         e.preventDefault();
                         const pageText = this.textContent.trim();
                         if (!isNaN(pageText)) {
@@ -449,15 +434,15 @@
             filterRecordsWithAjax(currentFilters, pageNum);
         }
 
-    function getCurrentFilters() {
+        function getCurrentFilters() {
             return {
                 patient_name: searchPatientName.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
                 responsible_doctor: responsibleDoctorFilter.value.trim(),
-        start_date: startDateFilter.value,
-        end_date: endDateFilter.value,
-        per_page: perPageSelect ? perPageSelect.value : undefined
+                start_date: startDateFilter.value,
+                end_date: endDateFilter.value,
+                per_page: perPageSelect ? perPageSelect.value : undefined
             };
         }
 
@@ -513,50 +498,50 @@
 
         let searchTimeout;
 
-        searchPatientName.addEventListener('input', function() {
+        searchPatientName.addEventListener('input', function () {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
+            searchTimeout = setTimeout(function () {
                 filterRecordsWithAjax();
             }, 500);
         });
 
-        searchPatientName.addEventListener('keypress', function(event) {
+        searchPatientName.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 clearTimeout(searchTimeout);
                 filterRecordsWithAjax();
             }
         });
 
-        responsibleDoctorFilter.addEventListener('input', function() {
+        responsibleDoctorFilter.addEventListener('input', function () {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
+            searchTimeout = setTimeout(function () {
                 filterRecordsWithAjax();
             }, 500);
         });
 
-        entryTypeFilter.addEventListener('change', function() {
+        entryTypeFilter.addEventListener('change', function () {
             console.log('Entry type filter changed:', this.value);
             filterRecordsWithAjax();
         });
-        
-        admissionTypeFilter.addEventListener('change', function() {
+
+        admissionTypeFilter.addEventListener('change', function () {
             console.log('Admission type filter changed:', this.value);
             filterRecordsWithAjax();
         });
-        
-        startDateFilter.addEventListener('change', function() {
+
+        startDateFilter.addEventListener('change', function () {
             console.log('Start date filter changed:', this.value);
             filterRecordsWithAjax();
         });
-        
-        endDateFilter.addEventListener('change', function() {
+
+        endDateFilter.addEventListener('change', function () {
             console.log('End date filter changed:', this.value);
             filterRecordsWithAjax();
         });
 
         applyFiltersButton.addEventListener('click', filterRecordsWithAjax);
 
-        clearFiltersButton.addEventListener('click', function() {
+        clearFiltersButton.addEventListener('click', function () {
             searchPatientName.value = '';
             entryTypeFilter.value = '';
             admissionTypeFilter.value = '';
@@ -567,8 +552,7 @@
         });
 
         if (perPageSelect) {
-            perPageSelect.addEventListener('change', function() {
-                // Sempre voltar para página 1 quando muda o tamanho
+            perPageSelect.addEventListener('change', function () {
                 const currentFilters = getCurrentFilters();
                 filterRecordsWithAjax(currentFilters, 1);
             });

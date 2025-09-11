@@ -4,49 +4,40 @@
 {% block content %}
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
-    <div class="container">
-        <div class="nir-header mb-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div class="container-fluid px-4">
+        <div class="nir-header mb-5">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
                 <div class="flex-grow-1">
-                    <h1 class="mb-1"><i class="bi bi-hospital"></i> Setor NIR</h1>
-                    <p class="mb-0">Monitoramento dos registros que exigem ação do setor.</p>
+                    <h1 class="mb-2"><i class="bi bi-hospital"></i> Setor NIR</h1>
+                    <p class="mb-0">Monitoramento inteligente dos registros que exigem ação do setor</p>
                 </div>
                 <div class="nir-breadcrumb-actions">
                     <a href="{{ url_for('nir.sector_new_record') }}"
-                        class="btn nir-btn-primary d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i> Novo NIR
+                        class="btn nir-btn-primary d-inline-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-plus-circle"></i> <span>Novo NIR</span>
                     </a>
                     <a href="{{ url_for('nir.list_records') }}"
-                        class="btn nir-btn-secondary d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-collection"></i> Todos
+                        class="btn nir-btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-collection"></i> <span>Todos</span>
                     </a>
                 </div>
             </div>
         </div>
 
-        <div class="nir-filters-modern mb-4">
-            <form method="GET" action="{{ url_for('nir.sector_nir_list') }}" class="row g-3 align-items-end">
-                <div class="col-md-6 col-lg-6">
-                    <label class="form-label">Paciente</label>
-                    <input type="text" class="form-control" name="patient_name"
-                        value="{{ request.args.get('patient_name', '') }}" placeholder="Buscar por nome...">
-                </div>
-                {% if filter_status %}
-                <input type="hidden" name="filter_status" value="{{ filter_status }}" />
-                {% endif %}
-                {% if waiting_for %}
-                <input type="hidden" name="waiting_for" value="{{ waiting_for }}" />
-                {% endif %}
-                <div class="col-md-6 col-lg-6 nir-filters-actions">
-                    <button type="submit" class="btn btn-filter"><i class="bi bi-search"></i> Filtrar</button>
-                    <a href="{{ url_for('nir.sector_nir_list') }}" class="btn btn-clear"><i class="bi bi-x-circle"></i>
-                        Limpar</a>
-                </div>
-            </form>
-        </div>
-
+        {% if stats_counts %}
+        {% set counts = namespace(
+        total=stats_counts.total,
+        pendentes=stats_counts.pendentes,
+        andamento=stats_counts.andamento,
+        concluidos=stats_counts.concluidos,
+        meus=stats_counts.meus,
+        wait_billing=stats_counts.wait_billing,
+        wait_surgery=stats_counts.wait_surgery
+        ) %}
+        {% else %}
         {% if records.items %}
-        {% set counts = namespace(total=records.total, pendentes=0, andamento=0, concluidos=0, meus=0, wait_billing=0, wait_surgery=0) %}
+        {% set counts = namespace(total=records.total, pendentes=0, andamento=0, concluidos=0, meus=0, wait_billing=0,
+        wait_surgery=0) %}
         {% for rec in records.items %}
         {% set status_display = rec._nir_display_status or rec.get_sector_progress().get('NIR', {}).get('status') %}
         {% set waiting_val = rec._nir_waiting_for %}
@@ -67,141 +58,263 @@
         {% else %}
         {% set counts = namespace(total=0, pendentes=0, andamento=0, concluidos=0, meus=0) %}
         {% endif %}
+        {% endif %}
 
-    <div class="nir-stat-cards mb-3">
-            <a href="{{ url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--info {% if not filter_status %}is-active{% endif %}">
-                <div class="nir-stat-card__icon"><i class="bi bi-collection"></i></div>
-                <div class="nir-stat-card__number">{{ counts.total }}</div>
-                <div class="nir-stat-card__label">Total Registros</div>
-                <div class="nir-stat-card__trend">{{ counts.meus }} meus</div>
-            </a>
-            {% set pendente_active = (filter_status == 'pendente') %}
-            <a href="{{ pendente_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='pendente', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--danger {% if pendente_active %}is-active{% endif %}">
-                <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
-                <div class="nir-stat-card__number">{{ counts.pendentes }}</div>
-                <div class="nir-stat-card__label">Pendentes</div>
-            </a>
-            {% set andamento_active = (filter_status == 'andamento') %}
-            <a href="{{ andamento_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='andamento', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--warning {% if andamento_active %}is-active{% endif %}">
-                <div class="nir-stat-card__icon"><i class="bi bi-hourglass-split"></i></div>
-                <div class="nir-stat-card__number">{{ counts.andamento }}</div>
-                <div class="nir-stat-card__label">Em Andamento</div>
-            </a>
-            {% set concluido_active = (filter_status == 'concluido') %}
-            <a href="{{ concluido_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='concluido', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--success {% if concluido_active %}is-active{% endif %}">
-                <div class="nir-stat-card__icon"><i class="bi bi-check2-circle"></i></div>
-                <div class="nir-stat-card__number">{{ counts.concluidos }}</div>
-                <div class="nir-stat-card__label">Concluídos</div>
-            </a>
+        <div class="mb-4">
+            <div class="nir-stat-cards">
+                {% set pendente_active = (filter_status == 'pendente') %}
+                <a href="{{ pendente_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='pendente', patient_name=request.args.get('patient_name','')) }}"
+                    class="nir-stat-card nir-stat-card--danger {% if pendente_active %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="nir-stat-card__number">{{ counts.pendentes }}</div>
+                    <div class="nir-stat-card__label">Registros Pendentes</div>
+                </a>
+                {% set andamento_active = (filter_status == 'andamento') %}
+                <a href="{{ andamento_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='andamento', patient_name=request.args.get('patient_name','')) }}"
+                    class="nir-stat-card nir-stat-card--warning {% if andamento_active %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="nir-stat-card__number">{{ counts.andamento }}</div>
+                    <div class="nir-stat-card__label">Em Andamento</div>
+                </a>
+                {% set concluido_active = (filter_status == 'concluido') %}
+                <a href="{{ concluido_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='concluido', patient_name=request.args.get('patient_name','')) }}"
+                    class="nir-stat-card nir-stat-card--success {% if concluido_active %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-check2-circle"></i></div>
+                    <div class="nir-stat-card__number">{{ counts.concluidos }}</div>
+                    <div class="nir-stat-card__label">Registros Concluídos</div>
+                </a>
+            </div>
         </div>
-        <div class="nir-wait-filters mb-4 d-flex flex-wrap gap-2 align-items-center">
-            <div class="small text-uppercase fw-bold text-muted me-2" style="letter-spacing:.08em;">Aguardando</div>
-            {% set current_wait = waiting_for %}
-            {% set preserved_name = request.args.get('patient_name','') %}
-            <a href="{{ url_for('nir.sector_nir_list', patient_name=preserved_name, filter_status=filter_status if filter_status else None) }}" class="nir-wait-chip {% if not current_wait %}active{% endif %}"><i class="bi bi-infinity"></i> Todos</a>
-            {% set active_cir = (current_wait == 'cirurgia') %}
-            <a href="{{ active_cir and url_for('nir.sector_nir_list', patient_name=preserved_name, filter_status=filter_status if filter_status else None) or url_for('nir.sector_nir_list', waiting_for='cirurgia', patient_name=preserved_name, filter_status=filter_status if filter_status else None) }}" class="nir-wait-chip chip-surgery {% if active_cir %}active{% endif %}"><i class="bi bi-hourglass-split"></i> Centro Cirúrgico ({{ counts.wait_surgery }})</a>
-            {% set active_fat = (current_wait == 'faturamento') %}
-            <a href="{{ active_fat and url_for('nir.sector_nir_list', patient_name=preserved_name, filter_status=filter_status if filter_status else None) or url_for('nir.sector_nir_list', waiting_for='faturamento', patient_name=preserved_name, filter_status=filter_status if filter_status else None) }}" class="nir-wait-chip chip-billing {% if active_fat %}active{% endif %}"><i class="bi bi-hourglass-top"></i> Faturamento ({{ counts.wait_billing }})</a>
+
+        <div class="nir-filters-modern mb-5">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-funnel me-2 text-primary"></i>
+                <h5 class="mb-0 text-primary fw-bold">Filtros de Pesquisa</h5>
+            </div>
+            <form method="GET" action="{{ url_for('nir.sector_nir_list') }}" class="nir-filters-grid">
+                <div>
+                    <label class="form-label text-muted fw-semibold">Nome do Paciente</label>
+                    <div class="nir-input-with-icon">
+                        <i class="bi bi-person-search icon"></i>
+                        <input type="text" class="form-control" name="patient_name"
+                            value="{{ request.args.get('patient_name', '') }}"
+                            placeholder="Digite o nome do paciente...">
+                    </div>
+                </div>
+                {% if filter_status %}
+                <input type="hidden" name="filter_status" value="{{ filter_status }}" />
+                {% endif %}
+                <div>
+                    <label class="form-label text-muted fw-semibold">Fluxo de Setores</label>
+                    <select class="form-select" name="waiting_for">
+                        <option value="" {% if not waiting_for %}selected{% endif %}>Todos</option>
+                        <option value="cirurgia" {% if waiting_for=='cirurgia' %}selected{% endif %}>Aguardando Centro
+                            Cirúrgico</option>
+                        <option value="faturamento" {% if waiting_for=='faturamento' %}selected{% endif %}>Aguardando
+                            Faturamento</option>
+                        <option value="alta" {% if waiting_for=='alta' %}selected{% endif %}>Aguardando dados de Alta
+                        </option>
+                    </select>
+                </div>
+                <div class="nir-filters-actions">
+                    <div class="nir-actions-group">
+                        <button type="submit" class="btn btn-filter flex-grow-1">
+                            <i class="bi bi-search me-2"></i>Filtrar
+                        </button>
+                        <a href="{{ url_for('nir.sector_nir_list') }}" class="btn btn-clear flex-shrink-0">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
 
         {% if records.items %}
-        <div class="nir-table-modern-wrapper mb-5">
-            <div class="table-responsive">
-                <table class="nir-table-modern">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Paciente</th>
-                            <th>Internação</th>
-                            <th>Entrada</th>
-                            <th>Fluxo</th>
-                            <th>Status Setor</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for record in records.items %}
-                        {% set progress = record.get_sector_progress() %}
-                        {% set nir_progress = progress.get('NIR', {}) %}
-                        {% set status_display = record._nir_display_status or nir_progress.get('status') %}
-                        {% set overall_progress = ((nir_progress.get('filled', 0) * 100) // nir_progress.get('total', 1)) if nir_progress.get('total', 0) > 0 else 0 %}
-                        <tr class="nir-row-status {% if status_display == 'PENDENTE' %}nir-row-pendente{% elif status_display == 'EM_ANDAMENTO' %}nir-row-andamento{% elif status_display == 'CONCLUIDO' %}nir-row-concluido{% endif %}">
-                            <td class="cell-id"><span class="badge">#{{ record.id }}</span></td>
-                            <td class="cell-patient">
-                                <strong>{{ record.patient_name }}</strong>
-                                {% if record._created_by_current %}<span class="badge bg-info ms-1"
-                                    title="Criado por mim">EU</span>{% endif %}<br>
-                                <small>SUS {{ record.sus_number or 'N/I' }}</small>
-                            </td>
-                            <td>{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}
-                            </td>
-                            <td class="cell-entry">
-                                <span
-                                    class="badge {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% else %}bg-secondary{% endif %}">
-                                    {{ record.entry_type or 'N/D' }}
-                                </span>
-                            </td>
-                            <td>
-                                {% set phase = record._nir_phase %}
-                                {% if phase in ['INITIAL','FULL'] %}
-                                <span class="badge badge-fx-inicial"
-                                    title="Coleta inicial dos dados de paciente e internação"><i
-                                        class="bi bi-pencil"></i> Coleta Inicial</span>
-                                {% elif phase == 'LOCKED_WAIT_SURGERY' %}
-                                <span class="badge badge-fx-aguardando" title="Aguardando Centro Cirúrgico"><i
-                                        class="bi bi-hourglass text-white"></i> <span class="text-white">Aguardando Centro Cirúrgico</span></span>
-                                {% elif phase == 'FINAL' %}
-                                <span class="badge badge-fx-alta" title="Preencher dados de alta"><i
-                                        class="bi bi-hourglass"></i> Aguardando dados de Alta</span>
-                                                                {% elif phase in ['LOCKED_AFTER','LOCKED_AFTER_FULL'] %}
-                                                                {% set billing_status = record.get_sector_progress().get('FATURAMENTO', {}).get('status') %}
-                                                                {% if billing_status == 'CONCLUIDO' %}
-                                                                    <span class="badge badge-fx-finalizado" title="Processo totalmente concluído"><i class="bi bi-check-circle"></i> Finalizado</span>
-                                                                {% elif record._nir_waiting_for == 'FATURAMENTO' %}
-                                                                    <span class="badge badge-fx-aguardando-fat" title="Aguardando Faturamento"><i class="bi bi-hourglass-top"></i> Aguardando Faturamento</span>
-                                                                {% else %}
-                                                                    <span class="badge badge-fx-encerrado" title="Fluxo concluído"><i class="bi bi-flag"></i> Encerrado</span>
-                                                                {% endif %}
-                                {% else %}
-                                <span class="badge bg-light text-dark" title="Sem definição">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if status_display == 'PENDENTE' %}
-                                <span class="badge bg-danger">Pendente</span>
-                                {% elif status_display == 'EM_ANDAMENTO' %}
-                                <span class="badge bg-warning text-dark">Em Andamento</span>
-                                {% elif status_display == 'CONCLUIDO' %}
-                                <span class="badge bg-success">Concluído</span>
-                                {% else %}
-                                <span class="badge bg-secondary">-</span>
-                                {% endif %}<br>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    {% if not record._nir_locked %}
-                                    <a href="{{ url_for('nir.sector_nir_form', record_id=record.id) }}" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> Preencher</a>
+        <div class="mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-table me-2 text-primary"></i>
+                    <h5 class="mb-0 text-primary fw-bold">Registros do Setor NIR</h5>
+                </div>
+                <div class="d-flex align-items-center text-muted">
+                    <i class="bi bi-list-check me-2"></i>
+                    <span class="fw-semibold">{{ records.items|length }} de {{ records.total }} registros</span>
+                </div>
+            </div>
+            <div class="nir-table-modern-wrapper">
+                <div class="table-responsive">
+                    <table class="nir-table-modern">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-hash me-1"></i>ID</th>
+                                <th><i class="bi bi-person me-1"></i>Paciente</th>
+                                <th><i class="bi bi-calendar-date me-1"></i>Internação</th>
+                                <th><i class="bi bi-door-open me-1"></i>Entrada</th>
+                                <th><i class="bi bi-arrow-right-circle me-1"></i>Fluxo</th>
+                                <th><i class="bi bi-flag me-1"></i>Status Setor</th>
+                                <th><i class="bi bi-gear me-1"></i>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records.items %}
+                            {% set progress = record.get_sector_progress() %}
+                            {% set nir_progress = progress.get('NIR', {}) %}
+                            {% set status_display = record._nir_display_status or nir_progress.get('status') %}
+                            {% set overall_progress = ((nir_progress.get('filled', 0) * 100) //
+                            nir_progress.get('total', 1)) if nir_progress.get('total', 0) > 0 else 0 %}
+                            <tr
+                                class="nir-row-status {% if status_display == 'PENDENTE' %}nir-row-pendente{% elif status_display == 'EM_ANDAMENTO' %}nir-row-andamento{% elif status_display == 'CONCLUIDO' %}nir-row-concluido{% endif %}">
+                                <td class="cell-id">
+                                    <span class="badge fw-bold">#{{ record.id }}</span>
+                                </td>
+                                <td class="cell-patient">
+                                    <div class="d-flex flex-column">
+                                        <strong class="mb-1">{{ record.patient_name }}
+                                            {% if record._created_by_current %}
+                                            <span class="badge bg-info rounded-pill" title="Criado por mim">
+                                                <i class="bi bi-person-check"></i> EU
+                                            </span>
+                                            {% endif %}
+                                        </strong>
+
+                                        <small class="text-muted">SUS: {{ record.sus_number or 'N/I' }}</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') if
+                                        record.admission_date else 'N/I' }}</span>
+                                </td>
+                                <td class="cell-entry text-center">
+                                    <span
+                                        class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% else %}bg-secondary{% endif %}">
+                                        {% if record.entry_type == 'ELETIVO' %}<i
+                                            class="bi bi-calendar-check me-1"></i>{% elif record.entry_type ==
+                                        'URGENCIA' %}<i class="bi bi-lightning me-1"></i>{% endif %}
+                                        {{ record.entry_type or 'N/D' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {% set phase = record._nir_phase %}
+                                    {% if phase in ['INITIAL','FULL'] %}
+                                    <span class="badge badge-fx-inicial rounded-pill"
+                                        title="Coleta inicial dos dados de paciente e internação">
+                                        <i class="bi bi-pencil me-1"></i>Coleta Inicial
+                                    </span>
+                                    {% elif phase == 'LOCKED_WAIT_SURGERY' %}
+                                    <span class="badge badge-fx-aguardando rounded-pill"
+                                        title="Aguardando Centro Cirúrgico">
+                                        <i class="bi bi-hourglass me-1"></i>Aguardando Centro Cirúrgico
+                                    </span>
+                                    {% elif phase == 'FINAL' %}
+                                    <span class="badge badge-fx-alta rounded-pill" title="Preencher dados de alta">
+                                        <i class="bi bi-hourglass me-1"></i>Aguardando dados de Alta
+                                    </span>
+                                    {% elif phase in ['LOCKED_AFTER','LOCKED_AFTER_FULL'] %}
+                                    {% set billing_status = record.get_sector_progress().get('FATURAMENTO',
+                                    {}).get('status') %}
+                                    {% if billing_status == 'CONCLUIDO' %}
+                                    <span class="badge badge-fx-finalizado rounded-pill"
+                                        title="Processo totalmente concluído">
+                                        <i class="bi bi-check-circle me-1"></i>Finalizado
+                                    </span>
+                                    {% elif record._nir_waiting_for == 'FATURAMENTO' %}
+                                    <span class="badge badge-fx-aguardando-fat rounded-pill"
+                                        title="Aguardando Faturamento">
+                                        <i class="bi bi-hourglass-top me-1"></i>Aguardando Faturamento
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-fx-encerrado rounded-pill" title="Fluxo concluído">
+                                        <i class="bi bi-flag me-1"></i>Encerrado
+                                    </span>
                                     {% endif %}
-                                    <a href="{{ url_for('nir.record_details', record_id=record.id) }}" class="nir-icon-btn nir-view-btn ms-1" title="Visualizar registro #{{ record.id }}">
-                                        <i class="bi bi-eye"></i>
-                                        <span class="visually-hidden">Visualizar</span>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark rounded-pill" title="Sem definição">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if status_display == 'PENDENTE' %}
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Pendente
+                                    </span>
+                                    {% elif status_display == 'EM_ANDAMENTO' %}
+                                    <span class="badge bg-warning text-dark rounded-pill">
+                                        <i class="bi bi-hourglass-split me-1"></i>Em Andamento
+                                    </span>
+                                    {% elif status_display == 'CONCLUIDO' %}
+                                    <span class="badge bg-success rounded-pill">
+                                        <i class="bi bi-check-circle me-1"></i>Concluído
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary rounded-pill">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        {% if not record._nir_locked %}
+                                        <a href="{{ url_for('nir.sector_nir_form', record_id=record.id) }}"
+                                            class="btn btn-sm btn-primary rounded-pill shadow-sm"
+                                            title="Preencher dados do registro #{{ record.id }}">
+                                            <i class="bi bi-pencil-square me-1"></i>Preencher
+                                        </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                            class="nir-icon-btn nir-view-btn"
+                                            title="Visualizar detalhes do registro #{{ record.id }}">
+                                            <i class="bi bi-eye"></i>
+                                            <span class="visually-hidden">Visualizar</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         {% else %}
         <div class="nir-empty-state">
-            <i class="bi bi-check-circle"></i>
-            <h4>Sem Pendências</h4>
-            <p>Todos os registros do setor NIR estão atualizados.</p>
+            <div class="text-center py-5">
+                <i class="bi bi-check-circle display-1 mb-4"></i>
+                <h4 class="fw-bold mb-3">Excelente Trabalho!</h4>
+                <p class="lead mb-4">Todos os registros do setor NIR estão atualizados e organizados.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ url_for('nir.sector_new_record') }}" class="btn nir-btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Criar Novo Registro
+                    </a>
+                    <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary">
+                        <i class="bi bi-collection me-2"></i>Ver Todos os Registros
+                    </a>
+                </div>
+            </div>
         </div>
+        {% endif %}
+
+        {% if pagination %}
+        <nav aria-label="Navegação de usuários">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('nir.sector_nir_list', page=pagination.prev_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status, waiting_for=waiting_for) }}">Anterior</a>
+                </li>
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('nir.sector_nir_list', page=p, patient_name=request.args.get('patient_name',''), filter_status=filter_status, waiting_for=waiting_for) }}">{{
+                        p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('nir.sector_nir_list', page=pagination.next_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status, waiting_for=waiting_for) }}">Próxima</a>
+                </li>
+            </ul>
+        </nav>
         {% endif %}
     </div>
 </div>

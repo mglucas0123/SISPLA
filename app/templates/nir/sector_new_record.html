@@ -32,16 +32,16 @@
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <label class="nir-form-label">Nome do Paciente *</label>
+                                <label class="nir-form-label">Nome do Paciente <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="patient_name" required
                                        placeholder="Nome completo do paciente">
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Data de Nascimento *</label>
+                                <label class="nir-form-label">Data de Nascimento <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control nir-form-control" name="birth_date" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="nir-form-label">Sexo *</label>
+                                <label class="nir-form-label">Sexo <span class="text-danger">*</span></label>
                                 <select class="form-select nir-form-control" name="gender" required>
                                     <option value="">Selecione</option>
                                     <option value="M">Masculino</option>
@@ -54,7 +54,7 @@
                                        placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números">
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Cartão SUS *</label>
+                                <label class="nir-form-label">Cartão SUS <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="sus_number" required
                                        placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
                                        title="Formato: 000 0000 0000 0000">
@@ -73,7 +73,7 @@
                                 <input type="date" class="form-control nir-form-control" name="admission_date">
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Tipo de Entrada *</label>
+                                <label class="nir-form-label">Tipo de Entrada <span class="text-danger">*</span></label>
                                 <select class="form-select nir-form-control" name="entry_type" required>
                                     <option value="">Selecione</option>
                                     <option value="ELETIVO">Eletivo</option>

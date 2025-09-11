@@ -155,6 +155,47 @@ def list_records():
                 return any(v['status'] == sector_progress for v in prog.values())
             return True
         filtered = [r for r in base_records if matches_sector(r)]
+        def _compute_global_info(rec):
+            prog = rec.get_sector_progress()
+            billing = (prog.get('FATURAMENTO') or {}).get('status')
+            if billing == 'CONCLUIDO':
+                return 'CONCLUIDO', 'Fluxo concluído'
+            current_sector = rec.get_next_available_sector()
+            sector_labels = {
+                'NIR': 'NIR',
+                'CENTRO_CIRURGICO': 'Centro Cirúrgico',
+                'FATURAMENTO': 'Faturamento',
+            }
+            if current_sector == 'FATURAMENTO':
+                return 'EM_ANDAMENTO', f"Aguardando {sector_labels.get(current_sector, current_sector or '')}"
+            if current_sector == 'NIR':
+                effective_entry = rec.get_effective_entry_type()
+                config = rec.get_section_control_config()
+                nir_sections = [s for s, sec in config.items() if sec == 'NIR']
+                alta_sections = [s for s in nir_sections if 'alta' in s]
+                initial_sections = [s for s in nir_sections if s not in alta_sections]
+                status_map = {s.section_name: s.status for s in rec.section_statuses if s.responsible_sector == 'NIR'}
+                def sections_complete(lst):
+                    if not lst:
+                        return True
+                    return all(status_map.get(sec) == 'PREENCHIDO' for sec in lst)
+                status = (prog.get('NIR') or {}).get('status') or 'PENDENTE'
+                if effective_entry == 'URGENCIA' and sections_complete(initial_sections) and not sections_complete(alta_sections):
+                    return status, 'Aguardando dados de Alta'
+                return status, 'Aguardando NIR'
+            if current_sector:
+                status = (prog.get(current_sector) or {}).get('status') or 'PENDENTE'
+                hint = f"Aguardando {sector_labels.get(current_sector, current_sector)}"
+                return status, hint
+            return 'CONCLUIDO', 'Fluxo concluído'
+        for r in filtered:
+            try:
+                st, hint = _compute_global_info(r)
+                setattr(r, '_global_status', st)
+                setattr(r, '_global_status_hint', hint)
+            except Exception:
+                setattr(r, '_global_status', None)
+                setattr(r, '_global_status_hint', None)
         total = len(filtered)
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
@@ -173,6 +214,47 @@ def list_records():
         )
     else:
         records = query.paginate(page=page, per_page=per_page, error_out=False)
+        def _compute_global_info(rec):
+            prog = rec.get_sector_progress()
+            billing = (prog.get('FATURAMENTO') or {}).get('status')
+            if billing == 'CONCLUIDO':
+                return 'CONCLUIDO', 'Fluxo concluído'
+            current_sector = rec.get_next_available_sector()
+            sector_labels = {
+                'NIR': 'NIR',
+                'CENTRO_CIRURGICO': 'Centro Cirúrgico',
+                'FATURAMENTO': 'Faturamento',
+            }
+            if current_sector == 'FATURAMENTO':
+                return 'EM_ANDAMENTO', f"Aguardando {sector_labels.get(current_sector, current_sector or '')}"
+            if current_sector == 'NIR':
+                effective_entry = rec.get_effective_entry_type()
+                config = rec.get_section_control_config()
+                nir_sections = [s for s, sec in config.items() if sec == 'NIR']
+                alta_sections = [s for s in nir_sections if 'alta' in s]
+                initial_sections = [s for s in nir_sections if s not in alta_sections]
+                status_map = {s.section_name: s.status for s in rec.section_statuses if s.responsible_sector == 'NIR'}
+                def sections_complete(lst):
+                    if not lst:
+                        return True
+                    return all(status_map.get(sec) == 'PREENCHIDO' for sec in lst)
+                status = (prog.get('NIR') or {}).get('status') or 'PENDENTE'
+                if effective_entry == 'URGENCIA' and sections_complete(initial_sections) and not sections_complete(alta_sections):
+                    return status, 'Aguardando dados de Alta'
+                return status, 'Aguardando NIR'
+            if current_sector:
+                status = (prog.get(current_sector) or {}).get('status') or 'PENDENTE'
+                hint = f"Aguardando {sector_labels.get(current_sector, current_sector)}"
+                return status, hint
+            return 'CONCLUIDO', 'Fluxo concluído'
+        for r in records.items:
+            try:
+                st, hint = _compute_global_info(r)
+                setattr(r, '_global_status', st)
+                setattr(r, '_global_status_hint', hint)
+            except Exception:
+                setattr(r, '_global_status', None)
+                setattr(r, '_global_status_hint', None)
 
     entry_types = db.session.query(Nir.entry_type).distinct().filter(Nir.entry_type.isnot(None)).all()
     entry_types = [et[0] for et in entry_types if et[0]]
@@ -238,21 +320,29 @@ def create_record():
         if admission_date and discharge_date:
             total_days = (discharge_date - admission_date).days
 
+        entry_type_form = request.form.get('entry_type')
+        admission_type_form = request.form.get('admission_type')
+        aih_form_value = request.form.get('aih')
+        if admission_type_form == 'CIRURGICO':
+            if 'aih' in request.form and (not aih_form_value or not aih_form_value.strip()):
+                flash('AIH é obrigatório para internação cirúrgica.', 'danger')
+                return redirect(url_for('nir.sector_new_record'))
+
         new_nir = Nir(
             patient_name=request.form.get('patient_name'),
             birth_date=birth_date,
             gender=request.form.get('gender'),
             susfacil=request.form.get('susfacil'),
             admission_date=admission_date,
-            entry_type=request.form.get('entry_type'),
-            admission_type=request.form.get('admission_type'),
+            entry_type=entry_type_form,
+            admission_type=admission_type_form,
             admitted_from_origin=request.form.get('admitted_from_origin'),
             procedure_code=None,
             surgical_description=None,
             responsible_doctor=request.form.get('responsible_doctor') if get_user_sector(current_user) == 'NIR' else None,
             main_cid=request.form.get('main_cid') if get_user_sector(current_user) == 'NIR' else None,
             sus_number=request.form.get('sus_number'),
-            aih=request.form.get('aih'),
+            aih=aih_form_value,
             scheduling_date=scheduling_date if get_user_sector(current_user) == 'NIR' else None,
             discharge_type=request.form.get('discharge_type') if get_user_sector(current_user) == 'NIR' else None,
             discharge_date=discharge_date if get_user_sector(current_user) == 'NIR' else None,
@@ -347,7 +437,40 @@ def create_record():
 @require_permission('visualizar_nir')
 def record_details(record_id):
     record = Nir.query.get_or_404(record_id)
-    return render_template('nir/record_details.html', record=record)
+    header_wait_label = None
+    header_wait_kind = None
+    try:
+        prog = record.get_sector_progress()
+        billing_status = (prog.get('FATURAMENTO') or {}).get('status')
+        if billing_status == 'CONCLUIDO':
+            header_wait_label = 'Fluxo concluído'
+            header_wait_kind = 'done'
+        else:
+            current_sector = record.get_next_available_sector()
+            if current_sector == 'FATURAMENTO':
+                header_wait_label = 'Aguardando Faturamento'
+                header_wait_kind = 'billing'
+            elif current_sector == 'CENTRO_CIRURGICO':
+                header_wait_label = 'Aguardando Centro Cirúrgico'
+                header_wait_kind = 'surgery'
+            elif current_sector == 'NIR':
+                effective_entry = record.get_effective_entry_type()
+                config = record.get_section_control_config()
+                nir_sections = [s for s, sec in config.items() if sec == 'NIR']
+                alta_sections = [s for s in nir_sections if 'alta' in s]
+                initial_sections = [s for s in nir_sections if s not in alta_sections]
+                status_map = {s.section_name: s.status for s in record.section_statuses if s.responsible_sector == 'NIR'}
+                def sections_complete(lst):
+                    if not lst:
+                        return True
+                    return all(status_map.get(sec) == 'PREENCHIDO' for sec in lst)
+                if effective_entry == 'URGENCIA' and sections_complete(initial_sections) and not sections_complete(alta_sections):
+                    header_wait_label = 'Aguardando dados de Alta'
+                else:
+                    header_wait_label = 'Aguardando NIR'
+    except Exception:
+        pass
+    return render_template('nir/record_details.html', record=record, header_wait_label=header_wait_label, header_wait_kind=header_wait_kind)
 
 @nir_bp.route("/nir/editar/<int:record_id>")
 @login_required
@@ -419,7 +542,6 @@ def update_record(record_id):
                     record.susfacil = request.form.get('susfacil')
                 if 'sus_number' in request.form and request.form.get('sus_number'):
                     record.sus_number = request.form.get('sus_number')
-
         if editable_sections.get('dados_internacao_iniciais', True):
             if any(k in request.form for k in ['admission_date','entry_type','admission_type','admitted_from_origin','aih']):
                 if admission_date:
@@ -434,6 +556,11 @@ def update_record(record_id):
                     record.admitted_from_origin = request.form.get('admitted_from_origin')
                 if 'aih' in request.form and request.form.get('aih'):
                     record.aih = request.form.get('aih')
+                if record.admission_type == 'CIRURGICO' and not record.aih:
+                    if 'aih' in request.form:
+                        db.session.rollback()
+                        flash('AIH é obrigatório para internação cirúrgica.', 'danger')
+                        return redirect(url_for('nir.edit_record', record_id=record.id))
 
         if editable_sections.get('procedimentos', True):
             if any(k in request.form for k in ['procedure_codes[]','procedure_code']):
@@ -490,9 +617,21 @@ def update_record(record_id):
                 if 'anesthesia' in request.form:
                     record.anesthesia = request.form.get('anesthesia') or record.anesthesia
                 if 'pediatrics' in request.form:
-                    record.pediatrics = request.form.get('pediatrics') or record.pediatrics
+                    if request.form.get('pediatrics_nao_aplica'):
+                        record.pediatrics = None
+                    else:
+                        record.pediatrics = request.form.get('pediatrics') or record.pediatrics
                 if 'surgical_type' in request.form:
                     record.surgical_type = request.form.get('surgical_type') or record.surgical_type
+
+                if 'auxiliary_nao_aplica' in request.form:
+                    if request.form.get('auxiliary_nao_aplica'):
+                        record.auxiliary = None
+
+                if not record.responsible_doctor or not record.main_cid:
+                    db.session.rollback()
+                    flash('Preencha Médico Responsável e CID Principal.', 'danger')
+                    return redirect(url_for('nir.edit_record', record_id=record.id))
 
         if editable_sections.get('dados_alta_finais', True):
             if 'scheduling_date' in request.form and scheduling_date:
@@ -507,6 +646,10 @@ def update_record(record_id):
             aih_final = request.form.get('aih_final')
             if aih_final:
                 record.aih = aih_final
+            if record.admission_type == 'CIRURGICO' and not record.aih and 'dados_alta_finais' in editable_sections:
+                db.session.rollback()
+                flash('AIH é obrigatório para internação cirúrgica.', 'danger')
+                return redirect(url_for('nir.edit_record', record_id=record.id))
 
         if editable_sections.get('status_controle', True):
             record.cancelled = request.form.get('cancelled') or 'NAO'
@@ -546,6 +689,11 @@ def update_record(record_id):
             
         if editable_sections.get('status_controle', False):
             update_section_status(record.id, 'status_controle', current_user.id)
+
+        try:
+            record.status = record.compute_overall_status()
+        except Exception:
+            pass
 
         db.session.commit()
         
@@ -598,6 +746,13 @@ def sector_nir_list():
         flash('Acesso negado: você não pertence ao setor NIR', 'danger')
         return redirect(url_for('nir.my_work'))
     
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    if per_page <= 0:
+        per_page = 10
+    if per_page > 100:
+        per_page = 100
+
     filter_status = request.args.get('filter_status', '').strip().lower()
     valid_filters = {'pendente': 'PENDENTE', 'andamento': 'EM_ANDAMENTO', 'concluido': 'CONCLUIDO'}
     target_status = valid_filters.get(filter_status)
@@ -648,8 +803,11 @@ def sector_nir_list():
                 phase_info = get_nir_phase(record)
                 setattr(record, '_nir_phase', phase_info.get('phase'))
                 setattr(record, '_nir_locked', phase_info.get('locked'))
+                phase = phase_info.get('phase')
                 display_status = nir_sector_progress.get('status')
-                if phase_info.get('phase') == 'FINAL':
+                if phase in ('INITIAL', 'FULL'):
+                    display_status = 'PENDENTE'
+                elif phase == 'FINAL':
                     if not alta_complete:
                         if not record.discharge_date and not record.discharge_type:
                             display_status = 'PENDENTE'
@@ -662,35 +820,92 @@ def sector_nir_list():
                 setattr(record, '_nir_locked', False)
             nir_relevant_records.append(record)
     
+    if waiting_for_param == 'alta':
+        nir_relevant_records = [r for r in nir_relevant_records if getattr(r, '_nir_phase', None) == 'FINAL']
+    elif target_waiting:
+        nir_relevant_records = [r for r in nir_relevant_records if getattr(r, '_nir_waiting_for', None) == target_waiting]
+
+    records_for_counts = list(nir_relevant_records)
+
+    def _status_priority(rec):
+        display = getattr(rec, '_nir_display_status', None) or rec.get_sector_progress().get('NIR', {}).get('status')
+        pri = 2
+        if display == 'PENDENTE':
+            pri = 0
+        elif display == 'EM_ANDAMENTO':
+            pri = 1
+        created_order = rec.creation_date or datetime.min
+        return (pri, -created_order.timestamp())
+
+    try:
+        nir_relevant_records.sort(key=_status_priority)
+    except Exception:
+        nir_relevant_records.sort(key=lambda r: 0)
+
+    stats_counts = {
+        'total': len(nir_relevant_records),
+        'pendentes': 0,
+        'andamento': 0,
+        'concluidos': 0,
+        'meus': 0,
+        'wait_billing': 0,
+        'wait_surgery': 0,
+    }
+    for r in records_for_counts:
+        if getattr(r, '_created_by_current', False):
+            stats_counts['meus'] += 1
+        display = getattr(r, '_nir_display_status', None) or r.get_sector_progress().get('NIR', {}).get('status')
+        if display == 'PENDENTE':
+            stats_counts['pendentes'] += 1
+        elif display == 'EM_ANDAMENTO':
+            stats_counts['andamento'] += 1
+        elif display == 'CONCLUIDO':
+            stats_counts['concluidos'] += 1
+        waiting_val = getattr(r, '_nir_waiting_for', None)
+        if waiting_val == 'FATURAMENTO':
+            stats_counts['wait_billing'] += 1
+        elif waiting_val == 'CENTRO CIRÚRGICO':
+            stats_counts['wait_surgery'] += 1
+
     if target_status:
-        filtered = []
-        for r in nir_relevant_records:
-            display = getattr(r, '_nir_display_status', None) or r.get_sector_progress().get('NIR', {}).get('status')
-            if display == target_status:
-                filtered.append(r)
-        nir_relevant_records = filtered
-    if target_waiting:
-        filtered_wait = []
-        for r in nir_relevant_records:
-            waiting_val = getattr(r, '_nir_waiting_for', None)
-            if waiting_val == target_waiting:
-                filtered_wait.append(r)
-        nir_relevant_records = filtered_wait
+        nir_relevant_records = [
+            r for r in nir_relevant_records
+            if (getattr(r, '_nir_display_status', None) or r.get_sector_progress().get('NIR', {}).get('status')) == target_status
+        ]
 
     total = len(nir_relevant_records)
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    page_items = nir_relevant_records[start_idx:end_idx]
+    pages = (total // per_page + (1 if total % per_page else 0)) if total > 0 else 1
+
     from types import SimpleNamespace
-    records = SimpleNamespace(
-        items=nir_relevant_records,
+    def _iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2):
+        return range(1, pages + 1)
+
+    pagination = SimpleNamespace(
+        items=page_items,
         total=total,
-        pages=1,
-        page=1,
-        has_prev=False,
-        has_next=False,
-        prev_num=None,
-        next_num=None
+        pages=pages,
+        page=page,
+        has_prev=page > 1,
+        has_next=page < pages,
+        prev_num=page - 1 if page > 1 else None,
+        next_num=page + 1 if page < pages else None,
+        iter_pages=_iter_pages
     )
+
+    records = pagination
     
-    return render_template('nir/sector_nir_list.html', records=records, user_sector=user_sector, filter_status=filter_status, waiting_for=waiting_for_param)
+    return render_template(
+        'nir/sector_nir_list.html', 
+        records=records, 
+        user_sector=user_sector, 
+        filter_status=filter_status, 
+        waiting_for=waiting_for_param,
+    pagination=pagination,
+    stats_counts=stats_counts
+    )
 
 @nir_bp.route("/nir/setor/centro-cirurgico")
 @login_required
@@ -700,7 +915,14 @@ def sector_surgery_list():
     if user_sector != 'CENTRO_CIRURGICO':
         flash('Acesso negado: você não pertence ao Centro Cirúrgico', 'danger')
         return redirect(url_for('nir.my_work'))
-        
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    if per_page <= 0:
+        per_page = 10
+    if per_page > 100:
+        per_page = 100
+
     query = Nir.query.order_by(Nir.creation_date.desc())
     
     patient_name = request.args.get('patient_name', '').strip()
@@ -708,30 +930,92 @@ def sector_surgery_list():
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
         
     all_records = query.all()
-    surgery_pending_records = []
+    surgery_relevant_records = []
     
     for record in all_records:
+        progress = record.get_sector_progress()
+        surgery_progress = progress.get('CENTRO_CIRURGICO', {})
+        status = surgery_progress.get('status')
+
+        include = False
         if record.is_ready_for_sector('CENTRO_CIRURGICO'):
-            progress = record.get_sector_progress()
-            surgery_progress = progress.get('CENTRO_CIRURGICO', {})
-            
-            if surgery_progress.get('status') in ['PENDENTE', 'EM_ANDAMENTO']:
-                surgery_pending_records.append(record)
-    
-    total = len(surgery_pending_records)
+            include = status in ['PENDENTE', 'EM_ANDAMENTO']
+        if status == 'CONCLUIDO':
+            include = True
+
+        if include:
+            surgery_relevant_records.append(record)
+
+    filter_status = request.args.get('filter_status', '').strip().lower()
+    status_map = {'pendente': 'PENDENTE', 'andamento': 'EM_ANDAMENTO', 'concluido': 'CONCLUIDO'}
+    target_status = status_map.get(filter_status)
+
+    def _status_priority(rec):
+        prog = rec.get_sector_progress().get('CENTRO_CIRURGICO', {})
+        display = prog.get('status')
+        pri = 2
+        if display == 'PENDENTE':
+            pri = 0
+        elif display == 'EM_ANDAMENTO':
+            pri = 1
+        created_order = rec.creation_date or datetime.min
+        return (pri, -created_order.timestamp())
+    try:
+        surgery_relevant_records.sort(key=_status_priority)
+    except Exception:
+        surgery_relevant_records.sort(key=lambda r: 0)
+
+    stats_counts = {
+        'total': len(surgery_relevant_records),
+        'pendentes': 0,
+        'andamento': 0,
+        'concluidos': 0,
+    }
+    for r in surgery_relevant_records:
+        st = r.get_sector_progress().get('CENTRO_CIRURGICO', {}).get('status')
+        if st == 'PENDENTE':
+            stats_counts['pendentes'] += 1
+        elif st == 'EM_ANDAMENTO':
+            stats_counts['andamento'] += 1
+        elif st == 'CONCLUIDO':
+            stats_counts['concluidos'] += 1
+
+    if target_status:
+        surgery_relevant_records = [
+            r for r in surgery_relevant_records
+            if r.get_sector_progress().get('CENTRO_CIRURGICO', {}).get('status') == target_status
+        ]
+
+    total = len(surgery_relevant_records)
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    page_items = surgery_relevant_records[start_idx:end_idx]
+    pages = (total // per_page + (1 if total % per_page else 0)) if total > 0 else 1
+
     from types import SimpleNamespace
-    records = SimpleNamespace(
-        items=surgery_pending_records,
+    def _iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2):
+        return range(1, pages + 1)
+
+    pagination = SimpleNamespace(
+        items=page_items,
         total=total,
-        pages=1,
-        page=1,
-        has_prev=False,
-        has_next=False,
-        prev_num=None,
-        next_num=None
+        pages=pages,
+        page=page,
+        has_prev=page > 1,
+        has_next=page < pages,
+        prev_num=page - 1 if page > 1 else None,
+        next_num=page + 1 if page < pages else None,
+        iter_pages=_iter_pages
     )
-    
-    return render_template('nir/sector_surgery_list.html', records=records, user_sector=user_sector)
+
+    return render_template(
+        'nir/sector_surgery_list.html', 
+        records=pagination, 
+        user_sector=user_sector,
+        pagination=pagination,
+    stats_counts=stats_counts,
+    filter_status=filter_status
+    )
 
 @nir_bp.route("/nir/setor/faturamento")
 @login_required
@@ -741,28 +1025,73 @@ def sector_billing_list():
     if user_sector != 'FATURAMENTO':
         flash('Acesso negado: você não pertence ao Faturamento', 'danger')
         return redirect(url_for('nir.my_work'))
-        
+    
     query = Nir.query.order_by(Nir.creation_date.desc())
     
     patient_name = request.args.get('patient_name', '').strip()
     if patient_name:
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
+
+    filter_status = request.args.get('filter_status', '').strip().lower()
+    status_map = {'pendente': 'PENDENTE', 'andamento': 'EM_ANDAMENTO', 'concluido': 'CONCLUIDO'}
+    target_status = status_map.get(filter_status)
         
     all_records = query.all()
-    billing_pending_records = []
+    billing_relevant_records = []
     
     for record in all_records:
+        progress = record.get_sector_progress()
+        billing_progress = progress.get('FATURAMENTO', {})
+        status = billing_progress.get('status')
+
+        include = False
         if record.is_ready_for_sector('FATURAMENTO'):
-            progress = record.get_sector_progress()
-            billing_progress = progress.get('FATURAMENTO', {})
-            
-            if billing_progress.get('status') in ['PENDENTE', 'EM_ANDAMENTO']:
-                billing_pending_records.append(record)
+            include = status in ['PENDENTE', 'EM_ANDAMENTO']
+        if status == 'CONCLUIDO':
+            include = True
+
+        if include:
+            billing_relevant_records.append(record)
+
+    stats_counts = {
+        'total': len(billing_relevant_records),
+        'pendentes': 0,
+        'andamento': 0,
+        'concluidos': 0,
+    }
+    for r in billing_relevant_records:
+        st = (r.get_sector_progress().get('FATURAMENTO', {}) or {}).get('status')
+        if st == 'PENDENTE':
+            stats_counts['pendentes'] += 1
+        elif st == 'EM_ANDAMENTO':
+            stats_counts['andamento'] += 1
+        elif st == 'CONCLUIDO':
+            stats_counts['concluidos'] += 1
+
+    if target_status:
+        billing_relevant_records = [
+            r for r in billing_relevant_records
+            if (r.get_sector_progress().get('FATURAMENTO', {}) or {}).get('status') == target_status
+        ]
+
+    def _status_priority(rec):
+        st = rec.get_sector_progress().get('FATURAMENTO', {}).get('status')
+        pri = 2
+        if st == 'PENDENTE':
+            pri = 0
+        elif st == 'EM_ANDAMENTO':
+            pri = 1
+        created_order = rec.creation_date or datetime.min
+        return (pri, -created_order.timestamp())
+    try:
+        billing_relevant_records.sort(key=_status_priority)
+    except Exception:
+        pass
     
-    total = len(billing_pending_records)
+    total = len(billing_relevant_records)
     from types import SimpleNamespace
     records = SimpleNamespace(
-        items=billing_pending_records,
+        items=billing_relevant_records,
         total=total,
         pages=1,
         page=1,
@@ -772,7 +1101,13 @@ def sector_billing_list():
         next_num=None
     )
     
-    return render_template('nir/sector_billing_list.html', records=records, user_sector=user_sector)
+    return render_template(
+        'nir/sector_billing_list.html',
+        records=records,
+        user_sector=user_sector,
+        filter_status=filter_status,
+        stats_counts=stats_counts
+    )
 
 @nir_bp.route("/nir/<int:record_id>/setor/nir")
 @login_required
@@ -834,6 +1169,15 @@ def sector_surgery_form(record_id):
     if not record.is_ready_for_sector('CENTRO_CIRURGICO'):
         flash('Dados iniciais do NIR ainda não finalizados. Conclua cadastro inicial no NIR antes do Centro Cirúrgico.', 'warning')
         return redirect(url_for('nir.record_details', record_id=record_id))
+
+    try:
+        progress = record.get_sector_progress()
+        surgery_status = (progress.get('CENTRO_CIRURGICO') or {}).get('status')
+        if surgery_status == 'CONCLUIDO':
+            flash('Este registro do Centro Cirúrgico já está concluído e não pode ser editado.', 'info')
+            return redirect(url_for('nir.record_details', record_id=record_id))
+    except Exception:
+        pass
     
     return render_template('nir/forms/surgery_sector_form.html', record=record, user_sector=user_sector)
 
@@ -857,6 +1201,15 @@ def sector_billing_form(record_id):
         else:
             flash('Este registro não está pronto para o Faturamento.', 'warning')
         return redirect(url_for('nir.record_details', record_id=record_id))
+    
+    try:
+        progress = record.get_sector_progress()
+        billing_status = (progress.get('FATURAMENTO') or {}).get('status')
+        if billing_status == 'CONCLUIDO':
+            flash('Este registro do Faturamento já está concluído e não pode ser editado.', 'info')
+            return redirect(url_for('nir.record_details', record_id=record_id))
+    except Exception:
+        pass
     
     return render_template('nir/forms/billing_sector_form.html', record=record, user_sector=user_sector)
 

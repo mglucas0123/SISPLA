@@ -11,37 +11,9 @@
                 Faturamento - Formulário Específico
             </h1>
             <p>Finalize o registro com informações de controle e status</p>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('nir.sector_billing_list') }}">Meus Trabalhos</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Finalizar NIR #{{ record.id }}</li>
-                </ol>
-            </nav>
         </div>
 
         {% set progress = record.get_sector_progress() %}
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="alert alert-success">
-                    <h6><i class="bi bi-check-circle"></i> NIR Completado</h6>
-                    <p class="mb-0">{{ progress.get('NIR', {}).get('filled', 0) }}/{{ progress.get('NIR', {}).get('total', 0) }} seções</p>
-                </div>
-            </div>
-            {% if progress.get('CENTRO_CIRURGICO') %}
-            <div class="col-md-4">
-                <div class="alert alert-success">
-                    <h6><i class="bi bi-check-circle"></i> Centro Cirúrgico Completado</h6>
-                    <p class="mb-0">{{ progress.get('CENTRO_CIRURGICO', {}).get('filled', 0) }}/{{ progress.get('CENTRO_CIRURGICO', {}).get('total', 0) }} seções</p>
-                </div>
-            </div>
-            {% endif %}
-            <div class="col-md-4">
-                <div class="alert alert-primary">
-                    <h6><i class="bi bi-person-circle"></i> Paciente: {{ record.patient_name }}</h6>
-                    <p class="mb-0">Pronto para finalização</p>
-                </div>
-            </div>
-        </div>
 
         <div class="card mb-4" style="background-color: #f8f9fa;">
             <div class="card-header">
@@ -50,12 +22,17 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3">
+                        <strong>Paciente:</strong><br>
+                        {{ record.patient_name }}
+                    </div>
+                    <div class="col-md-3">
                         <strong>Data de Internação:</strong><br>
                         {{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}
                     </div>
                     <div class="col-md-3">
                         <strong>Tipo de Entrada:</strong><br>
-                        <span class="badge {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-warning text-dark{% endif %}">
+                        <span
+                            class="badge {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% endif %}">
                             {{ record.entry_type or 'N/D' }}
                         </span>
                     </div>
@@ -94,26 +71,25 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}">
-                    
+
                     <div class="nir-form-section mb-4">
                         <h6 class="section-title">
-                            <i class="bi bi-clipboard-check text-success"></i>
+                            <i class="bi bi-clipboard-check text-danger"></i>
                             Status e Controle
-                            <span class="badge bg-success ms-2">Sua Responsabilidade</span>
                         </h6>
-                        
+
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="nir-form-label">Cancelado?</label>
                                 <select class="form-select nir-form-control" name="cancelled" id="cancelled-select">
                                     <option value="">Não</option>
-                                    <option value="SIM" {% if record.cancelled == 'SIM' %}selected{% endif %}>Sim</option>
+                                    <option value="SIM" {% if record.cancelled=='SIM' %}selected{% endif %}>Sim</option>
                                 </select>
                             </div>
                             <div class="col-md-8" id="cancellation-reason-group" style="display: none;">
                                 <label class="nir-form-label">Motivo do Cancelamento</label>
-                                <textarea class="form-control nir-form-control" name="cancellation_reason" rows="2" 
-                                          placeholder="Descreva o motivo do cancelamento">{{ record.cancellation_reason or '' }}</textarea>
+                                <textarea class="form-control nir-form-control" name="cancellation_reason" rows="2"
+                                    placeholder="Descreva o motivo do cancelamento">{{ record.cancellation_reason or '' }}</textarea>
                             </div>
                         </div>
 
@@ -121,24 +97,31 @@
                             <div class="col-md-4">
                                 <label class="nir-form-label">Criticado?</label>
                                 <select class="form-select nir-form-control" name="criticized">
-                                    <option value="NAO" {% if record.criticized in ['NAO','NÃO'] or not record.criticized %}selected{% endif %}>Não</option>
-                                    <option value="SIM" {% if record.criticized == 'SIM' %}selected{% endif %}>Sim</option>
+                                    <option value="NAO" {% if record.criticized in ['NAO','NÃO'] or not
+                                        record.criticized %}selected{% endif %}>Não</option>
+                                    <option value="SIM" {% if record.criticized=='SIM' %}selected{% endif %}>Sim
+                                    </option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Faturado?</label>
                                 <select class="form-select nir-form-control" name="billed">
-                                    <option value="NAO" {% if record.billed in ['NAO','NÃO'] or not record.billed %}selected{% endif %}>Não</option>
-                                    <option value="SIM" {% if record.billed == 'SIM' %}selected{% endif %}>Sim</option>
+                                    <option value="NAO" {% if record.billed in ['NAO','NÃO'] or not record.billed
+                                        %}selected{% endif %}>Não</option>
+                                    <option value="SIM" {% if record.billed=='SIM' %}selected{% endif %}>Sim</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Status Final</label>
                                 <select class="form-select nir-form-control" name="status">
-                                    <option value="PENDENTE" {% if record.status == 'PENDENTE' %}selected{% endif %}>Pendente</option>
-                                    <option value="EM_ANDAMENTO" {% if record.status == 'EM_ANDAMENTO' %}selected{% endif %}>Em Andamento</option>
-                                    <option value="CONCLUIDO" {% if record.status == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
-                                    <option value="CANCELADO" {% if record.status == 'CANCELADO' %}selected{% endif %}>Cancelado</option>
+                                    <option value="PENDENTE" {% if record.status=='PENDENTE' %}selected{% endif %}>
+                                        Pendente</option>
+                                    <option value="EM_ANDAMENTO" {% if record.status=='EM_ANDAMENTO' %}selected{% endif
+                                        %}>Em Andamento</option>
+                                    <option value="CONCLUIDO" {% if record.status=='CONCLUIDO' %}selected{% endif %}>
+                                        Concluído</option>
+                                    <option value="CANCELADO" {% if record.status=='CANCELADO' %}selected{% endif %}>
+                                        Cancelado</option>
                                 </select>
                             </div>
                         </div>
@@ -146,25 +129,15 @@
                         <div class="row g-3 mt-3">
                             <div class="col-12">
                                 <label class="nir-form-label">Observações Finais</label>
-                                <textarea class="form-control nir-form-control" name="observation" rows="4" 
-                                          placeholder="Observações adicionais sobre o registro...">{{ record.observation or '' }}</textarea>
+                                <textarea class="form-control nir-form-control" name="observation" rows="4"
+                                    placeholder="Observações adicionais sobre o registro...">{{ record.observation or '' }}</textarea>
                             </div>
                         </div>
                     </div>
-
-                    <div class="alert alert-light border">
-                        <h6><i class="bi bi-info-circle"></i> Resumo da Finalização</h6>
-                        <p>Ao salvar este formulário, você estará:</p>
-                        <ul class="mb-0">
-                            <li>Marcando a seção de <strong>Status e Controle</strong> como concluída</li>
-                            <li>Finalizando completamente este registro NIR</li>
-                            <li>Liberando o registro para auditoria e controle final</li>
-                        </ul>
-                    </div>
-
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('nir.sector_billing_list') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Voltar à Lista
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-4">
+                        <a href="{{ url_for('nir.sector_billing_list') }}" class="btn btn-outline-secondary"
+                            id="btn-voltar-lista">
+                            <i class="bi bi-arrow-left"></i> Voltar
                         </a>
                         <div>
                             <button type="submit" class="btn btn-success btn-lg">
@@ -179,25 +152,25 @@
 </div>
 
 <script>
-document.getElementById('cancelled-select').addEventListener('change', function() {
-    const reasonGroup = document.getElementById('cancellation-reason-group');
-    if (this.value === 'SIM') {
-        reasonGroup.style.display = 'block';
-    } else {
-        reasonGroup.style.display = 'none';
-    }
-});
+    document.getElementById('cancelled-select').addEventListener('change', function () {
+        const reasonGroup = document.getElementById('cancellation-reason-group');
+        if (this.value === 'SIM') {
+            reasonGroup.style.display = 'block';
+        } else {
+            reasonGroup.style.display = 'none';
+        }
+    });
 
-if (document.getElementById('cancelled-select').value === 'SIM') {
-    document.getElementById('cancellation-reason-group').style.display = 'block';
-}
+    if (document.getElementById('cancelled-select').value === 'SIM') {
+        document.getElementById('cancellation-reason-group').style.display = 'block';
+    }
 </script>
 
 <style>
-.section-title {
-    border-bottom: 2px solid #dee2e6;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
+    .section-title {
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
 </style>
 {% endblock %}

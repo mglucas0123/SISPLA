@@ -347,28 +347,39 @@ class Nir(db.Model):
         config = self.get_section_control_config()
 
         nir_sections = [s for s, sec in config.items() if sec == 'NIR']
-        final_nir_sections = []
-        if effective_entry == 'URGENCIA':
-            final_nir_sections = [s for s in nir_sections if 'alta' in s]
-
         section_status_map = { (s.section_name): s.status for s in self.section_statuses }
+
         def sections_complete(section_list):
             if not section_list:
                 return True
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
-        if not sections_complete(nir_sections):
-            return 'NIR'
+        if effective_entry == 'URGENCIA':
+            final_nir_sections = [s for s in nir_sections if 'alta' in s]
+            initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
 
-        surgery_progress = progress.get('CENTRO_CIRURGICO')
-        if surgery_progress and surgery_progress.get('status') != 'CONCLUIDO':
-            return 'CENTRO_CIRURGICO'
+            if not sections_complete(initial_nir_sections):
+                return 'NIR'
 
-        billing_progress = progress.get('FATURAMENTO', {})
-        if billing_progress.get('status') != 'CONCLUIDO':
-            return 'FATURAMENTO'
+            surgery_progress = progress.get('CENTRO_CIRURGICO', {})
+            if surgery_progress.get('status') != 'CONCLUIDO':
+                return 'CENTRO_CIRURGICO'
 
-        return None
+            if not sections_complete(final_nir_sections):
+                return 'NIR'
+
+            billing_progress = progress.get('FATURAMENTO', {})
+            if billing_progress.get('status') != 'CONCLUIDO':
+                return 'FATURAMENTO'
+
+            return None
+        else:
+            if not sections_complete(nir_sections):
+                return 'NIR'
+            billing_progress = progress.get('FATURAMENTO', {})
+            if billing_progress.get('status') != 'CONCLUIDO':
+                return 'FATURAMENTO'
+            return None
 
     def __repr__(self):
         return f'<Nir {self.id}: {self.patient_name}>'
