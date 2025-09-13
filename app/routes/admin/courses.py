@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app.models import db, Course, UserCourseProgress, Quiz, UserQuizAttempt
-from .utils import admin_required, handle_database_error
+from app.utils.rbac_permissions import require_permission
+from .utils import handle_database_error
 import os
 import logging
 import shutil
@@ -18,7 +19,7 @@ courses_bp = Blueprint('courses', __name__, url_prefix='/courses')
 
 @courses_bp.route('/')
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("listar cursos")
 def manage_courses():
     """Gerenciar cursos"""
@@ -56,7 +57,7 @@ def manage_courses():
 
 @courses_bp.route('/create', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("criar curso")
 def create_course():
     """Criar novo curso"""
@@ -100,7 +101,7 @@ def create_course():
 
 @courses_bp.route('/<int:course_id>/edit', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("editar curso")
 def edit_course(course_id):
     """Editar curso existente"""
@@ -171,7 +172,7 @@ def edit_course(course_id):
 
 @courses_bp.route('/<int:course_id>/toggle-status', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("alterar status do curso")
 def toggle_course_status(course_id):
     """Ativar/desativar curso"""
@@ -187,7 +188,7 @@ def toggle_course_status(course_id):
 
 @courses_bp.route('/<int:course_id>/delete', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("deletar curso")
 def delete_course(course_id):
     """Deletar curso"""
@@ -209,7 +210,7 @@ def delete_course(course_id):
 
 @courses_bp.route('/<int:course_id>/progress')
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 def view_course_progress(course_id):
     """Ver progresso dos usuários no curso"""
     course = Course.query.get_or_404(course_id)
@@ -266,7 +267,7 @@ def view_course_progress(course_id):
 
 @courses_bp.route('/<int:course_id>/reset-progress', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("resetar progresso")
 def reset_course_progress(course_id):
     """Resetar progresso de todos os usuários no curso"""
@@ -281,7 +282,7 @@ def reset_course_progress(course_id):
 
 @courses_bp.route('/<int:course_id>/reset-user-progress/<int:user_id>', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-treinamentos')
 @handle_database_error("resetar progresso do usuário")
 def reset_user_course_progress(course_id, user_id):
     """Resetar progresso de um usuário específico no curso"""
@@ -306,7 +307,6 @@ def reset_user_course_progress(course_id, user_id):
 
 @courses_bp.route('/<int:course_id>/video')
 @login_required
-@admin_required
 def serve_course_video(course_id):
     """Servir vídeos dos cursos"""
     try:
@@ -325,7 +325,6 @@ def serve_course_video(course_id):
 
 @courses_bp.route('/<int:course_id>/image')
 @login_required
-@admin_required
 def serve_course_image(course_id):
     """Servir imagens dos cursos"""
     try:

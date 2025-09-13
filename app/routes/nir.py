@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app.models import db, Nir, User, NirProcedure, NirSectionStatus
 from app.config_procedures import search_procedures
-from app.utils.rbac_permissions import require_permission, require_module_access
+from app.utils.rbac_permissions import require_permission, require_module_access, require_any_permission
 from datetime import datetime
 
 nir_bp = Blueprint('nir', __name__, template_folder='../templates')
@@ -131,7 +131,7 @@ def _compute_global_info(rec):
 
 @nir_bp.route("/nir")
 @login_required
-@require_module_access('nir')
+@require_permission('ver-nir-todos')
 def list_records():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -316,7 +316,7 @@ def list_records():
 
 @nir_bp.route("/nir/setor/novo")
 @login_required
-@require_permission('new_registry_nir')
+@require_permission('criar-registro-nir')
 def sector_new_record():
     """Formulário específico para criação de NIR pelo setor NIR"""
     user_sector = get_user_sector(current_user)
@@ -327,7 +327,7 @@ def sector_new_record():
 
 @nir_bp.route("/nir/criar", methods=['POST'])
 @login_required
-@require_permission('new_registry_nir')
+@require_permission('criar-registro-nir')
 def create_record():
     try:
         birth_date_str = request.form.get('birth_date')
@@ -468,7 +468,7 @@ def create_record():
 
 @nir_bp.route("/nir/<int:record_id>")
 @login_required
-@require_permission('visualizar_nir')
+@require_any_permission(['ver-nir-todos', 'ver-nir-setor'])
 def record_details(record_id):
     record = Nir.query.get_or_404(record_id)
     header_wait_label = None
@@ -508,7 +508,7 @@ def record_details(record_id):
 
 @nir_bp.route("/nir/editar/<int:record_id>")
 @login_required
-@require_permission('editar_nir')
+@require_permission('editar-secao-nir')
 def edit_record(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
@@ -532,7 +532,7 @@ def edit_record(record_id):
 
 @nir_bp.route("/nir/atualizar/<int:record_id>", methods=['POST'])
 @login_required
-@require_permission('editar_nir')
+@require_permission('editar-secao-nir')
 def update_record(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
@@ -781,7 +781,7 @@ def update_record(record_id):
 
 @nir_bp.route("/nir/excluir/<int:record_id>", methods=['POST'])
 @login_required
-@require_permission('excluir_nir')
+@require_permission('excluir-registro-nir')
 def delete_record(record_id):
     record = Nir.query.get_or_404(record_id)
 
@@ -797,7 +797,7 @@ def delete_record(record_id):
 
 @nir_bp.route("/nir/meus-trabalhos")
 @login_required 
-@require_module_access('nir')
+@require_any_permission(['ver-nir-todos', 'ver-nir-setor'])
 def my_work():
     user_sector = get_user_sector(current_user)
     
@@ -812,7 +812,7 @@ def my_work():
 
 @nir_bp.route("/nir/setor/nir")
 @login_required 
-@require_module_access('nir')
+@require_permission('ver-nir-setor')
 def sector_nir_list():
     user_sector = get_user_sector(current_user)
     if user_sector != 'NIR':
@@ -982,7 +982,7 @@ def sector_nir_list():
 
 @nir_bp.route("/nir/setor/centro-cirurgico")
 @login_required
-@require_module_access('nir') 
+@require_permission('ver-nir-setor')
 def sector_surgery_list():
     user_sector = get_user_sector(current_user)
     if user_sector != 'CENTRO_CIRURGICO':
@@ -1092,7 +1092,7 @@ def sector_surgery_list():
 
 @nir_bp.route("/nir/setor/faturamento")
 @login_required
-@require_module_access('nir')
+@require_permission('ver-nir-setor')
 def sector_billing_list():
     user_sector = get_user_sector(current_user)
     if user_sector != 'FATURAMENTO':
@@ -1203,7 +1203,7 @@ def sector_billing_list():
 
 @nir_bp.route("/nir/<int:record_id>/setor/nir")
 @login_required
-@require_permission('editar_nir')
+@require_permission('editar-secao-nir')
 def sector_nir_form(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
@@ -1249,7 +1249,7 @@ def sector_nir_form(record_id):
 
 @nir_bp.route("/nir/<int:record_id>/setor/centro-cirurgico")
 @login_required
-@require_permission('editar_nir')
+@require_permission('editar-secao-nir')
 def sector_surgery_form(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
@@ -1275,7 +1275,7 @@ def sector_surgery_form(record_id):
 
 @nir_bp.route("/nir/<int:record_id>/setor/faturamento")
 @login_required
-@require_permission('editar_nir')
+@require_permission('editar-secao-nir')
 def sector_billing_form(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
@@ -1307,7 +1307,7 @@ def sector_billing_form(record_id):
 
 @nir_bp.route('/nir/procedures/search')
 @login_required
-@require_module_access('nir')
+@require_any_permission(['criar-registro-nir', 'editar-secao-nir'])
 def procedures_search():
     q = request.args.get('q', '').strip()
     limit = request.args.get('limit', 15, type=int)
@@ -1318,7 +1318,7 @@ def procedures_search():
 
 @nir_bp.route('/nir/admin/recalibrar-alta')
 @login_required
-@require_permission('visualizar_relatorios')
+@require_permission('admin-total')
 def recalibrar_alta_sections():
     try:
         altered = 0
