@@ -5,11 +5,29 @@
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
     <div class="container-fluid px-4">
-        <div class="nir-header mb-5">
+        
+        {% if stats_counts %}
+        {% set counts = namespace(
+            total=stats_counts.total,
+            pendentes=stats_counts.pendentes,
+            andamento=stats_counts.andamento,
+            concluidos=stats_counts.concluidos
+        ) %}
+        {% else %}
+        {% set counts = namespace(total=0, pendentes=0, andamento=0, concluidos=0) %}
+        {% endif %}
+        
+        <div class="nir-header mb-4">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
                 <div class="flex-grow-1">
-                    <h1 class="mb-2"><i class="bi bi-receipt"></i> Setor Faturamento</h1>
-                    <p class="mb-0">Registros liberados pelos setores anteriores aguardando ações do Faturamento</p>
+                    <div class="nir-header-content">
+                        <h1 class="mb-2">
+                            <i class="bi bi-receipt"></i> 
+                            Setor Faturamento
+                            <span class="nir-header-badge">{{ counts.total }} registros</span>
+                        </h1>
+                        <p class="mb-0">Registros liberados pelos setores anteriores aguardando ações do Faturamento</p>
+                    </div>
                 </div>
                 <div class="nir-breadcrumb-actions">
                     <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
@@ -19,26 +37,30 @@
             </div>
         </div>
 
-        {% if stats_counts %}
         <div class="mb-4">
             <div class="nir-stat-cards">
                 {% set pendente_active = (filter_status == 'pendente') %}
                 <a href="{{ pendente_active and url_for('nir.sector_billing_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_billing_list', filter_status='pendente', patient_name=request.args.get('patient_name','')) }}"
                    class="nir-stat-card nir-stat-card--danger {% if pendente_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
-                    <div class="nir-stat-card__number">{{ stats_counts.pendentes }}</div>
-                    <div class="nir-stat-card__label">Pendentes</div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.pendentes }}</div>
+                        <div class="nir-stat-card__label">Registros Pendentes</div>
+                        <div class="nir-stat-card__subtitle">Aguardando faturamento</div>
+                    </div>
                 </a>
                 {% set concluido_active = (filter_status == 'concluido') %}
                 <a href="{{ concluido_active and url_for('nir.sector_billing_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_billing_list', filter_status='concluido', patient_name=request.args.get('patient_name','')) }}"
                    class="nir-stat-card nir-stat-card--success {% if concluido_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-check2-circle"></i></div>
-                    <div class="nir-stat-card__number">{{ stats_counts.concluidos }}</div>
-                    <div class="nir-stat-card__label">Concluídos</div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.concluidos }}</div>
+                        <div class="nir-stat-card__label">Registros Concluídos</div>
+                        <div class="nir-stat-card__subtitle">Faturamento finalizado</div>
+                    </div>
                 </a>
             </div>
         </div>
-        {% endif %}
 
         <div class="nir-filters-modern mb-5">
             <div class="d-flex align-items-center mb-3">
@@ -163,36 +185,33 @@
 
         {% else %}
         <div class="nir-empty-state">
-            <div class="text-center py-5">
-                <i class="bi bi-hourglass-split display-1 mb-4"></i>
-                <h4 class="fw-bold mb-3">Aguardando Liberação</h4>
-                <p class="lead mb-4">Não há NIRs liberados para o Faturamento no momento.</p>
-                <div class="d-flex justify-content-center gap-3">
-                    <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary">
-                        <i class="bi bi-collection me-2"></i>Ver Todos os Registros
-                    </a>
+            <div class="nir-empty-content">
+                <div class="nir-empty-icon">
+                    <i class="bi bi-receipt"></i>
                 </div>
+                <h4 class="nir-empty-title">Aguardando Liberação</h4>
+                <p class="nir-empty-subtitle">Não há registros pendentes para o Faturamento no momento.</p>
             </div>
         </div>
         {% endif %}
 
         {% if pagination %}
-        <nav aria-label="Navegação de faturamento">
-            <ul class="pagination justify-content-center mt-4 nir-pagination">
+        <nav aria-label="Navegação de registros">
+            <ul class="pagination justify-content-center mt-4">
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=pagination.prev_num, patient_name=request.args.get('patient_name','')) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=pagination.prev_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">Anterior</a>
                 </li>
                 {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                 {% if p %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=p, patient_name=request.args.get('patient_name','')) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=p, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">{{ p }}</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled"><span class="page-link">…</span></li>
                 {% endif %}
                 {% endfor %}
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=pagination.next_num, patient_name=request.args.get('patient_name','')) }}">Próxima</a>
+                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=pagination.next_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">Próxima</a>
                 </li>
             </ul>
         </nav>

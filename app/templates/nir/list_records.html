@@ -2,292 +2,138 @@
 {% block title %}Registros NIR{% endblock %}
 
 {% block content %}
-<div class="forms-page">
-    <div class="container-fluid py-4">
-        <div class="forms-header">
-            <div class="forms-header-content">
-                <div class="forms-title-section">
-                    <h1 class="forms-title">
-                        <i class="bi bi-hospital"></i>
-                        Registros NIR
-                    </h1>
-                    <p class="forms-subtitle">Gerencie os registros de Notificação de Internação Regulatória</p>
+<div class="nir-container">
+    {% include 'partials/_flash_messages.html' %}
+    <div class="container-fluid px-4">
+        
+        {% if stats_counts %}
+        {% set counts = stats_counts %}
+        {% else %}
+        {% set counts = {'total': 0, 'pendentes': 0, 'andamento': 0, 'concluidos': 0} %}
+        {% endif %}
+        
+        <div class="nir-header mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
+                <div class="flex-grow-1">
+                    <div class="nir-header-content">
+                        <h1 class="mb-2">
+                            <i class="bi bi-hospital"></i> 
+                            Registros NIR
+                            <span class="nir-header-badge">{{ counts.total or 0 }} registros</span>
+                        </h1>
+                        <p class="mb-0">Gerencie os registros de Notificação de Internação Regulatória</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {% include 'partials/_flash_messages.html' %}
+        <div class="mb-4">
+            <div class="nir-stat-cards">
+                {% set active_pendente = filters.sector_progress == 'PENDENTE' %}
+                <a
+                    href="{% if active_pendente %}{{ url_for('nir.list_records', per_page=request.args.get('per_page')) }}{% else %}{{ url_for('nir.list_records', sector_progress='PENDENTE', per_page=request.args.get('per_page')) }}{% endif %}"
+                    class="nir-stat-card nir-stat-card--danger {% if active_pendente %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.pendentes or 0 }}</div>
+                        <div class="nir-stat-card__label">Registros Pendentes</div>
+                        <div class="nir-stat-card__subtitle">Aguardando processamento</div>
+                    </div>
+                </a>
 
-        <div class="forms-card forms-filters-card">
-            <div class="forms-card-body forms-filters-body">
-                <form method="GET" action="{{ url_for('nir.list_records') }}" class="forms-filters-form">
-                    <div class="forms-filters-container">
-                        <div class="forms-filters-row">
-                            <div class="forms-filter-item">
-                                <div class="forms-input-group forms-input-compact">
-                                    <span class="forms-input-icon">
-                                        <i class="bi bi-person-search"></i>
-                                    </span>
-                                    <input type="text" id="searchPatientName" name="patient_name"
-                                        class="forms-input forms-input-sm" placeholder="Nome do paciente"
-                                        value="{{ filters.patient_name or '' }}">
-                                </div>
-                            </div>
+                {% set active_andamento = filters.sector_progress == 'EM_ANDAMENTO' %}
+                <a
+                    href="{% if active_andamento %}{{ url_for('nir.list_records', per_page=request.args.get('per_page')) }}{% else %}{{ url_for('nir.list_records', sector_progress='EM_ANDAMENTO', per_page=request.args.get('per_page')) }}{% endif %}"
+                    class="nir-stat-card nir-stat-card--warning {% if active_andamento %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.andamento or 0 }}</div>
+                        <div class="nir-stat-card__label">Em Andamento</div>
+                        <div class="nir-stat-card__subtitle">Sendo processados</div>
+                    </div>
+                </a>
 
-                            <div class="forms-filter-item">
-                                <div class="forms-input-group forms-input-compact">
-                                    <span class="forms-input-icon">
-                                        <i class="bi bi-clipboard-pulse"></i>
-                                    </span>
-                                    <select id="entryTypeFilter" name="entry_type" class="forms-select forms-input-sm">
-                                        <option value="">Tipo de Entrada</option>
-                                        {% for entry_type in entry_types %}
-                                        <option value="{{ entry_type }}" {% if filters.entry_type==entry_type
-                                            %}selected{% endif %}>{{ entry_type }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
+                {% set active_concluido = filters.sector_progress == 'CONCLUIDO' %}
+                <a
+                    href="{% if active_concluido %}{{ url_for('nir.list_records', per_page=request.args.get('per_page')) }}{% else %}{{ url_for('nir.list_records', sector_progress='CONCLUIDO', per_page=request.args.get('per_page')) }}{% endif %}"
+                    class="nir-stat-card nir-stat-card--success {% if active_concluido %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-check2-circle"></i></div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.concluidos or 0 }}</div>
+                        <div class="nir-stat-card__label">Registros Concluídos</div>
+                        <div class="nir-stat-card__subtitle">Fluxo finalizado</div>
+                    </div>
+                </a>
+            </div>
+        </div>
 
-                            <div class="forms-filter-item">
-                                <div class="forms-input-group forms-input-compact">
-                                    <span class="forms-input-icon">
-                                        <i class="bi bi-activity"></i>
-                                    </span>
-                                    <select id="admissionTypeFilter" name="admission_type"
-                                        class="forms-select forms-input-sm">
-                                        <option value="">Tipo de Internação</option>
-                                        {% for admission_type in admission_types %}
-                                        <option value="{{ admission_type }}" {% if
-                                            filters.admission_type==admission_type %}selected{% endif %}>{{
-                                            admission_type }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="forms-filter-item">
-                                <div class="forms-input-group forms-input-compact">
-                                    <span class="forms-input-icon">
-                                        <i class="bi bi-person-badge"></i>
-                                    </span>
-                                    <input type="text" id="responsibleDoctorFilter" name="responsible_doctor"
-                                        class="forms-input forms-input-sm" placeholder="Médico responsável"
-                                        value="{{ filters.responsible_doctor or '' }}">
-                                </div>
-                            </div>
-
-                            <div class="forms-filter-item">
-                                <div class="forms-input-group forms-input-compact">
-                                    <span class="forms-input-icon">
-                                        <i class="bi bi-calendar-date"></i>
-                                    </span>
-                                    <input type="date" id="startDateFilter" name="start_date"
-                                        class="forms-input forms-input-sm" value="{{ filters.start_date or '' }}"
-                                        title="Data inicial">
-                                </div>
-                            </div>
-
-                            <div class="forms-filter-item">
-                                <div class="forms-input-group forms-input-compact">
-                                    <span class="forms-input-icon">
-                                        <i class="bi bi-calendar-date"></i>
-                                    </span>
-                                    <input type="date" id="endDateFilter" name="end_date"
-                                        class="forms-input forms-input-sm" value="{{ filters.end_date or '' }}"
-                                        title="Data final">
-                                </div>
-                            </div>
-
-                            <div class="forms-filter-actions">
-                                <button type="button" id="applyFilters"
-                                    class="forms-btn forms-btn-primary forms-btn-sm">
-                                    <i class="bi bi-search"></i>
-                                    Filtrar
-                                </button>
-                                <button type="button" id="clearFilters"
-                                    class="forms-btn forms-btn-secondary forms-btn-sm">
-                                    <i class="bi bi-eraser"></i>
-                                    Limpar
-                                </button>
-                            </div>
+        <div class="nir-filters-modern mb-4">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-funnel me-2 text-primary"></i>
+                <h5 class="mb-0 text-primary fw-bold">Filtros de Pesquisa</h5>
+            </div>
+            <form method="GET" action="{{ url_for('nir.list_records') }}" id="filtersForm">
+                <div class="nir-filters-grid">
+                    <div>
+                        <label class="form-label">Nome do Paciente</label>
+                        <div class="nir-input-with-icon">
+                            <i class="bi bi-search icon"></i>
+                            <input type="text" id="searchPatientName" name="patient_name"
+                                   class="form-control" placeholder="Digite o nome do paciente..."
+                                   value="{{ filters.patient_name or '' }}">
                         </div>
                     </div>
-                </form>
-            </div>
+
+                    <div>
+                        <label class="form-label">Data Início</label>
+                        <input type="date" id="startDateFilter" name="start_date" class="form-control" value="{{ filters.start_date or '' }}">
+                    </div>
+
+                    <div>
+                        <label class="form-label">Data Fim</label>
+                        <input type="date" id="endDateFilter" name="end_date" class="form-control" value="{{ filters.end_date or '' }}">
+                    </div>
+
+                    <div>
+                        <label class="form-label">Tipo de Entrada</label>
+                        <select id="entryTypeFilter" name="entry_type" class="form-select">
+                            <option value="">Todos</option>
+                            {% for entry_type in entry_types %}
+                            <option value="{{ entry_type }}" {{ 'selected' if filters.entry_type == entry_type else '' }}>
+                                {{ entry_type }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Tipo de Internação</label>
+                        <select id="admissionTypeFilter" name="admission_type" class="form-select">
+                            <option value="">Todos</option>
+                            {% for admission_type in admission_types %}
+                            <option value="{{ admission_type }}" {{ 'selected' if filters.admission_type == admission_type else '' }}>
+                                {{ admission_type }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="nir-filters-actions">
+                        <div class="nir-actions-group">
+                            <button type="button" id="applyFiltersButton" class="btn btn-filter">
+                                <i class="bi bi-search me-1"></i> Filtrar
+                            </button>
+                            <button type="button" id="clearFiltersButton" class="btn btn-clear">
+                                <i class="bi bi-x-circle me-1"></i> Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
 
-        <div class="forms-card">
-            <div class="forms-card-header">
-                <div class="forms-card-title-section">
-                    <h5 class="forms-card-title">
-                        <i class="bi bi-list-stars"></i>
-                        Lista de Registros
-                    </h5>
-                    {% if records.items is defined and records.total is defined %}
-                    <span class="forms-card-subtitle">Exibindo {{ records.items|length }} de {{ records.total }}
-                        resultados — página {{ records.page }} de {{ records.pages }}</span>
-                    {% elif records|length > 0 %}
-                    <span class="forms-card-subtitle">Exibindo {{ records|length }} resultado(s)</span>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="forms-card-body forms-table-container" id="recordsTableContainer">
-                {% if records.items %}
-                <div class="forms-table-responsive">
-                    <table class="forms-table">
-                        <thead class="forms-table-head">
-                            <tr>
-                                <th class="forms-table-header">#</th>
-                                <th class="forms-table-header">Paciente</th>
-                                <th class="forms-table-header forms-table-center">Admissão</th>
-                                <th class="forms-table-header forms-table-center">Tipo Entrada</th>
-                                <th class="forms-table-header forms-table-center">Tipo Internação</th>
-                                <th class="forms-table-header forms-table-center">Status</th>
-                                <th class="forms-table-header forms-table-center forms-table-actions">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody class="forms-table-body">
-                            {% for record in records.items %}
-                            <tr class="forms-table-row">
-                                <td class="forms-table-cell">
-                                    <span class="fw-bold text-primary">#{{ record.id }}</span>
-                                </td>
-                                <td class="forms-table-cell">
-                                    <div class="forms-user-info">
-                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
-                                            class="forms-user-name">
-                                            {{ record.patient_name | truncate(35, False) }}
-                                        </a>
-                                        {% if record.susfacil %}
-                                        <span class="forms-user-username">SUSFacil: {{ record.susfacil | truncate(25,
-                                            False) }}</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td class="forms-table-cell forms-table-center">
-                                    <div class="forms-date-info">
-                                        {% if record.admission_date %}
-                                        <span class="forms-date">{{ record.admission_date.strftime('%d/%m/%Y') }}</span>
-                                        <small class="text-muted d-block">
-                                            {% if record.total_days_admitted %}
-                                            {{ record.total_days_admitted }} dias
-                                            {% endif %}
-                                        </small>
-                                        {% else %}
-                                        <span class="forms-date">-</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td class="forms-table-cell forms-table-center">
-                                    {% if record.entry_type %}
-                                    <span class="forms-sector-badge nir-badge-{{ record.entry_type.lower() }}">
-                                        {{ record.entry_type }}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="forms-table-cell forms-table-center">
-                                    {% if record.admission_type %}
-                                    <span class="forms-sector-badge nir-badge-{{ record.admission_type.lower() }}">
-                                        {{ record.admission_type }}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="forms-table-cell forms-table-center">
-                                    {% set display_status = record._global_status or record.status %}
-                                    {% if display_status %}
-                                    <span class="forms-sector-badge nir-status-{{ display_status.lower() }}">
-                                        {{ display_status.replace('_',' ') }}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="forms-table-cell forms-table-center">
-                                    <div class="forms-action-buttons">
-                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
-                                            class="forms-action-btn forms-action-view" title="Visualizar"
-                                            data-bs-toggle="tooltip">
-                                            <i class="bi bi-eye-fill"></i>
-                                        </a>
-                                        {% if current_user.has_permission('visualizar_relatorios') %}
-                                        <a href="{{ url_for('nir.edit_record', record_id=record.id) }}"
-                                            class="forms-action-btn forms-action-edit" title="Editar"
-                                            data-bs-toggle="tooltip">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <button class="forms-action-btn forms-action-delete"
-                                            onclick="deleteRecord({{ record.id }})" title="Excluir"
-                                            data-bs-toggle="tooltip">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="forms-empty-state">
-                    <div class="forms-empty-icon">
-                        <i class="bi bi-inbox"></i>
-                    </div>
-                    <p class="forms-empty-text">Nenhum registro encontrado com os filtros aplicados.</p>
-                    <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters()">
-                        <i class="bi bi-eraser me-2"></i>Limpar Filtros
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-
-            {% if records.pages > 1 %}
-            <div class="card-footer bg-transparent" id="paginationContainer">
-                <nav aria-label="Navegação de registros">
-                    <ul class="pagination justify-content-center mb-0">
-                        {% if records.has_prev %}
-                        <li class="page-item">
-                            <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ records.prev_num }})">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
-                        {% endif %}
-
-                        {% for page_num in records.iter_pages() %}
-                        {% if page_num %}
-                        {% if page_num != records.page %}
-                        <li class="page-item">
-                            <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ page_num }})">{{
-                                page_num }}</a>
-                        </li>
-                        {% else %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ page_num }}</span>
-                        </li>
-                        {% endif %}
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">…</span>
-                        </li>
-                        {% endif %}
-                        {% endfor %}
-
-                        {% if records.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ records.next_num }})">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-            {% endif %}
+        <div id="recordsTableContainer">
+            {% include 'nir/_records_table.html' %}
         </div>
     </div>
 </div>
@@ -316,15 +162,28 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    (function(){
+        try {
+            const navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+            const nav = navEntries && navEntries[0];
+            if (nav && nav.type === 'reload') {
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('sector_progress')) {
+                    url.searchParams.delete('sector_progress');
+                    url.searchParams.delete('page');
+                    window.location.replace(url.toString());
+                }
+            }
+        } catch(e) { }
+    })();
     document.addEventListener('DOMContentLoaded', function () {
         const searchPatientName = document.getElementById('searchPatientName');
         const entryTypeFilter = document.getElementById('entryTypeFilter');
         const admissionTypeFilter = document.getElementById('admissionTypeFilter');
-        const responsibleDoctorFilter = document.getElementById('responsibleDoctorFilter');
         const startDateFilter = document.getElementById('startDateFilter');
         const endDateFilter = document.getElementById('endDateFilter');
-        const applyFiltersButton = document.getElementById('applyFilters');
-        const clearFiltersButton = document.getElementById('clearFilters');
+        const applyFiltersButton = document.getElementById('applyFiltersButton');
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
         const perPageSelect = document.getElementById('perPage');
 
         function filterRecordsWithAjax(customFilters = null, page = 1) {
@@ -332,13 +191,12 @@
                 patient_name: searchPatientName.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
-                responsible_doctor: responsibleDoctorFilter.value.trim(),
                 start_date: startDateFilter.value,
                 end_date: endDateFilter.value,
-                per_page: perPageSelect ? perPageSelect.value : undefined
+                per_page: perPageSelect ? perPageSelect.value : undefined,
+                sector_progress: getSectorProgressFromUrl()
             };
 
-            console.log('Filtros aplicados:', filters);
             showLoadingState();
 
             const params = new URLSearchParams();
@@ -355,51 +213,17 @@
 
             fetch(url, {
                 method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     return response.text();
                 })
                 .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    const newTableContainer = doc.querySelector('.forms-table-container');
-                    const newCardTitle = doc.querySelector('.forms-card-title-section');
-                    const newPagination = doc.querySelector('#paginationContainer');
-
-                    if (newTableContainer) {
-                        const currentContainer = document.querySelector('.forms-table-container');
-                        currentContainer.innerHTML = newTableContainer.innerHTML;
-                    }
-
-                    if (newCardTitle) {
-                        const currentCardTitle = document.querySelector('.forms-card-title-section');
-                        if (currentCardTitle) {
-                            currentCardTitle.innerHTML = newCardTitle.innerHTML;
-                        }
-                    }
-
-                    const currentPagination = document.getElementById('paginationContainer');
-                    if (newPagination && currentPagination) {
-                        currentPagination.innerHTML = newPagination.innerHTML;
-                        currentPagination.style.display = 'block';
-                    } else if (currentPagination) {
-                        currentPagination.style.display = 'none';
-                    }
-
-                    reattachEventListeners();
+                    const currentContainer = document.querySelector('#recordsTableContainer');
+                    currentContainer.innerHTML = html;
                     hideLoadingState();
-
-                    document.querySelector('.forms-table-container').scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    currentContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 })
                 .catch(error => {
                     console.error('Erro ao filtrar registros:', error);
@@ -408,28 +232,8 @@
                 });
         }
 
-        function reattachEventListeners() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-                new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            document.querySelectorAll('.page-link').forEach(link => {
-                if (link.getAttribute('href') === 'javascript:void(0)') {
-                    link.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const pageText = this.textContent.trim();
-                        if (!isNaN(pageText)) {
-                            loadPage(parseInt(pageText));
-                        }
-                    });
-                }
-            });
-        }
-
         window.filterRecordsWithAjax = filterRecordsWithAjax;
-
-        function loadPage(pageNum) {
+        window.loadPage = function(pageNum){
             const currentFilters = getCurrentFilters();
             filterRecordsWithAjax(currentFilters, pageNum);
         }
@@ -439,25 +243,21 @@
                 patient_name: searchPatientName.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
-                responsible_doctor: responsibleDoctorFilter.value.trim(),
                 start_date: startDateFilter.value,
                 end_date: endDateFilter.value,
-                per_page: perPageSelect ? perPageSelect.value : undefined
+                per_page: perPageSelect ? perPageSelect.value : undefined,
+                sector_progress: getSectorProgressFromUrl()
             };
         }
 
-        function clearAllFilters() {
-            searchPatientName.value = '';
-            entryTypeFilter.value = '';
-            admissionTypeFilter.value = '';
-            responsibleDoctorFilter.value = '';
-            startDateFilter.value = '';
-            endDateFilter.value = '';
-            filterRecordsWithAjax();
+        function getSectorProgressFromUrl(){
+            const params = new URLSearchParams(window.location.search);
+            const val = params.get('sector_progress');
+            return val && val.trim() !== '' ? val.trim() : undefined;
         }
 
         function showLoadingState() {
-            const tableContainer = document.querySelector('.forms-table-container');
+            const tableContainer = document.querySelector('#recordsTableContainer');
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'nir-loading';
             loadingDiv.innerHTML = `
@@ -466,93 +266,50 @@
                         <span class="visually-hidden">Carregando...</span>
                     </div>
                     <span class="text-muted">Buscando registros...</span>
-                </div>
-            `;
+                </div>`;
             tableContainer.appendChild(loadingDiv);
         }
 
         function hideLoadingState() {
             const loadingDiv = document.querySelector('.nir-loading');
-            if (loadingDiv) {
-                loadingDiv.remove();
-            }
+            if (loadingDiv) loadingDiv.remove();
         }
 
         function showErrorMessage(message) {
-            const tableContainer = document.querySelector('.forms-table-container');
+            const tableContainer = document.querySelector('#recordsTableContainer');
             const errorDiv = document.createElement('div');
             errorDiv.className = 'nir-error alert alert-warning';
-            errorDiv.innerHTML = `
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                ${message}
-            `;
+            errorDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${message}`;
             tableContainer.appendChild(errorDiv);
-
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 5000);
+            setTimeout(() => errorDiv.remove(), 5000);
         }
 
-        window.loadPage = loadPage;
-        window.clearAllFilters = clearAllFilters;
-
         let searchTimeout;
-
         searchPatientName.addEventListener('input', function () {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function () {
-                filterRecordsWithAjax();
-            }, 500);
+            searchTimeout = setTimeout(() => filterRecordsWithAjax(), 500);
         });
-
         searchPatientName.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 clearTimeout(searchTimeout);
                 filterRecordsWithAjax();
             }
         });
-
-        responsibleDoctorFilter.addEventListener('input', function () {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function () {
-                filterRecordsWithAjax();
-            }, 500);
-        });
-
-        entryTypeFilter.addEventListener('change', function () {
-            console.log('Entry type filter changed:', this.value);
-            filterRecordsWithAjax();
-        });
-
-        admissionTypeFilter.addEventListener('change', function () {
-            console.log('Admission type filter changed:', this.value);
-            filterRecordsWithAjax();
-        });
-
-        startDateFilter.addEventListener('change', function () {
-            console.log('Start date filter changed:', this.value);
-            filterRecordsWithAjax();
-        });
-
-        endDateFilter.addEventListener('change', function () {
-            console.log('End date filter changed:', this.value);
-            filterRecordsWithAjax();
-        });
-
-        applyFiltersButton.addEventListener('click', filterRecordsWithAjax);
-
-        clearFiltersButton.addEventListener('click', function () {
+        entryTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
+        admissionTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
+        startDateFilter.addEventListener('change', () => filterRecordsWithAjax());
+        endDateFilter.addEventListener('change', () => filterRecordsWithAjax());
+        applyFiltersButton.addEventListener('click', () => filterRecordsWithAjax());
+        clearFiltersButton.addEventListener('click', () => {
             searchPatientName.value = '';
             entryTypeFilter.value = '';
             admissionTypeFilter.value = '';
-            responsibleDoctorFilter.value = '';
             startDateFilter.value = '';
             endDateFilter.value = '';
             filterRecordsWithAjax();
         });
-
         if (perPageSelect) {
-            perPageSelect.addEventListener('change', function () {
+            perPageSelect.addEventListener('change', () => {
                 const currentFilters = getCurrentFilters();
                 filterRecordsWithAjax(currentFilters, 1);
             });
@@ -562,7 +319,6 @@
     function deleteRecord(recordId) {
         const deleteForm = document.getElementById('deleteForm');
         deleteForm.action = `/nir/excluir/${recordId}`;
-
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
         deleteModal.show();
     }

@@ -181,11 +181,6 @@
                             {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{%
                             endif %}
                         </h6>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i>
-                            <strong>Caso Eletivo:</strong> Como o tipo de entrada é Eletivo, você deve preencher os
-                            procedimentos.
-                        </div>
                         <div id="procedures-container">
                             {% if record.procedures %}
                             {% for procedure in record.procedures %}
@@ -251,23 +246,77 @@
                             {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{%
                             endif %}
                         </h6>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i>
-                            <strong>Caso Eletivo:</strong> Você deve preencher as informações médicas.
-                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="nir-form-label">Médico Responsável</label>
                                 <input type="text" class="form-control nir-form-control" name="responsible_doctor"
-                                    value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico" {% if not
-                                    section_editable %}disabled data-readonly="1" {% endif %}>
+                                    value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico" {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
                             </div>
                             <div class="col-md-6">
                                 <label class="nir-form-label">CID Principal</label>
                                 <input type="text" class="form-control nir-form-control" name="main_cid"
-                                    value="{{ record.main_cid or '' }}" placeholder="Ex: A00.0" {% if not
-                                    section_editable %}disabled data-readonly="1" {% endif %}>
+                                    value="{{ record.main_cid or '' }}" placeholder="Ex: A00.0" {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
                             </div>
+                            {% set effective_entry = record.get_effective_entry_type() %}
+                            {% if effective_entry == 'ELETIVO' %}
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Especialidade Cirúrgica {% if section_editable %}*{% endif %}</label>
+                                <select class="form-select nir-form-control" name="surgical_specialty" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="CIRURGIA GERAL" {% if record.surgical_specialty=='CIRURGIA GERAL' %}selected{% endif %}>Cirurgia Geral</option>
+                                    <option value="CLINICO GERAL" {% if record.surgical_specialty=='CLINICO GERAL' %}selected{% endif %}>Clínico Geral</option>
+                                    <option value="DENTISTA" {% if record.surgical_specialty=='DENTISTA' %}selected{% endif %}>Dentista</option>
+                                    <option value="DERMATO" {% if record.surgical_specialty=='DERMATO' %}selected{% endif %}>Dermatologia</option>
+                                    <option value="OBSTETRICIA" {% if record.surgical_specialty=='OBSTETRICIA' %}selected{% endif %}>Obstetrícia</option>
+                                    <option value="OFTALMOLOGISTA" {% if record.surgical_specialty=='OFTALMOLOGISTA' %}selected{% endif %}>Oftalmologia</option>
+                                    <option value="ORTOPEDISTA" {% if record.surgical_specialty=='ORTOPEDISTA' %}selected{% endif %}>Ortopedia</option>
+                                    <option value="UROLOGISTA" {% if record.surgical_specialty=='UROLOGISTA' %}selected{% endif %}>Urologia</option>
+                                    <option value="VASCULAR" {% if record.surgical_specialty=='VASCULAR' %}selected{% endif %}>Vascular</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Classificação {% if section_editable %}*{% endif %}</label>
+                                <select class="form-select nir-form-control" name="surgical_type" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="CONTAMINADA" {% if record.surgical_type=='CONTAMINADA' %}selected{% endif %}>Contaminada</option>
+                                    <option value="INFECTADA" {% if record.surgical_type=='INFECTADA' %}selected{% endif %}>Infectada</option>
+                                    <option value="LIMPA" {% if record.surgical_type=='LIMPA' %}selected{% endif %}>Limpa</option>
+                                    <option value="SUSPENSA" {% if record.surgical_type=='SUSPENSA' %}selected{% endif %}>Suspensa</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label d-flex align-items-center justify-content-between">Médico Auxiliar
+                                    <span class="form-check form-check-inline m-0">
+                                        <input class="form-check-input" type="checkbox" id="aux-nao-aplica"
+                                            name="auxiliary_nao_aplica" value="1" {% if not record.auxiliary %}{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                        <label class="form-check-label small" for="aux-nao-aplica">Não se aplica</label>
+                                    </span>
+                                </label>
+                                <input type="text" class="form-control nir-form-control" name="auxiliary" id="auxiliary-input"
+                                    value="{{ record.auxiliary or '' }}" placeholder="Nome do auxiliar" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Anestesista {% if section_editable %}*{% endif %}</label>
+                                <input type="text" class="form-control nir-form-control" name="anesthetist"
+                                    value="{{ record.anesthetist or '' }}" placeholder="Nome do anestesista" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="nir-form-label">Anestesia {% if section_editable %}*{% endif %}</label>
+                                <input type="text" class="form-control nir-form-control" name="anesthesia"
+                                    value="{{ record.anesthesia or '' }}" placeholder="Tipo de anestesia" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="nir-form-label d-flex align-items-center justify-content-between">Pediatria
+                                    <span class="form-check form-check-inline m-0">
+                                        <input class="form-check-input" type="checkbox" id="ped-nao-aplica"
+                                            name="pediatrics_nao_aplica" value="1" {% if not record.pediatrics %}{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                        <label class="form-check-label small" for="ped-nao-aplica">Não se aplica</label>
+                                    </span>
+                                </label>
+                                <input type="text" class="form-control nir-form-control" name="pediatrics" id="pediatrics-input"
+                                    value="{{ record.pediatrics or '' }}" placeholder="Nome do Pediatra" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -380,6 +429,26 @@
                 el.classList.add('nir-readonly-field');
             });
         }
+
+        function toggleField(cbId, inputId) {
+            const cb = document.getElementById(cbId);
+            const input = document.getElementById(inputId);
+            if (!cb || !input) return;
+            const applyState = () => {
+                if (cb.checked) {
+                    input.value = '';
+                    input.disabled = true;
+                    input.classList.add('bg-light');
+                } else {
+                    input.disabled = false;
+                    input.classList.remove('bg-light');
+                }
+            };
+            cb.addEventListener('change', applyState);
+            applyState();
+        }
+        toggleField('aux-nao-aplica', 'auxiliary-input');
+        toggleField('ped-nao-aplica', 'pediatrics-input');
     });
 </script>
 

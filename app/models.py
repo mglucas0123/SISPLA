@@ -197,20 +197,11 @@ class Nir(db.Model):
         """Retorna a configuração de controle baseada no tipo de entrada"""
         effective_entry = 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
 
-        if effective_entry == 'ELETIVO':
-            return {
-                'dados_paciente': 'NIR',
-                'dados_internacao_iniciais': 'NIR', 
-                'procedimentos': 'NIR',
-                'informacoes_medicas': 'NIR',
-                'dados_alta_finais': 'NIR', 
-                'status_controle': 'FATURAMENTO'
-            }
-        elif effective_entry == 'URGENCIA':
+        if effective_entry in ('URGENCIA', 'ELETIVO'):
             return {
                 'dados_paciente': 'NIR',
                 'dados_internacao_iniciais': 'NIR',
-                'procedimentos': 'CENTRO_CIRURGICO', 
+                'procedimentos': 'CENTRO_CIRURGICO',
                 'informacoes_medicas': 'CENTRO_CIRURGICO',
                 'dados_alta_finais': 'NIR',
                 'status_controle': 'FATURAMENTO'
@@ -220,7 +211,7 @@ class Nir(db.Model):
                 'dados_paciente': 'NIR',
                 'dados_internacao_iniciais': 'NIR',
                 'procedimentos': 'NIR',
-                'informacoes_medicas': 'NIR', 
+                'informacoes_medicas': 'NIR',
                 'dados_alta_finais': 'NIR',
                 'status_controle': 'FATURAMENTO'
             }
@@ -310,11 +301,12 @@ class Nir(db.Model):
 
         nir_sections = [s for s, sec in config.items() if sec == 'NIR']
 
-        initial_nir_sections = nir_sections
-        final_nir_sections = []
-        if effective_entry == 'URGENCIA':
-            final_nir_sections = [s for s in nir_sections if 'alta' in s] 
+        if effective_entry in ('URGENCIA', 'ELETIVO'):
+            final_nir_sections = [s for s in nir_sections if 'alta' in s]
             initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
+        else:
+            initial_nir_sections = nir_sections
+            final_nir_sections = []
 
         section_status_map = { (s.section_name): s.status for s in self.section_statuses }
 
@@ -324,7 +316,7 @@ class Nir(db.Model):
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
         if sector == 'CENTRO_CIRURGICO':
-            if effective_entry == 'URGENCIA':
+            if effective_entry in ('URGENCIA', 'ELETIVO'):
                 return sections_complete(initial_nir_sections)
             else:
                 nir_progress = progress.get('NIR', {})
@@ -354,7 +346,7 @@ class Nir(db.Model):
                 return True
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
-        if effective_entry == 'URGENCIA':
+        if effective_entry in ('URGENCIA', 'ELETIVO'):
             final_nir_sections = [s for s in nir_sections if 'alta' in s]
             initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
 

@@ -79,16 +79,9 @@
                         </h6>
 
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Cancelado?</label>
-                                <select class="form-select nir-form-control" name="cancelled" id="cancelled-select">
-                                    <option value="">Não</option>
-                                    <option value="SIM" {% if record.cancelled=='SIM' %}selected{% endif %}>Sim</option>
-                                </select>
-                            </div>
-                            <div class="col-md-8" id="cancellation-reason-group" style="display: none;">
+                            <div class="col-12" id="cancellation-reason-group" style="display: none;">
                                 <label class="nir-form-label">Motivo do Cancelamento</label>
-                                <textarea class="form-control nir-form-control" name="cancellation_reason" rows="2"
+                                <textarea class="form-control nir-form-control" name="cancellation_reason" id="cancellation-reason" rows="2"
                                     placeholder="Descreva o motivo do cancelamento">{{ record.cancellation_reason or '' }}</textarea>
                             </div>
                         </div>
@@ -96,32 +89,26 @@
                         <div class="row g-3 mt-3">
                             <div class="col-md-4">
                                 <label class="nir-form-label">Criticado?</label>
-                                <select class="form-select nir-form-control" name="criticized">
-                                    <option value="NAO" {% if record.criticized in ['NAO','NÃO'] or not
-                                        record.criticized %}selected{% endif %}>Não</option>
-                                    <option value="SIM" {% if record.criticized=='SIM' %}selected{% endif %}>Sim
-                                    </option>
+                                <select class="form-select nir-form-control" name="criticized" id="criticized-select" required>
+                                    <option value="" disabled selected>Selecione...</option>
+                                    <option value="NAO">Não</option>
+                                    <option value="SIM">Sim</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Faturado?</label>
-                                <select class="form-select nir-form-control" name="billed">
-                                    <option value="NAO" {% if record.billed in ['NAO','NÃO'] or not record.billed
-                                        %}selected{% endif %}>Não</option>
-                                    <option value="SIM" {% if record.billed=='SIM' %}selected{% endif %}>Sim</option>
+                                <select class="form-select nir-form-control" name="billed" id="billed-select" required>
+                                    <option value="" disabled selected>Selecione...</option>
+                                    <option value="NAO">Não</option>
+                                    <option value="SIM">Sim</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Status Final</label>
-                                <select class="form-select nir-form-control" name="status">
-                                    <option value="PENDENTE" {% if record.status=='PENDENTE' %}selected{% endif %}>
-                                        Pendente</option>
-                                    <option value="EM_ANDAMENTO" {% if record.status=='EM_ANDAMENTO' %}selected{% endif
-                                        %}>Em Andamento</option>
-                                    <option value="CONCLUIDO" {% if record.status=='CONCLUIDO' %}selected{% endif %}>
-                                        Concluído</option>
-                                    <option value="CANCELADO" {% if record.status=='CANCELADO' %}selected{% endif %}>
-                                        Cancelado</option>
+                                <select class="form-select nir-form-control" name="status" id="final-status-select" required>
+                                    <option value="" disabled selected>Selecione...</option>
+                                    <option value="CONCLUIDO">Concluído</option>
+                                    <option value="CANCELADO">Cancelado</option>
                                 </select>
                             </div>
                         </div>
@@ -152,18 +139,71 @@
 </div>
 
 <script>
-    document.getElementById('cancelled-select').addEventListener('change', function () {
-        const reasonGroup = document.getElementById('cancellation-reason-group');
-        if (this.value === 'SIM') {
-            reasonGroup.style.display = 'block';
-        } else {
-            reasonGroup.style.display = 'none';
-        }
-    });
+    const reasonGroup = document.getElementById('cancellation-reason-group');
+    const reasonField = document.getElementById('cancellation-reason');
+    const finalStatusSelect = document.getElementById('final-status-select');
+    const billedSelect = document.getElementById('billed-select');
+    const criticizedSelect = document.getElementById('criticized-select');
 
-    if (document.getElementById('cancelled-select').value === 'SIM') {
-        document.getElementById('cancellation-reason-group').style.display = 'block';
+    function updateReasonVisibility() {
+        const isCancelled = finalStatusSelect && finalStatusSelect.value === 'CANCELADO';
+        reasonGroup.style.display = isCancelled ? 'block' : 'none';
+        if (reasonField) {
+            if (isCancelled) {
+                reasonField.setAttribute('required', 'required');
+            } else {
+                reasonField.removeAttribute('required');
+            }
+        }
     }
+
+    function updateConstraints() {
+        const isCriticizedSim = criticizedSelect && criticizedSelect.value === 'SIM';
+        if (billedSelect) {
+            const billedSimOption = Array.from(billedSelect.options).find(o => o.value === 'SIM');
+            if (billedSimOption) billedSimOption.disabled = isCriticizedSim;
+            if (isCriticizedSim && billedSelect.value === 'SIM') {
+                billedSelect.value = '';
+            }
+        }
+        if (finalStatusSelect && isCriticizedSim && finalStatusSelect.value === 'CONCLUIDO') {
+            finalStatusSelect.value = '';
+        }
+        updateReasonVisibility();
+    }
+
+    function syncFromFinalStatus() {
+        if (!finalStatusSelect) return;
+        if (finalStatusSelect.value === 'CONCLUIDO' && billedSelect) {
+            const isCriticizedSim = criticizedSelect && criticizedSelect.value === 'SIM';
+            if (isCriticizedSim) {
+                finalStatusSelect.value = '';
+            } else {
+                billedSelect.value = 'SIM';
+            }
+        }
+        updateReasonVisibility();
+    }
+
+    function syncFromBilled() {
+        if (!finalStatusSelect || !billedSelect) return;
+        if (finalStatusSelect.value === 'CONCLUIDO' && billedSelect.value !== 'SIM') {
+            finalStatusSelect.value = 'CANCELADO';
+        }
+        updateReasonVisibility();
+    }
+
+    if (finalStatusSelect) {
+        finalStatusSelect.addEventListener('change', syncFromFinalStatus);
+    }
+    if (billedSelect) {
+        billedSelect.addEventListener('change', syncFromBilled);
+    }
+    if (criticizedSelect) {
+        criticizedSelect.addEventListener('change', updateConstraints);
+    }
+
+    updateConstraints();
 </script>
 
 <style>

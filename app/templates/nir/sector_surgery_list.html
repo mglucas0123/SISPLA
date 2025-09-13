@@ -5,21 +5,7 @@
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
     <div class="container-fluid px-4">
-        <div class="nir-header mb-5">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
-                <div class="flex-grow-1">
-                    <h1 class="mb-2"><i class="bi bi-scissors"></i> Centro Cirúrgico</h1>
-                    <p class="mb-0">Registros liberados que exigem ação do Centro Cirúrgico</p>
-                </div>
-                <div class="nir-breadcrumb-actions">
-                    <a href="{{ url_for('nir.list_records') }}"
-                        class="btn nir-btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
-                        <i class="bi bi-collection"></i> <span>Todos</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
+        
         {% if stats_counts %}
             {% set counts = namespace(total=stats_counts.total, pendentes=stats_counts.pendentes, andamento=stats_counts.andamento, concluidos=stats_counts.concluidos) %}
         {% else %}
@@ -39,20 +25,47 @@
                 {% set counts = namespace(total=0, pendentes=0, andamento=0, concluidos=0) %}
             {% endif %}
         {% endif %}
+        
+        <div class="nir-header mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
+                <div class="flex-grow-1">
+                    <div class="nir-header-content">
+                        <h1 class="mb-2">
+                            <i class="bi bi-scissors"></i> 
+                            Centro Cirúrgico
+                            <span class="nir-header-badge">{{ counts.total }} registros</span>
+                        </h1>
+                        <p class="mb-0">Registros liberados que exigem ação do Centro Cirúrgico</p>
+                    </div>
+                </div>
+                <div class="nir-breadcrumb-actions">
+                    <a href="{{ url_for('nir.list_records') }}"
+                        class="btn nir-btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-collection"></i> <span>Todos</span>
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <div class="mb-4">
             <div class="nir-stat-cards">
                 {% set pendente_active = (filter_status == 'pendente') %}
                 <a href="{{ pendente_active and url_for('nir.sector_surgery_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_surgery_list', filter_status='pendente', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--danger {% if pendente_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
-                    <div class="nir-stat-card__number">{{ counts.pendentes }}</div>
-                    <div class="nir-stat-card__label">Registros Pendentes</div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.pendentes }}</div>
+                        <div class="nir-stat-card__label">Registros Pendentes</div>
+                        <div class="nir-stat-card__subtitle">Aguardando procedimento</div>
+                    </div>
                 </a>
                 {% set concluido_active = (filter_status == 'concluido') %}
                 <a href="{{ concluido_active and url_for('nir.sector_surgery_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_surgery_list', filter_status='concluido', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--success {% if concluido_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-check2-circle"></i></div>
-                    <div class="nir-stat-card__number">{{ counts.concluidos }}</div>
-                    <div class="nir-stat-card__label">Registros Concluídos</div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.concluidos }}</div>
+                        <div class="nir-stat-card__label">Registros Concluídos</div>
+                        <div class="nir-stat-card__subtitle">Cirurgias finalizadas</div>
+                    </div>
                 </a>
             </div>
         </div>
@@ -178,15 +191,12 @@
 
         {% else %}
         <div class="nir-empty-state">
-            <div class="text-center py-5">
-                <i class="bi bi-hourglass display-1 mb-4"></i>
-                <h4 class="fw-bold mb-3">Aguardando Liberação</h4>
-                <p class="lead mb-4">Não há registros pendentes para o Centro Cirúrgico no momento.</p>
-                <div class="d-flex justify-content-center gap-3">
-                    <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary">
-                        <i class="bi bi-collection me-2"></i>Ver Todos os Registros
-                    </a>
+            <div class="nir-empty-content">
+                <div class="nir-empty-icon">
+                    <i class="bi bi-scissors"></i>
                 </div>
+                <h4 class="nir-empty-title">Aguardando Liberação</h4>
+                <p class="nir-empty-subtitle">Não há registros pendentes para o Centro Cirúrgico no momento.</p>
             </div>
         </div>
         {% endif %}

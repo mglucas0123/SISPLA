@@ -1,0 +1,168 @@
+{% if records.items %}
+<div class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-table me-2 text-primary"></i>
+            <h5 class="mb-0 text-primary fw-bold">Lista de Registros NIR</h5>
+        </div>
+        <div class="d-flex align-items-center text-muted">
+            <i class="bi bi-list-check me-2"></i>
+            <span class="fw-semibold">{{ records.items|length }} de {{ records.total }} registros</span>
+        </div>
+    </div>
+    <div class="nir-table-modern-wrapper">
+        <div class="table-responsive">
+            <table class="nir-table-modern">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-hash me-1"></i>ID</th>
+                        <th><i class="bi bi-person me-1"></i>Paciente</th>
+                        <th><i class="bi bi-calendar-date me-1"></i>Admissão</th>
+                        <th><i class="bi bi-person-vcard me-1"></i>Médico</th>
+                        <th><i class="bi bi-door-open me-1"></i>Entrada</th>
+                        <th><i class="bi bi-activity me-1"></i>Internação</th>
+                        <th><i class="bi bi-flag me-1"></i>Status</th>
+                        <th><i class="bi bi-gear me-1"></i>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records.items %}
+                    {% set display_status = record._global_status or record.status %}
+                    <tr
+                        class="nir-row-status {% if display_status == 'PENDENTE' %}nir-row-pendente{% elif display_status == 'EM_ANDAMENTO' %}nir-row-andamento{% elif display_status == 'CONCLUIDO' %}nir-row-concluido{% elif display_status == 'CANCELADO' %}nir-row-pendente{% endif %}">
+                        <td class="cell-id">
+                            <span class="badge fw-bold">#{{ record.id }}</span>
+                        </td>
+                        <td class="cell-patient">
+                            <div class="d-flex flex-column">
+                                <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                    class="fw-bold text-decoration-none">
+                                    {{ record.patient_name | truncate(35, False) }}
+                                </a>
+                                {% if record.susfacil %}
+                                <small class="text-muted">SUS: {{ record.susfacil | truncate(25, False) }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% if record.admission_date %}
+                            <div>
+                                <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') }}</span>
+                                {% if record.total_days_admitted %}
+                                <small class="text-muted d-block">{{ record.total_days_admitted }} dias</small>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="fw-semibold">N/I</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="text-muted small">{{ record.responsible_doctor or 'N/I' }}</span>
+                        </td>
+                        <td class="cell-entry text-center">
+                            {% if record.entry_type %}
+                            <span
+                                class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% else %}bg-secondary{% endif %}">
+                                {% if record.entry_type == 'ELETIVO' %}<i class="bi bi-calendar-check me-1"></i>{% elif
+                                record.entry_type == 'URGENCIA' %}<i class="bi bi-lightning me-1"></i>{% endif %}
+                                {{ record.entry_type }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">N/D</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if record.admission_type %}
+                            <span class="badge bg-info text-dark rounded-pill">{{ record.admission_type }}</span>
+                            {% else %}
+                            <span class="text-muted">N/D</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-status text-center">
+                            {% if display_status == 'PENDENTE' %}
+                            <span class="badge bg-danger text-white">
+                                <i class="bi bi-exclamation-triangle me-1"></i>PENDENTE
+                            </span>
+                            {% elif display_status == 'EM_ANDAMENTO' %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-hourglass-split me-1"></i>EM ANDAMENTO
+                            </span>
+                            {% elif display_status == 'CONCLUIDO' %}
+                            <span class="badge bg-success text-white">
+                                <i class="bi bi-check2-circle me-1"></i>CONCLUÍDO
+                            </span>
+                            {% elif display_status == 'CANCELADO' %}
+                            <span class="badge bg-dark text-white">
+                                <i class="bi bi-x-octagon me-1"></i>CANCELADO
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ display_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="forms-table-cell forms-table-center">
+                            <div class="forms-action-buttons">
+                                <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                    class="forms-action-btn forms-action-view" title="Visualizar"
+                                    data-bs-toggle="tooltip">
+                                    <i class="bi bi-eye-fill"></i>
+                                </a>
+                                <a href="{{ url_for('nir.edit_record', record_id=record.id) }}"
+                                    class="forms-action-btn forms-action-edit" title="Editar" data-bs-toggle="tooltip">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <button class="forms-action-btn forms-action-delete"
+                                    onclick="deleteRecord({{ record.id }})" title="Excluir" data-bs-toggle="tooltip">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if records.pages > 1 %}
+    <nav aria-label="Navegação de páginas">
+        <ul class="pagination justify-content-center mt-4" id="paginationContainer">
+            <li class="page-item {% if not records.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="javascript:void(0)" {% if records.has_prev
+                    %}onclick="loadPage({{ records.prev_num }})" {% endif %}>Anterior</a>
+            </li>
+            {% for p in records.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {% if p == records.page %}active{% endif %}">
+                {% if p == records.page %}
+                <span class="page-link">{{ p }}</span>
+                {% else %}
+                <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ p }})">{{ p }}</a>
+                {% endif %}
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not records.has_next %}disabled{% endif %}">
+                <a class="page-link" href="javascript:void(0)" {% if records.has_next
+                    %}onclick="loadPage({{ records.next_num }})" {% endif %}>Próxima</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="nir-empty-state">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <h5 class="text-muted mt-3">Nenhum registro encontrado</h5>
+        <p class="text-muted">
+            {% if filters.patient_name or filters.entry_type or filters.admission_type or filters.start_date or filters.end_date or filters.sector_progress %}
+                Tente ajustar os filtros para encontrar os registros desejados.
+            {% else %}
+                Ainda não há registros NIR cadastrados no sistema.
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endif %}

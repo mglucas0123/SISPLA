@@ -20,7 +20,6 @@
                             </span>
                             {% endif %}
                         </div>
-                        <p class="mb-1 mt-2">{{ record.patient_name }}</p>
 
                         <div class="mt-3">
                             <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary me-2">
@@ -276,9 +275,11 @@
                                         <label class="form-label">Cancelado</label>
                                         <p>
                                             {% if record.cancelled == 'SIM' %}
-                                            <span class="nir-badge badge bg-danger">Sim</span>
+                                                <span class="nir-badge badge bg-danger">Sim</span>
+                                            {% elif record.cancelled in ['NAO','NÃO'] %}
+                                                <span class="nir-badge badge bg-success">Não</span>
                                             {% else %}
-                                            <span class="nir-badge badge bg-success">Não</span>
+                                                <span class="text-muted">-</span>
                                             {% endif %}
                                         </p>
                                     </div>
@@ -305,7 +306,7 @@
                                         <p>
                                             {% if record.billed == 'SIM' %}
                                                 <span class="nir-badge badge bg-success">Sim</span>
-                                            {% elif record.billed == 'NAO' or record.billed == 'NÃO' %}
+                                            {% elif record.billed in ['NAO','NÃO'] %}
                                                 <span class="nir-badge badge bg-danger">Não</span>
                                             {% else %}
                                                 <span class="text-muted">-</span>
@@ -408,7 +409,6 @@
             </head>
             <body>
                 <h1>Registro NIR #{{ record.id }}</h1>
-                <p><strong>Paciente:</strong> {{ record.patient_name }}</p>
                 <p><strong>Data de Impressão:</strong> ${new Date().toLocaleString('pt-BR')}</p>
                 <hr>
                 ${cardContent}

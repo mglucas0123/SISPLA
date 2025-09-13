@@ -4,7 +4,7 @@
 {% block content %}
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
-    
+
     <div class="container">
 
         <div class="nir-header mb-4">
@@ -24,7 +24,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('nir.create_record') }}">
-                    
+
                     <div class="nir-form-section mb-4">
                         <h6 class="section-title">
                             <i class="bi bi-person-circle text-danger"></i>
@@ -32,12 +32,14 @@
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <label class="nir-form-label">Nome do Paciente <span class="text-danger">*</span></label>
+                                <label class="nir-form-label">Nome do Paciente <span
+                                        class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="patient_name" required
-                                       placeholder="Nome completo do paciente">
+                                    placeholder="Nome completo do paciente">
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Data de Nascimento <span class="text-danger">*</span></label>
+                                <label class="nir-form-label">Data de Nascimento <span
+                                        class="text-danger">*</span></label>
                                 <input type="date" class="form-control nir-form-control" name="birth_date" required>
                             </div>
                             <div class="col-md-3">
@@ -49,15 +51,15 @@
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <label class="nir-form-label">SUSFacil</label>
-                                <input type="text" class="form-control nir-form-control" name="susfacil" 
-                                       placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números">
+                                <label class="nir-form-label">SUSFacil <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control nir-form-control" name="susfacil"
+                                    placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Cartão SUS <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="sus_number" required
-                                       placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
-                                       title="Formato: 000 0000 0000 0000">
+                                    placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
+                                    title="Formato: 000 0000 0000 0000">
                             </div>
                         </div>
                     </div>
@@ -69,8 +71,8 @@
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="nir-form-label">Data de Internação</label>
-                                <input type="date" class="form-control nir-form-control" name="admission_date">
+                                <label class="nir-form-label">Data de Internação <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control nir-form-control" name="admission_date" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Tipo de Entrada <span class="text-danger">*</span></label>
@@ -79,19 +81,18 @@
                                     <option value="ELETIVO">Eletivo</option>
                                     <option value="URGENCIA">Urgência</option>
                                 </select>
-                                <small class="text-muted">Este campo determina o fluxo de trabalho</small>
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Tipo de Internação</label>
-                                <select class="form-select nir-form-control" name="admission_type">
+                                <label class="nir-form-label">Tipo de Internação <span class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" name="admission_type" required>
                                     <option value="">Selecione</option>
                                     <option value="CLINICO">Clínico</option>
                                     <option value="CIRURGICO">Cirúrgico</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="nir-form-label">Local de Origem</label>
-                                <select class="form-select nir-form-control" name="admitted_from_origin">
+                                <label class="nir-form-label">Local de Origem <span class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" name="admitted_from_origin" required>
                                     <option value="Iturama">Iturama</option>
                                     <option value="São Francisco">São Francisco</option>
                                     <option value="União de Minas">União de Minas</option>
@@ -100,109 +101,20 @@
                                     <option value="Outro">Outro...</option>
                                 </select>
                             </div>
+                            
                         </div>
                     </div>
 
-                    <div class="nir-form-section mb-4" id="procedures-section" style="display: none;">
-                        <h6 class="section-title">
-                            <i class="bi bi-activity text-danger"></i>
-                            Procedimentos
-                        </h6>
-                        <div class="row g-3 align-items-end">
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Código</label>
-                                <input type="text" class="form-control nir-form-control" name="procedure_code" id="procedure-code-input" placeholder="Digite código ou parte da descrição">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="nir-form-label">Descrição</label>
-                                <input type="text" class="form-control nir-form-control bg-light" name="surgical_description" id="surgical-description-input" readonly tabindex="-1" aria-readonly="true">
-                            </div>
-                            <div class="col-md-2 d-grid">
-                                <button class="btn btn-outline-primary mt-2" id="add-procedure-btn" type="button">
-                                    <i class="bi bi-plus-circle"></i> Adicionar
-                                </button>
-                            </div>
-                            <div class="col-12">
-                                <div class="border rounded p-2 bg-body-tertiary" id="procedures-list" aria-live="polite"></div>
-                                <small class="text-muted">Adicione/remova procedimentos. O primeiro será considerado principal.</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="nir-form-section mb-4" id="medical-info-section" style="display: none;">
-                        <h6 class="section-title">
-                            <i class="bi bi-heart-pulse text-danger"></i>
-                            Informações Médicas
-                        </h6>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="nir-form-label">Médico Responsável</label>
-                                <input type="text" class="form-control nir-form-control" name="responsible_doctor" 
-                                       placeholder="Nome do médico">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="nir-form-label">CID Principal</label>
-                                <input type="text" class="form-control nir-form-control" name="main_cid" 
-                                       placeholder="CID-10">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Especialidade Cirúrgica</label>
-                                <select class="form-select nir-form-control" name="surgical_specialty">
-                                    <option value="">Selecione</option>
-                                    <option value="CIRURGIA GERAL">Cirurgia Geral</option>
-                                    <option value="CLINICO GERAL">Clínico Geral</option>
-                                    <option value="DENTISTA">Dentista</option>
-                                    <option value="DERMATO">Dermatologia</option>
-                                    <option value="OBSTETRICIA">Obstetrícia</option>
-                                    <option value="OFTALMOLOGISTA">Oftalmologia</option>
-                                    <option value="ORTOPEDISTA">Ortopedia</option>
-                                    <option value="UROLOGISTA">Urologia</option>
-                                    <option value="VASCULAR">Vascular</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Auxiliar</label>
-                                <input type="text" class="form-control nir-form-control" name="auxiliary" 
-                                       placeholder="Nome do auxiliar">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Anestesista</label>
-                                <input type="text" class="form-control nir-form-control" name="anesthetist" 
-                                       placeholder="Nome do anestesista">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Anestesia</label>
-                                <input type="text" class="form-control nir-form-control" name="anesthesia" 
-                                       placeholder="Tipo de anestesia">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Pediatria</label>
-                                <input type="text" class="form-control nir-form-control" name="pediatrics" 
-                                       placeholder="Nome do Pediatra (se aplicável)">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Classificação</label>
-                                <select class="form-select nir-form-control" name="surgical_type">
-                                    <option value="">Selecione</option>
-                                    <option value="CONTAMINADA">Contaminada</option>
-                                    <option value="INFECTADA">Infectada</option>
-                                    <option value="LIMPA">Limpa</option>
-                                    <option value="SUSPENSA">Suspensa</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="nir-form-section mb-4">
+                    <div class="nir-form-section mb-4" id="agendamento-inicial-section">
                         <h6 class="section-title">
                             <i class="bi bi-calendar-check text-danger"></i>
                             Agendamento Inicial
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="nir-form-label">Data de Agendamento</label>
-                                <input type="date" class="form-control nir-form-control" name="scheduling_date">
+                                <label class="nir-form-label">Data de Agendamento <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control nir-form-control" name="scheduling_date"
+                                    id="scheduling-date-initial" required>
                             </div>
                         </div>
                     </div>
@@ -228,67 +140,53 @@
 {% block scripts %}
 {{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const entryTypeSelect = document.querySelector('select[name="entry_type"]');
-    const proceduresSection = document.getElementById('procedures-section');
-    const medicalInfoSection = document.getElementById('medical-info-section');
+    document.addEventListener('DOMContentLoaded', function () {
+        const susNumberInput = document.getElementById('sus-number-input');
+        const susfacilInput = document.querySelector('input[name="susfacil"]');
 
-    function toggleSections(){
-        const isElective = entryTypeSelect && entryTypeSelect.value === 'ELETIVO';
-        if(proceduresSection) proceduresSection.style.display = isElective ? 'block' : 'none';
-        if(medicalInfoSection) medicalInfoSection.style.display = isElective ? 'block' : 'none';
-    }
-    if(entryTypeSelect){
-        entryTypeSelect.addEventListener('change', toggleSections);
-        toggleSections();
-    }
-
-    const susNumberInput = document.getElementById('sus-number-input');
-    const susfacilInput = document.querySelector('input[name="susfacil"]');
-
-    function formatSusNumber(value) {
-        const numbers = value.replace(/\D/g, '');
-        const limited = numbers.substring(0, 15);
-        if (limited.length <= 3) {
-            return limited;
-        } else if (limited.length <= 7) {
-            return limited.substring(0, 3) + ' ' + limited.substring(3);
-        } else if (limited.length <= 11) {
-            return limited.substring(0, 3) + ' ' + limited.substring(3, 7) + ' ' + limited.substring(7);
-        } else {
-            return limited.substring(0, 3) + ' ' + limited.substring(3, 7) + ' ' + limited.substring(7, 11) + ' ' + limited.substring(11);
+        function formatSusNumber(value) {
+            const numbers = value.replace(/\D/g, '');
+            const limited = numbers.substring(0, 15);
+            if (limited.length <= 3) {
+                return limited;
+            } else if (limited.length <= 7) {
+                return limited.substring(0, 3) + ' ' + limited.substring(3);
+            } else if (limited.length <= 11) {
+                return limited.substring(0, 3) + ' ' + limited.substring(3, 7) + ' ' + limited.substring(7);
+            } else {
+                return limited.substring(0, 3) + ' ' + limited.substring(3, 7) + ' ' + limited.substring(7, 11) + ' ' + limited.substring(11);
+            }
         }
-    }
 
-    function validateNumbersOnly(value) {
-        return value.replace(/\D/g, '');
-    }
+        function validateNumbersOnly(value) {
+            return value.replace(/\D/g, '');
+        }
 
-    if (susNumberInput) {
-        susNumberInput.addEventListener('input', function(e) {
-            const formatted = formatSusNumber(e.target.value);
-            e.target.value = formatted;
-        });
-        susNumberInput.addEventListener('keypress', function(e) {
-            const char = String.fromCharCode(e.which);
-            if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
-                e.preventDefault();
-            }
-        });
-    }
+        if (susNumberInput) {
+            susNumberInput.addEventListener('input', function (e) {
+                const formatted = formatSusNumber(e.target.value);
+                e.target.value = formatted;
+            });
+            susNumberInput.addEventListener('keypress', function (e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
+                    e.preventDefault();
+                }
+            });
+        }
 
-    if (susfacilInput) {
-        susfacilInput.addEventListener('input', function(e) {
-            e.target.value = validateNumbersOnly(e.target.value);
-        });
-        susfacilInput.addEventListener('keypress', function(e) {
-            const char = String.fromCharCode(e.which);
-            if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
-                e.preventDefault();
-            }
-        });
-    }
-});
+        if (susfacilInput) {
+            susfacilInput.addEventListener('input', function (e) {
+                e.target.value = validateNumbersOnly(e.target.value);
+            });
+            susfacilInput.addEventListener('keypress', function (e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+    });
 </script>
-<script src="{{ url_for('static', filename='nir/nir_procedures.js') }}"></script>
 {% endblock %}
