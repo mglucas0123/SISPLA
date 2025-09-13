@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def admin_required(f):
     """Decorator para verificar se o usuário é admin"""
-    return require_permission('admin_users')(f)
+    return require_permission('admin-total')(f)
 
 
 def handle_database_error(operation_name):

@@ -5,7 +5,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 from app.models import db, Notice
-from .utils import admin_required, handle_database_error, create_secure_folder, validate_file_extension, logger
+from app.utils.rbac_permissions import require_permission, require_any_permission
+from .utils import handle_database_error, create_secure_folder, validate_file_extension, logger
 
 notices_bp = Blueprint('notices', __name__, url_prefix='/notices')
 
@@ -15,13 +16,14 @@ notices_bp = Blueprint('notices', __name__, url_prefix='/notices')
 
 @notices_bp.route("/", methods=["GET", "POST"])
 @login_required
-@admin_required
+@require_any_permission(['gerenciar-mural', 'publicar-aviso-mural'])
 def manage_notices():
     if request.method == "POST":
         return create_notice()
     
     return list_notices()
 
+@require_any_permission(['gerenciar-mural', 'publicar-aviso-mural'])
 @handle_database_error("criar aviso")
 def create_notice():
     """Criar novo aviso"""
@@ -104,7 +106,7 @@ def list_notices():
 
 @notices_bp.route("/delete/<int:notice_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-mural')
 @handle_database_error("deletar aviso")
 def delete_notice(notice_id):
     """Deletar aviso"""

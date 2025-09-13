@@ -170,8 +170,11 @@ def repository_detail_page(repo_id, folder_id=None):
     return render_template("repository/repository_detail.html", repository=repo, current_folder=current_folder, folders=folders, files=files_with_details, breadcrumbs=breadcrumbs, all_folders=all_folders_for_moving)
 
 #<!--- UPLOAD DE ARQUIVO --->
+from app.utils.rbac_permissions import require_permission
+
 @repository_bp.route('/repository/<int:repo_id>/upload', methods=['POST'])
 @login_required
+@require_permission('criar-repositorio')
 def upload_file(repo_id):
     repo = Repository.query.get_or_404(repo_id)
     if not has_repo_access(repo, current_user):
@@ -220,6 +223,7 @@ def upload_file(repo_id):
 #<!--- CRIAR PASTA --->
 @repository_bp.route('/repository/<int:repo_id>/create_folder', methods=['POST'])
 @login_required
+@require_permission('criar-repositorio')
 def create_folder(repo_id):
     repo = Repository.query.get_or_404(repo_id)
     if not has_repo_access(repo, current_user):
@@ -291,6 +295,7 @@ def download_file(file_id):
 #<!--- RENOMEAR ARQUIVOS/PASTAS --->
 @repository_bp.route('/file/rename/<int:file_id>', methods=['POST'])
 @login_required
+@require_permission('editar-conteudo-repositorio')
 def rename_file(file_id):
     file_obj = get_file_and_validate_access(file_id)
     new_name_from_prompt = request.json.get('new_name', '').strip()
@@ -340,6 +345,7 @@ def rename_file(file_id):
 #<!--- DELETAR ARQUIVOS --->
 @repository_bp.route('/file/delete/<int:file_id>', methods=['POST'])
 @login_required
+@require_permission('excluir-conteudo-repositorio')
 def delete_file(file_id):
     item_to_delete = get_file_and_validate_access(file_id)
     repo_id_to_redirect = item_to_delete.repository_id
@@ -359,6 +365,7 @@ def delete_file(file_id):
 #<!--- MOVER ARQUIVOS/PASTAS --->
 @repository_bp.route('/file/move', methods=['POST'])
 @login_required
+@require_permission('editar-conteudo-repositorio')
 def move_file():
     data = request.get_json()
     file_id = data.get('file_id')

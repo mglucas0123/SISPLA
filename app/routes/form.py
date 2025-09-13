@@ -10,7 +10,7 @@ form_bp = Blueprint('form', __name__, template_folder='../templates')
 
 @form_bp.route("/new_form", methods=["GET", "POST"])
 @login_required
-@require_permission('criar_formulario')
+@require_permission('criar-plantao')
 def new_form():
 
     if request.method == "POST":
@@ -36,6 +36,7 @@ def new_form():
 
 @form_bp.route("/forms")
 @login_required
+@require_permission('ver-plantoes')
 def forms():
     data_inicio_str = request.args.get('data_inicio', '').strip()
     data_fim_str = request.args.get('data_fim', '').strip()
@@ -88,6 +89,7 @@ def forms():
 
 @form_bp.route("/form/<int:form_id>/details")
 @login_required
+@require_permission('ver-detalhes-plantao')
 def details_form(form_id):
     formulario = db.session.get(Form, form_id)
     if not formulario:
@@ -98,7 +100,7 @@ def details_form(form_id):
 
 @form_bp.route("/form/delet/<int:form_id>", methods=["POST"])
 @login_required
-@require_permission('admin_users')
+@require_permission('excluir-plantao')
 def delet_form(form_id): 
 
     formulario_para_deletar = db.session.get(Form, form_id)

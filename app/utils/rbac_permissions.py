@@ -7,107 +7,132 @@ class RBACManager:
         
     @staticmethod
     def init_default_permissions():
+        # Definição granular de permissões
         default_permissions = [
-            {'name': 'new_registry_nir', 'description': 'Criar registros NIR', 'module': 'nir'},
-            {'name': 'new_registry_on_duty', 'description': 'Criar registro Plantão', 'module': 'forms'},
+            # Módulo NIR
+            {'name': 'ver-nir-todos', 'description': 'Visualizar todos os registros do NIR', 'module': 'nir'},
+            {'name': 'ver-nir-setor', 'description': 'Visualizar apenas registros do seu setor (NIR)', 'module': 'nir'},
+            {'name': 'criar-registro-nir', 'description': 'Criar um novo registro de internação', 'module': 'nir'},
+            {'name': 'editar-registro-nir', 'description': 'Editar qualquer parte de um registro NIR', 'module': 'nir'},
+            {'name': 'editar-secao-nir', 'description': 'Editar a seção do NIR de responsabilidade do seu setor', 'module': 'nir'},
+            {'name': 'excluir-registro-nir', 'description': 'Excluir um registro do NIR', 'module': 'nir'},
+            {'name': 'faturar-registro-nir', 'description': 'Realizar a ação de faturamento em um registro NIR', 'module': 'nir'},
 
-            {'name': 'editar_nir', 'description': 'Editar registros NIR', 'module': 'nir'},
-            {'name': 'excluir_nir', 'description': 'Excluir registros NIR', 'module': 'nir'},
-            {'name': 'visualizar_nir', 'description': 'Visualizar registros NIR', 'module': 'nir'},
+            # Módulo Admin - Usuários
+            {'name': 'gerenciar-usuarios', 'description': 'Acesso total ao gerenciamento de usuários', 'module': 'admin'},
+
+            # Módulo Admin - Mural
+            {'name': 'gerenciar-mural', 'description': 'Acesso total ao gerenciamento do mural de avisos', 'module': 'admin'},
+            {'name': 'publicar-aviso-mural', 'description': 'Permissão para publicar um novo aviso no mural', 'module': 'admin'},
+
+            # Módulo Admin - Repositórios
+            {'name': 'gerenciar-repositorios-todos', 'description': 'Acesso total para gerenciar todos os repositórios', 'module': 'admin'},
+            {'name': 'criar-repositorio', 'description': 'Permissão para criar um novo repositório', 'module': 'repository'},
+
+            # Módulo Admin - Treinamentos
+            {'name': 'gerenciar-treinamentos', 'description': 'Acesso total para gerenciar treinamentos e quizzes', 'module': 'admin'},
+            {'name': 'criar-treinamento', 'description': 'Permissão para criar um novo treinamento', 'module': 'training'},
+
+            # Acesso Geral
+            {'name': 'acessar-treinamentos', 'description': 'Acesso geral para visualizar e realizar treinamentos', 'module': 'training'},
+            {'name': 'acessar-repositorios', 'description': 'Acesso geral para visualizar repositórios', 'module': 'repository'},
+
+            # Módulo Plantão
+            {'name': 'criar-plantao', 'description': 'Criar um novo registro de plantão', 'module': 'forms'},
+            {'name': 'ver-plantoes', 'description': 'Visualizar a lista de plantões', 'module': 'forms'},
+            {'name': 'ver-detalhes-plantao', 'description': 'Visualizar detalhes de um plantão', 'module': 'forms'},
+            {'name': 'excluir-plantao', 'description': 'Excluir um registro de plantão', 'module': 'forms'},
+
+            # Módulo Repositório (Conteúdo)
+            {'name': 'editar-conteudo-repositorio', 'description': 'Editar conteúdo de um repositório (renomear, mover)', 'module': 'repository'},
+            {'name': 'excluir-conteudo-repositorio', 'description': 'Excluir conteúdo de um repositório (arquivos, pastas)', 'module': 'repository'},
             
-            {'name': 'criar_formulario', 'description': 'Criar formulários', 'module': 'forms'},
-            {'name': 'editar_formulario', 'description': 'Editar formulários', 'module': 'forms'},
-            {'name': 'visualizar_formulario', 'description': 'Visualizar formulários', 'module': 'forms'},
-            
-            {'name': 'acessar_treinamentos', 'description': 'Acessar módulo de treinamentos', 'module': 'training'},
-            {'name': 'gerenciar_cursos', 'description': 'Gerenciar cursos', 'module': 'training'},
-            
-            {'name': 'visualizar_relatorios', 'description': 'Visualizar relatórios', 'module': 'reports'},
-            {'name': 'gerar_relatorios', 'description': 'Gerar relatórios', 'module': 'reports'},
-            
-            {'name': 'gerenciar_usuarios', 'description': 'Gerenciar usuários', 'module': 'admin'},
-            {'name': 'visualizar_usuarios', 'description': 'Visualizar usuários', 'module': 'admin'},
-            {'name': 'admin_users', 'description': 'Gerenciar usuários do sistema', 'module': 'admin'},
-            
-            {'name': 'gerenciar_farmacia', 'description': 'Gerenciar farmácia', 'module': 'farmacia'},
-            {'name': 'dispensar_medicamento', 'description': 'Dispensar medicamentos', 'module': 'farmacia'},
-            
-            {'name': 'gerenciar_laboratorio', 'description': 'Gerenciar laboratório', 'module': 'laboratorio'},
-            {'name': 'liberar_exames', 'description': 'Liberar resultados de exames', 'module': 'laboratorio'},
-            
-            {'name': 'gerenciar_faturamento', 'description': 'Gerenciar faturamento', 'module': 'faturamento'},
-            {'name': 'aprovar_contas', 'description': 'Aprovar contas médicas', 'module': 'faturamento'},
+            # Permissão de super-administrador
+            {'name': 'admin-total', 'description': 'Acesso irrestrito a todas as funcionalidades do sistema', 'module': 'admin'},
         ]
-        
+
         for perm_data in default_permissions:
             if not Permission.query.filter_by(name=perm_data['name']).first():
                 permission = Permission(**perm_data)
                 db.session.add(permission)
-        
+
         db.session.commit()
-    
+
     @staticmethod
     def init_default_roles():
+        # Definição das Funções (Roles) e suas permissões
         default_roles = [
             {
-                'name': 'Enfermeiro',
-                'description': 'Profissional de enfermagem',
-                'sector': 'ENFERMAGEM',
-                'permissions': ['criar_nir', 'editar_nir', 'visualizar_nir', 'criar_formulario', 'editar_formulario', 'visualizar_formulario', 'acessar_treinamentos']
+                'name': 'Administrador do Sistema',
+                'description': 'Acesso total ao sistema',
+                'sector': 'TI',
+                'permissions': ['admin-total'] # Permissão única que concede todos os acessos
             },
             {
-                'name': 'Médico',
-                'description': 'Médico assistente',
-                'sector': 'MEDICINA',
-                'permissions': ['criar_nir', 'editar_nir', 'visualizar_nir', 'criar_formulario', 'visualizar_formulario', 'acessar_treinamentos', 'visualizar_relatorios']
+                'name': 'Nir',
+                'description': 'Núcleo Interno de Regulação',
+                'sector': 'NIR',
+                'permissions': [
+                    'ver-nir-todos',
+                    'criar-registro-nir',
+                    'editar-secao-nir',
+                    'acessar-treinamentos',
+                    'acessar-repositorios',
+                    'criar-plantao',
+                    'ver-plantoes',
+                    'ver-detalhes-plantao',
+                    'criar-repositorio',
+                    'editar-conteudo-repositorio',
+                    'excluir-conteudo-repositorio'
+                ]
+            },
+            {
+                'name': 'Enfermeiro',
+                'description': 'Profissional de enfermagem assistencial',
+                'sector': 'ENFERMAGEM',
+                'permissions': [
+                    'ver-nir-setor',
+                    'editar-secao-nir',
+                    'acessar-treinamentos',
+                    'acessar-repositorios',
+                    'criar-plantao',
+                    'ver-plantoes',
+                    'ver-detalhes-plantao'
+                ]
+            },
+            {
+                'name': 'Enfermeiro CC (Centro Cirúrgico)',
+                'description': 'Profissional de enfermagem do Centro Cirúrgico',
+                'sector': 'CENTRO_CIRURGICO',
+                'permissions': [
+                    'ver-nir-setor',
+                    'editar-secao-nir',
+                    'acessar-treinamentos',
+                    'acessar-repositorios'
+                ]
             },
             {
                 'name': 'Faturista',
-                'description': 'Responsável pelo faturamento',
+                'description': 'Responsável pelo faturamento das contas hospitalares',
                 'sector': 'FATURAMENTO',
-                'permissions': ['visualizar_nir', 'editar_nir', 'gerenciar_faturamento', 'aprovar_contas', 'visualizar_relatorios', 'gerar_relatorios']
+                'permissions': [
+                    'ver-nir-setor',
+                    'editar-secao-nir',
+                    'faturar-registro-nir',
+                    'acessar-treinamentos',
+                    'acessar-repositorios'
+                ]
             },
+            # Adicionando um papel base para usuários comuns
             {
-                'name': 'Farmacêutico',
-                'description': 'Responsável pela farmácia',
-                'sector': 'FARMACIA',
-                'permissions': ['gerenciar_farmacia', 'dispensar_medicamento', 'acessar_treinamentos', 'criar_formulario', 'visualizar_formulario']
-            },
-            {
-                'name': 'Técnico Laboratório',
-                'description': 'Técnico de laboratório',
-                'sector': 'LABORATORIO',
-                'permissions': ['gerenciar_laboratorio', 'liberar_exames', 'acessar_treinamentos', 'criar_formulario', 'visualizar_formulario']
-            },
-            {
-                'name': 'Centro Cirúrgico',
-                'description': 'Equipe do centro cirúrgico',
-                'sector': 'CENTRO_CIRURGICO',
-                'permissions': ['visualizar_nir', 'editar_nir', 'acessar_treinamentos', 'criar_formulario', 'visualizar_formulario']
-            },
-            {
-                'name': 'Recepcionista',
-                'description': 'Atendimento e recepção',
-                'sector': 'RECEPCAO',
-                'permissions': ['criar_nir', 'visualizar_nir', 'acessar_treinamentos']
-            },
-            {
-                'name': 'Gestor RH',
-                'description': 'Gestão de recursos humanos',
-                'sector': 'RH',
-                'permissions': ['gerenciar_usuarios', 'visualizar_usuarios', 'gerenciar_cursos', 'acessar_treinamentos', 'visualizar_relatorios', 'gerar_relatorios']
-            },
-            {
-                'name': 'Administrador',
-                'description': 'Administrador do Sistema',
-                'sector': 'TI',
-                'permissions': ['gerenciar_usuarios', 'visualizar_usuarios', 'gerenciar_cursos', 'acessar_treinamentos', 'visualizar_relatorios', 'gerar_relatorios', 'admin_users']
-            },
-            {
-                'name': 'Diretor',
-                'description': 'Direção hospitalar',
-                'sector': 'DIRETORIA',
-                'permissions': ['visualizar_relatorios', 'gerar_relatorios', 'visualizar_usuarios', 'acessar_treinamentos', 'admin_users', 'gerenciar_usuarios']
+                'name': 'Usuário Padrão',
+                'description': 'Usuário com acesso básico aos módulos comuns',
+                'sector': 'GERAL',
+                'permissions': [
+                    'acessar-treinamentos',
+                    'acessar-repositorios',
+                    'criar-repositorio'
+                ]
             }
         ]
         
@@ -135,7 +160,7 @@ def require_permission(permission_name):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth.login'))
             
-            if current_user.has_permission('admin_users'):
+            if current_user.has_permission('admin-total'):
                 return f(*args, **kwargs)
             
             if not current_user.has_permission(permission_name):
@@ -153,7 +178,7 @@ def require_module_access(module_name):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth.login'))
             
-            if current_user.has_permission('admin_users'):
+            if current_user.has_permission('admin-total'):
                 return f(*args, **kwargs)
             
             if not current_user.has_module_access(module_name):
@@ -171,7 +196,7 @@ def require_any_permission(permission_list):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth.login'))
             
-            if current_user.has_permission('admin_users'):
+            if current_user.has_permission('admin-total'):
                 return f(*args, **kwargs)
             
             has_permission = any(current_user.has_permission(perm) for perm in permission_list)
@@ -185,7 +210,7 @@ def require_any_permission(permission_list):
     return decorator
 
 def get_user_permissions(user):
-    if user.has_permission('admin_users'):
+    if user.has_permission('admin-total'):
         return Permission.query.all()
     
     permissions = set()
@@ -195,7 +220,7 @@ def get_user_permissions(user):
     return list(permissions)
 
 def get_user_modules(user):
-    if user.has_permission('admin_users'):
+    if user.has_permission('admin-total'):
         return ['all']
     
     modules = set()

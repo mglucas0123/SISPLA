@@ -3,7 +3,8 @@ from flask_login import login_required, current_user
 from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from app.models import db, Repository, User
-from .utils import admin_required, handle_database_error
+from app.utils.rbac_permissions import require_permission
+from .utils import handle_database_error
 import os
 import logging
 import shutil
@@ -18,7 +19,7 @@ repositories_bp = Blueprint('repositories', __name__, url_prefix='/repositories'
 
 @repositories_bp.route('/')
 @login_required
-@admin_required
+@require_permission('gerenciar-repositorios-todos')
 @handle_database_error("listar repositórios")
 def manage_repositories():
     """Gerenciar repositórios"""
@@ -60,7 +61,7 @@ def manage_repositories():
 
 @repositories_bp.route('/create', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-repositorios-todos')
 @handle_database_error("criar repositório")
 def create_repository():
     """Criar novo repositório"""
@@ -122,7 +123,7 @@ def create_repository():
 
 @repositories_bp.route('/<int:repo_id>/edit', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-repositorios-todos')
 @handle_database_error("editar repositório")
 def edit_repository(repo_id):
     """Editar repositório existente"""
@@ -183,7 +184,7 @@ def edit_repository(repo_id):
 
 @repositories_bp.route('/<int:repo_id>/delete', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-repositorios-todos')
 @handle_database_error("deletar repositório")
 def delete_repository(repo_id):
     """Deletar repositório"""
@@ -208,7 +209,7 @@ def delete_repository(repo_id):
 
 @repositories_bp.route('/create-private-for-user/<int:user_id>', methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-repositorios-todos')
 @handle_database_error("criar repositório privado")
 def create_private_repository_for_user(user_id):
     """Criar repositório privado para usuário específico"""

@@ -4,7 +4,8 @@ from flask_login import current_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import generate_password_hash
 from app.models import db, User, Repository
-from .utils import admin_required, handle_database_error, validate_user_data, logger
+from app.utils.rbac_permissions import require_permission
+from .utils import handle_database_error, validate_user_data, logger
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -14,7 +15,7 @@ users_bp = Blueprint('users', __name__, url_prefix='/users')
 
 @users_bp.route("/", methods=["GET", "POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 def list_users():
     if request.method == "POST":
         return create_user()
@@ -22,7 +23,7 @@ def list_users():
     return render_users_list()
 
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("criar usuário")
 def create_user():
     """Lógica para criar novo usuário"""
@@ -144,7 +145,7 @@ def render_users_list():
 
 @users_bp.route("/change_password/<int:user_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("alterar senha")
 def change_password(user_id):
     """Alterar senha de usuário"""
@@ -164,7 +165,7 @@ def change_password(user_id):
 
 @users_bp.route("/delete/<int:user_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("deletar usuário")
 def delete_user(user_id):
     """Deletar usuário"""
@@ -184,7 +185,7 @@ def delete_user(user_id):
 
 @users_bp.route("/change_roles/<int:user_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("alterar roles")
 def change_roles(user_id):
     """Alterar roles do usuário no sistema RBAC"""
@@ -207,7 +208,7 @@ def change_roles(user_id):
 
 @users_bp.route("/toggle_status/<int:user_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("alterar status")
 def toggle_status(user_id):
     """Ativar/desativar usuário"""
@@ -229,7 +230,7 @@ def toggle_status(user_id):
 
 @users_bp.route("/change_rbac_permissions/<int:user_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("alterar permissões RBAC")
 def change_rbac_permissions(user_id):
     """Alterar permissões RBAC específicas do usuário"""
@@ -254,7 +255,7 @@ def change_rbac_permissions(user_id):
 
 @users_bp.route("/edit_basic_data/<int:user_id>", methods=["POST"])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("editar dados básicos")
 def edit_basic_data(user_id):
     """Editar dados básicos do usuário (nome, username, email)"""
@@ -301,7 +302,7 @@ def edit_basic_data(user_id):
 
 @users_bp.route("/create_private_repo/<int:user_id>", methods=['POST'])
 @login_required
-@admin_required
+@require_permission('gerenciar-usuarios')
 @handle_database_error("criar repositório privado")
 def create_private_repo(user_id):
     """Criar repositório privado para usuário"""
