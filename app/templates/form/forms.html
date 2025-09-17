@@ -30,7 +30,7 @@
     {% endif %}
     <div class="forms-card forms-filters-card">
             <div class="forms-card-body forms-filters-body">
-            <form method="GET" action="{{ url_for('form.forms') }}" class="forms-filters-form">
+            <form method="GET" action="{{ url_for('shift_handover.shift_handover_records') }}" class="forms-filters-form">
                 <div class="forms-filters-container">
                     <div class="forms-filters-row">
                         <div class="forms-filter-item">
@@ -87,7 +87,7 @@
                                 <i class="bi bi-search"></i>
                                 Filtrar
                             </button>
-                            <a href="{{ url_for('form.forms') }}" class="forms-btn forms-btn-secondary forms-btn-sm">
+                            <a href="{{ url_for('shift_handover.shift_handover_records') }}" class="forms-btn forms-btn-secondary forms-btn-sm">
                                 <i class="bi bi-eraser"></i>
                                 Limpar
                             </a>
@@ -129,7 +129,7 @@
                             <tr class="forms-table-row">
                                 <td class="forms-table-cell">
                                     <div class="forms-user-info">
-                                        <a href="{{ url_for('form.details_form', form_id=f.id) }}" class="forms-user-name">
+                                        <a href="{{ url_for('shift_handover.shift_handover_record_details', form_id=f.id) }}" class="forms-user-name">
                                             {{ f.worker.name | truncate(35, False) }}
                                         </a>
                                         <span class="forms-user-username">{{ f.worker.username | truncate(35, False) }}</span>
@@ -146,16 +146,9 @@
                                 </td>
                                 <td class="forms-table-cell forms-table-center">
                                     <div class="forms-action-buttons">
-                                        <a href="{{ url_for('form.details_form', form_id=f.id) }}" class="forms-action-btn forms-action-view" title="Ver Detalhes">
+                                        <a href="{{ url_for('shift_handover.shift_handover_record_details', form_id=f.id) }}" class="forms-action-btn forms-action-view" title="Ver Detalhes">
                                             <i class="bi bi-eye-fill"></i>
                                         </a>
-                                        {% if 'ALTERAR_STATUS' in session.get('perfil', []) or 'ADMIN' in session.get('perfil', []) %}
-                                        <button type="button" class="forms-action-btn forms-action-edit" title="Alterar Status" 
-                                            data-bs-toggle="modal" data-bs-target="#alterarStatusFormModal" 
-                                            data-form-id="{{ f.id }}" data-current-status="{{ f.status }}">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -180,19 +173,19 @@
         <nav aria-label="Navegação de usuários">
             <ul class="pagination justify-content-center mt-4">
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('form.forms', page=pagination.prev_num) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('shift_handover.shift_handover_records', page=pagination.prev_num) }}">Anterior</a>
                 </li>
                 {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                 {% if p %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('form.forms', page=p) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('shift_handover.shift_handover_records', page=p) }}">{{ p }}</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled"><span class="page-link">…</span></li>
                 {% endif %}
                 {% endfor %}
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('form.forms', page=pagination.next_num) }}">Próxima</a>
+                    <a class="page-link" href="{{ url_for('shift_handover.shift_handover_records', page=pagination.next_num) }}">Próxima</a>
                 </li>
             </ul>
         </nav>

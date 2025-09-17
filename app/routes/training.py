@@ -96,7 +96,7 @@ def course_list_page():
 def course_player_page(course_id):
     course = Course.query.get_or_404(course_id)
     
-    if not course.is_active and not current_user.has_permission('gerenciar-treinamentos'):
+    if not course.is_active:
         flash("Este curso não está disponível no momento.", "warning")
         return redirect(url_for('main.panel'))
 

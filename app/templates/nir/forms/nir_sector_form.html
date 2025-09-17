@@ -345,14 +345,11 @@
                                 <select class="form-select nir-form-control" name="discharge_type" {% if
                                     section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
                                     <option value="">Selecione</option>
-                                    <option value="CURA" {% if record.discharge_type=='CURA' %}selected{% endif %}>Cura
-                                    </option>
-                                    <option value="MELHORA" {% if record.discharge_type=='MELHORA' %}selected{% endif
-                                        %}>Melhora</option>
-                                    <option value="TRANSFERENCIA" {% if record.discharge_type=='TRANSFERENCIA'
-                                        %}selected{% endif %}>Transferência</option>
-                                    <option value="OBITO" {% if record.discharge_type=='OBITO' %}selected{% endif %}>
-                                        Óbito</option>
+                                    <option value="ALTA MELHORADA" {% if record.discharge_type=='ALTA MELHORADA' %}selected{% endif %}>Alta Melhorada</option>
+                                    <option value="ALTA A PEDIDO" {% if record.discharge_type=='ALTA A PEDIDO' %}selected{% endif %}>Alta a Pedido</option>
+                                    <option value="TRANSFERENCIA" {% if record.discharge_type=='TRANSFERENCIA' %}selected{% endif %}>Transferência</option>
+                                    <option value="OBITO" {% if record.discharge_type=='OBITO' %}selected{% endif %}>Óbito</option>
+                                    <option value="EVASAO" {% if record.discharge_type=='EVASAO' %}selected{% endif %}>Evasão</option>
                                 </select>
                             </div>
                             <div class="col-md-4">

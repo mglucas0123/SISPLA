@@ -33,6 +33,7 @@
   let selectedCode = '';
   const addBtn = document.getElementById('add-procedure-btn');
   const listWrapper = document.getElementById('procedures-list');
+  const canEdit = listWrapper ? (listWrapper.getAttribute('data-can-edit-procedures') === '1') : true;
   const form = codeInput.closest('form');
   let procedures = [];
 
@@ -97,6 +98,7 @@
   }
 
   function addCurrent(){
+    if(!canEdit) return;
     const c = codeInput.value.trim();
     const d = descInput.value.trim();
     if(!c || !d) return;
@@ -113,6 +115,7 @@
   }
 
   function removeProcedure(index){
+    if(!canEdit) return;
     procedures.splice(index,1);
     renderProcedures();
   }
@@ -123,14 +126,16 @@
     procedures.forEach((p,i)=>{
       const row = document.createElement('div');
       row.className = 'd-flex align-items-start gap-2 mb-1';
+      let btnHtml = '';
+      if(canEdit){
+        btnHtml = `<button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remover" data-index="${i}">&times;</button>`;
+      }
       row.innerHTML = `
         <div class="flex-grow-1 small border rounded p-2 bg-white">
           <strong>${escapeHtml(p.code)}</strong><br>
           <span class="text-muted">${escapeHtml(p.description)}</span>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remover" data-index="${i}">
-          &times;
-        </button>
+        ${btnHtml}
         <input type="hidden" name="procedure_codes[]" value="${escapeHtml(p.code)}">
         <input type="hidden" name="procedure_descriptions[]" value="${escapeHtml(p.description)}">
       `;
@@ -186,7 +191,7 @@
     if(!container.contains(e.target) && e.target !== codeInput){
       hide();
     }
-    if(e.target.matches('button[data-index]')){
+    if(canEdit && e.target.matches('button[data-index]')){
       const idx = parseInt(e.target.getAttribute('data-index')); 
       if(!isNaN(idx)) removeProcedure(idx);
     }
@@ -208,7 +213,7 @@
   window.addEventListener('resize', updateWidth);
   codeInput.addEventListener('focus', updateWidth);
 
-  if(addBtn){
+  if(addBtn && canEdit){
     addBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       addCurrent();

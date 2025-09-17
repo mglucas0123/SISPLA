@@ -5,8 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 from app.models import db, Notice
-from app.utils.rbac_permissions import require_permission, require_any_permission
-from .utils import handle_database_error, create_secure_folder, validate_file_extension, logger
+from .utils import admin_required, handle_database_error, create_secure_folder, validate_file_extension, logger
 
 notices_bp = Blueprint('notices', __name__, url_prefix='/notices')
 
@@ -16,14 +15,15 @@ notices_bp = Blueprint('notices', __name__, url_prefix='/notices')
 
 @notices_bp.route("/", methods=["GET", "POST"])
 @login_required
-@require_any_permission(['gerenciar-mural', 'publicar-aviso-mural'])
+@admin_required
 def manage_notices():
     if request.method == "POST":
         return create_notice()
     
     return list_notices()
 
-@require_any_permission(['gerenciar-mural', 'publicar-aviso-mural'])
+@login_required
+@admin_required
 @handle_database_error("criar aviso")
 def create_notice():
     """Criar novo aviso"""
@@ -93,8 +93,10 @@ def create_image_notice():
     flash("Imagem publicada com sucesso no mural!", "success")
     return redirect(url_for("admin.notices.manage_notices"))
 
+#<--- Listar Avisos --->
+@login_required
+@admin_required
 def list_notices():
-    """Listar todos os avisos"""
     try:
         notices_query = db.select(Notice).order_by(Notice.date_registry.desc())
         notices_list = db.session.execute(notices_query).scalars().all()
@@ -104,9 +106,10 @@ def list_notices():
         flash("Erro ao carregar avisos.", "danger")
         return render_template("manage_notices.html", notices=[])
 
+#<--- Rota para Deletar Aviso --->
 @notices_bp.route("/delete/<int:notice_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-mural')
+@admin_required
 @handle_database_error("deletar aviso")
 def delete_notice(notice_id):
     """Deletar aviso"""
@@ -133,10 +136,10 @@ def delete_notice(notice_id):
     flash("Aviso deletado com sucesso.", "success")
     return redirect(url_for("admin.notices.manage_notices"))
 
+#<--- Rota para Servir Imagens --->
 @notices_bp.route('/image/<path:filename>')
 @login_required
 def serve_notice_image(filename):
-    """Servir imagens de avisos com validação"""
     try:
         notice_upload_path = os.path.join(current_app.root_path, 'uploads', 'notices')
         

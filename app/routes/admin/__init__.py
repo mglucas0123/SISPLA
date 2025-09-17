@@ -7,7 +7,6 @@ from .notices import notices_bp
 from .repositories import repositories_bp
 from .courses import courses_bp
 from .quiz import quiz_bp
-from .duty import duty_bp
 
 def create_admin_blueprint():    
     admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -17,7 +16,6 @@ def create_admin_blueprint():
     admin_bp.register_blueprint(repositories_bp)
     admin_bp.register_blueprint(courses_bp)
     admin_bp.register_blueprint(quiz_bp)
-    admin_bp.register_blueprint(duty_bp)
     
     @admin_bp.route("/")
     @login_required

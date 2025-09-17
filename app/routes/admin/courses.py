@@ -19,7 +19,7 @@ courses_bp = Blueprint('courses', __name__, url_prefix='/courses')
 
 @courses_bp.route('/')
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("listar cursos")
 def manage_courses():
     """Gerenciar cursos"""
@@ -57,7 +57,7 @@ def manage_courses():
 
 @courses_bp.route('/create', methods=['POST'])
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("criar curso")
 def create_course():
     """Criar novo curso"""
@@ -101,7 +101,7 @@ def create_course():
 
 @courses_bp.route('/<int:course_id>/edit', methods=['POST'])
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("editar curso")
 def edit_course(course_id):
     """Editar curso existente"""
@@ -172,7 +172,7 @@ def edit_course(course_id):
 
 @courses_bp.route('/<int:course_id>/toggle-status', methods=['POST'])
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("alterar status do curso")
 def toggle_course_status(course_id):
     """Ativar/desativar curso"""
@@ -188,7 +188,7 @@ def toggle_course_status(course_id):
 
 @courses_bp.route('/<int:course_id>/delete', methods=['POST'])
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("deletar curso")
 def delete_course(course_id):
     """Deletar curso"""
@@ -210,7 +210,7 @@ def delete_course(course_id):
 
 @courses_bp.route('/<int:course_id>/progress')
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 def view_course_progress(course_id):
     """Ver progresso dos usuários no curso"""
     course = Course.query.get_or_404(course_id)
@@ -267,7 +267,7 @@ def view_course_progress(course_id):
 
 @courses_bp.route('/<int:course_id>/reset-progress', methods=['POST'])
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("resetar progresso")
 def reset_course_progress(course_id):
     """Resetar progresso de todos os usuários no curso"""
@@ -282,7 +282,7 @@ def reset_course_progress(course_id):
 
 @courses_bp.route('/<int:course_id>/reset-user-progress/<int:user_id>', methods=['POST'])
 @login_required
-@require_permission('gerenciar-treinamentos')
+@require_permission('admin-total')
 @handle_database_error("resetar progresso do usuário")
 def reset_user_course_progress(course_id, user_id):
     """Resetar progresso de um usuário específico no curso"""

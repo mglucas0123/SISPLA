@@ -260,7 +260,7 @@
                 <fieldset class="mb-4">
                     <legend>
                         <i class="bi bi-shield-check"></i>
-                        Roles do Usuário
+                        Setor do Usuário
                     </legend>
                     <div class="row">
                         {% for role in available_roles %}
@@ -270,9 +270,6 @@
                                 <label class="form-check-label" for="role_criar_{{ role.id }}">
                                     <i class="bi bi-person-badge text-primary"></i>
                                     {{ role.name }}
-                                    {% if role.description %}
-                                    <small class="text-muted d-block">{{ role.description }}</small>
-                                    {% endif %}
                                 </label>
                             </div>
                         </div>

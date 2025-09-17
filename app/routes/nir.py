@@ -2,11 +2,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app.models import db, Nir, User, NirProcedure, NirSectionStatus
 from app.config_procedures import search_procedures
-from app.utils.rbac_permissions import require_permission, require_module_access, require_any_permission
+from app.utils.rbac_permissions import require_permission, require_sector
 from datetime import datetime
 
 nir_bp = Blueprint('nir', __name__, template_folder='../templates')
 
+#<!--- Funções Auxiliares --->
 def get_nir_phase(record):
     config = record.get_section_control_config()
     nir_sections = [s for s, sec in config.items() if sec == 'NIR']
@@ -90,7 +91,6 @@ def update_section_status(nir_id, section_name, user_id):
 
 def _compute_global_info(rec):
     """Unified function to compute global status information for a NIR record"""
-    # If record was explicitly cancelled, surface it as the global status
     try:
         if (rec.cancelled or '').upper() == 'SIM':
             return 'CANCELADO', 'Fluxo cancelado'
@@ -129,9 +129,9 @@ def _compute_global_info(rec):
         return status, hint
     return 'CONCLUIDO', 'Fluxo concluído'
 
+#<!--- Lista de Registros NIR --->
 @nir_bp.route("/nir")
 @login_required
-@require_permission('ver-nir-todos')
 def list_records():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -178,10 +178,8 @@ def list_records():
         except ValueError:
             flash('Data final inválida', 'warning')
 
-    # Carrega todos os registros após filtros de formulário (sem sector_progress)
     all_basic_records = query.all()
 
-    # Pré-computa status global para todos (sempre para counts estáveis)
     for rec in all_basic_records:
         try:
             st, hint = _compute_global_info(rec)
@@ -191,10 +189,8 @@ def list_records():
             setattr(rec, '_global_status', None)
             setattr(rec, '_global_status_hint', None)
 
-    # Counts globais SEMPRE baseados em all_basic_records
     global_for_counts = all_basic_records
 
-    # Aplicar filtro sector/sector_progress apenas para definir registros mostrados
     if sector or sector_progress:
         def matches_sector(rec):
             prog = rec.get_sector_progress()
@@ -212,7 +208,6 @@ def list_records():
     else:
         display_records = all_basic_records
 
-    # Ordenar por status global: PENDENTE -> EM_ANDAMENTO -> CONCLUIDO (depois outros)
     def _status_sort_key(rec):
         st = getattr(rec, '_global_status', None) or 'PENDENTE'
         if st == 'PENDENTE':
@@ -223,7 +218,6 @@ def list_records():
             pri = 2
         else:
             pri = 3
-        # criação mais recente primeiro dentro da mesma categoria
         created_ts = 0
         try:
             if rec.creation_date:
@@ -237,18 +231,15 @@ def list_records():
     except Exception:
         pass
 
-    # Paginação somente sobre display_records
     from math import ceil
     total_display = len(display_records)
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
     page_items = display_records[start_idx:end_idx]
 
-    # Construir objeto pagination compatível com template (usando SimpleNamespace)
     from types import SimpleNamespace
     pages = ceil(total_display / per_page) if total_display else 1
     def _iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2):
-        # Mantém comportamento similar ao paginate padrão
         for p in range(1, pages + 1):
             yield p
     records = SimpleNamespace(
@@ -263,7 +254,6 @@ def list_records():
         iter_pages=_iter_pages
     )
 
-    # filtered_records agora igual aos registros usados para counts globais
     filtered_records = global_for_counts
     
     stats_counts = {
@@ -314,21 +304,20 @@ def list_records():
                          filters=filters,
                          stats_counts=stats_counts)
 
-@nir_bp.route("/nir/setor/novo")
+#<!--- Rota de Formulário e Criação de Registro NIR pelo Setor NIR --->
+@nir_bp.route("/nir/setor/novo", methods=['GET', 'POST'])
 @login_required
+@require_sector('NIR')
 @require_permission('criar-registro-nir')
 def sector_new_record():
-    """Formulário específico para criação de NIR pelo setor NIR"""
     user_sector = get_user_sector(current_user)
     if user_sector != 'NIR':
         flash('Acesso negado: apenas funcionários do NIR podem criar novos registros aqui', 'danger')
         return redirect(url_for('nir.my_work'))
-    return render_template('nir/sector_new_record.html', user_sector=user_sector)
 
-@nir_bp.route("/nir/criar", methods=['POST'])
-@login_required
-@require_permission('criar-registro-nir')
-def create_record():
+    if request.method == 'GET':
+        return render_template('nir/sector_new_record.html', user_sector=user_sector)
+
     try:
         birth_date_str = request.form.get('birth_date')
         birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date() if birth_date_str else None
@@ -354,7 +343,6 @@ def create_record():
                 flash('AIH é obrigatório para internação cirúrgica.', 'danger')
                 return redirect(url_for('nir.sector_new_record'))
 
-        # Capture medical/surgery fields from form (used for ELETIVO created by NIR)
         surgical_specialty_form = request.form.get('surgical_specialty') or None
         surgical_type_form = request.form.get('surgical_type') or None
         anesthetist_form = request.form.get('anesthetist') or None
@@ -397,7 +385,7 @@ def create_record():
             month=admission_date.strftime('%B') if admission_date else None,
             operator_id=current_user.id
         )
-        
+
         db.session.add(new_nir)
         db.session.flush()
 
@@ -466,9 +454,9 @@ def create_record():
         flash(f'Erro ao criar registro: {str(e)}', 'danger')
         return redirect(url_for('nir.sector_new_record'))
 
+#<!--- Detalhes do Registro NIR --->
 @nir_bp.route("/nir/<int:record_id>")
 @login_required
-@require_any_permission(['ver-nir-todos', 'ver-nir-setor'])
 def record_details(record_id):
     record = Nir.query.get_or_404(record_id)
     header_wait_label = None
@@ -506,9 +494,10 @@ def record_details(record_id):
         pass
     return render_template('nir/record_details.html', record=record, header_wait_label=header_wait_label, header_wait_kind=header_wait_kind)
 
+#<!--- Edição do Registro NIR --->
 @nir_bp.route("/nir/editar/<int:record_id>")
 @login_required
-@require_permission('editar-secao-nir')
+@require_permission('editar-registro-nir')
 def edit_record(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
@@ -518,7 +507,7 @@ def edit_record(record_id):
     section_statuses = {}
     
     for section_name, responsible_sector in config.items():
-        editable_sections[section_name] = (responsible_sector == user_sector)
+        editable_sections[section_name] = True
         status_obj = record.get_section_status(section_name)
         section_statuses[section_name] = status_obj.status if status_obj else 'PENDENTE'
     
@@ -530,26 +519,21 @@ def edit_record(record_id):
                          config=config,
                          current_user=current_user)
 
+#<!--- Atualização do Registro NIR --->
 @nir_bp.route("/nir/atualizar/<int:record_id>", methods=['POST'])
 @login_required
-@require_permission('editar-secao-nir')
+@require_permission('salvar-registro-nir')
 def update_record(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
     
     try:
         config = record.get_section_control_config()
-        editable_sections = {}
-        for section_name, responsible_sector in config.items():
-            editable_sections[section_name] = (responsible_sector == user_sector)
-        if user_sector == 'NIR':
-            phase_info = get_nir_phase(record)
-            if phase_info['locked'] or not phase_info['show_sections']:
-                flash('Registro bloqueado: aguardando fase de outro setor.', 'warning')
-                return redirect(url_for('nir.record_details', record_id=record.id))
-            for sec in list(editable_sections.keys()):
-                if sec not in phase_info['show_sections']:
-                    editable_sections[sec] = False
+        try:
+            initialize_section_statuses(record)
+        except Exception:
+            pass
+        editable_sections = {section_name: True for section_name in config.keys()}
         
         birth_date_str = request.form.get('birth_date')
         birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date() if birth_date_str else None
@@ -567,37 +551,50 @@ def update_record(record_id):
         if admission_date and discharge_date:
             total_days = (discharge_date - admission_date).days
 
+        changed_dados_paciente = False
         if editable_sections.get('dados_paciente', True):
             if 'patient_name' in request.form:
                 record.patient_name = request.form.get('patient_name') or record.patient_name
+                changed_dados_paciente = True
+            if 'birth_date' in request.form:
                 record.birth_date = birth_date or record.birth_date
+                changed_dados_paciente = True
+            if 'gender' in request.form:
                 record.gender = request.form.get('gender') or record.gender
-                if 'susfacil' in request.form:
-                    record.susfacil = request.form.get('susfacil')
-                if 'sus_number' in request.form and request.form.get('sus_number'):
+                changed_dados_paciente = True
+            if 'susfacil' in request.form:
+                record.susfacil = request.form.get('susfacil')
+                changed_dados_paciente = True
+            if 'sus_number' in request.form:
+                if request.form.get('sus_number'):
                     record.sus_number = request.form.get('sus_number')
+                changed_dados_paciente = True
+        changed_dados_iniciais = False
         if editable_sections.get('dados_internacao_iniciais', True):
-            if any(k in request.form for k in ['admission_date','entry_type','admission_type','admitted_from_origin','aih']):
+            if 'admission_date' in request.form:
                 if admission_date:
                     record.admission_date = admission_date
                     record.day = admission_date.day
                     record.month = admission_date.strftime('%B')
-                if 'entry_type' in request.form and request.form.get('entry_type'):
+                changed_dados_iniciais = True
+            if 'entry_type' in request.form:
+                if request.form.get('entry_type'):
                     record.entry_type = request.form.get('entry_type')
-                if 'admission_type' in request.form:
-                    record.admission_type = request.form.get('admission_type')
-                if 'admitted_from_origin' in request.form:
-                    record.admitted_from_origin = request.form.get('admitted_from_origin')
-                if 'aih' in request.form and request.form.get('aih'):
+                changed_dados_iniciais = True
+            if 'admission_type' in request.form:
+                record.admission_type = request.form.get('admission_type')
+                changed_dados_iniciais = True
+            if 'admitted_from_origin' in request.form:
+                record.admitted_from_origin = request.form.get('admitted_from_origin')
+                changed_dados_iniciais = True
+            if 'aih' in request.form:
+                if request.form.get('aih'):
                     record.aih = request.form.get('aih')
-                if record.admission_type == 'CIRURGICO' and not record.aih:
-                    if 'aih' in request.form:
-                        db.session.rollback()
-                        flash('AIH é obrigatório para internação cirúrgica.', 'danger')
-                        return redirect(url_for('nir.edit_record', record_id=record.id))
+                changed_dados_iniciais = True
 
+        changed_procedimentos = False
         if editable_sections.get('procedimentos', True):
-            if any(k in request.form for k in ['procedure_codes[]','procedure_code']):
+            if any(k in request.form for k in ['procedure_codes[]','procedure_code','surgical_description']):
                 record.procedures.clear()
                 db.session.flush()
                 codes = request.form.getlist('procedure_codes[]')
@@ -635,69 +632,75 @@ def update_record(record_id):
                             sequence=0,
                             is_primary=True
                         ))
-                
-                if user_sector == 'CENTRO_CIRURGICO' and not seen and not (single_code and single_desc):
-                    db.session.rollback()
-                    flash('É necessário adicionar pelo menos um procedimento para salvar o formulário do Centro Cirúrgico.', 'danger')
-                    return redirect(url_for('nir.edit_record', record_id=record.id))
+                changed_procedimentos = True
 
+        changed_info_med = False
         if editable_sections.get('informacoes_medicas', True):
-            if any(k in request.form for k in ['responsible_doctor','main_cid','surgical_specialty','auxiliary','anesthetist','anesthesia','pediatrics','surgical_type']):
-                if 'responsible_doctor' in request.form:
-                    record.responsible_doctor = request.form.get('responsible_doctor') or record.responsible_doctor
-                if 'main_cid' in request.form:
-                    record.main_cid = request.form.get('main_cid') or record.main_cid
-                if 'surgical_specialty' in request.form:
-                    record.surgical_specialty = request.form.get('surgical_specialty') or record.surgical_specialty
-                if 'auxiliary' in request.form:
-                    record.auxiliary = request.form.get('auxiliary') or record.auxiliary
-                if 'anesthetist' in request.form:
-                    record.anesthetist = request.form.get('anesthetist') or record.anesthetist
-                if 'anesthesia' in request.form:
-                    record.anesthesia = request.form.get('anesthesia') or record.anesthesia
-                if 'pediatrics' in request.form:
-                    if request.form.get('pediatrics_nao_aplica'):
-                        record.pediatrics = None
-                    else:
-                        record.pediatrics = request.form.get('pediatrics') or record.pediatrics
-                if 'surgical_type' in request.form:
-                    record.surgical_type = request.form.get('surgical_type') or record.surgical_type
+            if 'responsible_doctor' in request.form:
+                record.responsible_doctor = request.form.get('responsible_doctor') or record.responsible_doctor
+                changed_info_med = True
+            if 'main_cid' in request.form:
+                record.main_cid = request.form.get('main_cid') or record.main_cid
+                changed_info_med = True
+            if 'surgical_specialty' in request.form:
+                record.surgical_specialty = request.form.get('surgical_specialty') or record.surgical_specialty
+                changed_info_med = True
+            if 'auxiliary' in request.form:
+                record.auxiliary = request.form.get('auxiliary') or record.auxiliary
+                changed_info_med = True
+            if 'anesthetist' in request.form:
+                record.anesthetist = request.form.get('anesthetist') or record.anesthetist
+                changed_info_med = True
+            if 'anesthesia' in request.form:
+                record.anesthesia = request.form.get('anesthesia') or record.anesthesia
+                changed_info_med = True
+            if 'pediatrics' in request.form:
+                if request.form.get('pediatrics_nao_aplica'):
+                    record.pediatrics = None
+                else:
+                    record.pediatrics = request.form.get('pediatrics') or record.pediatrics
+                changed_info_med = True
+            if 'surgical_type' in request.form:
+                record.surgical_type = request.form.get('surgical_type') or record.surgical_type
+                changed_info_med = True
+            if 'auxiliary_nao_aplica' in request.form and request.form.get('auxiliary_nao_aplica'):
+                record.auxiliary = None
+                changed_info_med = True
 
-                if 'auxiliary_nao_aplica' in request.form:
-                    if request.form.get('auxiliary_nao_aplica'):
-                        record.auxiliary = None
-
-                if not record.responsible_doctor or not record.main_cid:
-                    db.session.rollback()
-                    flash('Preencha Médico Responsável e CID Principal.', 'danger')
-                    return redirect(url_for('nir.edit_record', record_id=record.id))
-
+        changed_alta = False
         if editable_sections.get('dados_alta_finais', True):
-            if 'scheduling_date' in request.form and scheduling_date:
-                record.scheduling_date = scheduling_date
-            discharge_type_form = request.form.get('discharge_type')
-            record.discharge_type = discharge_type_form
-            record.discharge_date = discharge_date
-            if discharge_date:
-                admission_for_calc = admission_date or record.admission_date
-                if admission_for_calc:
-                    record.total_days_admitted = (discharge_date - admission_for_calc).days
-            aih_final = request.form.get('aih_final')
-            if aih_final:
-                record.aih = aih_final
-            if record.admission_type == 'CIRURGICO' and not record.aih and 'dados_alta_finais' in editable_sections:
-                db.session.rollback()
-                flash('AIH é obrigatório para internação cirúrgica.', 'danger')
-                return redirect(url_for('nir.edit_record', record_id=record.id))
+            if 'scheduling_date' in request.form:
+                if scheduling_date:
+                    record.scheduling_date = scheduling_date
+                changed_alta = True
+            if 'discharge_type' in request.form:
+                record.discharge_type = request.form.get('discharge_type')
+                changed_alta = True
+            if 'discharge_date' in request.form:
+                record.discharge_date = discharge_date
+                if discharge_date:
+                    admission_for_calc = admission_date or record.admission_date
+                    if admission_for_calc:
+                        record.total_days_admitted = (discharge_date - admission_for_calc).days
+                changed_alta = True
+            if 'aih_final' in request.form:
+                aih_final = request.form.get('aih_final')
+                if aih_final:
+                    record.aih = aih_final
+                changed_alta = True
 
+        changed_status = False
         if editable_sections.get('status_controle', True):
-            # Harmonize final status selection with cancellation behavior (no separate 'cancelled' field)
-            status_final = (request.form.get('status') or '').strip()
-            if status_final == 'CANCELADO':
-                record.cancelled = 'SIM'
-            else:
-                record.cancelled = 'NAO'
-            record.cancellation_reason = request.form.get('cancellation_reason')
+            if 'status' in request.form:
+                status_final = (request.form.get('status') or '').strip()
+                if status_final == 'CANCELADO':
+                    record.cancelled = 'SIM'
+                elif status_final:
+                    record.cancelled = 'NAO'
+                changed_status = True
+            if 'cancellation_reason' in request.form:
+                record.cancellation_reason = request.form.get('cancellation_reason')
+                changed_status = True
             def norm_bool(value):
                 if not value:
                     return None
@@ -705,62 +708,35 @@ def update_record(record_id):
                 if value_up in ('SIM', 'NAO', 'NÃO'):
                     return 'SIM' if value_up == 'SIM' else 'NAO'
                 return None
-            criticized_raw = (request.form.get('criticized') or '').strip()
-            billed_raw = (request.form.get('billed') or '').strip()
-            criticized_form = norm_bool(criticized_raw)
-            billed_form = norm_bool(billed_raw)
-            # Required selections: ensure values provided
-            if not status_final or status_final not in ('CONCLUIDO', 'CANCELADO'):
-                db.session.rollback()
-                flash('Selecione uma opção para "Status Final".', 'danger')
-                return redirect(url_for('nir.edit_record', record_id=record.id))
-            if not criticized_raw or criticized_form is None:
-                db.session.rollback()
-                flash('Selecione uma opção para "Criticado?".', 'danger')
-                return redirect(url_for('nir.edit_record', record_id=record.id))
-            if not billed_raw or billed_form is None:
-                db.session.rollback()
-                flash('Selecione uma opção para "Faturado?".', 'danger')
-                return redirect(url_for('nir.edit_record', record_id=record.id))
-            if criticized_form is not None:
-                record.criticized = criticized_form
-            if billed_form is not None:
-                record.billed = billed_form
-            record.observation = request.form.get('observation')
-
-            # Validation: Final status CONCLUIDO requires billed == SIM
-            if status_final == 'CONCLUIDO':
-                effective_billed = (record.billed or 'NAO')
-                if effective_billed != 'SIM':
-                    db.session.rollback()
-                    flash('Para marcar como Concluído, o campo "Faturado?" deve ser SIM.', 'danger')
-                    return redirect(url_for('nir.edit_record', record_id=record.id))
-            # Validation: Final status CANCELADO requires cancellation_reason
-            if status_final == 'CANCELADO':
-                if not (record.cancellation_reason and record.cancellation_reason.strip()):
-                    db.session.rollback()
-                    flash('Informe o motivo do cancelamento ao marcar como Cancelado.', 'danger')
-                    return redirect(url_for('nir.edit_record', record_id=record.id))
+            if 'criticized' in request.form:
+                record.criticized = norm_bool((request.form.get('criticized') or '').strip()) or record.criticized
+                changed_status = True
+            if 'billed' in request.form:
+                record.billed = norm_bool((request.form.get('billed') or '').strip()) or record.billed
+                changed_status = True
+            if 'observation' in request.form:
+                record.observation = request.form.get('observation')
+                changed_status = True
 
         record.last_modified = datetime.utcnow()
 
-        if editable_sections.get('dados_paciente', False):
+        try:
+            if record.admission_date and record.discharge_date:
+                record.total_days_admitted = (record.discharge_date - record.admission_date).days
+        except Exception:
+            pass
+
+        if editable_sections.get('dados_paciente', False) and changed_dados_paciente:
             update_section_status(record.id, 'dados_paciente', current_user.id)
-            
-        if editable_sections.get('dados_internacao_iniciais', False):
+        if editable_sections.get('dados_internacao_iniciais', False) and changed_dados_iniciais:
             update_section_status(record.id, 'dados_internacao_iniciais', current_user.id)
-            
-        if editable_sections.get('procedimentos', False):
+        if editable_sections.get('procedimentos', False) and changed_procedimentos:
             update_section_status(record.id, 'procedimentos', current_user.id)
-            
-        if editable_sections.get('informacoes_medicas', False):
+        if editable_sections.get('informacoes_medicas', False) and changed_info_med:
             update_section_status(record.id, 'informacoes_medicas', current_user.id)
-            
-        if editable_sections.get('dados_alta_finais', False):
-            if record.discharge_date or record.discharge_type:
-                update_section_status(record.id, 'dados_alta_finais', current_user.id)
-            
-        if editable_sections.get('status_controle', False):
+        if editable_sections.get('dados_alta_finais', False) and changed_alta:
+            update_section_status(record.id, 'dados_alta_finais', current_user.id)
+        if editable_sections.get('status_controle', False) and changed_status:
             update_section_status(record.id, 'status_controle', current_user.id)
 
         try:
@@ -779,6 +755,7 @@ def update_record(record_id):
         flash(f'Erro ao atualizar registro: {str(e)}', 'danger')
         return redirect(url_for('nir.edit_record', record_id=record_id))
 
+#<!--- Exclusão do Registro NIR --->
 @nir_bp.route("/nir/excluir/<int:record_id>", methods=['POST'])
 @login_required
 @require_permission('excluir-registro-nir')
@@ -795,9 +772,9 @@ def delete_record(record_id):
 
     return redirect(url_for('nir.list_records'))
 
+#<!--- Rota de Redirecionamento "Meus Trabalhos" --->
 @nir_bp.route("/nir/meus-trabalhos")
 @login_required 
-@require_any_permission(['ver-nir-todos', 'ver-nir-setor'])
 def my_work():
     user_sector = get_user_sector(current_user)
     
@@ -810,9 +787,10 @@ def my_work():
     else:
         return redirect(url_for('nir.sector_nir_list'))
 
+#<!--- Rota de Listagem do Setor NIR --->
 @nir_bp.route("/nir/setor/nir")
 @login_required 
-@require_permission('ver-nir-setor')
+@require_sector('NIR')
 def sector_nir_list():
     user_sector = get_user_sector(current_user)
     if user_sector != 'NIR':
@@ -840,7 +818,6 @@ def sector_nir_list():
         query = query.filter(Nir.patient_name.ilike(f'%{patient_name}%'))
     
     all_records = query.all()
-    is_admin = current_user.has_permission('admin_users')
     nir_relevant_records = []
     for record in all_records:
         progress = record.get_sector_progress()
@@ -859,39 +836,28 @@ def sector_nir_list():
         alta_complete = sections_complete(alta_sections)
         surgery_progress = progress.get('CENTRO_CIRURGICO')
         surgery_complete = (surgery_progress and surgery_progress.get('status') == 'CONCLUIDO') if surgery_progress else True
-        include = True if is_admin else False
-        if entry in ('URGENCIA', 'ELETIVO'):
-            if not initial_complete:
-                include = True
-            elif initial_complete and surgery_complete and not alta_complete:
-                include = True
-        else:
-            if nir_sector_progress.get('status') in ['PENDENTE', 'EM_ANDAMENTO']:
-                include = True
-        if not include and record.operator_id == current_user.id:
-            include = True
-        if include:
-            setattr(record, '_created_by_current', record.operator_id == current_user.id)
-            try:
-                phase_info = get_nir_phase(record)
-                setattr(record, '_nir_phase', phase_info.get('phase'))
-                setattr(record, '_nir_locked', phase_info.get('locked'))
-                phase = phase_info.get('phase')
-                display_status = nir_sector_progress.get('status')
-                if phase in ('INITIAL', 'FULL'):
-                    display_status = 'PENDENTE'
-                elif phase == 'FINAL':
-                    if not alta_complete:
-                        if not record.discharge_date and not record.discharge_type:
-                            display_status = 'PENDENTE'
-                setattr(record, '_nir_display_status', display_status)
-                setattr(record, '_nir_waiting_for', phase_info.get('waiting_for'))
-            except Exception:
-                setattr(record, '_nir_phase', None)
-                setattr(record, '_nir_display_status', nir_sector_progress.get('status'))
-                setattr(record, '_nir_waiting_for', None)
-                setattr(record, '_nir_locked', False)
-            nir_relevant_records.append(record)
+
+        setattr(record, '_created_by_current', record.operator_id == current_user.id)
+        try:
+            phase_info = get_nir_phase(record)
+            setattr(record, '_nir_phase', phase_info.get('phase'))
+            setattr(record, '_nir_locked', phase_info.get('locked'))
+            phase = phase_info.get('phase')
+            display_status = nir_sector_progress.get('status')
+            if phase in ('INITIAL', 'FULL'):
+                display_status = 'PENDENTE'
+            elif phase == 'FINAL':
+                if not alta_complete:
+                    if not record.discharge_date and not record.discharge_type:
+                        display_status = 'PENDENTE'
+            setattr(record, '_nir_display_status', display_status)
+            setattr(record, '_nir_waiting_for', phase_info.get('waiting_for'))
+        except Exception:
+            setattr(record, '_nir_phase', None)
+            setattr(record, '_nir_display_status', nir_sector_progress.get('status'))
+            setattr(record, '_nir_waiting_for', None)
+            setattr(record, '_nir_locked', False)
+        nir_relevant_records.append(record)
     
     if waiting_for_param == 'alta':
         nir_relevant_records = [r for r in nir_relevant_records if getattr(r, '_nir_phase', None) == 'FINAL']
@@ -980,9 +946,10 @@ def sector_nir_list():
     stats_counts=stats_counts
     )
 
+#<!--- Rota de Listagem do Setor Centro Cirúrgico --->
 @nir_bp.route("/nir/setor/centro-cirurgico")
 @login_required
-@require_permission('ver-nir-setor')
+@require_sector('CENTRO_CIRURGICO')
 def sector_surgery_list():
     user_sector = get_user_sector(current_user)
     if user_sector != 'CENTRO_CIRURGICO':
@@ -1090,9 +1057,10 @@ def sector_surgery_list():
     filter_status=filter_status
     )
 
+#<!--- Rota de Listagem do Setor Faturamento --->
 @nir_bp.route("/nir/setor/faturamento")
 @login_required
-@require_permission('ver-nir-setor')
+@require_sector('FATURAMENTO')
 def sector_billing_list():
     user_sector = get_user_sector(current_user)
     if user_sector != 'FATURAMENTO':
@@ -1201,16 +1169,14 @@ def sector_billing_list():
         filter_status=filter_status
     )
 
+#<!--- Rota de Preencher Formulário do Setor NIR --->
 @nir_bp.route("/nir/<int:record_id>/setor/nir")
 @login_required
-@require_permission('editar-secao-nir')
+@require_sector('NIR')
 def sector_nir_form(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
     
-    if user_sector != 'NIR':
-        flash('Acesso negado: você não pertence ao setor NIR', 'danger')
-        return redirect(url_for('nir.record_details', record_id=record_id))
     section_status_map = {s.section_name: s.status for s in record.section_statuses if s.responsible_sector == 'NIR'}
     phase_info = get_nir_phase(record)
     final_phase = phase_info['phase'] == 'FINAL'
@@ -1247,17 +1213,14 @@ def sector_nir_form(record_id):
         hide_aih_initial=hide_aih_initial
     )
 
+#<!--- Rota de Preencher Formulário do Setor Centro Cirúrgico --->
 @nir_bp.route("/nir/<int:record_id>/setor/centro-cirurgico")
 @login_required
-@require_permission('editar-secao-nir')
+@require_sector('CENTRO_CIRURGICO')
 def sector_surgery_form(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
-    
-    if user_sector != 'CENTRO_CIRURGICO':
-        flash('Acesso negado: você não pertence ao Centro Cirúrgico', 'danger')
-        return redirect(url_for('nir.record_details', record_id=record_id))
-    
+
     if not record.is_ready_for_sector('CENTRO_CIRURGICO'):
         flash('Dados iniciais do NIR ainda não finalizados. Conclua cadastro inicial no NIR antes do Centro Cirúrgico.', 'warning')
         return redirect(url_for('nir.record_details', record_id=record_id))
@@ -1273,16 +1236,13 @@ def sector_surgery_form(record_id):
     
     return render_template('nir/forms/surgery_sector_form.html', record=record, user_sector=user_sector)
 
+#<!--- Rota de Preencher Formulário do Setor Faturamento --->
 @nir_bp.route("/nir/<int:record_id>/setor/faturamento")
 @login_required
-@require_permission('editar-secao-nir')
+@require_sector('FATURAMENTO')
 def sector_billing_form(record_id):
     record = Nir.query.get_or_404(record_id)
     user_sector = get_user_sector(current_user)
-    
-    if user_sector != 'FATURAMENTO':
-        flash('Acesso negado: você não pertence ao Faturamento', 'danger')
-        return redirect(url_for('nir.record_details', record_id=record_id))
     
     if not record.is_ready_for_sector('FATURAMENTO'):
         next_sector = record.get_next_available_sector()
@@ -1305,9 +1265,9 @@ def sector_billing_form(record_id):
     
     return render_template('nir/forms/billing_sector_form.html', record=record, user_sector=user_sector)
 
+#<!--- Rota de Busca de Procedimentos --->
 @nir_bp.route('/nir/procedures/search')
 @login_required
-@require_any_permission(['criar-registro-nir', 'editar-secao-nir'])
 def procedures_search():
     q = request.args.get('q', '').strip()
     limit = request.args.get('limit', 15, type=int)
@@ -1315,29 +1275,3 @@ def procedures_search():
         limit = 50
     results = search_procedures(q, limit=limit)
     return jsonify(results)
-
-@nir_bp.route('/nir/admin/recalibrar-alta')
-@login_required
-@require_permission('admin-total')
-def recalibrar_alta_sections():
-    try:
-        altered = 0
-        nirs = Nir.query.all()
-        for nir in nirs:
-            section = nir.get_section_status('dados_alta_finais')
-            if not section:
-                continue
-            if (not nir.discharge_date and not nir.discharge_type) and section.status == 'PREENCHIDO':
-                section.status = 'PENDENTE'
-                section.filled_by_user_id = None
-                section.filled_at = None
-                altered += 1
-        if altered:
-            db.session.commit()
-            flash(f'Recalibração concluída. {altered} registros ajustados.', 'success')
-        else:
-            flash('Nenhum ajuste necessário.', 'info')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro na recalibração: {e}', 'danger')
-    return redirect(url_for('nir.list_records'))

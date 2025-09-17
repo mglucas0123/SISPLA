@@ -30,15 +30,15 @@
                             <div class="row g-3">
                                 <div class="col-md-8">
                                     <label class="nir-form-label">Nome do Paciente <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control nir-form-control" name="patient_name" value="{{ record.patient_name }}" required placeholder="Nome completo do paciente">
+                                    <input type="text" class="form-control nir-form-control" name="patient_name" value="{{ record.patient_name }}" placeholder="Nome completo do paciente">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Data de Nascimento <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control nir-form-control" name="birth_date" value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}" required>
+                                    <input type="date" class="form-control nir-form-control" name="birth_date" value="{{ record.birth_date.strftime('%Y-%m-%d') if record.birth_date else '' }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="nir-form-label">Sexo <span class="text-danger">*</span></label>
-                                    <select class="form-select nir-form-control" name="gender" required>
+                                    <select class="form-select nir-form-control" name="gender">
                                         <option value="">Selecione</option>
                                         <option value="M" {% if record.gender == 'M' %}selected{% endif %}>Masculino</option>
                                         <option value="F" {% if record.gender == 'F' %}selected{% endif %}>Feminino</option>
@@ -51,7 +51,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Cartão SUS <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}" required
+                                    <input type="text" class="form-control nir-form-control" name="sus_number" value="{{ record.sus_number or '' }}"
                                         placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
                                         title="Formato: 000 0000 0000 0000">
                                 </div>
@@ -108,7 +108,9 @@
                                 <i class="bi bi-activity"></i>
                                 Procedimentos
                             </h6>
+                            {% set can_edit_procedures = editable_sections.get('procedimentos', False) %}
                             <div class="row g-3 align-items-end">
+                                {% if can_edit_procedures %}
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Código</label>
                                     <input type="text" class="form-control nir-form-control" name="procedure_code" id="procedure-code-input" value="" placeholder="Digite código ou parte da descrição">
@@ -122,21 +124,32 @@
                                         <i class="bi bi-plus-circle"></i> Adicionar
                                     </button>
                                 </div>
+                                {% else %}
                                 <div class="col-12">
-                                    <div class="border rounded p-2 bg-body-tertiary" id="procedures-list" aria-live="polite">
+                                    <div class="alert alert-info py-2" role="alert">
+                                        Esta seção é editável apenas pelo setor Centro Cirúrgico. Você pode visualizar os procedimentos abaixo.
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="col-12">
+                                    <div class="border rounded p-2 bg-body-tertiary" id="procedures-list" aria-live="polite" data-can-edit-procedures="{{ '1' if can_edit_procedures else '0' }}">
                                         {% for p in record.procedures %}
                                             <div class="d-flex align-items-start gap-2 mb-1">
                                                 <div class="flex-grow-1 small border rounded p-2 bg-white">
                                                     <strong>{{ p.code }}</strong><br>
                                                     <span class="text-muted">{{ p.description }}</span>
                                                 </div>
+                                                {% if can_edit_procedures %}
                                                 <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remover" data-index="{{ loop.index0 }}">&times;</button>
+                                                {% endif %}
                                                 <input type="hidden" name="procedure_codes[]" value="{{ p.code }}">
                                                 <input type="hidden" name="procedure_descriptions[]" value="{{ p.description }}">
                                             </div>
                                         {% endfor %}
                                     </div>
+                                    {% if can_edit_procedures %}
                                     <small class="text-muted">Adicione/remova procedimentos. O primeiro será considerado principal.</small>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -314,10 +327,8 @@
         function toggleCancellationReason() {
             if (cancelledSelect.value === 'SIM') {
                 cancellationReasonDiv.style.display = 'block';
-                cancellationReasonInput.required = true;
             } else {
                 cancellationReasonDiv.style.display = 'none';
-                cancellationReasonInput.required = false;
                 cancellationReasonInput.value = '';
             }
         }

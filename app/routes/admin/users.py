@@ -3,9 +3,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import generate_password_hash
-from app.models import db, User, Repository
+from app.models import db, User, Repository, Role
 from app.utils.rbac_permissions import require_permission
-from .utils import handle_database_error, validate_user_data, logger
+from .utils import admin_required, handle_database_error, validate_user_data, logger
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -15,7 +15,7 @@ users_bp = Blueprint('users', __name__, url_prefix='/users')
 
 @users_bp.route("/", methods=["GET", "POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 def list_users():
     if request.method == "POST":
         return create_user()
@@ -23,7 +23,7 @@ def list_users():
     return render_users_list()
 
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("criar usuário")
 def create_user():
     """Lógica para criar novo usuário"""
@@ -53,7 +53,9 @@ def create_user():
         return redirect(url_for("admin.users.list_users"))
     
     password_hash = generate_password_hash(password)
-    
+
+    selected_roles = request.form.getlist("roles")
+
     new_user = User(
         name=name,
         username=username,
@@ -61,11 +63,16 @@ def create_user():
         email=email,
         profile="USER"
     )
-    
+    if selected_roles:
+        for role_name in selected_roles:
+            role = Role.query.filter_by(name=role_name).first()
+            if role:
+                new_user.roles.append(role)
+
     db.session.add(new_user)
     db.session.commit()
     
-    logger.info(f"Usuário criado: {username} por {current_user.username}")
+    logger.info(f"Usuário criado: {username} por {current_user.username} | Roles: {[r.name for r in new_user.roles]}")
     flash("Usuário cadastrado com sucesso!", "success")
     return redirect(url_for("admin.users.list_users"))
 
@@ -116,7 +123,6 @@ def render_users_list():
         
         from app.models import Role, Permission
         available_roles = Role.query.filter_by(is_active=True).all()
-        # Monta agrupamento de permissões por módulo de forma dinâmica
         permissions = Permission.query.order_by(Permission.module.asc(), Permission.name.asc()).all()
         grouped_permissions = {}
         for perm in permissions:
@@ -145,7 +151,7 @@ def render_users_list():
 
 @users_bp.route("/change_password/<int:user_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("alterar senha")
 def change_password(user_id):
     """Alterar senha de usuário"""
@@ -165,7 +171,7 @@ def change_password(user_id):
 
 @users_bp.route("/delete/<int:user_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("deletar usuário")
 def delete_user(user_id):
     """Deletar usuário"""
@@ -185,7 +191,7 @@ def delete_user(user_id):
 
 @users_bp.route("/change_roles/<int:user_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("alterar roles")
 def change_roles(user_id):
     """Alterar roles do usuário no sistema RBAC"""
@@ -208,7 +214,7 @@ def change_roles(user_id):
 
 @users_bp.route("/toggle_status/<int:user_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("alterar status")
 def toggle_status(user_id):
     """Ativar/desativar usuário"""
@@ -230,7 +236,7 @@ def toggle_status(user_id):
 
 @users_bp.route("/change_rbac_permissions/<int:user_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("alterar permissões RBAC")
 def change_rbac_permissions(user_id):
     """Alterar permissões RBAC específicas do usuário"""
@@ -239,7 +245,6 @@ def change_rbac_permissions(user_id):
     user_to_edit = User.query.get_or_404(user_id)
     new_permissions_list = request.form.getlist("permissions_edit")
     
-    # Limpa permissões diretas atuais
     user_to_edit.permissions.clear()
     
     for permission_name in new_permissions_list:
@@ -255,7 +260,7 @@ def change_rbac_permissions(user_id):
 
 @users_bp.route("/edit_basic_data/<int:user_id>", methods=["POST"])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("editar dados básicos")
 def edit_basic_data(user_id):
     """Editar dados básicos do usuário (nome, username, email)"""
@@ -302,7 +307,7 @@ def edit_basic_data(user_id):
 
 @users_bp.route("/create_private_repo/<int:user_id>", methods=['POST'])
 @login_required
-@require_permission('gerenciar-usuarios')
+@admin_required
 @handle_database_error("criar repositório privado")
 def create_private_repo(user_id):
     """Criar repositório privado para usuário"""

@@ -58,7 +58,7 @@
                             </div>
                             <div class="col-12">
                                 <div class="border rounded p-2 bg-body-tertiary" id="procedures-list"
-                                    aria-live="polite">
+                                    aria-live="polite" data-can-edit-procedures="1">
                                     {% for procedure in record.procedures %}
                                     <input type="hidden" name="procedure_codes[]" value="{{ procedure.code }}">
                                     <input type="hidden" name="procedure_descriptions[]"
@@ -77,17 +77,17 @@
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="nir-form-label">Médico Responsável *</label>
+                                <label class="nir-form-label">Médico Responsável <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="responsible_doctor"
                                     value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="nir-form-label">CID Principal *</label>
+                                <label class="nir-form-label">CID Principal <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="main_cid"
                                     value="{{ record.main_cid or '' }}" placeholder="Ex: A00.0" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Especialidade Cirúrgica *</label>
+                                <label class="nir-form-label">Especialidade Cirúrgica <span class="text-danger">*</span></label>
                                 <select class="form-select nir-form-control" name="surgical_specialty" required>
                                     <option value="">Selecione</option>
                                     <option value="CIRURGIA GERAL" {% if record.surgical_specialty=='CIRURGIA GERAL'
@@ -111,7 +111,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Classificação *</label>
+                                <label class="nir-form-label">Classificação <span class="text-danger">*</span></label>
                                 <select class="form-select nir-form-control" name="surgical_type" required>
                                     <option value="">Selecione</option>
                                     <option value="CONTAMINADA" {% if record.surgical_type=='CONTAMINADA' %}selected{%
@@ -139,12 +139,12 @@
                                     placeholder="Nome do auxiliar" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Anestesista *</label>
+                                <label class="nir-form-label">Anestesista <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="anesthetist"
                                     value="{{ record.anesthetist or '' }}" placeholder="Nome do anestesista" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Anestesia *</label>
+                                <label class="nir-form-label">Anestesia <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control nir-form-control" name="anesthesia"
                                     value="{{ record.anesthesia or '' }}" placeholder="Tipo de anestesia" required>
                             </div>

@@ -1,18 +1,18 @@
 from datetime import datetime, time
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import Date, cast, select
+from sqlalchemy import select
 from sqlalchemy.sql import func
 from app.models import db, Form, User
 from app.utils.rbac_permissions import require_permission
 
-form_bp = Blueprint('form', __name__, template_folder='../templates')
+shift_handover_bp = Blueprint('shift_handover', __name__, template_folder='../templates')
 
-@form_bp.route("/new_form", methods=["GET", "POST"])
+#<!--- Novo Registro de Plantão --->
+@shift_handover_bp.route("/new_shift_handover_record", methods=["GET", "POST"])
 @login_required
-@require_permission('criar-plantao')
-def new_form():
-
+@require_permission('criar-registro-plantao')
+def new_shift_handover_record():
     if request.method == "POST":
         try:
             form = Form(
@@ -24,7 +24,7 @@ def new_form():
             db.session.add(form)
             db.session.commit()
             flash("Registro de Plantão enviado com sucesso!", "success")
-            return redirect(url_for("main.panel"))
+            return redirect(url_for("shift_handover.shift_handover_records"))
         
         except KeyError as e:
             flash(f"Erro no formulário: campo obrigatório '{e.name}' ausente.", "danger")
@@ -32,12 +32,12 @@ def new_form():
             db.session.rollback()
             flash(f"Ocorreu um erro ao salvar o formulário: {str(e)}", "danger")
 
-    return render_template("form/new_form.html")
+    return render_template("form/new_shift_handover_record.html")
 
-@form_bp.route("/forms")
+#<!--- Lista dos Registros de Plantão --->
+@shift_handover_bp.route("/shift_handover_records")
 @login_required
-@require_permission('ver-plantoes')
-def forms():
+def shift_handover_records():
     data_inicio_str = request.args.get('data_inicio', '').strip()
     data_fim_str = request.args.get('data_fim', '').strip()
     tipo_data = request.args.get('tipo_data', 'registro').strip()
@@ -87,35 +87,25 @@ def forms():
         tipo_data_atual=tipo_data
     )
 
-@form_bp.route("/form/<int:form_id>/details")
+#<!--- Detalhes do Registro de Plantão --->
+@shift_handover_bp.route("/shift_handover_record/<int:form_id>/details")
 @login_required
-@require_permission('ver-detalhes-plantao')
-def details_form(form_id):
+def shift_handover_record_details(form_id):
     formulario = db.session.get(Form, form_id)
     if not formulario:
         flash("Formulário não encontrado.", "danger")
-        return redirect(url_for('form.forms'))
-    
+        return redirect(url_for('shift_handover.shift_handover_records'))
     return render_template("form/details_form.html", formulario=formulario)
 
-@form_bp.route("/form/delet/<int:form_id>", methods=["POST"])
+#<!--- Excluir Registro de Plantão --->
+@shift_handover_bp.route("/shift_handover_record/delete/<int:form_id>", methods=["POST"])
 @login_required
-@require_permission('excluir-plantao')
-def delet_form(form_id): 
-
-    formulario_para_deletar = db.session.get(Form, form_id)
-
-    if not formulario_para_deletar:
-        flash("Formulário não encontrado para deleção.", "danger")
-        return redirect(url_for('form.forms'))
-
-    try:
-        db.session.delete(formulario_para_deletar)
-        db.session.commit()
-        flash(f"Formulário ID {form_id} deletado com sucesso.", "success")
-        return redirect(url_for('form.forms'))
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Ocorreu um erro ao deletar o formulário: {str(e)}", "danger")
-        print(f"Erro ao deletar formulário ID {form_id}: {e}")
-        return redirect(url_for("form.details_form", form_id=form_id))
+@require_permission('excluir-registro-plantao')
+def delete_shift_handover_record(form_id):
+    form_to_delete = Form.query.get_or_404(form_id)
+    
+    db.session.delete(form_to_delete)
+    db.session.commit()
+    
+    flash('Formulário excluído com sucesso!', 'success')
+    return redirect(url_for('shift_handover.shift_handover_records'))

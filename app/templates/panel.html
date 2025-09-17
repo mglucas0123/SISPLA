@@ -18,7 +18,8 @@
                                     <h4 class="mb-0 opacity-90">{{ current_user.name }}</h4>
                                 </div>
                             </div>
-                            <p class="lead mb-0 opacity-75">Acesse suas ferramentas e gerencie suas atividades com facilidade</p>
+                            <p class="lead mb-0 opacity-75">Acesse suas ferramentas e gerencie suas atividades com
+                                facilidade</p>
                         </div>
                         <div class="col-md-4 text-end d-none d-md-block">
                             <div class="stats-widget">
@@ -44,7 +45,7 @@
         </div>
     </div>
     {% include 'partials/_flash_messages.html' %}
-    
+
     <div class="row mb-5">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -71,53 +72,19 @@
                     </div>
                     <div class="feature-actions">
                         <div class="d-grid gap-2">
-                            <!-- Acessos específicos por setor -->
-                            {% if current_user.has_permission('admin_users') or current_user.has_module_access('nir') %}
-                                {% set user_sector = '' %}
-                                {% for role in current_user.roles %}
-                                    {% if role.sector == 'CENTRO_CIRURGICO' %}
-                                        {% set user_sector = 'CENTRO_CIRURGICO' %}
-                                    {% elif role.sector == 'FATURAMENTO' %}
-                                        {% set user_sector = 'FATURAMENTO' %}
-                                    {% elif role.sector in ['ENFERMAGEM', 'MEDICINA', 'RECEPCAO'] %}
-                                        {% set user_sector = 'NIR' %}
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                {% if not user_sector %}
-                                    {% set user_sector = 'NIR' %}
-                                {% endif %}
-                                
-                                {% if user_sector == 'NIR' %}
-                                <a href="{{ url_for('nir.sector_nir_list') }}" 
-                                   class="btn btn-danger w-100">
-                                    <i class="bi bi-journal-plus me-2"></i>
-                                    Meus Trabalhos
-                                </a>
-                                {% elif user_sector == 'CENTRO_CIRURGICO' %}
-                                <a href="{{ url_for('nir.sector_surgery_list') }}" 
-                                   class="btn btn-danger w-100">
-                                    <i class="bi bi-journal-plus me-2"></i>
-                                    Meus Trabalhos
-                                </a>
-                                {% elif user_sector == 'FATURAMENTO' %}
-                                <a href="{{ url_for('nir.sector_billing_list') }}" 
-                                   class="btn btn-danger w-100">
-                                    <i class="bi bi-journal-plus me-2"></i>
-                                    Meus Trabalhos
-                                </a>
-                                {% endif %}
-                                
-                                <a href="{{ url_for('nir.list_records') }}" 
-                                   class="btn btn-outline-danger d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-clipboard-data me-2"></i>
-                                    Ver Registros
-                                </a>
-                            {% else %}
-                                <div class="alert alert-warning">
-                                    <small>Sem acesso ao módulo NIR</small>
-                                </div>
+                            {% for role in current_user.roles %}
+                            {% if role.sector in ['NIR', 'TI', 'CENTRO_CIRURGICO', 'FATURAMENTO'] %}
+                            <a href="{{ url_for('nir.my_work') }}" class="btn btn-danger w-100">
+                                <i class="bi bi-journal-plus me-2"></i>
+                                Meus Trabalhos
+                            </a>
                             {% endif %}
+                            {% endfor %}
+                            <a href="{{ url_for('nir.list_records') }}"
+                                class="btn btn-outline-danger d-flex align-items-center justify-content-center">
+                                <i class="bi bi-clipboard-data me-2"></i>
+                                Ver Registros
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -136,11 +103,12 @@
                             <i class="bi bi-archive text-primary fs-3"></i>
                         </div>
                         <h5 class="fw-bold mb-2">Repositório de Arquivos</h5>
-                        <p class="text-muted mb-3">Gerencie documentos e arquivos importantes com segurança e organização</p>
+                        <p class="text-muted mb-3">Gerencie documentos e arquivos importantes com segurança e
+                            organização</p>
                     </div>
                     <div class="feature-actions">
-                        <a href="{{ url_for('repository.repository_list_page') }}" 
-                           class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
+                        <a href="{{ url_for('repository.repository_list_page') }}"
+                            class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
                             <i class="bi bi-archive me-2"></i>
                             Acessar Repositório
                         </a>
@@ -161,19 +129,20 @@
                             <i class="bi bi-arrow-left-right text-success fs-3"></i>
                         </div>
                         <h5 class="fw-bold mb-2">Passagem de Plantão</h5>
-                        <p class="text-muted mb-3">Registre e acompanhe as passagens de plantão e relatórios de turno</p>
+                        <p class="text-muted mb-3">Registre e acompanhe as passagens de plantão e relatórios de turno
+                        </p>
                     </div>
                     <div class="feature-actions">
                         <div class="d-grid gap-2">
-                            {% if current_user.has_permission('gerar_relatorios') %}
-                            <a href="{{ url_for('form.new_form') }}" 
-                               class="btn btn-success d-flex align-items-center justify-content-center">
+                            {% if current_user.has_permission('criar-registro-plantao') or current_user.has_permission('admin-total') %}
+                            <a href="{{ url_for('shift_handover.new_shift_handover_record') }}"
+                                class="btn btn-success d-flex align-items-center justify-content-center">
                                 <i class="bi bi-journal-plus me-2"></i>
                                 Novo Registro
                             </a>
                             {% endif %}
-                            <a href="{{ url_for('form.forms') }}" 
-                               class="btn btn-outline-success d-flex align-items-center justify-content-center">
+                            <a href="{{ url_for('shift_handover.shift_handover_records') }}"
+                                class="btn btn-outline-success d-flex align-items-center justify-content-center">
                                 <i class="bi bi-clipboard-data me-2"></i>
                                 Ver Registros
                             </a>
@@ -195,11 +164,12 @@
                             <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
                         </div>
                         <h5 class="fw-bold mb-2">Treinamentos</h5>
-                        <p class="text-muted mb-3">Acesse cursos e materiais de treinamento para desenvolvimento profissional</p>
+                        <p class="text-muted mb-3">Acesse cursos e materiais de treinamento para desenvolvimento
+                            profissional</p>
                     </div>
                     <div class="feature-actions">
-                        <a href="{{ url_for('training.course_list_page') }}" 
-                           class="btn btn-warning btn-lg w-100 d-flex align-items-center justify-content-center">
+                        <a href="{{ url_for('training.course_list_page') }}"
+                            class="btn btn-warning btn-lg w-100 d-flex align-items-center justify-content-center">
                             <i class="bi bi-mortarboard-fill me-2"></i>
                             Acessar Cursos
                         </a>
@@ -223,7 +193,7 @@
                 <span class="badge bg-info text-white px-3 py-2">{{ notice|length }} avisos</span>
                 {% endif %}
             </div>
-            
+
             {% if notice %}
             <div class="notices-container">
                 {% for n in notice %}
@@ -265,7 +235,7 @@
                         <div class="notice-text">{{ n.content | safe }}</div>
                     </div>
                     {% endif %}
-                    
+
                     <div class="notice-footer">
                         <div class="author-info">
                             <i class="bi bi-person-circle me-2"></i>
@@ -393,6 +363,6 @@
         }
     });
 
-    
+
 </script>
 {% endblock %}

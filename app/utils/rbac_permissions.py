@@ -7,47 +7,18 @@ class RBACManager:
         
     @staticmethod
     def init_default_permissions():
-        # Definição granular de permissões
         default_permissions = [
-            # Módulo NIR
-            {'name': 'ver-nir-todos', 'description': 'Visualizar todos os registros do NIR', 'module': 'nir'},
-            {'name': 'ver-nir-setor', 'description': 'Visualizar apenas registros do seu setor (NIR)', 'module': 'nir'},
+            # Módulo NIR - Internações
             {'name': 'criar-registro-nir', 'description': 'Criar um novo registro de internação', 'module': 'nir'},
             {'name': 'editar-registro-nir', 'description': 'Editar qualquer parte de um registro NIR', 'module': 'nir'},
-            {'name': 'editar-secao-nir', 'description': 'Editar a seção do NIR de responsabilidade do seu setor', 'module': 'nir'},
+            {'name': 'salvar-registro-nir', 'description': 'Salvar um registro do NIR', 'module': 'nir'},
             {'name': 'excluir-registro-nir', 'description': 'Excluir um registro do NIR', 'module': 'nir'},
-            {'name': 'faturar-registro-nir', 'description': 'Realizar a ação de faturamento em um registro NIR', 'module': 'nir'},
-
-            # Módulo Admin - Usuários
-            {'name': 'gerenciar-usuarios', 'description': 'Acesso total ao gerenciamento de usuários', 'module': 'admin'},
-
-            # Módulo Admin - Mural
-            {'name': 'gerenciar-mural', 'description': 'Acesso total ao gerenciamento do mural de avisos', 'module': 'admin'},
-            {'name': 'publicar-aviso-mural', 'description': 'Permissão para publicar um novo aviso no mural', 'module': 'admin'},
-
-            # Módulo Admin - Repositórios
-            {'name': 'gerenciar-repositorios-todos', 'description': 'Acesso total para gerenciar todos os repositórios', 'module': 'admin'},
-            {'name': 'criar-repositorio', 'description': 'Permissão para criar um novo repositório', 'module': 'repository'},
-
-            # Módulo Admin - Treinamentos
-            {'name': 'gerenciar-treinamentos', 'description': 'Acesso total para gerenciar treinamentos e quizzes', 'module': 'admin'},
-            {'name': 'criar-treinamento', 'description': 'Permissão para criar um novo treinamento', 'module': 'training'},
-
-            # Acesso Geral
-            {'name': 'acessar-treinamentos', 'description': 'Acesso geral para visualizar e realizar treinamentos', 'module': 'training'},
-            {'name': 'acessar-repositorios', 'description': 'Acesso geral para visualizar repositórios', 'module': 'repository'},
-
-            # Módulo Plantão
-            {'name': 'criar-plantao', 'description': 'Criar um novo registro de plantão', 'module': 'forms'},
-            {'name': 'ver-plantoes', 'description': 'Visualizar a lista de plantões', 'module': 'forms'},
-            {'name': 'ver-detalhes-plantao', 'description': 'Visualizar detalhes de um plantão', 'module': 'forms'},
-            {'name': 'excluir-plantao', 'description': 'Excluir um registro de plantão', 'module': 'forms'},
-
-            # Módulo Repositório (Conteúdo)
-            {'name': 'editar-conteudo-repositorio', 'description': 'Editar conteúdo de um repositório (renomear, mover)', 'module': 'repository'},
-            {'name': 'excluir-conteudo-repositorio', 'description': 'Excluir conteúdo de um repositório (arquivos, pastas)', 'module': 'repository'},
             
-            # Permissão de super-administrador
+            # Módulo Passagem de Plantão
+            {'name': 'criar-registro-plantao', 'description': 'Criar um novo registro de plantão', 'module': 'passagem_plantao'},
+            {'name': 'excluir-registro-plantao', 'description': 'Excluir um registro de plantão', 'module': 'passagem_plantao'},
+
+            # Permissão de Administrador
             {'name': 'admin-total', 'description': 'Acesso irrestrito a todas as funcionalidades do sistema', 'module': 'admin'},
         ]
 
@@ -60,81 +31,24 @@ class RBACManager:
 
     @staticmethod
     def init_default_roles():
-        # Definição das Funções (Roles) e suas permissões
         default_roles = [
-            {
-                'name': 'Administrador do Sistema',
-                'description': 'Acesso total ao sistema',
-                'sector': 'TI',
-                'permissions': ['admin-total'] # Permissão única que concede todos os acessos
-            },
-            {
-                'name': 'Nir',
-                'description': 'Núcleo Interno de Regulação',
-                'sector': 'NIR',
-                'permissions': [
-                    'ver-nir-todos',
-                    'criar-registro-nir',
-                    'editar-secao-nir',
-                    'acessar-treinamentos',
-                    'acessar-repositorios',
-                    'criar-plantao',
-                    'ver-plantoes',
-                    'ver-detalhes-plantao',
-                    'criar-repositorio',
-                    'editar-conteudo-repositorio',
-                    'excluir-conteudo-repositorio'
-                ]
-            },
-            {
-                'name': 'Enfermeiro',
-                'description': 'Profissional de enfermagem assistencial',
-                'sector': 'ENFERMAGEM',
-                'permissions': [
-                    'ver-nir-setor',
-                    'editar-secao-nir',
-                    'acessar-treinamentos',
-                    'acessar-repositorios',
-                    'criar-plantao',
-                    'ver-plantoes',
-                    'ver-detalhes-plantao'
-                ]
-            },
-            {
-                'name': 'Enfermeiro CC (Centro Cirúrgico)',
-                'description': 'Profissional de enfermagem do Centro Cirúrgico',
-                'sector': 'CENTRO_CIRURGICO',
-                'permissions': [
-                    'ver-nir-setor',
-                    'editar-secao-nir',
-                    'acessar-treinamentos',
-                    'acessar-repositorios'
-                ]
-            },
-            {
-                'name': 'Faturista',
-                'description': 'Responsável pelo faturamento das contas hospitalares',
-                'sector': 'FATURAMENTO',
-                'permissions': [
-                    'ver-nir-setor',
-                    'editar-secao-nir',
-                    'faturar-registro-nir',
-                    'acessar-treinamentos',
-                    'acessar-repositorios'
-                ]
-            },
-            # Adicionando um papel base para usuários comuns
-            {
-                'name': 'Usuário Padrão',
-                'description': 'Usuário com acesso básico aos módulos comuns',
-                'sector': 'GERAL',
-                'permissions': [
-                    'acessar-treinamentos',
-                    'acessar-repositorios',
-                    'criar-repositorio'
-                ]
-            }
-        ]
+            {'name': 'Administrador', 'description': 'Acesso total ao sistema', 'sector': 'TI',
+                'permissions': ['admin-total']},
+            
+            {'name': 'Coordenação', 'description': 'Responsável pela coordenação geral', 'sector': 'COORDENACAO',
+                'permissions': ['excluir-registro-nir', 'excluir-registro-plantao', 'editar-registro-nir', 'salvar-registro-nir']},
+            
+            {'name': 'Nir', 'description': 'Núcleo Interno de Regulação', 'sector': 'NIR',
+                'permissions': ['criar-registro-nir', 'editar-registro-nir', 'salvar-registro-nir']},
+            
+            {'name': 'Enfermagem', 'description': 'Profissional de enfermagem assistencial', 'sector': 'ENFERMAGEM',
+                'permissions': ['criar-registro-plantao']},
+            
+            {'name': 'Enfermagem CC', 'description': 'Profissional de enfermagem do Centro Cirúrgico', 'sector': 'CENTRO_CIRURGICO',
+                'permissions': ['salvar-registro-nir', 'criar-registro-plantao']},
+            
+            {'name': 'Faturamento', 'description': 'Responsável pelo faturamento das contas hospitalares', 'sector': 'FATURAMENTO',
+                'permissions': ['editar-registro-nir', 'salvar-registro-nir']}]
         
         for role_data in default_roles:
             if not Role.query.filter_by(name=role_data['name']).first():
@@ -206,6 +120,25 @@ def require_any_permission(permission_list):
                 return redirect(url_for('main.panel'))
             
             return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def require_sector(sector_name):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                return redirect(url_for('auth.login'))
+
+            if current_user.has_permission('admin-total'):
+                return f(*args, **kwargs)
+
+            user_sectors = [role.sector for role in getattr(current_user, 'roles', []) if getattr(role, 'sector', None)]
+            if sector_name in user_sectors:
+                return f(*args, **kwargs)
+
+            flash(f"Acesso negado! Esta área é exclusiva do setor '{sector_name}'.", "danger")
+            return redirect(url_for('main.panel'))
         return decorated_function
     return decorator
 

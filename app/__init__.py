@@ -14,7 +14,7 @@ from app.utils.rbac_permissions import initialize_rbac, assign_role_to_user
 from app.routes.auth import auth_bp
 from app.routes.main import main_bp
 from app.routes.util import util_bp, format_date_filter
-from app.routes.form import form_bp
+from app.routes.shift_handover import shift_handover_bp
 from app.routes.repository import repository_bp
 from app.routes.training import training_bp
 from app.routes.nir import nir_bp
@@ -44,7 +44,7 @@ def registry_routes(app):
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(util_bp)
-    app.register_blueprint(form_bp)
+    app.register_blueprint(shift_handover_bp)
     app.register_blueprint(repository_bp)
     app.register_blueprint(training_bp)
     app.register_blueprint(nir_bp)
@@ -87,14 +87,14 @@ def initdb(app):
                 db.session.commit()
                 
                 assign_role_to_user(admin, 'Administrador')
-                print("Usuário Administrador padrão criado com sucesso e papel RBac atribuído.")
+                print("Usuário Administrador padrão criado com sucesso e papel 'Administrador' atribuído.")
             else:
                 admin_role = Role.query.filter_by(name='Administrador').first()
                 if admin_role and admin_role not in admin_usuario.roles:
                     assign_role_to_user(admin_usuario, 'Administrador')
-                    print("Papel RBac atribuído ao usuário admin existente.")
+                    print("Papel 'Administrador' atribuído ao usuário admin existente.")
                 else:
-                    print("Usuário admin padrão já existe com papel RBac.")
+                    print("Usuário admin padrão já existe com papel apropriado no RBAC.")
         print("Banco de dados inicializado com sistema RBac.")
     @app.cli.command("migrate-upgrade")
     def migrate_upgrade():

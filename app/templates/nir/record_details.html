@@ -25,10 +25,12 @@
                             <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary me-2">
                                 <i class="bi bi-arrow-left me-2"></i>Voltar
                             </a>
-                            {% if current_user.has_permission('visualizar_relatorios') %}
+                            {% if current_user.has_permission('editar-registro-nir') or current_user.has_permission('admin-total') %}
                             <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" class="btn btn-warning me-2">
                                 <i class="bi bi-pencil me-2"></i>Editar
                             </a>
+                            {% endif %}
+                            {% if current_user.has_permission('excluir-registro-nir') or current_user.has_permission('admin-total') %}
                             <button class="btn btn-danger" onclick="deleteRecord('{{ record.id }}')">
                                 <i class="bi bi-trash me-2"></i>Excluir
                             </button>
@@ -256,10 +258,13 @@
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Total de Dias Internado</label>
                                         <p>
-                                            {% if record.total_days_admitted %}
-                                            <span class="nir-badge badge bg-info">{{ record.total_days_admitted }} dias</span>
+                                            {% if record.total_days_admitted is not none %}
+                                                <span class="nir-badge badge bg-info">{{ record.total_days_admitted }} dias</span>
+                                            {% elif record.admission_date and record.discharge_date %}
+                                                {% set _dias = (record.discharge_date - record.admission_date).days %}
+                                                <span class="nir-badge badge bg-info">{{ _dias }} dias</span>
                                             {% else %}
-                                            -
+                                                -
                                             {% endif %}
                                         </p>
                                     </div>
