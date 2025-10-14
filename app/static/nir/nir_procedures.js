@@ -112,12 +112,14 @@
     codeInput.value = '';
     descInput.value = '';
     selectedCode='';
+    if(typeof window.updateCidOptions === 'function') window.updateCidOptions();
   }
 
   function removeProcedure(index){
     if(!canEdit) return;
     procedures.splice(index,1);
     renderProcedures();
+    if(typeof window.updateCidOptions === 'function') window.updateCidOptions();
   }
 
   function renderProcedures(){

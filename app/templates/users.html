@@ -162,41 +162,8 @@
             </div>
         </div>
 
-        {% if pagination %}
-        <div class="manage-users-pagination">
-            <nav aria-label="Navegação de usuários">
-                <ul class="pagination">
-                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link"
-                            href="{{ url_for('admin.users.list_users', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', 'date_desc')) }}">
-                            <i class="bi bi-chevron-left me-1"></i>
-                            Anterior
-                        </a>
-                    </li>
-                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                    {% if p %}
-                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                        <a class="page-link"
-                            href="{{ url_for('admin.users.list_users', page=p, search=request.args.get('search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', 'date_desc')) }}">{{
-                            p }}</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">…</span>
-                    </li>
-                    {% endif %}
-                    {% endfor %}
-                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link"
-                            href="{{ url_for('admin.users.list_users', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', 'date_desc')) }}">
-                            Próxima
-                            <i class="bi bi-chevron-right ms-1"></i>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        {% endif %}
+        {% set pagination_params = {'pagination': pagination, 'endpoint': 'admin.users.list_users', 'extra_params': {'search': request.args.get('search', ''), 'status': request.args.get('status', ''), 'sort': request.args.get('sort', 'date_desc')}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de usuários'} %}
+        {% include 'partials/_pagination.html' %}
     </div>
 </div>
 
@@ -204,6 +171,7 @@
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ url_for('admin.users.list_users') }}" class="modal-content">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
                 <h5 class="modal-title" id="criarUsuarioModalLabel">
                     <i class="bi bi-person-plus-fill"></i>
@@ -350,6 +318,7 @@
                         Editar Dados Básicos
                     </h6>
                     <form id="formEditarDadosBasicos" method="POST" action="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="edit_name" class="form-label">
@@ -394,6 +363,7 @@
                         Gerenciar Permissões RBAC
                     </h6>
                     <form id="formEditarPermissoesRBAC" method="POST" action="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <fieldset>
                             <legend>
                                 <i class="bi bi-gear-wide-connected"></i>
@@ -433,6 +403,7 @@
                         Gerenciar Roles
                     </h6>
                     <form id="formEditarRoles" method="POST" action="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <fieldset>
                             <legend>
                                 <i class="bi bi-gear-wide-connected"></i>
@@ -476,6 +447,7 @@
                     <div class="action-item">
                         <div class="action-label">Redefinir Senha do Usuário:</div>
                         <form id="formAlterarSenhaAdmin" method="POST" action="">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="bi bi-key-fill"></i>
@@ -493,6 +465,7 @@
                     <div class="action-item">
                         <div class="action-label">Status da Conta:</div>
                         <form id="formToggleUserStatus" method="POST" action="">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button id="btnToggleUserStatus" type="submit" class="btn w-100">
                                 <i class="bi bi-hourglass-split"></i>
                                 Carregando Status...
@@ -504,6 +477,8 @@
                         <div class="action-label">Remover Usuário:</div>
                         <form id="formDeletarUsuario" method="POST" action=""
                             onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                             <button class="btn btn-danger w-100" type="submit">
                                 <i class="bi bi-trash3-fill"></i>
                                 Deletar Usuário
@@ -634,7 +609,7 @@
 
                     const newTableContainer = doc.querySelector('.manage-users-table-container');
                     const newResultsInfo = doc.querySelector('.manage-users-results-info');
-                    const newPagination = doc.querySelector('.manage-users-pagination');
+                    const newPagination = doc.querySelector('.pagination-container');
 
                     if (newTableContainer) {
                         document.querySelector('.manage-users-table-container').innerHTML = newTableContainer.innerHTML;
@@ -648,7 +623,7 @@
                         }
                     }
 
-                    const currentPagination = document.querySelector('.manage-users-pagination');
+                    const currentPagination = document.querySelector('.pagination-container');
                     if (newPagination && currentPagination) {
                         currentPagination.innerHTML = newPagination.innerHTML;
                         currentPagination.style.display = 'block';

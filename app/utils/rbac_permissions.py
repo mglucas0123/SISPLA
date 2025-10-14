@@ -1,12 +1,13 @@
 from functools import wraps
 from flask import flash, redirect, url_for, abort
 from flask_login import current_user
-from app.models import db, Permission, Role
+from app.models import db, Permission, Role, PermissionCatalog
 
 class RBACManager:
         
     @staticmethod
     def init_default_permissions():
+        """Inicializa permissões padrão no sistema antigo E no novo catálogo"""
         default_permissions = [
             # Módulo NIR - Internações
             {'name': 'criar-registro-nir', 'description': 'Criar um novo registro de internação', 'module': 'nir'},
@@ -18,7 +19,18 @@ class RBACManager:
             {'name': 'criar-registro-plantao', 'description': 'Criar um novo registro de plantão', 'module': 'passagem_plantao'},
             {'name': 'excluir-registro-plantao', 'description': 'Excluir um registro de plantão', 'module': 'passagem_plantao'},
 
-            # Permissão de Administrador
+            # Módulo de Procedimentos
+            {'name': 'manage_procedures', 'description': 'Gerenciar procedimentos médicos (criar, editar, remover)', 'module': 'procedures'},
+
+            # Módulo de Usuários e Permissões
+            {'name': 'manage-users', 'description': 'Gerenciar usuários do sistema', 'module': 'admin'},
+            {'name': 'view-users', 'description': 'Visualizar lista de usuários', 'module': 'admin'},
+            {'name': 'manage-roles', 'description': 'Gerenciar roles e permissões', 'module': 'admin'},
+
+            # Permissões Gerais
+            {'name': 'access-panel', 'description': 'Acessar o painel principal', 'module': 'geral'},
+            {'name': 'change-password', 'description': 'Alterar a própria senha', 'module': 'geral'},
+
             {'name': 'admin-total', 'description': 'Acesso irrestrito a todas as funcionalidades do sistema', 'module': 'admin'},
         ]
 
@@ -27,43 +39,65 @@ class RBACManager:
                 permission = Permission(**perm_data)
                 db.session.add(permission)
 
+        for perm_data in default_permissions:
+            if not PermissionCatalog.query.filter_by(name=perm_data['name']).first():
+                catalog_perm = PermissionCatalog(
+                    name=perm_data['name'],
+                    description=perm_data.get('description')
+                )
+                db.session.add(catalog_perm)
+
         db.session.commit()
 
     @staticmethod
     def init_default_roles():
+        """Inicializa roles padrão com permissões no sistema antigo E novo"""
         default_roles = [
             {'name': 'Administrador', 'description': 'Acesso total ao sistema', 'sector': 'TI',
                 'permissions': ['admin-total']},
             
             {'name': 'Coordenação', 'description': 'Responsável pela coordenação geral', 'sector': 'COORDENACAO',
-                'permissions': ['excluir-registro-nir', 'excluir-registro-plantao', 'editar-registro-nir', 'salvar-registro-nir']},
+                'permissions': ['excluir-registro-nir', 'excluir-registro-plantao', 'editar-registro-nir', 'salvar-registro-nir', 'manage_procedures', 'manage-users', 'view-users']},
             
             {'name': 'Nir', 'description': 'Núcleo Interno de Regulação', 'sector': 'NIR',
-                'permissions': ['criar-registro-nir', 'editar-registro-nir', 'salvar-registro-nir']},
+                'permissions': ['criar-registro-nir', 'editar-registro-nir', 'salvar-registro-nir', 'access-panel', 'change-password']},
             
             {'name': 'Enfermagem', 'description': 'Profissional de enfermagem assistencial', 'sector': 'ENFERMAGEM',
-                'permissions': ['criar-registro-plantao']},
+                'permissions': ['criar-registro-plantao', 'access-panel', 'change-password']},
             
             {'name': 'Enfermagem CC', 'description': 'Profissional de enfermagem do Centro Cirúrgico', 'sector': 'CENTRO_CIRURGICO',
-                'permissions': ['salvar-registro-nir', 'criar-registro-plantao']},
+                'permissions': ['salvar-registro-nir', 'criar-registro-plantao', 'access-panel', 'change-password']},
             
             {'name': 'Faturamento', 'description': 'Responsável pelo faturamento das contas hospitalares', 'sector': 'FATURAMENTO',
-                'permissions': ['editar-registro-nir', 'salvar-registro-nir']}]
+                'permissions': ['editar-registro-nir', 'salvar-registro-nir', 'manage_procedures', 'access-panel', 'change-password']}
+        ]
         
         for role_data in default_roles:
-            if not Role.query.filter_by(name=role_data['name']).first():
+            role = Role.query.filter_by(name=role_data['name']).first()
+            
+            if not role:
+                # Criar nova role
                 role = Role(
                     name=role_data['name'],
                     description=role_data['description'],
                     sector=role_data['sector']
                 )
-                
-                for perm_name in role_data['permissions']:
-                    permission = Permission.query.filter_by(name=perm_name).first()
-                    if permission:
-                        role.permissions.append(permission)
-                
                 db.session.add(role)
+                db.session.flush()  # Garante que o role.id está disponível
+            
+            # Atualizar sistema antigo (relationship permissions)
+            for perm_name in role_data['permissions']:
+                permission = Permission.query.filter_by(name=perm_name).first()
+                if permission and permission not in role.permissions:
+                    role.permissions.append(permission)
+            
+            # Atualizar novo sistema (permissions_list)
+            if role.permissions_list is None:
+                role.permissions_list = []
+            
+            for perm_name in role_data['permissions']:
+                if perm_name not in role.permissions_list:
+                    role.permissions_list.append(perm_name)
         
         db.session.commit()
 

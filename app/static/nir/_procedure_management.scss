@@ -1,0 +1,456 @@
+// Button to open modal
+.procedure-manage-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+// Modal Structure
+.procedure-modal-content {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15);
+}
+
+.procedure-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+    
+    .procedure-modal-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        i {
+            font-size: 1.5rem;
+        }
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    
+    .procedure-modal-subtitle {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+}
+
+.procedure-modal-body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 2rem;
+}
+
+// Container styling
+.procedure-management-container {
+    .procedure-controls-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    
+    // Search input wrapper
+    .procedure-search-wrapper {
+        position: relative;
+        
+        .procedure-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        .procedure-search-input {
+            padding-left: 3rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            height: 48px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+            
+            &:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+                outline: none;
+            }
+            
+            &::placeholder {
+                color: #94a3b8;
+            }
+        }
+    }
+    
+    // Add new procedure button
+    .procedure-btn-add {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        height: 48px;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+        
+        &:active {
+            transform: translateY(0);
+        }
+    }
+    
+    // Form container
+    .procedure-form-container {
+        animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .procedure-form-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+        border: 2px solid #667eea;
+    }
+    
+    .procedure-form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        
+        h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+    }
+    
+    .procedure-form-body {
+        padding: 1.5rem;
+    }
+    
+    .procedure-form-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        
+        i {
+            color: #667eea;
+        }
+    }
+    
+    .procedure-form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        
+        &:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+    }
+    
+    .procedure-form-actions {
+        display: flex;
+        gap: 0.75rem;
+        
+        .procedure-btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+            }
+            
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+        }
+        
+        .procedure-btn-cancel {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            
+            &:hover {
+                border-color: #cbd5e1;
+                background: #f8fafc;
+                transform: translateY(-2px);
+            }
+        }
+    }
+    
+    // Loading state
+    .procedure-loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        
+        .procedure-loading-spinner {
+            text-align: center;
+            
+            .spinner-border {
+                width: 3rem;
+                height: 3rem;
+                border-width: 0.3em;
+                color: #667eea;
+            }
+            
+            p {
+                color: #64748b;
+                margin-top: 1rem;
+                font-weight: 500;
+            }
+        }
+    }
+    
+    // Table container
+    .procedure-table-container {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+    
+    .procedure-table {
+        margin-bottom: 0;
+        
+        thead {
+            tr {
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                border-bottom: 2px solid #e2e8f0;
+                
+                th {
+                    padding: 1rem;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: #475569;
+                    border: none;
+                    
+                    i {
+                        color: #667eea;
+                    }
+                }
+            }
+        }
+        
+        tbody {
+            tr {
+                transition: all 0.2s ease;
+                border-bottom: 1px solid #f1f5f9;
+                
+                &:hover {
+                    background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+                    transform: translateX(4px);
+                }
+                
+                td {
+                    padding: 1rem;
+                    vertical-align: middle;
+                    border: none;
+                    
+                    &:first-child {
+                        font-family: 'Courier New', Consolas, monospace;
+                        font-weight: 700;
+                        color: #667eea;
+                        font-size: 0.9rem;
+                    }
+                    
+                    &:nth-child(2) {
+                        color: #334155;
+                        font-size: 0.95rem;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Action buttons in table - Modern Style
+    .procedure-action-btn {
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 600; 
+        font-size: 0.875rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        overflow: hidden;
+        
+        i {
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+        }
+        
+        span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        &:hover {
+            transform: translateY(-2px);
+            
+            i {
+                transform: scale(1.1);
+            }
+            
+            &::before {
+                opacity: 1;
+            }
+        }
+        
+        &:active {
+            transform: translateY(0);
+        }
+    }
+    
+    .procedure-action-btn-edit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+        
+        &:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+    }
+    
+    .procedure-action-btn-delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        
+        &:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+    }
+    
+    // PAGINATION - Agora usando estilos padronizados de util/pagination.scss
+    
+    // Empty state
+    .procedure-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        text-align: center;
+        
+        i {
+            font-size: 5rem;
+            color: #cbd5e1;
+            margin-bottom: 1.5rem;
+        }
+        
+        h5 {
+            color: #64748b;
+            font-weight: 600;
+        }
+        
+        p {
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+    }
+}
+
+// Animation
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .procedure-modal-body {
+        padding: 1rem;
+    }
+    
+    .procedure-form-actions {
+        flex-direction: column;
+        
+        button {
+            width: 100%;
+        }
+    }
+    
+    .procedure-table-container {
+        overflow-x: auto;
+    }
+}

@@ -37,6 +37,7 @@
         </div>
 
         <form method="POST" id="quizForm" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="questions_data" id="questions_data_input">
 
             <div class="manage-quiz-basic-info">

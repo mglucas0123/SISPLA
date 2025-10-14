@@ -188,6 +188,7 @@
                             </div>
                             
                             <form method="POST" action="{{ url_for('training.submit_quiz', quiz_id=quiz.id) }}" class="course-quiz-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 {% for question in quiz.questions | sort(attribute='id') %}
                                 <div class="course-question-item">
                                     <div class="course-question-header">

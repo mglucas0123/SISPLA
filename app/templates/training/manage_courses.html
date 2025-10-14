@@ -123,9 +123,8 @@
                             
                             <div class="manage-course-card-toggle">
                                 <div class="form-check form-switch" title="Ativar/Desativar Curso">
-                                    <form method="POST" 
-                                          action="{{ url_for('admin.courses.toggle_course_status', course_id=course.id) }}"
-                                          class="toggle-form">
+                                    <form method="POST" action="{{ url_for('admin.courses.toggle_course_status', course_id=course.id) }}" class="toggle-form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input class="form-check-input" type="checkbox" role="switch" 
                                                {% if course.is_active %}checked{% endif %} 
                                                onchange="this.form.submit()">
@@ -172,6 +171,7 @@
                                               action="{{ url_for('admin.courses.delete_course', course_id=course.id) }}"
                                               onsubmit="return confirm('Tem certeza que deseja excluir este curso e todo o seu conteúdo?');"
                                               style="margin: 0;">
+                                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="dropdown-item text-danger">
                                                 <i class="bi bi-trash3-fill"></i>
                                                 Excluir Curso
@@ -202,45 +202,15 @@
             {% endif %}
         </div>
 
-        {% if courses and courses.pages > 1 %}
-        <div class="manage-courses-pagination">
-            <nav aria-label="Navegação de cursos">
-                <ul class="pagination">
-                    <li class="page-item {% if not courses.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.courses.manage_courses', page=courses.prev_num) }}">
-                            <i class="bi bi-chevron-left"></i>
-                            Anterior
-                        </a>
-                    </li>
-                    
-                    {% for p in courses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                        {% if p %}
-                        <li class="page-item {% if p == courses.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('admin.courses.manage_courses', page=p) }}">{{ p }}</a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">…</span>
-                        </li>
-                        {% endif %}
-                    {% endfor %}
-
-                    <li class="page-item {% if not courses.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.courses.manage_courses', page=courses.next_num) }}">
-                            Próxima
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        {% endif %}
+        {% set pagination_params = {'pagination': courses, 'endpoint': 'admin.courses.manage_courses', 'extra_params': {}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de cursos'} %}
+        {% include 'partials/_pagination.html' %}
     </div>
 </div>
 
 <div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form id="createCourseForm" method="POST" action="{{ url_for('admin.courses.create_course') }}" enctype="multipart/form-data" class="modal-content">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
                 <h5 class="modal-title" id="createCourseModalLabel">
                     <i class="bi bi-plus-circle-fill"></i>
@@ -306,6 +276,7 @@
 <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form id="editCourseForm" method="POST" action="" enctype="multipart/form-data" class="modal-content">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
                 <h5 class="modal-title" id="editCourseModalLabel">
                     <i class="bi bi-pencil-square"></i>

@@ -49,9 +49,9 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}" {% if phase_info
                     and phase_info.locked %}data-locked="1" onsubmit="return false;" {% endif %}>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     {% if 'dados_paciente' in show_sections %}
-                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'dados_paciente' in
-                    editable_sections) %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'dados_paciente' in editable_sections) %}
                     <div class="nir-form-section mb-4">
                         <h6 class="section-title">
                             <i class="bi bi-person-circle text-danger"></i>
@@ -82,9 +82,19 @@
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <label class="nir-form-label">SUSFacil</label>
+                                <label class="nir-form-label">SUSFacil
+                                    <span class="text-danger" id="susfacil-required-nir-form" style="display: {% if record.susfacil or not section_editable %}none{% else %}inline{% endif %};">*</span>
+                                    {% if section_editable %}
+                                    <small class="form-check form-check-inline m-0 ms-2">
+                                        <input class="form-check-input" type="checkbox" id="susfacil-nao-tem-nir-form" 
+                                            name="susfacil_nao_tem" value="1" {% if not record.susfacil %}checked{% endif %}>
+                                        <label class="form-check-label" for="susfacil-nao-tem-nir-form" 
+                                            style="font-size: 0.75rem;">N/A</label>
+                                    </small>
+                                    {% endif %}
+                                </label>
                                 <input type="text" class="form-control nir-form-control" name="susfacil"
-                                    value="{{ record.susfacil or '' }}" placeholder="Somente números" pattern="[0-9]*"
+                                    id="susfacil-input-nir-form" value="{{ record.susfacil or '' }}" placeholder="Somente números" pattern="[0-9]*"
                                     title="Digite apenas números" {% if not section_editable %}disabled
                                     data-readonly="1" {% endif %}>
                             </div>
@@ -106,8 +116,7 @@
                         <h6 class="section-title">
                             <i class="bi bi-clipboard-data text-danger"></i>
                             Dados da Internação
-                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{%
-                            endif %}
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -126,7 +135,6 @@
                                     <option value="URGENCIA" {% if record.entry_type=='URGENCIA' %}selected{% endif %}>
                                         Urgência</option>
                                 </select>
-                                <small class="text-muted">Este campo determina o fluxo de trabalho</small>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Tipo de Internação</label>
@@ -139,7 +147,7 @@
                                         endif %}>Cirúrgico</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="nir-form-label">Local de Origem</label>
                                 <select class="form-select nir-form-control" name="admitted_from_origin" {% if not
                                     section_editable %}disabled data-readonly="1" {% endif %}>
@@ -158,8 +166,20 @@
                                         %}>Outro...</option>
                                 </select>
                             </div>
+                            <div class="col-md-12" id="palliative-field-nir-form" style="display: {% if record.admission_type == 'CLINICO' %}block{% else %}none{% endif %};">
+                                <div class="form-check form-switch mt-3">
+                                    <input class="form-check-input" type="checkbox" id="is_palliative_nir_form" name="is_palliative" {% if record.is_palliative %}checked{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    <label class="form-check-label fw-bold text-danger" for="is_palliative_nir_form">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        Paciente Paliativo
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted ms-4">
+                                    Marque esta opção para pacientes em cuidados paliativos
+                                </small>
+                            </div>
                             {% if not hide_aih_initial %}
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="nir-form-label">AIH</label>
                                 <input type="text" class="form-control nir-form-control" name="aih"
                                     value="{{ record.aih or '' }}" placeholder="Número da AIH" {% if not
@@ -170,7 +190,76 @@
                     </div>
                     {% endif %}
 
-                    {% set config = record.get_section_control_config() %}
+                    <!-- Seção de Aceite SUSFACIL -->
+                    {% if 'dados_internacao_iniciais' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'dados_internacao_iniciais' in editable_sections) %}
+                    <div class="nir-form-section mb-4" id="susfacil-aceite-section-nir-form" style="display: {% if record.entry_type == 'ELETIVO' %}block{% else %}none{% endif %};">
+                        <h6 class="section-title">
+                            <i class="bi bi-check2-circle text-danger"></i>
+                            Confirmação de Aceite SUSFACIL
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Atenção:</strong> Para internações eletivas, é obrigatório confirmar o aceite no
+                            sistema SUSFACIL antes de criar o NIR.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="susfacil-accepted-nir-form" 
+                                           name="susfacil_accepted" value="1" 
+                                           {% if record.susfacil_accepted %}checked{% endif %}
+                                           {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                    <label class="form-check-label fw-bold text-success" for="susfacil-accepted-nir-form">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Confirmo que realizei o aceite do paciente no sistema SUSFACIL
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="aceite-datetime-field-nir-form" style="display: {% if record.susfacil_accepted %}block{% else %}none{% endif %};">
+                                <label class="nir-form-label">Data e Hora do Aceite no SUSFACIL <span class="text-danger" id="aceite-datetime-required-nir-form">*</span></label>
+                                <input type="datetime-local" class="form-control nir-form-control" 
+                                       id="susfacil-accept-datetime-nir-form" 
+                                       name="susfacil_accept_datetime" 
+                                       value="{{ record.susfacil_accept_datetime.strftime('%Y-%m-%dT%H:%M') if record.susfacil_accept_datetime else '' }}"
+                                       {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    Informe exatamente a data e hora que aparece no SUSFACIL após o aceite
+                                </small>
+                            </div>
+                            <div class="col-md-6" id="protocol-info-field-nir-form" style="display: {% if record.susfacil_accept_datetime %}block{% else %}none{% endif %};">
+                                <label class="nir-form-label">Protocolo</label>
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    O protocolo será gerado automaticamente após salvar a solicitação. Você poderá
+                                    copiá-lo na página de detalhes.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if config.get('agendamento_inicial') == 'NIR' and 'agendamento_inicial' in show_sections %}
+                    {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'agendamento_inicial' in editable_sections) %}
+                    <div class="nir-form-section mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-calendar-check text-danger"></i>
+                            Agendamento Inicial
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Data de Agendamento</label>
+                                <input type="date" class="form-control nir-form-control" name="scheduling_date"
+                                    value="{{ record.scheduling_date.strftime('%Y-%m-%d') if record.scheduling_date else '' }}"
+                                    {% if not section_editable %}disabled data-readonly="1" {% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     {% if config.get('procedimentos') == 'NIR' and 'procedimentos' in show_sections %}
                     {% set section_editable = (not (phase_info.locked)) and (editable_sections and 'procedimentos' in
                     editable_sections) %}
@@ -254,8 +343,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="nir-form-label">CID Principal</label>
-                                <input type="text" class="form-control nir-form-control" name="main_cid"
-                                    value="{{ record.main_cid or '' }}" placeholder="Ex: A00.0" {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
+                                <select class="form-select nir-form-control" id="main-cid-select" name="main_cid" 
+                                    {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
+                                    <option value="">Selecione um procedimento primeiro</option>
+                                    {% if record.main_cid %}
+                                    <option value="{{ record.main_cid }}" selected>{{ record.main_cid }}</option>
+                                    {% endif %}
+                                </select>
                             </div>
                             {% set effective_entry = record.get_effective_entry_type() %}
                             {% if effective_entry == 'ELETIVO' %}
@@ -288,7 +382,7 @@
                                 <label class="nir-form-label d-flex align-items-center justify-content-between">Médico Auxiliar
                                     <span class="form-check form-check-inline m-0">
                                         <input class="form-check-input" type="checkbox" id="aux-nao-aplica"
-                                            name="auxiliary_nao_aplica" value="1" {% if not record.auxiliary %}{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                            name="auxiliary_nao_aplica" value="1" {% if not record.auxiliary %}checked{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
                                         <label class="form-check-label small" for="aux-nao-aplica">Não se aplica</label>
                                     </span>
                                 </label>
@@ -309,7 +403,7 @@
                                 <label class="nir-form-label d-flex align-items-center justify-content-between">Pediatria
                                     <span class="form-check form-check-inline m-0">
                                         <input class="form-check-input" type="checkbox" id="ped-nao-aplica"
-                                            name="pediatrics_nao_aplica" value="1" {% if not record.pediatrics %}{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
+                                            name="pediatrics_nao_aplica" value="1" {% if not record.pediatrics %}checked{% endif %} {% if not section_editable %}disabled data-readonly="1"{% endif %}>
                                         <label class="form-check-label small" for="ped-nao-aplica">Não se aplica</label>
                                     </span>
                                 </label>
@@ -317,6 +411,112 @@
                                     value="{{ record.pediatrics or '' }}" placeholder="Nome do Pediatra" {% if section_editable %}required{% else %}disabled data-readonly="1"{% endif %}>
                             </div>
                             {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% set section_editable = not (phase_info.locked) %}
+                    
+                    {% if not (config.get('procedimentos') == 'NIR' and 'procedimentos' in show_sections) %}
+                    <div class="nir-form-section mb-4" id="procedimentos-clinico-section" style="display: {% if record.admission_type == 'CLINICO' %}block{% else %}none{% endif %};">
+                        <h6 class="section-title">
+                            <i class="bi bi-activity text-danger"></i>
+                            Procedimentos
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        {% if section_editable %}
+                        <div class="row g-3 align-items-end mb-3">
+                            <div class="col-md-5">
+                                <label class="nir-form-label">Código do Procedimento</label>
+                                <div style="position: relative;">
+                                    <input type="text" class="form-control nir-form-control" 
+                                        id="procedure-code-input-clinico" 
+                                        placeholder="Digite código ou descrição do procedimento..."
+                                        autocomplete="off">
+                                    <div id="procedure-search-results-clinico" class="procedure-search-results"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="nir-form-label">Descrição</label>
+                                <input type="text" class="form-control nir-form-control bg-light" 
+                                    id="procedure-description-input-clinico" 
+                                    readonly>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary w-100" id="add-procedure-btn-clinico">
+                                    <i class="bi bi-plus-circle"></i> Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="mt-3">
+                            <div class="border rounded p-3 bg-body-tertiary" id="procedures-list-clinico">
+                                {% if record.procedures %}
+                                    {% for procedure in record.procedures %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded procedure-item border">
+                                        <div class="flex-grow-1">
+                                            <strong>{{ procedure.code }}</strong> - {{ procedure.description }}
+                                            {% if loop.index == 1 %}
+                                            <span class="badge bg-primary ms-2">Principal</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if section_editable %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-procedure-clinico">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    <input type="hidden" name="procedure_codes[]" value="{{ procedure.code }}">
+                                    <input type="hidden" name="procedure_descriptions[]" value="{{ procedure.description }}">
+                                    {% endfor %}
+                                {% else %}
+                                <p class="text-muted text-center mb-0"><i class="bi bi-info-circle me-2"></i>Nenhum procedimento adicionado</p>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted d-block mt-2"><i class="bi bi-lightbulb me-1"></i>O primeiro procedimento será considerado principal.</small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if not (config.get('informacoes_medicas') == 'NIR' and 'informacoes_medicas' in show_sections) %}
+                    <div class="nir-form-section mb-4" id="informacoes-medicas-clinico-section" style="display: {% if record.admission_type == 'CLINICO' %}block{% else %}none{% endif %};">
+                        <h6 class="section-title">
+                            <i class="bi bi-heart-pulse text-danger"></i>
+                            Informações Médicas
+                            {% if not section_editable %}<span class="badge bg-secondary ms-1">Somente leitura</span>{% endif %}
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Médico Responsável <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control nir-form-control" name="responsible_doctor" id="responsible-doctor-clinico-nir-form"
+                                    value="{{ record.responsible_doctor or '' }}" placeholder="Nome do médico" {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">CID Principal <span class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" id="main-cid-select-clinico" name="main_cid" 
+                                    {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
+                                    <option value="">Adicione um procedimento primeiro</option>
+                                    {% if record.main_cid %}
+                                    <option value="{{ record.main_cid }}" selected>{{ record.main_cid }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Especialidade <span class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" name="surgical_specialty" id="surgical-specialty-clinico-nir-form"
+                                    {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
+                                    <option value="">Selecione</option>
+                                    <option value="CIRURGIA GERAL" {% if record.surgical_specialty=='CIRURGIA GERAL' %}selected{% endif %}>Cirurgia Geral</option>
+                                    <option value="CLINICO GERAL" {% if record.surgical_specialty=='CLINICO GERAL' %}selected{% endif %}>Clínico Geral</option>
+                                    <option value="DENTISTA" {% if record.surgical_specialty=='DENTISTA' %}selected{% endif %}>Dentista</option>
+                                    <option value="DERMATO" {% if record.surgical_specialty=='DERMATO' %}selected{% endif %}>Dermatologia</option>
+                                    <option value="OBSTETRICIA" {% if record.surgical_specialty=='OBSTETRICIA' %}selected{% endif %}>Obstetrícia</option>
+                                    <option value="OFTALMOLOGISTA" {% if record.surgical_specialty=='OFTALMOLOGISTA' %}selected{% endif %}>Oftalmologia</option>
+                                    <option value="ORTOPEDISTA" {% if record.surgical_specialty=='ORTOPEDISTA' %}selected{% endif %}>Ortopedia</option>
+                                    <option value="UROLOGISTA" {% if record.surgical_specialty=='UROLOGISTA' %}selected{% endif %}>Urologia</option>
+                                    <option value="VASCULAR" {% if record.surgical_specialty=='VASCULAR' %}selected{% endif %}>Vascular</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -332,21 +532,12 @@
                             endif %}
                         </h6>
                         <div class="row g-3">
-                            {% if not final_phase %}
-                            <div class="col-md-4">
-                                <label class="nir-form-label">Data de Agendamento</label>
-                                <input type="date" class="form-control nir-form-control" name="scheduling_date"
-                                    value="{{ record.scheduling_date.strftime('%Y-%m-%d') if record.scheduling_date else '' }}"
-                                    {% if not section_editable %}disabled data-readonly="1" {% endif %}>
-                            </div>
-                            {% endif %}
                             <div class="col-md-4">
                                 <label class="nir-form-label">Tipo de Alta <span class="text-danger">*</span></label>
                                 <select class="form-select nir-form-control" name="discharge_type" {% if
                                     section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
                                     <option value="">Selecione</option>
                                     <option value="ALTA MELHORADA" {% if record.discharge_type=='ALTA MELHORADA' %}selected{% endif %}>Alta Melhorada</option>
-                                    <option value="ALTA A PEDIDO" {% if record.discharge_type=='ALTA A PEDIDO' %}selected{% endif %}>Alta a Pedido</option>
                                     <option value="TRANSFERENCIA" {% if record.discharge_type=='TRANSFERENCIA' %}selected{% endif %}>Transferência</option>
                                     <option value="OBITO" {% if record.discharge_type=='OBITO' %}selected{% endif %}>Óbito</option>
                                     <option value="EVASAO" {% if record.discharge_type=='EVASAO' %}selected{% endif %}>Evasão</option>
@@ -394,6 +585,96 @@
 </div>
 
 <script>
+    function updateCidOptions() {
+        const container = document.getElementById('procedures-container');
+        const cidSelect = document.getElementById('main-cid-select');
+        
+        if (!container || !cidSelect) return;
+        
+        const firstProcedureInput = container.querySelector('input[name="procedure_codes[]"]');
+        
+        if (!firstProcedureInput || !firstProcedureInput.value.trim()) {
+            cidSelect.innerHTML = '<option value="">Selecione um procedimento primeiro</option>';
+            cidSelect.disabled = true;
+            return;
+        }
+        
+        const procedureCode = firstProcedureInput.value.trim();
+        const currentCid = cidSelect.value;
+        
+        fetch(`/nir/procedure/${encodeURIComponent(procedureCode)}/cids`)
+            .then(response => response.json())
+            .then(cids => {
+                if (cids.length === 0) {
+                    cidSelect.innerHTML = '<option value="">Nenhum CID compatível encontrado</option>';
+                    cidSelect.disabled = true;
+                } else {
+                    cidSelect.disabled = false;
+                    const escapeHtml = (str) => {
+                        const div = document.createElement('div');
+                        div.textContent = str || '';
+                        return div.innerHTML;
+                    };
+                    cidSelect.innerHTML = '<option value="">Selecione o CID</option>' +
+                        cids.map(cid => 
+                            `<option value="${escapeHtml(cid.code)}" ${cid.code === currentCid ? 'selected' : ''}>
+                                ${escapeHtml(cid.code)} - ${escapeHtml(cid.description)}
+                            </option>`
+                        ).join('');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar CIDs:', error);
+                cidSelect.innerHTML = '<option value="">Erro ao carregar CIDs</option>';
+                cidSelect.disabled = true;
+            });
+    }
+
+    function updateCidOptionsClinico() {
+        const proceduresListClinico = document.getElementById('procedures-list-clinico');
+        const cidSelect = document.getElementById('main-cid-select-clinico');
+        
+        if (!proceduresListClinico || !cidSelect) return;
+        
+        const firstProcedureInput = proceduresListClinico.querySelector('input[name="procedure_codes[]"]');
+        
+        if (!firstProcedureInput || !firstProcedureInput.value.trim()) {
+            cidSelect.innerHTML = '<option value="">Adicione um procedimento primeiro</option>';
+            cidSelect.disabled = true;
+            return;
+        }
+        
+        const procedureCode = firstProcedureInput.value.trim();
+        const currentCid = cidSelect.value;
+        
+        fetch(`/nir/procedure/${encodeURIComponent(procedureCode)}/cids`)
+            .then(response => response.json())
+            .then(cids => {
+                if (cids.length === 0) {
+                    cidSelect.innerHTML = '<option value="">Nenhum CID compatível encontrado</option>';
+                    cidSelect.disabled = true;
+                } else {
+                    cidSelect.disabled = false;
+                    const escapeHtml = (str) => {
+                        const div = document.createElement('div');
+                        div.textContent = str || '';
+                        return div.innerHTML;
+                    };
+                    cidSelect.innerHTML = '<option value="">Selecione o CID</option>' +
+                        cids.map(cid => 
+                            `<option value="${escapeHtml(cid.code)}" ${cid.code === currentCid ? 'selected' : ''}>
+                                ${escapeHtml(cid.code)} - ${escapeHtml(cid.description)}
+                            </option>`
+                        ).join('');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar CIDs:', error);
+                cidSelect.innerHTML = '<option value="">Erro ao carregar CIDs</option>';
+                cidSelect.disabled = true;
+            });
+    }
+
     function addProcedureRow() {
         const container = document.getElementById('procedures-container');
         const newRow = document.createElement('div');
@@ -412,11 +693,192 @@
         </div>
     `;
         container.appendChild(newRow);
+        
+        const codeInput = newRow.querySelector('input[name="procedure_codes[]"]');
+        if (codeInput) {
+            codeInput.addEventListener('blur', updateCidOptions);
+        }
     }
 
     function removeProcedureRow(button) {
         const row = button.closest('.procedure-row');
         row.remove();
+        updateCidOptions();
+        updateCidOptionsClinico();
+    }
+
+    function escapeHtmlNir(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    function setupProcedureSearchClinico() {
+        const procedureCodeInputClinico = document.getElementById('procedure-code-input-clinico');
+        const procedureDescInputClinico = document.getElementById('procedure-description-input-clinico');
+        const addProcedureBtnClinico = document.getElementById('add-procedure-btn-clinico');
+        const searchResultsDivClinico = document.getElementById('procedure-search-results-clinico');
+        
+        if (!procedureCodeInputClinico || !addProcedureBtnClinico) return;
+        
+        let searchTimeout;
+        let selectedProcedure = null;
+        let lastSearchResults = [];
+
+        procedureCodeInputClinico.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (selectedProcedure && query !== selectedProcedure.code) {
+                procedureDescInputClinico.value = '';
+                selectedProcedure = null;
+            }
+            
+            if (query.length < 2) {
+                searchResultsDivClinico.innerHTML = '';
+                searchResultsDivClinico.style.display = 'none';
+                lastSearchResults = [];
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/nir/search_procedures?q=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Erro do servidor:', data.error);
+                            searchResultsDivClinico.innerHTML = '<div class="p-2 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Erro no servidor</div>';
+                            searchResultsDivClinico.style.display = 'block';
+                            lastSearchResults = [];
+                        } else if (data.results && data.results.length > 0) {
+                            lastSearchResults = data.results;
+                            
+                            searchResultsDivClinico.innerHTML = data.results.map((proc, index) => 
+                                `<div class="procedure-result-item" data-index="${index}">
+                                    <strong>${escapeHtmlNir(proc.code)}</strong> - ${escapeHtmlNir(proc.description)}
+                                </div>`
+                            ).join('');
+                            searchResultsDivClinico.style.display = 'block';
+                        } else {
+                            searchResultsDivClinico.innerHTML = '<div class="p-2 text-muted"><i class="bi bi-info-circle me-2"></i>Nenhum procedimento encontrado</div>';
+                            searchResultsDivClinico.style.display = 'block';
+                            lastSearchResults = [];
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao buscar procedimento:', error);
+                        searchResultsDivClinico.innerHTML = '<div class="p-2 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Erro ao buscar</div>';
+                        searchResultsDivClinico.style.display = 'block';
+                        lastSearchResults = [];
+                    });
+            }, 300);
+        });
+
+        searchResultsDivClinico.addEventListener('click', function(e) {
+            const item = e.target.closest('.procedure-result-item');
+            if (item) {
+                const index = parseInt(item.getAttribute('data-index'));
+                
+                if (lastSearchResults[index]) {
+                    selectedProcedure = lastSearchResults[index];
+                    procedureCodeInputClinico.value = selectedProcedure.code;
+                    procedureDescInputClinico.value = selectedProcedure.description;
+                    searchResultsDivClinico.style.display = 'none';
+                }
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!procedureCodeInputClinico.contains(e.target) && !searchResultsDivClinico.contains(e.target)) {
+                searchResultsDivClinico.style.display = 'none';
+            }
+        });
+
+        addProcedureBtnClinico.addEventListener('click', function() {
+            if (!selectedProcedure) {
+                alert('Por favor, selecione um procedimento da lista de busca antes de adicionar.');
+                procedureCodeInputClinico.focus();
+                return;
+            }
+            
+            const code = selectedProcedure.code;
+            const description = selectedProcedure.description;
+            
+            if (!code || !description) {
+                alert('Por favor, selecione um procedimento válido da lista.');
+                return;
+            }
+            
+            const proceduresListClinico = document.getElementById('procedures-list-clinico');
+            
+            const existingCodes = Array.from(proceduresListClinico.querySelectorAll('input[name="procedure_codes[]"]'))
+                .map(inp => inp.value);
+            if (existingCodes.includes(code)) {
+                alert('Este procedimento já foi adicionado.');
+                return;
+            }
+            
+            const emptyMessage = proceduresListClinico.querySelector('p.text-muted');
+            if (emptyMessage) {
+                emptyMessage.remove();
+            }
+            
+            const procedureItem = document.createElement('div');
+            procedureItem.className = 'd-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded procedure-item border';
+            
+            const isPrimary = existingCodes.length === 0;
+            procedureItem.innerHTML = `
+                <div class="flex-grow-1">
+                    <strong>${escapeHtmlNir(code)}</strong> - ${escapeHtmlNir(description)}
+                    ${isPrimary ? '<span class="badge bg-primary ms-2">Principal</span>' : ''}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-procedure-clinico">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            
+            const hiddenCode = document.createElement('input');
+            hiddenCode.type = 'hidden';
+            hiddenCode.name = 'procedure_codes[]';
+            hiddenCode.value = code;
+            
+            const hiddenDescription = document.createElement('input');
+            hiddenDescription.type = 'hidden';
+            hiddenDescription.name = 'procedure_descriptions[]';
+            hiddenDescription.value = description;
+            
+            proceduresListClinico.appendChild(procedureItem);
+            proceduresListClinico.appendChild(hiddenCode);
+            proceduresListClinico.appendChild(hiddenDescription);
+            
+            procedureCodeInputClinico.value = '';
+            procedureDescInputClinico.value = '';
+            searchResultsDivClinico.style.display = 'none';
+            selectedProcedure = null;
+            lastSearchResults = [];
+            
+            updateCidOptionsClinico();
+            
+            procedureItem.querySelector('.remove-procedure-clinico').addEventListener('click', function() {
+                procedureItem.remove();
+                hiddenCode.remove();
+                hiddenDescription.remove();
+                
+                if (!proceduresListClinico.querySelector('.procedure-item')) {
+                    const emptyMsg = document.createElement('p');
+                    emptyMsg.className = 'text-muted text-center mb-0';
+                    emptyMsg.innerHTML = '<i class="bi bi-info-circle me-2"></i>Nenhum procedimento adicionado';
+                    proceduresListClinico.appendChild(emptyMsg);
+                }
+                
+                updateCidOptionsClinico();
+            });
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -427,18 +889,22 @@
             });
         }
 
-        function toggleField(cbId, inputId) {
+        function toggleField(cbId, inputId, requiredMarkId) {
             const cb = document.getElementById(cbId);
             const input = document.getElementById(inputId);
+            const requiredMark = requiredMarkId ? document.getElementById(requiredMarkId) : null;
             if (!cb || !input) return;
             const applyState = () => {
                 if (cb.checked) {
                     input.value = '';
                     input.disabled = true;
+                    input.removeAttribute('required');
                     input.classList.add('bg-light');
+                    if (requiredMark) requiredMark.style.display = 'none';
                 } else {
                     input.disabled = false;
                     input.classList.remove('bg-light');
+                    if (requiredMark) requiredMark.style.display = 'inline';
                 }
             };
             cb.addEventListener('change', applyState);
@@ -446,22 +912,192 @@
         }
         toggleField('aux-nao-aplica', 'auxiliary-input');
         toggleField('ped-nao-aplica', 'pediatrics-input');
+        toggleField('susfacil-nao-tem-nir-form', 'susfacil-input-nir-form', 'susfacil-required-nir-form');
+
+        const susfacilInputNirForm = document.getElementById('susfacil-input-nir-form');
+        if (susfacilInputNirForm) {
+            susfacilInputNirForm.addEventListener('input', function (e) {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+            susfacilInputNirForm.addEventListener('keypress', function (e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 46) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        const procedureInputs = document.querySelectorAll('#procedures-container input[name="procedure_codes[]"]');
+        procedureInputs.forEach(input => {
+            input.addEventListener('blur', updateCidOptions);
+        });
+        
+        if (procedureInputs.length > 0 && procedureInputs[0].value.trim()) {
+            updateCidOptions();
+        }
+
+        setupProcedureSearchClinico();
+        
+        document.querySelectorAll('.remove-procedure-clinico').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const item = this.closest('.procedure-item');
+                if (item) {
+                    const proceduresList = item.closest('#procedures-list-clinico');
+                    
+                    const nextCode = item.nextElementSibling;
+                    const nextDesc = nextCode ? nextCode.nextElementSibling : null;
+                    
+                    item.remove();
+                    if (nextCode && nextCode.name === 'procedure_codes[]') nextCode.remove();
+                    if (nextDesc && nextDesc.name === 'procedure_descriptions[]') nextDesc.remove();
+                    
+                    if (proceduresList && !proceduresList.querySelector('.procedure-item')) {
+                        const emptyMsg = document.createElement('p');
+                        emptyMsg.className = 'text-muted text-center mb-0';
+                        emptyMsg.innerHTML = '<i class="bi bi-info-circle me-2"></i>Nenhum procedimento adicionado';
+                        proceduresList.appendChild(emptyMsg);
+                    }
+                    
+                    updateCidOptionsClinico();
+                }
+            });
+        });
+        
+        const firstProcedureClinico = document.querySelector('#procedures-list-clinico input[name="procedure_codes[]"]');
+        if (firstProcedureClinico && firstProcedureClinico.value.trim()) {
+            updateCidOptionsClinico();
+        }
+
+        const admissionTypeNirForm = document.querySelector('[name="admission_type"]');
+        const palliativeFieldNirForm = document.getElementById('palliative-field-nir-form');
+        const palliativeCheckboxNirForm = document.getElementById('is_palliative_nir_form');
+        const procedimentosClinicoSection = document.getElementById('procedimentos-clinico-section');
+        const informacoesMedicasClinicoSection = document.getElementById('informacoes-medicas-clinico-section');
+        const responsibleDoctorClinicoInput = document.getElementById('responsible-doctor-clinico-nir-form');
+        const mainCidSelectClinico = document.getElementById('main-cid-select-clinico');
+        const surgicalSpecialtyClinicoSelect = document.getElementById('surgical-specialty-clinico-nir-form');
+
+        function toggleClinicoSections(admissionType) {
+            const isClinico = admissionType === 'CLINICO';
+            
+            if (palliativeFieldNirForm) {
+                palliativeFieldNirForm.style.display = isClinico ? 'block' : 'none';
+                if (!isClinico && palliativeCheckboxNirForm && !palliativeCheckboxNirForm.disabled) {
+                    palliativeCheckboxNirForm.checked = false;
+                }
+            }
+            
+            if (procedimentosClinicoSection) {
+                procedimentosClinicoSection.style.display = isClinico ? 'block' : 'none';
+            }
+            
+            if (informacoesMedicasClinicoSection) {
+                informacoesMedicasClinicoSection.style.display = isClinico ? 'block' : 'none';
+                
+                if (isClinico) {
+                    if (responsibleDoctorClinicoInput && !responsibleDoctorClinicoInput.disabled) {
+                        responsibleDoctorClinicoInput.required = true;
+                    }
+                    if (mainCidSelectClinico && !mainCidSelectClinico.disabled) {
+                        mainCidSelectClinico.required = true;
+                    }
+                    if (surgicalSpecialtyClinicoSelect && !surgicalSpecialtyClinicoSelect.disabled) {
+                        surgicalSpecialtyClinicoSelect.required = true;
+                    }
+                } else {
+                    if (responsibleDoctorClinicoInput) {
+                        responsibleDoctorClinicoInput.required = false;
+                        if (!responsibleDoctorClinicoInput.disabled) {
+                            responsibleDoctorClinicoInput.value = '';
+                        }
+                    }
+                    if (mainCidSelectClinico) {
+                        mainCidSelectClinico.required = false;
+                        if (!mainCidSelectClinico.disabled) {
+                            mainCidSelectClinico.selectedIndex = 0;
+                        }
+                    }
+                    if (surgicalSpecialtyClinicoSelect) {
+                        surgicalSpecialtyClinicoSelect.required = false;
+                        if (!surgicalSpecialtyClinicoSelect.disabled) {
+                            surgicalSpecialtyClinicoSelect.selectedIndex = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (admissionTypeNirForm) {
+            toggleClinicoSections(admissionTypeNirForm.value);
+            
+            admissionTypeNirForm.addEventListener('change', function() {
+                toggleClinicoSections(this.value);
+            });
+        }
+
+        // Controle da seção de aceite SUSFACIL baseado no tipo de entrada
+        const entryTypeSelect = document.querySelector('[name="entry_type"]');
+        const susfacilAceiteSection = document.getElementById('susfacil-aceite-section-nir-form');
+        const susfacilAcceptedCheckbox = document.getElementById('susfacil-accepted-nir-form');
+        const aceiteDatetimeField = document.getElementById('aceite-datetime-field-nir-form');
+        const aceiteDatetimeInput = document.getElementById('susfacil-accept-datetime-nir-form');
+        const protocolInfoField = document.getElementById('protocol-info-field-nir-form');
+
+        function toggleSusfacilSection(entryType) {
+            if (susfacilAceiteSection) {
+                if (entryType === 'ELETIVO') {
+                    susfacilAceiteSection.style.display = 'block';
+                } else {
+                    susfacilAceiteSection.style.display = 'none';
+                    // Limpar campos quando não é eletivo
+                    if (susfacilAcceptedCheckbox && !susfacilAcceptedCheckbox.disabled) {
+                        susfacilAcceptedCheckbox.checked = false;
+                    }
+                    if (aceiteDatetimeInput && !aceiteDatetimeInput.disabled) {
+                        aceiteDatetimeInput.value = '';
+                    }
+                }
+            }
+        }
+
+        if (entryTypeSelect) {
+            toggleSusfacilSection(entryTypeSelect.value);
+            
+            entryTypeSelect.addEventListener('change', function() {
+                toggleSusfacilSection(this.value);
+            });
+        }
+
+        // Controle de exibição dos campos relacionados ao aceite SUSFACIL
+        if (susfacilAcceptedCheckbox) {
+            susfacilAcceptedCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    aceiteDatetimeField.style.display = 'block';
+                    if (aceiteDatetimeInput && !aceiteDatetimeInput.disabled) {
+                        aceiteDatetimeInput.required = true;
+                    }
+                } else {
+                    aceiteDatetimeField.style.display = 'none';
+                    protocolInfoField.style.display = 'none';
+                    if (aceiteDatetimeInput) {
+                        aceiteDatetimeInput.required = false;
+                        if (!aceiteDatetimeInput.disabled) {
+                            aceiteDatetimeInput.value = '';
+                        }
+                    }
+                }
+            });
+        }
+
+        if (aceiteDatetimeInput) {
+            aceiteDatetimeInput.addEventListener('change', function() {
+                if (this.value) {
+                    protocolInfoField.style.display = 'block';
+                } else {
+                    protocolInfoField.style.display = 'none';
+                }
+            });
+        }
     });
 </script>
-
-<style>
-    .section-title {
-        border-bottom: 2px solid #dee2e6;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .nir-readonly-field,
-    .nir-readonly-field:disabled {
-        background-color: #f1f3f5 !important;
-        color: #6c757d !important;
-        cursor: not-allowed;
-        opacity: 1 !important;
-    }
-</style>
 {% endblock %}

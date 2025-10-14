@@ -22,6 +22,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="nir-form-section">
                             <h6>
                                 <i class="bi bi-person-circle"></i>
@@ -78,13 +79,13 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Tipo de Internação</label>
-                                    <select class="form-select nir-form-control" name="admission_type">
+                                    <select class="form-select nir-form-control" name="admission_type" id="admission_type_edit">
                                         <option value="">Selecione</option>
                                         <option value="CLINICO" {% if record.admission_type == 'CLINICO' %}selected{% endif %}>Clínico</option>
                                         <option value="CIRURGICO" {% if record.admission_type == 'CIRURGICO' %}selected{% endif %}>Cirúrgico</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label class="nir-form-label">Local de Origem</label>
                                     <select class="form-select nir-form-control" name="admitted_from_origin">
                                         <option value="Iturama" {% if record.admitted_from_origin == 'Iturama' or not record.admitted_from_origin %}selected{% endif %}>Iturama</option>
@@ -93,10 +94,21 @@
                                         <option value="Carneirinho" {% if record.admitted_from_origin == 'Carneirinho' %}selected{% endif %}>Carneirinho</option>
                                         <option value="Limeira do Oeste" {% if record.admitted_from_origin == 'Limeira do Oeste' %}selected{% endif %}>Limeira do Oeste</option>
                                         <option value="Outro" {% if record.admitted_from_origin == 'Outro' %}selected{% endif %}>Outro...</option>
-
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12" id="palliative-field-edit" style="display: {% if record.admission_type == 'CLINICO' %}block{% else %}none{% endif %};">
+                                    <div class="form-check form-switch mt-3">
+                                        <input class="form-check-input" type="checkbox" id="is_palliative_edit" name="is_palliative" {% if record.is_palliative %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold text-danger" for="is_palliative_edit">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                            Paciente Paliativo
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted ms-4">
+                                        Marque esta opção para pacientes em cuidados paliativos (somente para internações clínicas)
+                                    </small>
+                                </div>
+                                <div class="col-md-12">
                                     <label class="nir-form-label">AIH</label>
                                     <input type="text" class="form-control nir-form-control" name="aih" value="{{ record.aih or '' }}" placeholder="Número da AIH">
                                 </div>
@@ -166,7 +178,12 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="nir-form-label">CID Principal</label>
-                                    <input type="text" class="form-control nir-form-control" name="main_cid" value="{{ record.main_cid or '' }}" placeholder="CID-10">
+                                    <select class="form-select nir-form-control" id="main-cid-select" name="main_cid">
+                                        <option value="">Selecione um procedimento primeiro</option>
+                                        {% if record.main_cid %}
+                                        <option value="{{ record.main_cid }}" selected>{{ record.main_cid }}</option>
+                                        {% endif %}
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="nir-form-label">Especialidade Cirúrgica</label>
@@ -239,7 +256,6 @@
                                     <select class="form-select nir-form-control" name="discharge_type">
                                         <option value="">Selecione</option>
                                         <option value="ALTA MELHORADA" {% if record.discharge_type == 'ALTA MELHORADA' %}selected{% endif %}>Alta Melhorada</option>
-                                        <option value="ALTA A PEDIDO" {% if record.discharge_type == 'ALTA A PEDIDO' %}selected{% endif %}>Alta a Pedido</option>
                                         <option value="TRANSFERENCIA" {% if record.discharge_type == 'TRANSFERENCIA' %}selected{% endif %}>Transferência</option>
                                         <option value="OBITO" {% if record.discharge_type == 'OBITO' %}selected{% endif %}>Óbito</option>
                                         <option value="EVASAO" {% if record.discharge_type == 'EVASAO' %}selected{% endif %}>Evasão</option>
@@ -291,6 +307,18 @@
                                         <option value="EM_ANDAMENTO" {% if record.status == 'EM_ANDAMENTO' %}selected{% endif %}>Em Andamento</option>
                                         <option value="CONCLUIDO" {% if record.status == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
                                     </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="nir-form-label">Recurso <span class="text-danger">*</span></label>
+                                    <select class="form-select nir-form-control" name="recurso" required>
+                                        <option value="">Selecione o recurso</option>
+                                        <option value="PMAE" {% if record.recurso == 'PMAE' %}selected{% endif %}>PMAE</option>
+                                        <option value="PPI" {% if record.recurso == 'PPI' %}selected{% endif %}>PPI</option>
+                                        <option value="Valora Eletivo" {% if record.recurso == 'Valora Eletivo' %}selected{% endif %}>Valora Eletivo</option>
+                                        <option value="Valora Urgencia" {% if record.recurso == 'Valora Urgencia' %}selected{% endif %}>Valora Urgencia</option>
+                                        <option value="Próprio" {% if record.recurso == 'Próprio' %}selected{% endif %}>Próprio</option>
+                                    </select>
+                                    <small class="text-muted">Campo de responsabilidade do Faturamento</small>
                                 </div>
                                 <div class="col-12">
                                     <label class="nir-form-label">Observação</label>
@@ -384,6 +412,75 @@
                 }
             });
         }
+
+        const admissionTypeEditSelect = document.getElementById('admission_type_edit');
+        const palliativeFieldEdit = document.getElementById('palliative-field-edit');
+        const palliativeCheckboxEdit = document.getElementById('is_palliative_edit');
+
+        if (admissionTypeEditSelect && palliativeFieldEdit) {
+            admissionTypeEditSelect.addEventListener('change', function() {
+                if (this.value === 'CLINICO') {
+                    palliativeFieldEdit.style.display = 'block';
+                } else {
+                    palliativeFieldEdit.style.display = 'none';
+                    if (palliativeCheckboxEdit) {
+                        palliativeCheckboxEdit.checked = false;
+                    }
+                }
+            });
+        }
+
+        function updateCidOptions() {
+            const proceduresContainer = document.getElementById('procedures-container');
+            const cidSelect = document.getElementById('main-cid-select');
+            
+            if (!proceduresContainer || !cidSelect) return;
+            
+            const firstProcedureInput = proceduresContainer.querySelector('input[name="procedure_codes[]"]');
+            
+            if (!firstProcedureInput || !firstProcedureInput.value.trim()) {
+                cidSelect.innerHTML = '<option value="">Selecione um procedimento primeiro</option>';
+                cidSelect.disabled = true;
+                return;
+            }
+            
+            const procedureCode = firstProcedureInput.value.trim();
+            const currentCid = cidSelect.value;
+            
+            fetch(`/nir/procedure/${encodeURIComponent(procedureCode)}/cids`)
+                .then(response => response.json())
+                .then(cids => {
+                    if (cids.length === 0) {
+                        cidSelect.innerHTML = '<option value="">Nenhum CID compatível encontrado</option>';
+                        cidSelect.disabled = true;
+                    } else {
+                        cidSelect.disabled = false;
+                        const escapeHtml = (str) => {
+                            const div = document.createElement('div');
+                            div.textContent = str || '';
+                            return div.innerHTML;
+                        };
+                        cidSelect.innerHTML = '<option value="">Selecione o CID</option>' +
+                            cids.map(cid => 
+                                `<option value="${escapeHtml(cid.code)}" ${cid.code === currentCid ? 'selected' : ''}>
+                                    ${escapeHtml(cid.code)} - ${escapeHtml(cid.description)}
+                                </option>`
+                            ).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar CIDs:', error);
+                    cidSelect.innerHTML = '<option value="">Erro ao carregar CIDs</option>';
+                    cidSelect.disabled = true;
+                });
+        }
+
+        const procedureInputs = document.querySelectorAll('#procedures-container input[name="procedure_codes[]"]');
+        if (procedureInputs.length > 0 && procedureInputs[0].value.trim()) {
+            updateCidOptions();
+        }
+
+        window.updateCidOptions = updateCidOptions;
     });
 </script>
 <script src="{{ url_for('static', filename='nir/nir_procedures.js') }}"></script>

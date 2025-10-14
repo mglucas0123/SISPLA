@@ -71,7 +71,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}">
-
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="nir-form-section mb-4">
                         <h6 class="section-title">
                             <i class="bi bi-clipboard-check text-danger"></i>
@@ -87,7 +87,18 @@
                         </div>
 
                         <div class="row g-3 mt-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <label class="nir-form-label">Recurso <span class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" name="recurso" required>
+                                    <option value="">Selecione o recurso</option>
+                                    <option value="PMAE" {% if record.recurso == 'PMAE' %}selected{% endif %}>PMAE</option>
+                                    <option value="PPI" {% if record.recurso == 'PPI' %}selected{% endif %}>PPI</option>
+                                    <option value="Valora Eletivo" {% if record.recurso == 'Valora Eletivo' %}selected{% endif %}>Valora Eletivo</option>
+                                    <option value="Valora Urgencia" {% if record.recurso == 'Valora Urgencia' %}selected{% endif %}>Valora Urgencia</option>
+                                    <option value="Próprio" {% if record.recurso == 'Próprio' %}selected{% endif %}>Próprio</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
                                 <label class="nir-form-label">Criticado?</label>
                                 <select class="form-select nir-form-control" name="criticized" id="criticized-select" required>
                                     <option value="" disabled selected>Selecione...</option>
@@ -95,7 +106,7 @@
                                     <option value="SIM">Sim</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="nir-form-label">Faturado?</label>
                                 <select class="form-select nir-form-control" name="billed" id="billed-select" required>
                                     <option value="" disabled selected>Selecione...</option>
@@ -103,7 +114,7 @@
                                     <option value="SIM">Sim</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="nir-form-label">Status Final</label>
                                 <select class="form-select nir-form-control" name="status" id="final-status-select" required>
                                     <option value="" disabled selected>Selecione...</option>

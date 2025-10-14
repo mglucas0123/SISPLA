@@ -77,6 +77,7 @@
                 <p class="forms-danger-text">Esta ação é irreversível e irá apagar permanentemente o registro.</p>
                 <form method="POST" action="{{ url_for('shift_handover.delete_shift_handover_record', form_id=formulario.id) }}"
                     onsubmit="return confirm('TEM CERTEZA ABSOLUTA que deseja deletar esta solicitação?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="forms-btn forms-btn-danger">
                         <i class="bi bi-trash3-fill"></i>
                         Deletar Registro

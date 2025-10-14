@@ -1,0 +1,394 @@
+<div class="modal fade" id="procedureManagementModal" tabindex="-1" aria-labelledby="procedureManagementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content procedure-modal-content">
+            <div class="modal-header procedure-modal-header">
+                <div class="d-flex align-items-center">
+                    <div class="procedure-modal-icon me-3">
+                        <i class="bi bi-gear-fill text-dark"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="procedureManagementModalLabel">Gerenciar Procedimentos</h5>
+                        <p class="procedure-modal-subtitle text-dark mb-0">Administração de procedimentos médicos</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body procedure-modal-body">
+                <div class="procedure-management-container">
+                    <div class="procedure-controls-card mb-4">
+                        <div class="row g-3">
+                            <div class="col-lg-8">
+                                <div class="procedure-search-wrapper">
+                                    <i class="bi bi-search procedure-search-icon"></i>
+                                    <input type="text" 
+                                           class="form-control procedure-search-input" 
+                                           id="procedureSearchInput" 
+                                           placeholder="Pesquisar por código ou descrição...">
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <button type="button" class="btn procedure-btn-add w-100" id="btnAddProcedure">
+                                    <i class="bi bi-plus-circle me-2"></i>Novo Procedimento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="procedureFormContainer" class="procedure-form-container mb-4" style="display: none;">
+                        <div class="procedure-form-card">
+                            <div class="procedure-form-header">
+                                <h6 class="mb-0" id="formTitle">
+                                    <i class="bi bi-pencil-square me-2"></i>Novo Procedimento
+                                </h6>
+                            </div>
+                            <div class="procedure-form-body">
+                                <form id="procedureForm">
+                                    <input type="hidden" id="procedureId" value="">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label for="procedureCode" class="procedure-form-label">
+                                                <i class="bi bi-hash me-1"></i>Código *
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control procedure-form-control" 
+                                                   id="procedureCode" 
+                                                   placeholder="Ex: 0404030084"
+                                                   maxlength="20"
+                                                   required>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <label for="procedureDescription" class="procedure-form-label">
+                                                <i class="bi bi-text-left me-1"></i>Descrição *
+                                            </label>
+                                            <textarea class="form-control procedure-form-control" 
+                                                      id="procedureDescription" 
+                                                      rows="2"
+                                                      placeholder="Descrição completa do procedimento"
+                                                      required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 procedure-form-actions">
+                                        <button type="submit" class="btn procedure-btn-save" id="btnSaveProcedure">
+                                            <i class="bi bi-check-circle me-2"></i>Salvar
+                                        </button>
+                                        <button type="button" class="btn procedure-btn-cancel" id="btnCancelForm">
+                                            <i class="bi bi-x-circle me-2"></i>Cancelar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="procedure-list-container">
+                        <div id="procedureListLoading" class="procedure-loading-state" style="display: none;">
+                            <div class="procedure-loading-spinner">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-3 mb-0">Carregando procedimentos...</p>
+                            </div>
+                        </div>
+                        <div id="procedureTableContainer" class="procedure-table-container" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table procedure-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 15%;">
+                                                <i class="bi bi-hash me-2"></i>Código
+                                            </th>
+                                            <th>
+                                                <i class="bi bi-text-left me-2"></i>Descrição
+                                            </th>
+                                            <th style="width: 180px;" class="text-center">
+                                                <i class="bi bi-gear me-2"></i>Ações
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="procedureTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <nav aria-label="Navegação de procedimentos">
+                                <ul class="pagination procedure-pagination justify-content-center mt-4" id="procedurePagination">
+                                </ul>
+                            </nav>
+                        </div>
+                        <div id="procedureEmptyState" class="procedure-empty-state" style="display: none;">
+                            <i class="bi bi-inbox"></i>
+                            <h5>Nenhum procedimento encontrado</h5>
+                            <p>Tente ajustar os filtros de pesquisa ou adicione um novo procedimento.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        let currentPage = 1;
+        let searchQuery = '';
+        let editingProcedureId = null;
+
+        const modal = document.getElementById('procedureManagementModal');
+        const searchInput = document.getElementById('procedureSearchInput');
+        const btnAddProcedure = document.getElementById('btnAddProcedure');
+        const formContainer = document.getElementById('procedureFormContainer');
+        const procedureForm = document.getElementById('procedureForm');
+        const btnCancelForm = document.getElementById('btnCancelForm');
+        const tableBody = document.getElementById('procedureTableBody');
+        const pagination = document.getElementById('procedurePagination');
+        const loading = document.getElementById('procedureListLoading');
+        const tableContainer = document.getElementById('procedureTableContainer');
+        const emptyState = document.getElementById('procedureEmptyState');
+
+        modal.addEventListener('shown.bs.modal', function() {
+            loadProcedures();
+        });
+
+        searchInput.addEventListener('input', debounce(function() {
+            searchQuery = this.value.trim();
+            currentPage = 1;
+            loadProcedures();
+        }, 500));
+
+        btnAddProcedure.addEventListener('click', function() {
+            showForm();
+        });
+
+        btnCancelForm.addEventListener('click', function() {
+            hideForm();
+        });
+
+        procedureForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveProcedure();
+        });
+
+        function showForm(procedure = null) {
+            if (procedure) {
+                document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Editar Procedimento';
+                document.getElementById('procedureId').value = procedure.id;
+                document.getElementById('procedureCode').value = procedure.code;
+                document.getElementById('procedureDescription').value = procedure.description;
+                editingProcedureId = procedure.id;
+            } else {
+                document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Novo Procedimento';
+                procedureForm.reset();
+                document.getElementById('procedureId').value = '';
+                editingProcedureId = null;
+            }
+            formContainer.style.display = 'block';
+            document.getElementById('procedureCode').focus();
+        }
+
+        function hideForm() {
+            formContainer.style.display = 'none';
+            procedureForm.reset();
+            editingProcedureId = null;
+        }
+
+        function loadProcedures() {
+            loading.style.display = 'block';
+            tableContainer.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: 25,
+                search: searchQuery
+            });
+
+            fetch(`/admin/procedures/list?${params}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loading.style.display = 'none';
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (data.procedures.length === 0) {
+                        emptyState.style.display = 'block';
+                    } else {
+                        renderTable(data.procedures);
+                        renderPagination(data.pages, data.current_page);
+                        tableContainer.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    const emptyTitle = document.querySelector('.procedure-empty-state h5');
+                    const emptyText = document.querySelector('.procedure-empty-state p');
+                    if (emptyTitle) emptyTitle.textContent = 'Erro ao carregar';
+                    if (emptyText) emptyText.textContent = error.message;
+                    console.error('Erro detalhado:', error);
+                });
+        }
+
+        function renderTable(procedures) {
+            tableBody.innerHTML = '';
+            procedures.forEach(procedure => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="fw-bold">${escapeHtml(procedure.code)}</td>
+                    <td>${escapeHtml(procedure.description)}</td>
+                    <td class="text-center">
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="procedure-action-btn procedure-action-btn-edit" onclick="editProcedure(${procedure.id})" title="Editar">
+                                <i class="bi bi-pencil-fill"></i>
+                                <span>Editar</span>
+                            </button>
+                            <button type="button" class="procedure-action-btn procedure-action-btn-delete" onclick="deleteProcedure(${procedure.id})" title="Excluir">
+                                <i class="bi bi-trash-fill"></i>
+                                <span>Excluir</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function renderPagination(totalPages, currentPageNum) {
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+
+            const createPageItem = (page, text, disabled = false, active = false) => {
+                const li = document.createElement('li');
+                li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = text || page;
+                if (!disabled) {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentPage = page;
+                        loadProcedures();
+                    });
+                }
+                li.appendChild(a);
+                return li;
+            };
+
+            pagination.appendChild(createPageItem(currentPageNum - 1, 'Anterior', currentPageNum === 1));
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPageNum - 2 && i <= currentPageNum + 2)) {
+                    pagination.appendChild(createPageItem(i, i, false, i === currentPageNum));
+                } else if (i === currentPageNum - 3 || i === currentPageNum + 3) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    li.innerHTML = '<span class="page-link">...</span>';
+                    pagination.appendChild(li);
+                }
+            }
+
+            pagination.appendChild(createPageItem(currentPageNum + 1, 'Próxima', currentPageNum === totalPages));
+        }
+
+        function saveProcedure() {
+            const id = document.getElementById('procedureId').value;
+            const code = document.getElementById('procedureCode').value.trim();
+            const description = document.getElementById('procedureDescription').value.trim();
+
+            if (!code || !description) {
+                alert('Preencha todos os campos obrigatórios');
+                return;
+            }
+
+            const url = id ? `/admin/procedures/update/${id}` : '/admin/procedures/create';
+            const method = id ? 'PUT' : 'POST';
+            
+            const saveBtn = document.getElementById('btnSaveProcedure');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Salvando...';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, description })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.reload) {
+                    window.location.reload();
+                } else {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Salvar';
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao salvar procedimento. Tente novamente.');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Salvar';
+            });
+        }
+
+        window.editProcedure = function(id) {
+            fetch(`/admin/procedures/list?page=1&per_page=1000`)
+                .then(response => response.json())
+                .then(data => {
+                    const procedure = data.procedures.find(p => p.id === id);
+                    if (procedure) {
+                        showForm(procedure);
+                    }
+                });
+        };
+
+        window.deleteProcedure = function(id) {
+            if (!confirm('Tem certeza que deseja remover este procedimento?\n\nEle poderá ser reativado futuramente se necessário.')) return;
+
+            fetch(`/admin/procedures/delete/${id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.reload) {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao remover procedimento. Tente novamente.');
+                });
+        };
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func.apply(this, args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    })();
+</script>

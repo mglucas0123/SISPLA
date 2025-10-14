@@ -68,35 +68,43 @@
         </div>
 
         <div class="nir-filters-modern mb-4">
-            <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-funnel me-2 text-primary"></i>
-                <h5 class="mb-0 text-primary fw-bold">Filtros de Pesquisa</h5>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-funnel me-2 text-primary"></i>
+                    <h5 class="mb-0 text-primary fw-bold">Filtros de Pesquisa</h5>
+                </div>
+                
+                <button type="button" id="exportExcelButton" class="btn btn-export-excel">
+                    <i class="bi bi-file-earmark-excel me-2"></i>
+                    <span>Exportar para Excel</span>
+                </button>
             </div>
             <form method="GET" action="{{ url_for('nir.list_records') }}" id="filtersForm">
-                <div class="nir-filters-grid">
-                    <div>
-                        <label class="form-label">Nome do Paciente</label>
+                <!-- Primeira Linha de Filtros -->
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Nome do Paciente ou Protocolo</label>
                         <div class="nir-input-with-icon">
                             <i class="bi bi-search icon"></i>
-                            <input type="text" id="searchPatientName" name="patient_name"
-                                   class="form-control" placeholder="Digite o nome do paciente..."
-                                   value="{{ filters.patient_name or '' }}">
+                            <input type="text" id="searchUnified" name="search"
+                                   class="form-control form-control-sm" placeholder="Pesquisar..."
+                                   value="{{ filters.search or '' }}">
                         </div>
                     </div>
 
-                    <div>
-                        <label class="form-label">Data Início</label>
-                        <input type="date" id="startDateFilter" name="start_date" class="form-control" value="{{ filters.start_date or '' }}">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Data Início</label>
+                        <input type="date" id="startDateFilter" name="start_date" class="form-control form-control-sm" value="{{ filters.start_date or '' }}">
                     </div>
 
-                    <div>
-                        <label class="form-label">Data Fim</label>
-                        <input type="date" id="endDateFilter" name="end_date" class="form-control" value="{{ filters.end_date or '' }}">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Data Fim</label>
+                        <input type="date" id="endDateFilter" name="end_date" class="form-control form-control-sm" value="{{ filters.end_date or '' }}">
                     </div>
 
-                    <div>
-                        <label class="form-label">Tipo de Entrada</label>
-                        <select id="entryTypeFilter" name="entry_type" class="form-select">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Tipo Entrada</label>
+                        <select id="entryTypeFilter" name="entry_type" class="form-select form-select-sm">
                             <option value="">Todos</option>
                             {% for entry_type in entry_types %}
                             <option value="{{ entry_type }}" {{ 'selected' if filters.entry_type == entry_type else '' }}>
@@ -106,9 +114,9 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label class="form-label">Tipo de Internação</label>
-                        <select id="admissionTypeFilter" name="admission_type" class="form-select">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Tipo Internação</label>
+                        <select id="admissionTypeFilter" name="admission_type" class="form-select form-select-sm">
                             <option value="">Todos</option>
                             {% for admission_type in admission_types %}
                             <option value="{{ admission_type }}" {{ 'selected' if filters.admission_type == admission_type else '' }}>
@@ -117,9 +125,46 @@
                             {% endfor %}
                         </select>
                     </div>
+                </div>
 
-                    <div class="nir-filters-actions">
-                        <div class="nir-actions-group">
+                <!-- Segunda Linha de Filtros -->
+                <div class="row g-2 mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Paliativo</label>
+                        <select id="palliativeFilter" name="is_palliative" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="1" {{ 'selected' if filters.is_palliative == '1' else '' }}>Sim</option>
+                            <option value="0" {{ 'selected' if filters.is_palliative == '0' else '' }}>Não</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Local de Origem</label>
+                        <select id="originFilter" name="origin" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="Iturama" {{ 'selected' if filters.origin == 'Iturama' else '' }}>Iturama</option>
+                            <option value="São Francisco" {{ 'selected' if filters.origin == 'São Francisco' else '' }}>São Francisco</option>
+                            <option value="União de Minas" {{ 'selected' if filters.origin == 'União de Minas' else '' }}>União de Minas</option>
+                            <option value="Carneirinho" {{ 'selected' if filters.origin == 'Carneirinho' else '' }}>Carneirinho</option>
+                            <option value="Limeira do Oeste" {{ 'selected' if filters.origin == 'Limeira do Oeste' else '' }}>Limeira do Oeste</option>
+                            <option value="Outro" {{ 'selected' if filters.origin == 'Outro' else '' }}>Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Recurso</label>
+                        <select id="recursoFilter" name="recurso" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="PMAE" {{ 'selected' if filters.recurso == 'PMAE' else '' }}>PMAE</option>
+                            <option value="PPI" {{ 'selected' if filters.recurso == 'PPI' else '' }}>PPI</option>
+                            <option value="Valora Eletivo" {{ 'selected' if filters.recurso == 'Valora Eletivo' else '' }}>Valora Eletivo</option>
+                            <option value="Valora Urgencia" {{ 'selected' if filters.recurso == 'Valora Urgencia' else '' }}>Valora Urgencia</option>
+                            <option value="Próprio" {{ 'selected' if filters.recurso == 'Próprio' else '' }}>Próprio</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="nir-actions-group w-100">
                             <button type="button" id="applyFiltersButton" class="btn btn-filter">
                                 <i class="bi bi-search me-1"></i> Filtrar
                             </button>
@@ -151,6 +196,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">Excluir</button>
                 </form>
             </div>
@@ -177,9 +223,12 @@
         } catch(e) { }
     })();
     document.addEventListener('DOMContentLoaded', function () {
-        const searchPatientName = document.getElementById('searchPatientName');
+    const searchUnified = document.getElementById('searchUnified');
         const entryTypeFilter = document.getElementById('entryTypeFilter');
         const admissionTypeFilter = document.getElementById('admissionTypeFilter');
+        const palliativeFilter = document.getElementById('palliativeFilter');
+        const originFilter = document.getElementById('originFilter');
+        const recursoFilter = document.getElementById('recursoFilter');
         const startDateFilter = document.getElementById('startDateFilter');
         const endDateFilter = document.getElementById('endDateFilter');
         const applyFiltersButton = document.getElementById('applyFiltersButton');
@@ -188,9 +237,12 @@
 
         function filterRecordsWithAjax(customFilters = null, page = 1) {
             const filters = customFilters || {
-                patient_name: searchPatientName.value.trim(),
+                search: searchUnified.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
+                is_palliative: palliativeFilter.value,
+                origin: originFilter.value,
+                recurso: recursoFilter.value,
                 start_date: startDateFilter.value,
                 end_date: endDateFilter.value,
                 per_page: perPageSelect ? perPageSelect.value : undefined,
@@ -240,7 +292,7 @@
 
         function getCurrentFilters() {
             return {
-                patient_name: searchPatientName.value.trim(),
+                search: searchUnified.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
                 start_date: startDateFilter.value,
@@ -285,11 +337,11 @@
         }
 
         let searchTimeout;
-        searchPatientName.addEventListener('input', function () {
+        searchUnified.addEventListener('input', function () {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => filterRecordsWithAjax(), 500);
         });
-        searchPatientName.addEventListener('keypress', function (event) {
+        searchUnified.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 clearTimeout(searchTimeout);
                 filterRecordsWithAjax();
@@ -297,13 +349,19 @@
         });
         entryTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
         admissionTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
+        palliativeFilter.addEventListener('change', () => filterRecordsWithAjax());
+        originFilter.addEventListener('change', () => filterRecordsWithAjax());
+        recursoFilter.addEventListener('change', () => filterRecordsWithAjax());
         startDateFilter.addEventListener('change', () => filterRecordsWithAjax());
         endDateFilter.addEventListener('change', () => filterRecordsWithAjax());
         applyFiltersButton.addEventListener('click', () => filterRecordsWithAjax());
         clearFiltersButton.addEventListener('click', () => {
-            searchPatientName.value = '';
+            searchUnified.value = '';
             entryTypeFilter.value = '';
             admissionTypeFilter.value = '';
+            palliativeFilter.value = '';
+            originFilter.value = '';
+            recursoFilter.value = '';
             startDateFilter.value = '';
             endDateFilter.value = '';
             filterRecordsWithAjax();
@@ -312,6 +370,40 @@
             perPageSelect.addEventListener('change', () => {
                 const currentFilters = getCurrentFilters();
                 filterRecordsWithAjax(currentFilters, 1);
+            });
+        }
+
+        const exportButton = document.getElementById('exportExcelButton');
+        if (exportButton) {
+            exportButton.addEventListener('click', function() {
+                const filters = {
+                    search: searchUnified.value.trim(),
+                    entry_type: entryTypeFilter.value,
+                    admission_type: admissionTypeFilter.value,
+                    start_date: startDateFilter.value,
+                    end_date: endDateFilter.value,
+                    sector_progress: getSectorProgressFromUrl()
+                };
+
+                const params = new URLSearchParams();
+                Object.keys(filters).forEach(key => {
+                    if (filters[key]) {
+                        params.set(key, filters[key]);
+                    }
+                });
+
+                const exportUrl = "{{ url_for('nir.export_to_excel') }}?" + params.toString();
+                
+                const originalText = exportButton.innerHTML;
+                exportButton.disabled = true;
+                exportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gerando relatório...';
+
+                window.open(exportUrl, '_blank');
+
+                setTimeout(() => {
+                    exportButton.disabled = false;
+                    exportButton.innerHTML = originalText;
+                }, 2000);
             });
         }
     });

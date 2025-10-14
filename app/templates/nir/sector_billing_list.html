@@ -33,6 +33,11 @@
                     <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
                         <i class="bi bi-collection"></i> <span>Todos</span>
                     </a>
+                    {% if current_user.has_permission('manage_procedures') %}
+                    <button type="button" class="btn nir-btn-primary d-inline-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#sigtapImportModal">
+                        <i class="bi bi-cloud-upload-fill"></i> <span>Importar SIGTAP</span>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -136,36 +141,38 @@
                                     <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}</span>
                                 </td>
                                 <td class="cell-entry text-center">
-                                    <span class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% else %}bg-secondary{% endif %}">
+                                    <span class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-custom-blue{% elif record.entry_type == 'URGENCIA' %}bg-custom-red text-white{% else %}bg-custom-gray{% endif %}">
                                         {% if record.entry_type == 'ELETIVO' %}<i class="bi bi-calendar-check me-1"></i>{% elif record.entry_type == 'URGENCIA' %}<i class="bi bi-lightning me-1"></i>{% endif %}
                                         {{ record.entry_type or 'N/D' }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     {% if billing_status == 'PENDENTE' %}
-                                        <span class="badge bg-danger rounded-pill">
+                                        <span class="badge bg-custom-red-pulse rounded-pill">
                                             <i class="bi bi-exclamation-triangle me-1"></i>Pendente
                                         </span>
                                     {% elif billing_status == 'EM_ANDAMENTO' %}
-                                        <span class="badge bg-warning text-dark rounded-pill">
+                                        <span class="badge bg-custom-yellow text-dark rounded-pill">
                                             <i class="bi bi-hourglass-split me-1"></i>Em Andamento
                                         </span>
                                     {% elif billing_status == 'CONCLUIDO' %}
-                                        <span class="badge bg-success rounded-pill">
+                                        <span class="badge bg-custom-green rounded-pill">
                                             <i class="bi bi-check-circle me-1"></i>Concluído
                                         </span>
                                     {% else %}
-                                        <span class="badge bg-secondary rounded-pill">-</span>
+                                        <span class="badge bg-custom-gray rounded-pill">-</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
                                         {% if billing_status != 'CONCLUIDO' %}
-                                        <a href="{{ url_for('nir.sector_billing_form', record_id=record.id) }}"
-                                           class="btn btn-sm btn-primary rounded-pill shadow-sm"
-                                           title="Finalizar faturamento do registro #{{ record.id }}">
-                                            <i class="bi bi-pencil-square me-1"></i>Finalizar
-                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-primary rounded-pill shadow-sm toggle-detail-billing" 
+                                                data-detail-id="detail-billing-{{ record.id }}"
+                                                title="Ver e gerenciar faturamento">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            <span class="btn-text">Ver e gerenciar</span>
+                                        </button>
                                         {% endif %}
                                         <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
                                            class="nir-icon-btn nir-view-btn"
@@ -176,6 +183,115 @@
                                     </div>
                                 </td>
                             </tr>
+                            {% if billing_status != 'CONCLUIDO' %}
+                            <tr id="detail-billing-{{ record.id }}" class="detail-row" style="display:none;">
+                                <td colspan="6" class="p-0">
+                                    <div class="inline-detail-card">
+                                        <div class="inline-detail-header">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">
+                                                    <i class="bi bi-receipt me-2"></i>
+                                                    Finalização do Faturamento - {{ record.patient_name }}
+                                                </h5>
+                                                <span class="badge bg-primary">ID: #{{ record.id }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="inline-detail-body">
+                                            <form method="POST" action="{{ url_for('nir.update_record', record_id=record.id) }}" id="billing-form-{{ record.id }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                
+                                                <div class="alert alert-info mb-4">
+                                                    {% if record.procedures %}
+                                                        <strong>Procedimentos:</strong>
+                                                        <ul class="mb-0 mt-1" style="font-size: 0.9rem;">
+                                                            {% for procedure in record.procedures %}
+                                                            <li>{{ procedure.code }} - {{ procedure.description }}</li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div id="cancellation-reason-group-{{ record.id }}" style="display: none;" class="mb-3">
+                                                    <label class="form-label fw-bold">
+                                                        Motivo do Cancelamento <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea class="form-control" name="cancellation_reason" 
+                                                              id="cancellation-reason-{{ record.id }}" rows="2"
+                                                              placeholder="Descreva o motivo do cancelamento">{{ record.cancellation_reason or '' }}</textarea>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">
+                                                            Recurso <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" name="recurso" required>
+                                                            <option value="">Selecione</option>
+                                                            <option value="PMAE" {% if record.recurso == 'PMAE' %}selected{% endif %}>PMAE</option>
+                                                            <option value="PPI" {% if record.recurso == 'PPI' %}selected{% endif %}>PPI</option>
+                                                            <option value="Valora Eletivo" {% if record.recurso == 'Valora Eletivo' %}selected{% endif %}>Valora Eletivo</option>
+                                                            <option value="Valora Urgencia" {% if record.recurso == 'Valora Urgencia' %}selected{% endif %}>Valora Urgencia</option>
+                                                            <option value="Próprio" {% if record.recurso == 'Próprio' %}selected{% endif %}>Próprio</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">
+                                                            Criticado? <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" name="criticized" 
+                                                                id="criticized-select-{{ record.id }}" required>
+                                                            <option value="">Selecione</option>
+                                                            <option value="NAO" {% if record.criticized == 'NAO' %}selected{% endif %}>Não</option>
+                                                            <option value="SIM" {% if record.criticized == 'SIM' %}selected{% endif %}>Sim</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">
+                                                            Faturado? <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" name="billed" 
+                                                                id="billed-select-{{ record.id }}" required>
+                                                            <option value="">Selecione</option>
+                                                            <option value="NAO" {% if record.billed == 'NAO' %}selected{% endif %}>Não</option>
+                                                            <option value="SIM" {% if record.billed == 'SIM' %}selected{% endif %}>Sim</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">
+                                                            Status Final <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" name="status" 
+                                                                id="final-status-select-{{ record.id }}" required>
+                                                            <option value="">Selecione</option>
+                                                            <option value="CONCLUIDO" {% if record.status == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
+                                                            <option value="CANCELADO" {% if record.status == 'CANCELADO' %}selected{% endif %}>Cancelado</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3 mt-3">
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-bold">Observações Finais</label>
+                                                        <textarea class="form-control" name="observation" rows="3"
+                                                                  placeholder="Observações adicionais sobre o registro...">{{ record.observation or '' }}</textarea>
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                                    <button type="button" class="btn btn-secondary cancel-billing-form" 
+                                                            data-record-id="{{ record.id }}">
+                                                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="bi bi-check2-all me-1"></i>Finalizar Registro
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -195,27 +311,292 @@
         </div>
         {% endif %}
 
-        {% if pagination %}
-        <nav aria-label="Navegação de registros">
-            <ul class="pagination justify-content-center mt-4">
-                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=pagination.prev_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">Anterior</a>
-                </li>
-                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if p %}
-                <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=p, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">{{ p }}</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-                {% endif %}
-                {% endfor %}
-                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_billing_list', page=pagination.next_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">Próxima</a>
-                </li>
-            </ul>
-        </nav>
-        {% endif %}
+        {% set pagination_params = {'pagination': pagination, 'endpoint': 'nir.sector_billing_list', 'extra_params': {'patient_name': request.args.get('patient_name',''), 'filter_status': filter_status}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de registros do Faturamento'} %}
+        {% include 'partials/_pagination.html' %}
     </div>
 </div>
+
+{% if current_user.has_permission('manage_procedures') %}
+<!-- Modal de Importação SIGTAP -->
+<div class="modal fade" id="sigtapImportModal" tabindex="-1" aria-labelledby="sigtapImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="sigtapImportModalLabel">
+                    <i class="bi bi-cloud-upload me-2"></i>Importar Tabela SIGTAP
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="POST" action="{{ url_for('nir.import_sigtap') }}" enctype="multipart/form-data" id="sigtapImportForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="alert alert-info d-flex align-items-start">
+                        <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                        <div>
+                            <strong>Instruções:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Faça o download do arquivo SIGTAP mais recente no site do DATASUS</li>
+                                <li>O arquivo deve estar no formato <strong>.zip</strong></li>
+                                <li>A importação irá <strong>atualizar</strong> procedimentos existentes e <strong>adicionar</strong> novos</li>
+                                <li>Procedimentos que não estiverem no arquivo importado serão <strong>desativados</strong></li>
+                                <li>Este processo pode levar alguns minutos dependendo do tamanho do arquivo</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sigtapFile" class="form-label fw-bold">
+                            <i class="bi bi-file-earmark-zip me-1"></i>Arquivo SIGTAP (.zip)
+                        </label>
+                        <input type="file" class="form-control form-control-lg" id="sigtapFile" name="sigtap_file" 
+                               accept=".zip" required>
+                        <div class="form-text">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            O arquivo deve conter o arquivo <code>tb_procedimento.txt</code> na raiz ou em subpastas.
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                        <div>
+                            <strong>Atenção:</strong> Esta operação irá modificar a base de dados de procedimentos. 
+                            Recomenda-se fazer um backup antes de prosseguir.
+                        </div>
+                    </div>
+
+                    <div id="importProgress" class="d-none">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Importando...</span>
+                            </div>
+                            <h5 class="mb-2">Importando SIGTAP...</h5>
+                            <p class="text-muted mb-0">Por favor, aguarde. Este processo pode levar alguns minutos.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="importButton">
+                        <i class="bi bi-cloud-upload me-1"></i>Iniciar Importação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('sigtapImportForm').addEventListener('submit', function(e) {
+    document.getElementById('importProgress').classList.remove('d-none');
+    document.getElementById('importButton').disabled = true;
+    document.querySelector('[data-bs-dismiss="modal"]').disabled = true;
+});
+
+document.getElementById('sigtapImportModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('sigtapImportForm').reset();
+    document.getElementById('importProgress').classList.add('d-none');
+    document.getElementById('importButton').disabled = false;
+    document.querySelector('[data-bs-dismiss="modal"]').disabled = false;
+});
+</script>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.toggle-detail-billing');
+            if (!btn) return;
+
+            const id = btn.getAttribute('data-detail-id');
+            if (!id) return;
+
+            const row = document.getElementById(id);
+            if (!row) return;
+
+            const visible = row.style.display !== 'none';
+
+            if (visible) {
+                const recordId = id.replace('detail-billing-', '');
+                resetBillingForm(recordId);
+            }
+
+            document.querySelectorAll('tr.detail-row').forEach(r => {
+                if (r !== row && r.style.display !== 'none') {
+                    r.style.display = 'none';
+
+                    const otherId = r.id;
+                    document.querySelectorAll(`button.toggle-detail-billing[data-detail-id="${otherId}"] .btn-text`).forEach(span => {
+                        if (span) span.textContent = 'Ver e gerenciar';
+                    });
+                }
+            });
+
+            row.style.display = visible ? 'none' : '';
+
+            const card = row.querySelector('.inline-detail-card');
+            if (!visible && card) {
+                card.classList.remove('animate-in');
+                void card.offsetWidth;
+                card.classList.add('animate-in');
+            }
+
+            document.querySelectorAll(`button.toggle-detail-billing[data-detail-id="${id}"] .btn-text`).forEach(span => {
+                if (!span) return;
+                span.textContent = row.style.display === 'none' ? 'Ver e gerenciar' : 'Ocultar painel';
+            });
+
+            if (row.style.display !== 'none') {
+                setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                
+                const recordId = id.replace('detail-billing-', '');
+                setupBillingFormLogic(recordId);
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            const cancelBtn = e.target.closest('.cancel-billing-form');
+            if (!cancelBtn) return;
+
+            const recordId = cancelBtn.getAttribute('data-record-id');
+            const detailRow = document.getElementById(`detail-billing-${recordId}`);
+            
+            if (detailRow) {
+                detailRow.style.display = 'none';
+                document.querySelectorAll(`button.toggle-detail-billing[data-detail-id="detail-billing-${recordId}"] .btn-text`).forEach(span => {
+                    if (span) span.textContent = 'Ver e gerenciar';
+                });
+                resetBillingForm(recordId);
+            }
+        });
+
+        function resetBillingForm(recordId) {
+            const form = document.getElementById(`billing-form-${recordId}`);
+            if (!form) return;
+
+            form.querySelectorAll('input[type="text"], select, textarea').forEach(input => {
+                if (input.name !== 'csrf_token') {
+                    const originalValue = input.getAttribute('value');
+                    if (originalValue !== null) {
+                        input.value = originalValue;
+                    } else if (input.tagName === 'SELECT') {
+                        input.selectedIndex = 0;
+                    } else {
+                        input.value = '';
+                    }
+                }
+            });
+
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            
+            const reasonGroup = document.getElementById(`cancellation-reason-group-${recordId}`);
+            if (reasonGroup) reasonGroup.style.display = 'none';
+        }
+
+        function setupBillingFormLogic(recordId) {
+            const reasonGroup = document.getElementById(`cancellation-reason-group-${recordId}`);
+            const reasonField = document.getElementById(`cancellation-reason-${recordId}`);
+            const finalStatusSelect = document.getElementById(`final-status-select-${recordId}`);
+            const billedSelect = document.getElementById(`billed-select-${recordId}`);
+            const criticizedSelect = document.getElementById(`criticized-select-${recordId}`);
+
+            function updateReasonVisibility() {
+                const isCancelled = finalStatusSelect && finalStatusSelect.value === 'CANCELADO';
+                if (reasonGroup) reasonGroup.style.display = isCancelled ? 'block' : 'none';
+                if (reasonField) {
+                    if (isCancelled) {
+                        reasonField.setAttribute('required', 'required');
+                    } else {
+                        reasonField.removeAttribute('required');
+                    }
+                }
+            }
+
+            function updateConstraints() {
+                const isCriticizedSim = criticizedSelect && criticizedSelect.value === 'SIM';
+                if (billedSelect) {
+                    const billedSimOption = Array.from(billedSelect.options).find(o => o.value === 'SIM');
+                    if (billedSimOption) billedSimOption.disabled = isCriticizedSim;
+                    if (isCriticizedSim && billedSelect.value === 'SIM') {
+                        billedSelect.value = '';
+                    }
+                }
+                if (finalStatusSelect && isCriticizedSim && finalStatusSelect.value === 'CONCLUIDO') {
+                    finalStatusSelect.value = '';
+                }
+                updateReasonVisibility();
+            }
+
+            function syncFromFinalStatus() {
+                if (!finalStatusSelect) return;
+                if (finalStatusSelect.value === 'CONCLUIDO' && billedSelect) {
+                    const isCriticizedSim = criticizedSelect && criticizedSelect.value === 'SIM';
+                    if (isCriticizedSim) {
+                        finalStatusSelect.value = '';
+                    } else {
+                        billedSelect.value = 'SIM';
+                    }
+                }
+                updateReasonVisibility();
+            }
+
+            function syncFromBilled() {
+                if (!finalStatusSelect || !billedSelect) return;
+                if (finalStatusSelect.value === 'CONCLUIDO' && billedSelect.value !== 'SIM') {
+                    finalStatusSelect.value = 'CANCELADO';
+                }
+                updateReasonVisibility();
+            }
+
+            if (finalStatusSelect) {
+                finalStatusSelect.removeEventListener('change', syncFromFinalStatus);
+                finalStatusSelect.addEventListener('change', syncFromFinalStatus);
+            }
+            if (billedSelect) {
+                billedSelect.removeEventListener('change', syncFromBilled);
+                billedSelect.addEventListener('change', syncFromBilled);
+            }
+            if (criticizedSelect) {
+                criticizedSelect.removeEventListener('change', updateConstraints);
+                criticizedSelect.addEventListener('change', updateConstraints);
+            }
+
+            updateConstraints();
+        }
+
+        document.querySelectorAll('form[id^="billing-form-"]').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const requiredInputs = this.querySelectorAll('input[required], select[required], textarea[required]');
+                let firstInvalidField = null;
+
+                requiredInputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        if (!firstInvalidField) {
+                            firstInvalidField = input;
+                        }
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                });
+
+                if (firstInvalidField) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Finalizando...';
+
+                return true;
+            });
+        });
+    });
+</script>
+
 {% endblock %}

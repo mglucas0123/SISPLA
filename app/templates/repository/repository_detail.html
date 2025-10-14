@@ -182,6 +182,7 @@
                 <form id="upload-form" method="POST"
                       action="{{ url_for('repository.upload_file', repo_id=repository.id) }}"
                       enctype="multipart/form-data">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="parent_id" value="{{ current_folder.id if current_folder else '' }}">
 
                     <div id="upload-zone" class="upload-zone">
@@ -274,6 +275,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const contextMenu = document.getElementById('context-menu');
     const repoId = {{ repository.id | tojson }};
     const parentFolderId = {{ current_folder.id | tojson if current_folder else 'null' }};
+    const csrfToken = '{{ csrf_token() }}';
     let selectedRow = null;
     let moveModalInstance = null;
 
@@ -466,7 +468,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (folderName && folderName.trim() !== '') {
             fetch(`/repository/${repoId}/create_folder`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
                 body: JSON.stringify({
                     folder_name: folderName.trim(),
                     parent_id: parentFolderId
@@ -553,7 +558,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (newName && newName !== currentName) {
                 fetch(`/file/rename/${fileId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
                     body: JSON.stringify({ new_name: newName })
                 })
                 .then(res => res.json().then(data => ({ ok: res.ok, data })))
@@ -594,6 +602,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = `/file/delete/${fileId}`;
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+            
             document.body.appendChild(form);
             form.submit();
         }
@@ -622,7 +637,10 @@ document.addEventListener('DOMContentLoaded', function () {
         
         fetch('/file/move', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
             body: JSON.stringify({ 
                 file_id: parseInt(fileId), 
                 target_folder_id: targetFolderId ? parseInt(targetFolderId) : null 
@@ -699,7 +717,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (targetRow && draggedItem && targetRow !== draggedItem) {
                 fetch('/file/move', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
                     body: JSON.stringify({ 
                         file_id: parseInt(draggedItem.dataset.fileId), 
                         target_folder_id: parseInt(targetRow.dataset.fileId) 

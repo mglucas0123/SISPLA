@@ -103,6 +103,11 @@
                             </a>
                         </li>
                         <li>
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.roles.permissions_page') }}">
+                                <i class="bi bi-shield-lock me-2"></i>Gerenciar Permissões
+                            </a>
+                        </li>
+                        <li>
                             <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.notices.manage_notices') }}">
                                 <i class="bi bi-megaphone-fill me-2"></i>Gerenciar Mural
                             </a>
@@ -139,6 +144,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form class="modal-content password-change-modal" method="POST" action="{{ url_for('util.user_change_password') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header password-modal-header">
                     <div class="modal-title-container">
                         <div class="modal-icon-wrapper">
@@ -146,7 +152,7 @@
                         </div>
                         <div class="modal-title-text">
                             <h5 class="modal-title" id="modalTrocarSenhaBaseLabel">Alterar Senha</h5>
-                            <p class="modal-subtitle">Mantenha sua conta segura</p>
+                            <p class="modal-subtitle text-dark">Mantenha sua conta segura</p>
                         </div>
                     </div>
                     <button type="button" class="btn-close password-modal-close" data-bs-dismiss="modal" aria-label="Fechar"></button>

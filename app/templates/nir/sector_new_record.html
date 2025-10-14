@@ -24,6 +24,45 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('nir.sector_new_record') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- Seleção de Tipo de Registro - Cards Modernos -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="bi bi-question-circle me-2"></i>
+                            Tipo de Registro:
+                        </h6>
+                        <div class="row g-3" id="record-type-card-selector">
+                            <div class="col-md-6">
+                                <input type="radio" class="d-none" name="record_type" id="type_observation" value="observation" checked>
+                                <label for="type_observation" class="record-type-card card shadow-sm p-3 mb-0 h-100 cursor-pointer">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="icon-box bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:2rem;">
+                                            <i class="bi bi-eye"></i>
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold fs-5 text-primary">Observação</span>
+                                            <div class="text-muted small">Paciente em monitoramento inicial</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="d-none" name="record_type" id="type_admission" value="admission">
+                                <label for="type_admission" class="record-type-card card shadow-sm p-3 mb-0 h-100 cursor-pointer">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="icon-box bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:2rem;">
+                                            <i class="bi bi-hospital"></i>
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold fs-5 text-success">Internação</span>
+                                            <div class="text-muted small">Paciente já confirmado para internar</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="nir-form-section mb-4">
                         <h6 class="section-title">
                             <i class="bi bi-person-circle text-danger"></i>
@@ -50,9 +89,18 @@
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <label class="nir-form-label">SUSFacil <span class="text-danger">*</span></label>
+                                <label class="nir-form-label">SUSFacil 
+                                    <span class="text-danger" id="susfacil-required">*</span>
+                                    <small class="form-check form-check-inline m-0 ms-2">
+                                        <input class="form-check-input" type="checkbox" id="susfacil-nao-tem" 
+                                            name="susfacil_nao_tem" value="1">
+                                        <label class="form-check-label" for="susfacil-nao-tem" 
+                                            style="font-size: 0.75rem;">N/A</label>
+                                    </small>
+                                </label>
                                 <input type="text" class="form-control nir-form-control" name="susfacil"
-                                    placeholder="Somente números" pattern="[0-9]*" title="Digite apenas números" required>
+                                    id="susfacil-input" placeholder="Somente números" pattern="[0-9]*" 
+                                    title="Digite apenas números" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Cartão SUS <span class="text-danger">*</span></label>
@@ -70,26 +118,29 @@
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="nir-form-label">Data de Internação <span class="text-danger">*</span></label>
+                                <label class="nir-form-label">Data de Internação <span
+                                        class="text-danger">*</span></label>
                                 <input type="date" class="form-control nir-form-control" name="admission_date" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Tipo de Entrada <span class="text-danger">*</span></label>
-                                <select class="form-select nir-form-control" name="entry_type" required>
+                                <select class="form-select nir-form-control" name="entry_type" id="entry_type" required>
                                     <option value="">Selecione</option>
                                     <option value="ELETIVO">Eletivo</option>
                                     <option value="URGENCIA">Urgência</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="nir-form-label">Tipo de Internação <span class="text-danger">*</span></label>
-                                <select class="form-select nir-form-control" name="admission_type" required>
+                                <label class="nir-form-label">Tipo de Internação <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" name="admission_type" id="admission_type"
+                                    required>
                                     <option value="">Selecione</option>
                                     <option value="CLINICO">Clínico</option>
                                     <option value="CIRURGICO">Cirúrgico</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="nir-form-label">Local de Origem <span class="text-danger">*</span></label>
                                 <select class="form-select nir-form-control" name="admitted_from_origin" required>
                                     <option value="Iturama">Iturama</option>
@@ -100,7 +151,62 @@
                                     <option value="Outro">Outro...</option>
                                 </select>
                             </div>
-                            
+                            <div class="col-md-12" id="palliative-field" style="display: none;">
+                                <div class="form-check form-switch mt-3">
+                                    <input class="form-check-input" type="checkbox" id="is_palliative"
+                                        name="is_palliative">
+                                    <label class="form-check-label fw-bold text-danger" for="is_palliative">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        Paciente Paliativo
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted ms-4">
+                                    Marque esta opção para pacientes em cuidados paliativos
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Aceite SUSFACIL -->
+                    <div class="nir-form-section mb-4" id="susfacil-aceite-section" style="display: none;">
+                        <h6 class="section-title">
+                            <i class="bi bi-check2-circle text-danger"></i>
+                            Confirmação de Aceite SUSFACIL
+                        </h6>
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Atenção:</strong> Para internações eletivas, é obrigatório confirmar o aceite no
+                            sistema SUSFACIL antes de criar o NIR.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="susfacil_accepted"
+                                        name="susfacil_accepted">
+                                    <label class="form-check-label fw-bold text-success" for="susfacil_accepted">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Confirmo que realizei o aceite do paciente no sistema SUSFACIL
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="aceite-datetime-field" style="display: none;">
+                                <label class="nir-form-label">Data e Hora do Aceite no SUSFACIL <span
+                                        class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control nir-form-control"
+                                    name="susfacil_accept_datetime" id="susfacil_accept_datetime">
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    Informe exatamente a data e hora que aparece no SUSFACIL após o aceite
+                                </small>
+                            </div>
+                            <div class="col-md-6" id="protocol-info-field" style="display: none;">
+                                <label class="nir-form-label">Protocolo</label>
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    O protocolo será gerado automaticamente após salvar a solicitação. Você poderá
+                                    copiá-lo na página de detalhes.
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -111,9 +217,91 @@
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="nir-form-label">Data de Agendamento <span class="text-danger">*</span></label>
+                                <label class="nir-form-label">Data de Agendamento <span
+                                        class="text-danger">*</span></label>
                                 <input type="date" class="form-control nir-form-control" name="scheduling_date"
                                     id="scheduling-date-initial" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Procedimentos - Aparece apenas para CLÍNICO -->
+                    <div class="nir-form-section mb-4" id="procedimentos-section" style="display: none;">
+                        <h6 class="section-title">
+                            <i class="bi bi-activity text-danger"></i>
+                            Procedimentos
+                        </h6>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-5">
+                                <label class="nir-form-label">Código do Procedimento</label>
+                                <div style="position: relative;">
+                                    <input type="text" class="form-control nir-form-control" 
+                                        id="procedure-code-input" 
+                                        placeholder="Digite código ou descrição"
+                                        autocomplete="off">
+                                    <div id="procedure-search-results" class="procedure-search-results"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="nir-form-label">Descrição</label>
+                                <input type="text" class="form-control nir-form-control bg-light" 
+                                    id="procedure-description-input" 
+                                    readonly>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary w-100" id="add-procedure-btn">
+                                    <i class="bi bi-plus-circle"></i> Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="border rounded p-3 bg-body-tertiary" id="procedures-list">
+                                <p class="text-muted text-center mb-0"><i class="bi bi-info-circle me-2"></i>Nenhum procedimento adicionado</p>
+                            </div>
+                            <small class="text-muted d-block mt-2"><i class="bi bi-lightbulb me-1"></i>O primeiro procedimento será considerado principal.</small>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Informações Médicas - Aparece apenas para CLÍNICO -->
+                    <div class="nir-form-section mb-4" id="informacoes-medicas-section" style="display: none;">
+                        <h6 class="section-title">
+                            <i class="bi bi-heart-pulse text-danger"></i>
+                            Informações Médicas
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Médico Responsável <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control nir-form-control" 
+                                    name="responsible_doctor" 
+                                    id="responsible-doctor-clinico"
+                                    placeholder="Nome do médico responsável">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">
+                                    CID Principal <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select nir-form-control" 
+                                    name="main_cid" 
+                                    id="main-cid-clinico">
+                                    <option value="">Adicione um procedimento primeiro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Especialidade <span class="text-danger">*</span></label>
+                                <select class="form-select nir-form-control" 
+                                    name="surgical_specialty" 
+                                    id="surgical-specialty-clinico">
+                                    <option value="">Selecione</option>
+                                    <option value="CIRURGIA GERAL">Cirurgia Geral</option>
+                                    <option value="CLINICO GERAL">Clínico Geral</option>
+                                    <option value="DENTISTA">Dentista</option>
+                                    <option value="DERMATO">Dermatologia</option>
+                                    <option value="OBSTETRICIA">Obstetrícia</option>
+                                    <option value="OFTALMOLOGISTA">Oftalmologia</option>
+                                    <option value="ORTOPEDISTA">Ortopedia</option>
+                                    <option value="UROLOGISTA">Urologia</option>
+                                    <option value="VASCULAR">Vascular</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -142,6 +330,27 @@
     document.addEventListener('DOMContentLoaded', function () {
         const susNumberInput = document.getElementById('sus-number-input');
         const susfacilInput = document.querySelector('input[name="susfacil"]');
+        const susfacilNaoTemCheckbox = document.getElementById('susfacil-nao-tem');
+        const susfacilRequiredMark = document.getElementById('susfacil-required');
+
+        if (susfacilNaoTemCheckbox && susfacilInput) {
+            const applyState = () => {
+                if (susfacilNaoTemCheckbox.checked) {
+                    susfacilInput.value = '';
+                    susfacilInput.disabled = true;
+                    susfacilInput.removeAttribute('required');
+                    susfacilInput.classList.add('bg-light');
+                    if (susfacilRequiredMark) susfacilRequiredMark.style.display = 'none';
+                } else {
+                    susfacilInput.disabled = false;
+                    susfacilInput.setAttribute('required', 'required');
+                    susfacilInput.classList.remove('bg-light');
+                    if (susfacilRequiredMark) susfacilRequiredMark.style.display = 'inline';
+                }
+            };
+            susfacilNaoTemCheckbox.addEventListener('change', applyState);
+            applyState();
+        }
 
         function formatSusNumber(value) {
             const numbers = value.replace(/\D/g, '');
@@ -185,6 +394,418 @@
                 }
             });
         }
+
+        const entryTypeSelect = document.getElementById('entry_type');
+        const susfacilSection = document.getElementById('susfacil-aceite-section');
+        const susfacilCheckbox = document.getElementById('susfacil_accepted');
+        const aceiteDatetimeField = document.getElementById('aceite-datetime-field');
+        const aceiteDatetimeInput = document.getElementById('susfacil_accept_datetime');
+        const protocolInfoField = document.getElementById('protocol-info-field');
+        const form = document.querySelector('form');
+
+        entryTypeSelect.addEventListener('change', function () {
+            if (this.value === 'ELETIVO') {
+                susfacilSection.style.display = 'block';
+                susfacilCheckbox.required = true;
+            } else {
+                susfacilSection.style.display = 'none';
+                susfacilCheckbox.required = false;
+                susfacilCheckbox.checked = false;
+                aceiteDatetimeField.style.display = 'none';
+                protocolInfoField.style.display = 'none';
+                aceiteDatetimeInput.value = '';
+                aceiteDatetimeInput.required = false;
+            }
+        });
+
+        susfacilCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                aceiteDatetimeField.style.display = 'block';
+                aceiteDatetimeInput.required = true;
+                aceiteDatetimeInput.focus();
+            } else {
+                aceiteDatetimeField.style.display = 'none';
+                protocolInfoField.style.display = 'none';
+                aceiteDatetimeInput.value = '';
+                aceiteDatetimeInput.required = false;
+            }
+        });
+
+        aceiteDatetimeInput.addEventListener('change', function () {
+            if (this.value) {
+                protocolInfoField.style.display = 'block';
+            } else {
+                protocolInfoField.style.display = 'none';
+            }
+        });
+
+        const recordTypeRadios = document.querySelectorAll('input[name="record_type"]');
+        const admissionDateInput = document.querySelector('input[name="admission_date"]');
+        const admissionTypeInput = document.querySelector('select[name="admission_type"]');
+        const admittedFromInput = document.querySelector('select[name="admitted_from_origin"]');
+        const agendamentoSection = document.getElementById('agendamento-inicial-section');
+        const schedulingDateInput = document.getElementById('scheduling-date-initial');
+
+        const admissionDataSection = document.querySelector('.nir-form-section:has([name="admission_date"])');
+
+        function toggleFieldsByRecordType() {
+            const recordType = document.querySelector('input[name="record_type"]:checked').value;
+
+            if (recordType === 'observation') {
+                if (admissionDataSection) {
+                    admissionDataSection.style.display = 'none';
+                }
+                if (agendamentoSection) {
+                    agendamentoSection.style.display = 'none';
+                }
+
+                if (admissionDateInput) admissionDateInput.removeAttribute('required');
+                if (entryTypeSelect) entryTypeSelect.removeAttribute('required');
+                if (admissionTypeInput) admissionTypeInput.removeAttribute('required');
+                if (admittedFromInput) admittedFromInput.removeAttribute('required');
+                if (schedulingDateInput) schedulingDateInput.removeAttribute('required');
+
+                if (susfacilSection) {
+                    susfacilSection.style.display = 'none';
+                    if (susfacilCheckbox) susfacilCheckbox.required = false;
+                }
+
+            } else {
+                if (admissionDataSection) {
+                    admissionDataSection.style.display = 'block';
+                }
+                if (agendamentoSection) {
+                    agendamentoSection.style.display = 'block';
+                }
+
+                if (admissionDateInput) admissionDateInput.setAttribute('required', 'required');
+                if (entryTypeSelect) entryTypeSelect.setAttribute('required', 'required');
+                if (admissionTypeInput) admissionTypeInput.setAttribute('required', 'required');
+                if (admittedFromInput) admittedFromInput.setAttribute('required', 'required');
+                if (schedulingDateInput) schedulingDateInput.setAttribute('required', 'required');
+
+                if (entryTypeSelect && entryTypeSelect.value === 'ELETIVO') {
+                    if (susfacilSection) {
+                        susfacilSection.style.display = 'block';
+                        if (susfacilCheckbox) susfacilCheckbox.required = true;
+                    }
+                }
+            }
+        }
+
+        recordTypeRadios.forEach(radio => {
+            radio.addEventListener('change', toggleFieldsByRecordType);
+        });
+
+        toggleFieldsByRecordType();
+
+        form.addEventListener('submit', function (e) {
+            const recordType = document.querySelector('input[name="record_type"]:checked').value;
+            const entryType = entryTypeSelect.value;
+
+            if (recordType === 'observation') {
+                return true;
+            }
+
+            if (entryType === 'ELETIVO') {
+                if (!susfacilCheckbox.checked) {
+                    e.preventDefault();
+                    alert('Para internações eletivas, você deve confirmar que realizou o aceite no SUSFACIL.');
+                    susfacilCheckbox.focus();
+                    return false;
+                }
+
+                if (!aceiteDatetimeInput.value) {
+                    e.preventDefault();
+                    alert('Por favor, informe a data e hora do aceite no SUSFACIL.');
+                    aceiteDatetimeInput.focus();
+                    return false;
+                }
+            }
+        });
+
+        const admissionTypeSelect = document.getElementById('admission_type');
+        const palliativeField = document.getElementById('palliative-field');
+        const palliativeCheckbox = document.getElementById('is_palliative');
+        const procedimentosSection = document.getElementById('procedimentos-section');
+        const informacoesMedicasSection = document.getElementById('informacoes-medicas-section');
+        const responsibleDoctorInput = document.getElementById('responsible-doctor-clinico');
+        const mainCidSelect = document.getElementById('main-cid-clinico');
+        const surgicalSpecialtySelect = document.getElementById('surgical-specialty-clinico');
+
+        let addedProcedures = [];
+
+        admissionTypeSelect.addEventListener('change', function () {
+            if (this.value === 'CLINICO') {
+                palliativeField.style.display = 'block';
+                procedimentosSection.style.display = 'block';
+                informacoesMedicasSection.style.display = 'block';
+                
+                if (responsibleDoctorInput) responsibleDoctorInput.required = true;
+                if (mainCidSelect) mainCidSelect.required = true;
+                if (surgicalSpecialtySelect) surgicalSpecialtySelect.required = true;
+            } else {
+                palliativeField.style.display = 'none';
+                palliativeCheckbox.checked = false;
+                procedimentosSection.style.display = 'none';
+                informacoesMedicasSection.style.display = 'none';
+                
+                if (responsibleDoctorInput) {
+                    responsibleDoctorInput.required = false;
+                    responsibleDoctorInput.value = '';
+                }
+                if (mainCidSelect) {
+                    mainCidSelect.required = false;
+                    mainCidSelect.selectedIndex = 0;
+                }
+                if (surgicalSpecialtySelect) {
+                    surgicalSpecialtySelect.required = false;
+                    surgicalSpecialtySelect.selectedIndex = 0;
+                }
+                
+                addedProcedures = [];
+                updateProceduresList();
+            }
+        });
+
+        const procedureCodeInput = document.getElementById('procedure-code-input');
+        const procedureDescInput = document.getElementById('procedure-description-input');
+        const addProcedureBtn = document.getElementById('add-procedure-btn');
+        const searchResultsDiv = document.getElementById('procedure-search-results');
+        let searchTimeout;
+        let selectedProcedure = null;
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        let lastSearchResults = [];
+
+        if (procedureCodeInput) {
+            procedureCodeInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (selectedProcedure && query !== selectedProcedure.code) {
+                    procedureDescInput.value = '';
+                    selectedProcedure = null;
+                }
+                
+                if (query.length < 2) {
+                    searchResultsDiv.innerHTML = '';
+                    searchResultsDiv.style.display = 'none';
+                    lastSearchResults = [];
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    fetch(`/nir/search_procedures?q=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.error) {
+                                console.error('Erro do servidor:', data.error);
+                                searchResultsDiv.innerHTML = '<div class="p-2 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Erro no servidor</div>';
+                                searchResultsDiv.style.display = 'block';
+                                lastSearchResults = [];
+                            } else if (data.results && data.results.length > 0) {
+                                lastSearchResults = data.results;
+                                
+                                searchResultsDiv.innerHTML = data.results.map((proc, index) => 
+                                    `<div class="procedure-result-item" data-index="${index}">
+                                        <strong>${escapeHtml(proc.code)}</strong> - ${escapeHtml(proc.description)}
+                                    </div>`
+                                ).join('');
+                                searchResultsDiv.style.display = 'block';
+                            } else {
+                                searchResultsDiv.innerHTML = '<div class="p-2 text-muted"><i class="bi bi-info-circle me-2"></i>Nenhum procedimento encontrado</div>';
+                                searchResultsDiv.style.display = 'block';
+                                lastSearchResults = [];
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar procedimento:', error);
+                            searchResultsDiv.innerHTML = '<div class="p-2 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Erro ao buscar</div>';
+                            searchResultsDiv.style.display = 'block';
+                            lastSearchResults = [];
+                        });
+                }, 300);
+            });
+
+            searchResultsDiv.addEventListener('click', function(e) {
+                const item = e.target.closest('.procedure-result-item');
+                if (item) {
+                    const index = parseInt(item.getAttribute('data-index'));
+                    
+                    if (lastSearchResults[index]) {
+                        selectedProcedure = lastSearchResults[index];
+                        procedureCodeInput.value = selectedProcedure.code;
+                        procedureDescInput.value = selectedProcedure.description;
+                        searchResultsDiv.style.display = 'none';
+                    }
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!procedureCodeInput.contains(e.target) && !searchResultsDiv.contains(e.target)) {
+                    searchResultsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        if (addProcedureBtn) {
+            addProcedureBtn.addEventListener('click', function() {
+                if (!selectedProcedure) {
+                    alert('Por favor, selecione um procedimento da lista de busca antes de adicionar.');
+                    procedureCodeInput.focus();
+                    return;
+                }
+                
+                const code = selectedProcedure.code;
+                const description = selectedProcedure.description;
+                
+                if (!code || !description) {
+                    alert('Por favor, selecione um procedimento válido da lista.');
+                    return;
+                }
+                
+                if (addedProcedures.some(p => p.code === code)) {
+                    alert('Este procedimento já foi adicionado');
+                    return;
+                }
+                
+                addedProcedures.push({
+                    code: code,
+                    description: description,
+                    cids: selectedProcedure.cids || [],
+                });
+                
+                updateProceduresList();
+                updateCidOptions();
+                
+                procedureCodeInput.value = '';
+                procedureDescInput.value = '';
+                searchResultsDiv.style.display = 'none';
+                selectedProcedure = null;
+                lastSearchResults = [];
+            });
+        }
+
+        function updateProceduresList() {
+            const listContainer = document.getElementById('procedures-list');
+            
+            if (addedProcedures.length === 0) {
+                listContainer.innerHTML = '<p class="text-muted text-center mb-0"><i class="bi bi-info-circle me-2"></i>Nenhum procedimento adicionado</p>';
+                return;
+            }
+            
+            let html = '<div class="list-group">';
+            addedProcedures.forEach((proc, index) => {
+                const isPrimary = index === 0;
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${proc.code}</strong> - ${proc.description}
+                            ${isPrimary ? '<span class="badge bg-primary ms-2">Principal</span>' : ''}
+                            <input type="hidden" name="procedure_codes[]" value="${proc.code}">
+                            <input type="hidden" name="procedure_is_primary[]" value="${isPrimary ? '1' : '0'}">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeProcedure(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            listContainer.innerHTML = html;
+        }
+
+        function updateCidOptions() {
+            if (mainCidSelect && addedProcedures.length > 0) {
+                mainCidSelect.innerHTML = '<option value="">Selecione um CID</option>';
+                
+                const primaryProcedure = addedProcedures[0];
+                
+                if (primaryProcedure && primaryProcedure.cids && primaryProcedure.cids.length > 0) {
+                    const primaryCids = new Set();
+                    primaryProcedure.cids.forEach(cid => {
+                        primaryCids.add(JSON.stringify(cid));
+                    });
+                    
+                    Array.from(primaryCids).forEach(cidJson => {
+                        const cid = JSON.parse(cidJson);
+                        const option = document.createElement('option');
+                        option.value = cid.code;
+                        option.textContent = `${cid.code} - ${cid.description}`;
+                        mainCidSelect.appendChild(option);
+                    });
+                } else {
+                    mainCidSelect.innerHTML = '<option value="">Nenhum CID disponível para o procedimento principal</option>';
+                }
+            } else if (mainCidSelect) {
+                mainCidSelect.innerHTML = '<option value="">Adicione um procedimento primeiro</option>';
+            }
+        }
+
+        window.removeProcedure = function(index) {
+            const wasRemovingPrimary = (index === 0 && addedProcedures.length > 0);
+            
+            addedProcedures.splice(index, 1);
+            updateProceduresList();
+            
+            if (wasRemovingPrimary) {
+                if (mainCidSelect) {
+                    mainCidSelect.selectedIndex = 0;
+                }
+                if (surgicalSpecialtySelect) {
+                    surgicalSpecialtySelect.selectedIndex = 0;
+                }
+            }
+            
+            updateCidOptions();
+        };
+
+        form.addEventListener('submit', function(e) {
+            const recordType = document.querySelector('input[name="record_type"]:checked').value;
+            const admissionType = admissionTypeSelect.value;
+            
+            if (recordType === 'admission' && admissionType === 'CLINICO') {
+                if (addedProcedures.length === 0) {
+                    e.preventDefault();
+                    alert('Para internações clínicas, é necessário adicionar pelo menos um procedimento.');
+                    procedureCodeInput.focus();
+                    return false;
+                }
+                
+                if (!responsibleDoctorInput.value) {
+                    e.preventDefault();
+                    alert('Por favor, informe o médico responsável.');
+                    responsibleDoctorInput.focus();
+                    return false;
+                }
+                
+                if (!mainCidSelect.value) {
+                    e.preventDefault();
+                    alert('Por favor, selecione o CID principal.');
+                    mainCidSelect.focus();
+                    return false;
+                }
+                
+                if (!surgicalSpecialtySelect.value) {
+                    e.preventDefault();
+                    alert('Por favor, selecione a especialidade.');
+                    surgicalSpecialtySelect.focus();
+                    return false;
+                }
+            }
+        });
 
     });
 </script>

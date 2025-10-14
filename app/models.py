@@ -4,6 +4,8 @@ from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
+from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy import JSON
 
 db = SQLAlchemy()
 
@@ -38,6 +40,19 @@ class Permission(db.Model):
     def __repr__(self):
         return f'<Permission {self.name}>'
 
+
+class PermissionCatalog(db.Model):
+    """Catálogo centralizado de permissões disponíveis no sistema"""
+    __tablename__ = 'permission_catalog'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.String(200), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<PermissionCatalog {self.name}>'
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -47,12 +62,21 @@ class Role(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Sistema antigo (manter por compatibilidade durante migração)
     permissions = db.relationship('Permission', secondary=role_permissions, backref='roles')
     
+    # Novo sistema: lista de nomes de permissões armazenada como JSON
+    permissions_list = db.Column(MutableList.as_mutable(JSON), nullable=True, default=list)
+    
     def has_permission(self, permission_name):
+        # Verifica no novo sistema primeiro
+        if self.permissions_list and permission_name in set(self.permissions_list):
+            return True
+        # Fallback para sistema antigo durante migração
         return any(perm.name == permission_name for perm in self.permissions)
     
     def has_module_access(self, module_name):
+        # Sistema antigo
         return any(perm.module == module_name for perm in self.permissions)
     
     def __repr__(self):
@@ -84,11 +108,23 @@ class User(db.Model, UserMixin):
         ).scalar()
     
     def has_permission(self, permission_name):
+        """Verifica se o usuário tem uma permissão específica (direto ou via role)"""
+        # Admin-total tem todas as permissões
+        if any(p.name == 'admin-total' for p in self.permissions):
+            return True
+        
+        # Verifica permissões diretas do usuário
         if any(p.name == permission_name for p in self.permissions):
             return True
+        
+        # Verifica permissões via roles (novo e antigo sistema)
         for role in self.roles:
             if role.has_permission(permission_name):
                 return True
+            # Verifica admin-total nas roles
+            if role.has_permission('admin-total'):
+                return True
+        
         return False
     
     def has_module_access(self, module_name):
@@ -100,12 +136,23 @@ class User(db.Model, UserMixin):
         return False
     
     def get_permissions(self):
+        """Retorna todas as permissões do usuário (diretas + através de roles)"""
         permissions = set()
+        
+        # Permissões diretas do usuário
         for permission in self.permissions:
             permissions.add(permission.name)
+        
+        # Permissões via roles
         for role in self.roles:
+            # Novo sistema: permissions_list
+            if role.permissions_list:
+                for perm_name in role.permissions_list:
+                    permissions.add(perm_name)
+            # Sistema antigo: relationship permissions
             for permission in role.permissions:
                 permissions.add(permission.name)
+        
         return list(permissions)
     
     def get_modules(self):
@@ -151,11 +198,13 @@ class Nir(db.Model):
     gender = db.Column(db.String(1), nullable=False)
     susfacil = db.Column(db.String(50), nullable=True)
     sus_number = db.Column(db.String(50), nullable=False)
+    is_palliative = db.Column(db.Boolean, default=False, nullable=True)
     
     admission_date = db.Column(db.Date, nullable=True)
     entry_type = db.Column(db.String(50), nullable=True)
     admission_type = db.Column(db.String(50), nullable=True)
-    admitted_from_origin = db.Column(db.String(10), nullable=True)
+    admitted_from_origin = db.Column(db.String(100), nullable=True)
+    recurso = db.Column(db.String(50), nullable=True)
     
     procedure_code = db.Column(db.String(20), nullable=True)
     surgical_description = db.Column(db.Text, nullable=True)
@@ -163,6 +212,10 @@ class Nir(db.Model):
     responsible_doctor = db.Column(db.String(100), nullable=True)
     main_cid = db.Column(db.String(10), nullable=True)
     aih = db.Column(db.String(50), nullable=True)
+    
+    susfacil_accepted = db.Column(db.Boolean, default=False, nullable=True)
+    susfacil_accept_datetime = db.Column(db.DateTime, nullable=True)
+    susfacil_protocol = db.Column(db.String(50), nullable=True)
     
     scheduling_date = db.Column(db.Date, nullable=True)
     discharge_type = db.Column(db.String(50), nullable=True)
@@ -187,6 +240,8 @@ class Nir(db.Model):
     month = db.Column(db.String(20), nullable=True)
     operator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
+    observation_start_time = db.Column(db.DateTime, nullable=True)
+    
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -194,22 +249,53 @@ class Nir(db.Model):
     section_statuses = db.relationship('NirSectionStatus', back_populates='nir', cascade='all, delete-orphan')
     
     def get_section_control_config(self):
-        """Retorna a configuração de controle baseada no tipo de entrada"""
-        effective_entry = 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
-
-        if effective_entry in ('URGENCIA', 'ELETIVO'):
+        """
+        Retorna a configuração de controle baseada no tipo de internação.
+        
+        Para CIRURGICO (admission_type='CIRURGICO'):
+        - NIR: dados_paciente, dados_internacao_iniciais, agendamento_inicial, dados_alta_finais
+        - CENTRO_CIRURGICO: procedimentos, informacoes_medicas
+        - FATURAMENTO: status_controle
+        
+        Para CLINICO (admission_type='CLINICO'):
+        - NIR: TODAS as seções (dados_paciente, dados_internacao_iniciais, agendamento_inicial, 
+                procedimentos, informacoes_medicas, dados_alta_finais)
+        - FATURAMENTO: status_controle
+        - (NÃO passa pelo Centro Cirúrgico)
+        """
+        # Se o tipo de internação é CLÍNICO, todas as seções ficam com o NIR
+        # (não passa pelo Centro Cirúrgico)
+        if self.admission_type == 'CLINICO':
             return {
                 'dados_paciente': 'NIR',
                 'dados_internacao_iniciais': 'NIR',
+                'agendamento_inicial': 'NIR',
+                'procedimentos': 'NIR',
+                'informacoes_medicas': 'NIR',
+                'dados_alta_finais': 'NIR',
+                'status_controle': 'FATURAMENTO'
+            }
+        
+        # Para CIRURGICO ou observações evoluídas sem tipo definido,
+        # usar o fluxo completo com Centro Cirúrgico
+        effective_entry = 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
+        
+        if self.admission_type == 'CIRURGICO' or effective_entry in ('URGENCIA', 'ELETIVO') or not self.entry_type:
+            return {
+                'dados_paciente': 'NIR',
+                'dados_internacao_iniciais': 'NIR',
+                'agendamento_inicial': 'NIR',
                 'procedimentos': 'CENTRO_CIRURGICO',
                 'informacoes_medicas': 'CENTRO_CIRURGICO',
                 'dados_alta_finais': 'NIR',
                 'status_controle': 'FATURAMENTO'
             }
         else:
+            # Caso especial (fallback)
             return {
                 'dados_paciente': 'NIR',
                 'dados_internacao_iniciais': 'NIR',
+                'agendamento_inicial': 'NIR',
                 'procedimentos': 'NIR',
                 'informacoes_medicas': 'NIR',
                 'dados_alta_finais': 'NIR',
@@ -236,8 +322,20 @@ class Nir(db.Model):
         return section_status
     
     def get_effective_entry_type(self):
-        """Retorna o tipo de entrada considerando valores legados."""
-        return 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
+        """
+        Retorna o tipo de entrada considerando valores legados e observações evoluídas.
+        
+        - CIRURGICO (legado) → URGENCIA
+        - None/vazio (observações evoluídas) → URGENCIA (para seguir fluxo completo)
+        - URGENCIA/ELETIVO → mantém o valor
+        """
+        if self.entry_type == 'CIRURGICO':
+            return 'URGENCIA'
+        elif not self.entry_type:
+            # Observações evoluídas sem entry_type definido seguem fluxo de URGENCIA
+            return 'URGENCIA'
+        else:
+            return self.entry_type
 
     def get_sector_sections(self):
         """Mapeia setores para as seções que são de responsabilidade deles."""
@@ -280,34 +378,45 @@ class Nir(db.Model):
         return progress
 
     def compute_overall_status(self):
+        """
+        Calcula o status geral do registro baseado no fluxo entre setores.
+        
+        Para entry_type URGENCIA/ELETIVO:
+        1. NIR preenche seções iniciais → EM_ANDAMENTO
+        2. CENTRO_CIRURGICO preenche suas seções → EM_ANDAMENTO
+        3. NIR preenche seções de alta → EM_ANDAMENTO
+        4. FATURAMENTO conclui → CONCLUIDO
+        
+        Para outros tipos:
+        1. NIR preenche todas as seções → EM_ANDAMENTO
+        2. FATURAMENTO conclui → CONCLUIDO
+        """
         if not self.section_statuses:
             return 'PENDENTE'
-        total = len(self.section_statuses)
-        filled = sum(1 for s in self.section_statuses if s.status == 'PREENCHIDO')
-        if filled == 0:
+        
+        progress = self.get_sector_progress()
+        
+        # Verificar se alguma seção foi preenchida
+        total_filled = sum(p['filled'] for p in progress.values())
+        if total_filled == 0:
             return 'PENDENTE'
-        if filled < total:
-            return 'EM_ANDAMENTO'
-        return 'CONCLUIDO'
+        
+        # Se FATURAMENTO está concluído, o registro está concluído
+        faturamento_status = progress.get('FATURAMENTO', {}).get('status')
+        if faturamento_status == 'CONCLUIDO':
+            return 'CONCLUIDO'
+        
+        # Caso contrário, se há algo preenchido, está em andamento
+        return 'EM_ANDAMENTO'
     
     def is_ready_for_sector(self, sector):
         if sector == 'NIR':
             return True
 
         progress = self.get_sector_progress()
-
         effective_entry = self.get_effective_entry_type()
         config = self.get_section_control_config()
-
         nir_sections = [s for s, sec in config.items() if sec == 'NIR']
-
-        if effective_entry in ('URGENCIA', 'ELETIVO'):
-            final_nir_sections = [s for s in nir_sections if 'alta' in s]
-            initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
-        else:
-            initial_nir_sections = nir_sections
-            final_nir_sections = []
-
         section_status_map = { (s.section_name): s.status for s in self.section_statuses }
 
         def sections_complete(section_list):
@@ -315,14 +424,25 @@ class Nir(db.Model):
                 return True
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
+        # Para CLÍNICO, nunca está pronto para Centro Cirúrgico (pula essa etapa)
         if sector == 'CENTRO_CIRURGICO':
+            if self.admission_type == 'CLINICO':
+                return False
+            
             if effective_entry in ('URGENCIA', 'ELETIVO'):
+                final_nir_sections = [s for s in nir_sections if 'alta' in s]
+                initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
                 return sections_complete(initial_nir_sections)
             else:
                 nir_progress = progress.get('NIR', {})
                 return nir_progress.get('status') == 'CONCLUIDO'
 
         if sector == 'FATURAMENTO':
+            # Para CLÍNICO, só precisa que o NIR esteja completo
+            if self.admission_type == 'CLINICO':
+                return sections_complete(nir_sections)
+            
+            # Para CIRURGICO, precisa do NIR E do Centro Cirúrgico completos
             if not sections_complete(nir_sections):
                 return False
             surgery_progress = progress.get('CENTRO_CIRURGICO')
@@ -333,7 +453,12 @@ class Nir(db.Model):
         return False
         
     def get_next_available_sector(self):
-        """Retorna o próximo setor que pode trabalhar no registro."""
+        """
+        Retorna o próximo setor que pode trabalhar no registro.
+        
+        Para CLÍNICO: NIR → FATURAMENTO (pula Centro Cirúrgico)
+        Para CIRURGICO: NIR (inicial) → CENTRO_CIRURGICO → NIR (alta) → FATURAMENTO
+        """
         progress = self.get_sector_progress()
         effective_entry = self.get_effective_entry_type()
         config = self.get_section_control_config()
@@ -346,7 +471,19 @@ class Nir(db.Model):
                 return True
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
-        if effective_entry in ('URGENCIA', 'ELETIVO'):
+        # FLUXO PARA CLÍNICO: NIR (tudo) → FATURAMENTO
+        if self.admission_type == 'CLINICO':
+            if not sections_complete(nir_sections):
+                return 'NIR'
+            
+            billing_progress = progress.get('FATURAMENTO', {})
+            if billing_progress.get('status') != 'CONCLUIDO':
+                return 'FATURAMENTO'
+            
+            return None
+
+        # FLUXO PARA CIRURGICO: NIR (inicial) → CENTRO_CIRURGICO → NIR (alta) → FATURAMENTO
+        if effective_entry in ('URGENCIA', 'ELETIVO') or self.admission_type == 'CIRURGICO':
             final_nir_sections = [s for s in nir_sections if 'alta' in s]
             initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
 
@@ -366,12 +503,48 @@ class Nir(db.Model):
 
             return None
         else:
+            # Fallback para casos especiais
             if not sections_complete(nir_sections):
                 return 'NIR'
             billing_progress = progress.get('FATURAMENTO', {})
             if billing_progress.get('status') != 'CONCLUIDO':
                 return 'FATURAMENTO'
             return None
+    
+    def is_in_observation(self):
+        """Verifica se o registro está em período de observação"""
+        return self.status == 'EM_OBSERVACAO' and self.observation_start_time is not None
+    
+    def observation_hours_elapsed(self):
+        """Retorna quantas horas se passaram desde o início da observação"""
+        if not self.observation_start_time:
+            return 0
+        delta = datetime.utcnow() - self.observation_start_time
+        return delta.total_seconds() / 3600  # Retorna em horas
+    
+    def should_transition_to_decision(self):
+        """Verifica se o registro deve transitar para AGUARDANDO_DECISAO (>24h)"""
+        return self.is_in_observation() and self.observation_hours_elapsed() > 24
+    
+    def evolve_to_admission(self):
+        """Evolui um registro de observação para internação normal"""
+        if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
+            self.status = 'PENDENTE'
+            self.observation_start_time = None
+            # Se não tem data de admissão, usa a data de início da observação
+            if not self.admission_date and self.observation_start_time:
+                self.admission_date = self.observation_start_time.date()
+            return True
+        return False
+    
+    def cancel_observation(self, reason):
+        """Cancela uma observação"""
+        if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
+            self.cancelled = 'SIM'
+            self.cancellation_reason = reason
+            self.status = 'CANCELADO'
+            return True
+        return False
 
     def __repr__(self):
         return f'<Nir {self.id}: {self.patient_name}>'

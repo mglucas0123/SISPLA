@@ -167,6 +167,7 @@
                                     action="{{ url_for('admin.courses.reset_user_course_progress', course_id=course.id, user_id=p.user_id) }}" 
                                     onsubmit="return confirm('Tem certeza que deseja resetar todo o progresso deste aluno? Esta ação não pode ser desfeita.');"
                                     style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="course-progress-action-btn" title="Resetar Progresso">
                                         <i class="bi bi-arrow-counterclockwise"></i>
                                     </button>

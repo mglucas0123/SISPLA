@@ -67,6 +67,7 @@
                 {% include 'partials/_flash_messages.html' %}
 
                 <form class="login-form" method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="login-form-group">
                         <label for="username" class="login-form-label">
                             <i class="bi bi-person"></i>

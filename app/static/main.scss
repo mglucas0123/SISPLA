@@ -6,6 +6,7 @@
 @import 'repository/repository';
 @import 'course/manage_course';
 @import 'util/flash_messages'; 
+@import 'util/pagination';
 @import 'form/forms';
 @import 'course/course';
 @import 'course/course_player';
@@ -13,3 +14,7 @@
 @import 'course/manage_quiz';
 @import 'users/manage_users';
 @import 'nir/nir';
+@import 'nir/procedure_management';
+@import 'roles/roles_permissions';
+@import 'util/colors';
+@import 'nir/cc';

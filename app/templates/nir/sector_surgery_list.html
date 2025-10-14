@@ -5,33 +5,34 @@
 <div class="nir-container">
     {% include 'partials/_flash_messages.html' %}
     <div class="container-fluid px-4">
-        
+
         {% if stats_counts %}
-            {% set counts = namespace(total=stats_counts.total, pendentes=stats_counts.pendentes, andamento=stats_counts.andamento, concluidos=stats_counts.concluidos) %}
+        {% set counts = namespace(total=stats_counts.total, pendentes=stats_counts.pendentes,
+        andamento=stats_counts.andamento, concluidos=stats_counts.concluidos) %}
         {% else %}
-            {% if records.items %}
-                {% set counts = namespace(total=records.total, pendentes=0, andamento=0, concluidos=0) %}
-                {% for r in records.items %}
-                    {% set prog = r.get_sector_progress().get('CENTRO_CIRURGICO', {}) %}
-                    {% if prog.get('status') == 'PENDENTE' %}
-                        {% set counts.pendentes = counts.pendentes + 1 %}
-                    {% elif prog.get('status') == 'EM_ANDAMENTO' %}
-                        {% set counts.andamento = counts.andamento + 1 %}
-                    {% elif prog.get('status') == 'CONCLUIDO' %}
-                        {% set counts.concluidos = counts.concluidos + 1 %}
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                {% set counts = namespace(total=0, pendentes=0, andamento=0, concluidos=0) %}
-            {% endif %}
+        {% if records.items %}
+        {% set counts = namespace(total=records.total, pendentes=0, andamento=0, concluidos=0) %}
+        {% for r in records.items %}
+        {% set prog = r.get_sector_progress().get('CENTRO_CIRURGICO', {}) %}
+        {% if prog.get('status') == 'PENDENTE' %}
+        {% set counts.pendentes = counts.pendentes + 1 %}
+        {% elif prog.get('status') == 'EM_ANDAMENTO' %}
+        {% set counts.andamento = counts.andamento + 1 %}
+        {% elif prog.get('status') == 'CONCLUIDO' %}
+        {% set counts.concluidos = counts.concluidos + 1 %}
         {% endif %}
-        
+        {% endfor %}
+        {% else %}
+        {% set counts = namespace(total=0, pendentes=0, andamento=0, concluidos=0) %}
+        {% endif %}
+        {% endif %}
+
         <div class="nir-header mb-4">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
                 <div class="flex-grow-1">
                     <div class="nir-header-content">
                         <h1 class="mb-2">
-                            <i class="bi bi-scissors"></i> 
+                            <i class="bi bi-scissors"></i>
                             Centro Cirúrgico
                             <span class="nir-header-badge">{{ counts.total }} registros</span>
                         </h1>
@@ -50,7 +51,8 @@
         <div class="mb-4">
             <div class="nir-stat-cards">
                 {% set pendente_active = (filter_status == 'pendente') %}
-                <a href="{{ pendente_active and url_for('nir.sector_surgery_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_surgery_list', filter_status='pendente', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--danger {% if pendente_active %}is-active{% endif %}">
+                <a href="{{ pendente_active and url_for('nir.sector_surgery_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_surgery_list', filter_status='pendente', patient_name=request.args.get('patient_name','')) }}"
+                    class="nir-stat-card nir-stat-card--danger {% if pendente_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
                     <div class="nir-stat-card__content">
                         <div class="nir-stat-card__number">{{ counts.pendentes }}</div>
@@ -59,7 +61,8 @@
                     </div>
                 </a>
                 {% set concluido_active = (filter_status == 'concluido') %}
-                <a href="{{ concluido_active and url_for('nir.sector_surgery_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_surgery_list', filter_status='concluido', patient_name=request.args.get('patient_name','')) }}" class="nir-stat-card nir-stat-card--success {% if concluido_active %}is-active{% endif %}">
+                <a href="{{ concluido_active and url_for('nir.sector_surgery_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_surgery_list', filter_status='concluido', patient_name=request.args.get('patient_name','')) }}"
+                    class="nir-stat-card nir-stat-card--success {% if concluido_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-check2-circle"></i></div>
                     <div class="nir-stat-card__content">
                         <div class="nir-stat-card__number">{{ counts.concluidos }}</div>
@@ -81,7 +84,7 @@
                     <div class="nir-input-with-icon">
                         <i class="bi bi-person-search icon"></i>
                         <input type="text" class="form-control" name="patient_name"
-                            value="{{ request.args.get('patient_name', '') }}" 
+                            value="{{ request.args.get('patient_name', '') }}"
                             placeholder="Digite o nome do paciente...">
                     </div>
                 </div>
@@ -128,7 +131,8 @@
                             {% set progress = record.get_sector_progress() %}
                             {% set surgery_progress = progress.get('CENTRO_CIRURGICO', {}) %}
                             {% set status_display = surgery_progress.get('status') %}
-                            <tr class="nir-row-status {% if status_display == 'PENDENTE' %}nir-row-pendente{% elif status_display == 'EM_ANDAMENTO' %}nir-row-andamento{% elif status_display == 'CONCLUIDO' %}nir-row-concluido{% endif %}">
+                            <tr
+                                class="nir-row-status {% if status_display == 'PENDENTE' %}nir-row-pendente{% elif status_display == 'EM_ANDAMENTO' %}nir-row-andamento{% elif status_display == 'CONCLUIDO' %}nir-row-concluido{% endif %}">
                                 <td class="cell-id">
                                     <span class="badge fw-bold">#{{ record.id }}</span>
                                 </td>
@@ -139,46 +143,333 @@
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}</span>
+                                    <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') if
+                                        record.admission_date else 'N/I' }}</span>
                                 </td>
                                 <td class="cell-entry text-center">
-                                    <span class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% else %}bg-secondary{% endif %}">
-                                        {% if record.entry_type == 'ELETIVO' %}<i class="bi bi-calendar-check me-1"></i>{% elif record.entry_type == 'URGENCIA' %}<i class="bi bi-lightning me-1"></i>{% endif %}
+                                    <span
+                                        class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-custom-blue{% elif record.entry_type == 'URGENCIA' %}bg-custom-red text-white{% else %}bg-custom-gray{% endif %}">
+                                        {% if record.entry_type == 'ELETIVO' %}<i
+                                            class="bi bi-calendar-check me-1"></i>{% elif record.entry_type ==
+                                        'URGENCIA' %}<i class="bi bi-lightning me-1"></i>{% endif %}
                                         {{ record.entry_type or 'N/D' }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     {% if status_display == 'PENDENTE' %}
-                                    <span class="badge bg-danger rounded-pill">
+                                    <span class="badge bg-custom-red-pulse rounded-pill">
                                         <i class="bi bi-exclamation-triangle me-1"></i>Pendente
                                     </span>
                                     {% elif status_display == 'EM_ANDAMENTO' %}
-                                    <span class="badge bg-warning text-dark rounded-pill">
+                                    <span class="badge bg-custom-yellow text-dark rounded-pill">
                                         <i class="bi bi-hourglass-split me-1"></i>Em Andamento
                                     </span>
                                     {% elif status_display == 'CONCLUIDO' %}
-                                    <span class="badge bg-success rounded-pill">
+                                    <span class="badge bg-custom-green rounded-pill">
                                         <i class="bi bi-check-circle me-1"></i>Concluído
                                     </span>
                                     {% else %}
-                                    <span class="badge bg-secondary rounded-pill">-</span>
+                                    <span class="badge bg-custom-gray rounded-pill">-</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
                                         {% if status_display != 'CONCLUIDO' %}
-                                        <a href="{{ url_for('nir.sector_surgery_form', record_id=record.id) }}" 
-                                           class="btn btn-sm btn-primary rounded-pill shadow-sm" 
-                                           title="Preencher dados do registro #{{ record.id }}">
-                                            <i class="bi bi-pencil-square me-1"></i>Preencher
-                                        </a>
+                                        <button class="btn btn-sm btn-primary rounded-pill shadow-sm toggle-detail"
+                                            data-detail-id="detail-{{ record.id }}" title="Ver e gerenciar">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            <span class="btn-text">Ver e gerenciar</span>
+                                        </button>
                                         {% endif %}
-                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}" 
-                                           class="nir-icon-btn nir-view-btn" 
-                                           title="Visualizar detalhes do registro #{{ record.id }}">
+                                        <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                            class="nir-icon-btn nir-view-btn"
+                                            title="Visualizar detalhes do registro #{{ record.id }}">
                                             <i class="bi bi-eye"></i>
                                             <span class="visually-hidden">Visualizar</span>
                                         </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="detail-{{ record.id }}" class="detail-row" style="display:none;">
+                                <td colspan="6">
+                                    <div
+                                        class="card shadow-sm border-0 mb-2 inline-detail-card nir-inline-panel animate-in">
+                                        <div class="card-body p-3">
+                                            <div
+                                                class="d-flex align-items-center justify-content-between mb-2 inline-detail-header-compact">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="bi bi-scissors text-primary fs-5"></i>
+                                                    <strong>Registro #{{ record.id }}</strong>
+                                                    <span class="text-muted">|</span>
+                                                    <small class="text-muted">{{ record.patient_name }}</small>
+                                                    <span class="badge bg-custom-red-pulse">{{ status_display }}</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
+                                                        class="btn btn-outline-secondary btn-sm"
+                                                        title="Abrir página completa">
+                                                        <i class="bi bi-box-arrow-up-right"></i>
+                                                    </a>
+                                                    <button class="btn btn-light btn-sm toggle-detail"
+                                                        data-detail-id="detail-{{ record.id }}" title="Fechar">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <form method="POST"
+                                                action="{{ url_for('nir.update_record', record_id=record.id) }}"
+                                                id="surgery-form-{{ record.id }}" novalidate>
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <ul class="nav nav-tabs nav-tabs-compact mb-2" id="tabs-{{ record.id }}"
+                                                    role="tablist">
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link active" id="proc-tab-{{ record.id }}"
+                                                            data-bs-toggle="tab" data-bs-target="#proc-{{ record.id }}"
+                                                            type="button" role="tab">
+                                                            <i class="bi bi-activity me-1"></i>Procedimentos
+                                                        </button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link" id="med-tab-{{ record.id }}"
+                                                            data-bs-toggle="tab" data-bs-target="#med-{{ record.id }}"
+                                                            type="button" role="tab">
+                                                            <i class="bi bi-heart-pulse me-1"></i>Informações Médicas
+                                                        </button>
+                                                    </li>
+                                                </ul>
+
+                                                <div class="tab-content" id="tabContent-{{ record.id }}">
+                                                    <div class="tab-pane fade show active" id="proc-{{ record.id }}"
+                                                        role="tabpanel">
+                                                        <div class="nir-form-section-compact mb-2">
+                                                            <div class="row g-2 align-items-end">
+                                                                <div class="col-md-4">
+                                                                    <label
+                                                                        class="form-label form-label-sm">Código</label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        id="procedure-code-input-{{ record.id }}"
+                                                                        placeholder="Digite código ou descrição do procedimento..."
+                                                                        data-procedure-entry
+                                                                        data-record-id="{{ record.id }}">
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label
+                                                                        class="form-label form-label-sm">Descrição</label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm bg-light"
+                                                                        id="surgical-description-input-{{ record.id }}"
+                                                                        readonly tabindex="-1">
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <button class="btn btn-outline-primary btn-sm w-100"
+                                                                        id="add-procedure-btn-{{ record.id }}"
+                                                                        type="button" data-record-id="{{ record.id }}">
+                                                                        <i class="bi bi-plus-circle"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="mt-2">
+                                                                <div class="border rounded p-2 bg-body-tertiary procedure-list-compact"
+                                                                    id="procedures-list-{{ record.id }}"
+                                                                    data-can-edit-procedures="1">
+                                                                    {% if record.procedures %}
+                                                                    {% for procedure in record.procedures %}
+                                                                    <div
+                                                                        class="d-flex justify-content-between align-items-center mb-1 p-1 px-2 bg-white rounded procedure-item-compact border">
+                                                                        <small class="flex-grow-1">
+                                                                            <strong>{{ procedure.code }}</strong> - {{
+                                                                            procedure.description }}
+                                                                        </small>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-danger btn-xs remove-procedure"
+                                                                            data-record-id="{{ record.id }}">
+                                                                            <i class="bi bi-trash"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                    <input type="hidden" name="procedure_codes[]"
+                                                                        value="{{ procedure.code }}">
+                                                                    <input type="hidden" name="procedure_descriptions[]"
+                                                                        value="{{ procedure.description }}">
+                                                                    {% endfor %}
+                                                                    {% else %}
+                                                                    <p class="text-muted mb-0 text-center py-1 small"><i
+                                                                            class="bi bi-info-circle me-1"></i>Nenhum
+                                                                        procedimento</p>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <small class="text-muted d-block mt-1"><i
+                                                                        class="bi bi-lightbulb me-1"></i>O primeiro será
+                                                                    considerado principal.</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="tab-pane fade" id="med-{{ record.id }}" role="tabpanel">
+                                                        <div class="nir-form-section-compact mb-2">
+                                                            <div class="row g-2">
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label form-label-sm">Médico
+                                                                        Responsável <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        name="responsible_doctor"
+                                                                        value="{{ record.responsible_doctor or '' }}"
+                                                                        placeholder="Nome do médico" required>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label form-label-sm">CID
+                                                                        Principal <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <select class="form-select form-select-sm"
+                                                                        name="main_cid" id="main-cid-{{ record.id }}"
+                                                                        required>
+                                                                        <option value="">Selecione um procedimento
+                                                                            primeiro</option>
+                                                                        {% if record.main_cid %}
+                                                                        <option value="{{ record.main_cid }}" selected>
+                                                                            {{ record.main_cid }}</option>
+                                                                        {% endif %}
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label
+                                                                        class="form-label form-label-sm">Especialidade
+                                                                        <span class="text-danger">*</span></label>
+                                                                    <select class="form-select form-select-sm"
+                                                                        name="surgical_specialty" required>
+                                                                        <option value="">Selecione</option>
+                                                                        <option value="CIRURGIA GERAL" {% if
+                                                                            record.surgical_specialty=='CIRURGIA GERAL'
+                                                                            %}selected{% endif %}>Cirurgia Geral
+                                                                        </option>
+                                                                        <option value="CLINICO GERAL" {% if
+                                                                            record.surgical_specialty=='CLINICO GERAL'
+                                                                            %}selected{% endif %}>Clínico Geral</option>
+                                                                        <option value="DENTISTA" {% if
+                                                                            record.surgical_specialty=='DENTISTA'
+                                                                            %}selected{% endif %}>Dentista</option>
+                                                                        <option value="DERMATO" {% if
+                                                                            record.surgical_specialty=='DERMATO'
+                                                                            %}selected{% endif %}>Dermatologia</option>
+                                                                        <option value="OBSTETRICIA" {% if
+                                                                            record.surgical_specialty=='OBSTETRICIA'
+                                                                            %}selected{% endif %}>Obstetrícia</option>
+                                                                        <option value="OFTALMOLOGISTA" {% if
+                                                                            record.surgical_specialty=='OFTALMOLOGISTA'
+                                                                            %}selected{% endif %}>Oftalmologia</option>
+                                                                        <option value="ORTOPEDISTA" {% if
+                                                                            record.surgical_specialty=='ORTOPEDISTA'
+                                                                            %}selected{% endif %}>Ortopedia</option>
+                                                                        <option value="UROLOGISTA" {% if
+                                                                            record.surgical_specialty=='UROLOGISTA'
+                                                                            %}selected{% endif %}>Urologia</option>
+                                                                        <option value="VASCULAR" {% if
+                                                                            record.surgical_specialty=='VASCULAR'
+                                                                            %}selected{% endif %}>Vascular</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label
+                                                                        class="form-label form-label-sm">Classificação
+                                                                        <span class="text-danger">*</span></label>
+                                                                    <select class="form-select form-select-sm"
+                                                                        name="surgical_type" required>
+                                                                        <option value="">Selecione</option>
+                                                                        <option value="CONTAMINADA" {% if
+                                                                            record.surgical_type=='CONTAMINADA'
+                                                                            %}selected{% endif %}>Contaminada</option>
+                                                                        <option value="INFECTADA" {% if
+                                                                            record.surgical_type=='INFECTADA'
+                                                                            %}selected{% endif %}>Infectada</option>
+                                                                        <option value="LIMPA" {% if
+                                                                            record.surgical_type=='LIMPA' %}selected{%
+                                                                            endif %}>Limpa</option>
+                                                                        <option value="SUSPENSA" {% if
+                                                                            record.surgical_type=='SUSPENSA'
+                                                                            %}selected{% endif %}>Suspensa</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label form-label-sm">Médico
+                                                                        Auxiliar <span class="text-danger"
+                                                                            id="aux-required-{{ record.id }}">*</span>
+                                                                        <small
+                                                                            class="form-check form-check-inline m-0 ms-2">
+                                                                            <input class="form-check-input"
+                                                                                type="checkbox"
+                                                                                id="aux-nao-aplica-{{ record.id }}"
+                                                                                name="auxiliary_nao_aplica" value="1">
+                                                                            <label class="form-check-label"
+                                                                                for="aux-nao-aplica-{{ record.id }}"
+                                                                                style="font-size: 0.75rem;">N/A</label>
+                                                                        </small>
+                                                                    </label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        name="auxiliary"
+                                                                        id="auxiliary-input-{{ record.id }}"
+                                                                        value="{{ record.auxiliary or '' }}"
+                                                                        placeholder="Auxiliar" required>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label form-label-sm">Anestesista
+                                                                        <span class="text-danger">*</span></label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        name="anesthetist"
+                                                                        value="{{ record.anesthetist or '' }}"
+                                                                        placeholder="Anestesista" required>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label form-label-sm">Anestesia
+                                                                        <span class="text-danger">*</span></label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        name="anesthesia"
+                                                                        value="{{ record.anesthesia or '' }}"
+                                                                        placeholder="Tipo" required>
+                                                                </div>
+                                                                <div class="col-md-12">
+                                                                    <label class="form-label form-label-sm">Pediatria
+                                                                        <span class="text-danger"
+                                                                            id="ped-required-{{ record.id }}">*</span>
+                                                                        <small
+                                                                            class="form-check form-check-inline m-0 ms-2">
+                                                                            <input class="form-check-input"
+                                                                                type="checkbox"
+                                                                                id="ped-nao-aplica-{{ record.id }}"
+                                                                                name="pediatrics_nao_aplica" value="1">
+                                                                            <label class="form-check-label"
+                                                                                for="ped-nao-aplica-{{ record.id }}"
+                                                                                style="font-size: 0.75rem;">N/A</label>
+                                                                        </small>
+                                                                    </label>
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        name="pediatrics"
+                                                                        id="pediatrics-input-{{ record.id }}"
+                                                                        value="{{ record.pediatrics or '' }}"
+                                                                        placeholder="Pediatra" required>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex justify-content-end gap-2 mt-2 pt-2 border-top">
+                                                    <button type="button" class="btn btn-secondary btn-sm toggle-detail"
+                                                        data-detail-id="detail-{{ record.id }}">
+                                                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        <i class="bi bi-check-circle me-1"></i>Salvar e Concluir
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -201,27 +492,591 @@
         </div>
         {% endif %}
 
-        {% if pagination %}
-        <nav aria-label="Navegação de usuários">
-            <ul class="pagination justify-content-center mt-4">
-                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_surgery_list', page=pagination.prev_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">Anterior</a>
-                </li>
-                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if p %}
-                <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_surgery_list', page=p, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">{{ p }}</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-                {% endif %}
-                {% endfor %}
-                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('nir.sector_surgery_list', page=pagination.next_num, patient_name=request.args.get('patient_name',''), filter_status=filter_status) }}">Próxima</a>
-                </li>
-            </ul>
-        </nav>
-        {% endif %}
+        {% set pagination_params = {'pagination': pagination, 'endpoint': 'nir.sector_surgery_list', 'extra_params':
+        {'patient_name': request.args.get('patient_name',''), 'filter_status': filter_status}, 'css_class':
+        'pagination-container', 'aria_label': 'Navegação de registros do Centro Cirúrgico'} %}
+        {% include 'partials/_pagination.html' %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.toggle-detail');
+            if (!btn) return;
+
+            const id = btn.getAttribute('data-detail-id');
+            if (!id) return;
+
+            const row = document.getElementById(id);
+            if (!row) return;
+
+            const visible = row.style.display !== 'none';
+
+            if (visible) {
+                const recordId = id.replace('detail-', '');
+                resetForm(recordId);
+            }
+
+            document.querySelectorAll('tr.detail-row').forEach(r => {
+                if (r !== row && r.style.display !== 'none') {
+                    r.style.display = 'none';
+
+                    const otherId = r.id;
+                    document.querySelectorAll(`button.toggle-detail[data-detail-id="${otherId}"] .btn-text`).forEach(span => {
+                        if (span) span.textContent = 'Ver e gerenciar';
+                    });
+                }
+            });
+
+            row.style.display = visible ? 'none' : '';
+
+            const card = row.querySelector('.inline-detail-card');
+            if (!visible && card) {
+                card.classList.remove('animate-in');
+                void card.offsetWidth;
+                card.classList.add('animate-in');
+            }
+
+            document.querySelectorAll(`button.toggle-detail[data-detail-id="${id}"] .btn-text`).forEach(span => {
+                if (!span) return;
+                span.textContent = row.style.display === 'none' ? 'Ver e gerenciar' : 'Ocultar painel';
+            });
+
+            if (row.style.display !== 'none') {
+                setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            }
+        });
+
+        try {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            tooltipTriggerList.forEach(function (el) {
+                if (window.bootstrap && bootstrap.Tooltip) {
+                    new bootstrap.Tooltip(el);
+                }
+            });
+        } catch (e) {
+            console.log('Bootstrap tooltips não disponível');
+        }
+
+        function resetForm(recordId) {
+            const form = document.getElementById(`surgery-form-${recordId}`);
+            if (!form) return;
+
+            form.querySelectorAll('input[type="text"], input[type="date"], input[type="time"], select').forEach(input => {
+                if (input.name !== 'csrf_token') {
+                    input.value = '';
+                }
+            });
+
+            form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            const proceduresList = document.getElementById(`procedures-list-${recordId}`);
+            if (proceduresList) {
+                proceduresList.innerHTML = '<p class="text-muted text-center mb-0"><i class="bi bi-info-circle me-2"></i>Nenhum procedimento adicionado</p>';
+            }
+
+            const searchInput = document.getElementById(`procedure-code-input-${recordId}`);
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            const procTab = document.getElementById(`proc-tab-${recordId}`);
+            if (procTab) {
+                const tab = new bootstrap.Tab(procTab);
+                tab.show();
+            }
+
+            form.querySelectorAll('.tab-error').forEach(el => el.classList.remove('tab-error'));
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            document.querySelectorAll('.tab-validation-tooltip').forEach(t => t.remove());
+
+            const auxCheckbox = document.getElementById(`aux-nao-aplica-${recordId}`);
+            const pedCheckbox = document.getElementById(`ped-nao-aplica-${recordId}`);
+
+            if (auxCheckbox) auxCheckbox.checked = false;
+            if (pedCheckbox) pedCheckbox.checked = false;
+
+            const auxInput = document.getElementById(`auxiliary-input-${recordId}`);
+            const pedInput = document.getElementById(`pediatrics-input-${recordId}`);
+
+            if (auxInput) {
+                auxInput.disabled = false;
+                auxInput.setAttribute('required', 'required');
+                auxInput.classList.remove('bg-light');
+            }
+
+            if (pedInput) {
+                pedInput.disabled = false;
+                pedInput.setAttribute('required', 'required');
+                pedInput.classList.remove('bg-light');
+            }
+
+            const auxRequired = document.getElementById(`aux-required-${recordId}`);
+            const pedRequired = document.getElementById(`ped-required-${recordId}`);
+
+            if (auxRequired) auxRequired.style.display = '';
+            if (pedRequired) pedRequired.style.display = '';
+        }
+
+        function setupToggleFields() {
+            document.querySelectorAll('[id^="aux-nao-aplica-"]').forEach(checkbox => {
+                const recordId = checkbox.id.replace('aux-nao-aplica-', '');
+                const input = document.getElementById(`auxiliary-input-${recordId}`);
+                const requiredMark = document.getElementById(`aux-required-${recordId}`);
+
+                if (input) {
+                    const applyState = () => {
+                        if (checkbox.checked) {
+                            input.value = '';
+                            input.disabled = true;
+                            input.removeAttribute('required');
+                            input.classList.add('bg-light');
+                            if (requiredMark) requiredMark.style.display = 'none';
+                        } else {
+                            input.disabled = false;
+                            input.setAttribute('required', 'required');
+                            input.classList.remove('bg-light');
+                            if (requiredMark) requiredMark.style.display = 'inline';
+                        }
+                    };
+                    checkbox.addEventListener('change', applyState);
+                    applyState();
+                }
+            });
+
+            document.querySelectorAll('[id^="ped-nao-aplica-"]').forEach(checkbox => {
+                const recordId = checkbox.id.replace('ped-nao-aplica-', '');
+                const input = document.getElementById(`pediatrics-input-${recordId}`);
+                const requiredMark = document.getElementById(`ped-required-${recordId}`);
+
+                if (input) {
+                    const applyState = () => {
+                        if (checkbox.checked) {
+                            input.value = '';
+                            input.disabled = true;
+                            input.removeAttribute('required');
+                            input.classList.add('bg-light');
+                            if (requiredMark) requiredMark.style.display = 'none';
+                        } else {
+                            input.disabled = false;
+                            input.setAttribute('required', 'required');
+                            input.classList.remove('bg-light');
+                            if (requiredMark) requiredMark.style.display = 'inline';
+                        }
+                    };
+                    checkbox.addEventListener('change', applyState);
+                    applyState();
+                }
+            });
+        }
+
+        setupToggleFields();
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.toggle-detail')) {
+                setTimeout(setupToggleFields, 100);
+                setTimeout(setupProcedureSearch, 100);
+            }
+        });
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        function updateCidOptionsForRecord(recordId) {
+            const proceduresList = document.getElementById(`procedures-list-${recordId}`);
+            const cidSelect = document.getElementById(`main-cid-${recordId}`);
+
+            if (!proceduresList || !cidSelect) return;
+
+            const firstProcedureInput = proceduresList.querySelector('input[name="procedure_codes[]"]');
+
+            if (!firstProcedureInput) {
+                cidSelect.innerHTML = '<option value="">Selecione um procedimento primeiro</option>';
+                cidSelect.disabled = true;
+                return;
+            }
+
+            const procedureCode = firstProcedureInput.value;
+            const currentCid = cidSelect.value;
+
+            fetch(`/nir/procedure/${encodeURIComponent(procedureCode)}/cids`)
+                .then(response => response.json())
+                .then(cids => {
+                    if (cids.length === 0) {
+                        cidSelect.innerHTML = '<option value="">Nenhum CID compatível encontrado</option>';
+                        cidSelect.disabled = true;
+                    } else {
+                        cidSelect.disabled = false;
+                        cidSelect.innerHTML = '<option value="">Selecione o CID</option>' +
+                            cids.map(cid =>
+                                `<option value="${escapeHtml(cid.code)}" ${cid.code === currentCid ? 'selected' : ''}>
+                                    ${escapeHtml(cid.code)} - ${escapeHtml(cid.description)}
+                                </option>`
+                            ).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar CIDs:', error);
+                    cidSelect.innerHTML = '<option value="">Erro ao carregar CIDs</option>';
+                    cidSelect.disabled = true;
+                });
+        }
+
+        function setupProcedureSearch() {
+            document.querySelectorAll('[data-procedure-entry]:not([data-initialized])').forEach(input => {
+                const recordId = input.getAttribute('data-record-id');
+                const descriptionInput = document.getElementById(`surgical-description-input-${recordId}`);
+                const addButton = document.getElementById(`add-procedure-btn-${recordId}`);
+
+                input.setAttribute('data-initialized', 'true');
+
+                let selectedProcedure = null;
+                let searchTimeout = null;
+                let resultsDiv = document.getElementById(`procedure-results-${recordId}`);
+
+                if (!resultsDiv) {
+                    resultsDiv = document.createElement('div');
+                    resultsDiv.id = `procedure-results-${recordId}`;
+                    resultsDiv.className = 'procedure-search-results';
+                    input.parentElement.style.position = 'relative';
+                    input.parentElement.appendChild(resultsDiv);
+                }
+
+                input.addEventListener('input', function () {
+                    clearTimeout(searchTimeout);
+                    const query = this.value.trim();
+
+                    if (descriptionInput.value && query !== selectedProcedure?.code) {
+                        descriptionInput.value = '';
+                        selectedProcedure = null;
+                    }
+
+                    if (query.length < 2) {
+                        resultsDiv.innerHTML = '';
+                        resultsDiv.style.display = 'none';
+                        return;
+                    }
+
+                    searchTimeout = setTimeout(() => {
+                        fetch(`/nir/procedures/search?q=${encodeURIComponent(query)}&limit=10`)
+                            .then(response => response.json())
+                            .then(procedures => {
+                                if (procedures.length === 0) {
+                                    resultsDiv.innerHTML = '<div class="p-2 text-muted">Nenhum procedimento encontrado</div>';
+                                } else {
+                                    resultsDiv.innerHTML = procedures.map(p =>
+                                        `<div class="procedure-result-item" data-code="${escapeHtml(p.code)}" data-description="${escapeHtml(p.description)}">
+                                            <strong>${escapeHtml(p.code)}</strong> - ${escapeHtml(p.description)}
+                                        </div>`
+                                    ).join('');
+                                }
+                                resultsDiv.style.display = 'block';
+                            })
+                            .catch(error => {
+                                console.error('Erro ao buscar procedimentos:', error);
+                                resultsDiv.innerHTML = '<div class="p-2 text-danger">Erro ao buscar procedimentos</div>';
+                                resultsDiv.style.display = 'block';
+                            });
+                    }, 300);
+                });
+
+                resultsDiv.addEventListener('click', function (e) {
+                    const item = e.target.closest('.procedure-result-item');
+                    if (item) {
+                        const code = item.getAttribute('data-code');
+                        const description = item.getAttribute('data-description');
+
+                        selectedProcedure = { code, description };
+                        input.value = code;
+                        descriptionInput.value = description;
+                        resultsDiv.style.display = 'none';
+
+                        console.log('Procedimento selecionado:', selectedProcedure);
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
+                        resultsDiv.style.display = 'none';
+                    }
+                });
+
+                if (addButton) {
+                    addButton.addEventListener('click', function () {
+                        const code = input.value.trim();
+                        const description = descriptionInput.value.trim();
+
+                        console.log('Tentando adicionar:', { code, description });
+
+                        if (!code || !description) {
+                            alert('Por favor, selecione um procedimento da lista de busca antes de adicionar.');
+                            return;
+                        }
+
+                        const proceduresList = document.getElementById(`procedures-list-${recordId}`);
+
+                        const emptyMessage = proceduresList.querySelector('p.text-muted');
+                        if (emptyMessage) {
+                            emptyMessage.remove();
+                        }
+
+                        const existingCodes = Array.from(proceduresList.querySelectorAll('input[name="procedure_codes[]"]'))
+                            .map(inp => inp.value);
+                        if (existingCodes.includes(code)) {
+                            alert('Este procedimento já foi adicionado.');
+                            return;
+                        }
+
+                        const procedureItem = document.createElement('div');
+                        procedureItem.className = 'd-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded procedure-item border';
+                        procedureItem.innerHTML = `
+                            <div class="flex-grow-1">
+                                <strong>${escapeHtml(code)}</strong> - ${escapeHtml(description)}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-procedure">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        `;
+
+                        const hiddenCode = document.createElement('input');
+                        hiddenCode.type = 'hidden';
+                        hiddenCode.name = 'procedure_codes[]';
+                        hiddenCode.value = code;
+
+                        const hiddenDescription = document.createElement('input');
+                        hiddenDescription.type = 'hidden';
+                        hiddenDescription.name = 'procedure_descriptions[]';
+                        hiddenDescription.value = description;
+
+                        proceduresList.appendChild(procedureItem);
+                        proceduresList.appendChild(hiddenCode);
+                        proceduresList.appendChild(hiddenDescription);
+
+                        input.value = '';
+                        descriptionInput.value = '';
+                        selectedProcedure = null;
+
+                        updateCidOptionsForRecord(recordId);
+
+                        procedureItem.querySelector('.remove-procedure').addEventListener('click', function () {
+                            procedureItem.remove();
+                            hiddenCode.remove();
+                            hiddenDescription.remove();
+                            updateCidOptionsForRecord(recordId);
+                        });
+                    });
+                }
+            });
+
+            document.querySelectorAll('.remove-procedure').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const item = this.closest('.procedure-item');
+                    if (item) {
+                        const proceduresList = item.closest('[id^="procedures-list-"]');
+                        const recordId = proceduresList.id.replace('procedures-list-', '');
+
+                        const nextCode = item.nextElementSibling;
+                        const nextDesc = nextCode ? nextCode.nextElementSibling : null;
+
+                        item.remove();
+                        if (nextCode && nextCode.name === 'procedure_codes[]') nextCode.remove();
+                        if (nextDesc && nextDesc.name === 'procedure_descriptions[]') nextDesc.remove();
+
+                        if (proceduresList && !proceduresList.querySelector('.procedure-item')) {
+                            const emptyMsg = document.createElement('p');
+                            emptyMsg.className = 'text-muted mb-0 text-center py-2';
+                            emptyMsg.innerHTML = '<i class="bi bi-info-circle me-1"></i>Nenhum procedimento adicionado ainda';
+                            proceduresList.appendChild(emptyMsg);
+                        }
+
+                        updateCidOptionsForRecord(recordId);
+                    }
+                });
+            });
+        }
+
+        setupProcedureSearch();
+
+        document.querySelectorAll('[id^="procedures-list-"]').forEach(proceduresList => {
+            const recordId = proceduresList.id.replace('procedures-list-', '');
+            const firstProcedure = proceduresList.querySelector('input[name="procedure_codes[]"]');
+            if (firstProcedure) {
+                updateCidOptionsForRecord(recordId);
+            }
+        });
+
+        function showTabValidationTooltip(tabElement, message) {
+            const existingTooltips = document.querySelectorAll('.tab-validation-tooltip');
+            existingTooltips.forEach(t => t.remove());
+
+            const navTabs = tabElement.closest('.nav-tabs');
+            if (navTabs) {
+                navTabs.querySelectorAll('.nav-link').forEach(t => {
+                    if (t !== tabElement) t.classList.remove('tab-error');
+                });
+            }
+
+
+            const tabsContainer = tabElement.closest('.nav-tabs');
+            if (!tabsContainer) return;
+
+            if (getComputedStyle(tabsContainer).position === 'static') {
+                tabsContainer.style.position = 'relative';
+            }
+
+
+            const tabRect = tabElement.getBoundingClientRect();
+            const containerRect = tabsContainer.getBoundingClientRect();
+
+            const leftPosition = tabRect.left - containerRect.left + (tabRect.width / 2);
+
+            setTimeout(() => {
+                setTimeout(() => {
+                    tabElement.classList.remove('tab-error');
+                }, 300);
+            }, 4000);
+        }
+
+        function setupFormValidation() {
+            document.querySelectorAll('form[id^="surgery-form-"]').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    const formId = this.id;
+                    const recordId = formId.replace('surgery-form-', '');
+
+                    const procTab = document.getElementById(`proc-tab-${recordId}`);
+                    const medTab = document.getElementById(`med-tab-${recordId}`);
+                    const procPane = document.getElementById(`proc-${recordId}`);
+                    const medPane = document.getElementById(`med-${recordId}`);
+
+                    const isProcTabActive = procPane && procPane.classList.contains('show') && procPane.classList.contains('active');
+                    const isMedTabActive = medPane && medPane.classList.contains('show') && medPane.classList.contains('active');
+
+                    const proceduresList = document.getElementById(`procedures-list-${recordId}`);
+                    const hasProcedures = proceduresList && proceduresList.querySelectorAll('input[name="procedure_codes[]"]').length > 0;
+
+                    if (!hasProcedures) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (procTab) {
+                            const tab = new bootstrap.Tab(procTab);
+                            tab.show();
+
+                            procTab.classList.add('tab-error');
+
+                            showTabValidationTooltip(procTab, 'Você deve adicionar pelo menos um procedimento antes de salvar!');
+                        }
+
+                        if (proceduresList) {
+                            proceduresList.classList.add('is-invalid');
+                            setTimeout(() => proceduresList.classList.remove('is-invalid'), 3000);
+                        }
+
+                        const codeInput = document.getElementById(`procedure-code-input-${recordId}`);
+                        if (codeInput) {
+                            codeInput.classList.add('is-invalid');
+                            setTimeout(() => codeInput.classList.remove('is-invalid'), 3000);
+
+                            setTimeout(() => {
+                                codeInput.focus();
+                                codeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 300);
+                        }
+
+                        return false;
+                    }
+
+                    if (isProcTabActive && hasProcedures) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (procTab) {
+                            procTab.classList.remove('tab-error');
+                        }
+
+                        if (medTab) {
+                            const tab = new bootstrap.Tab(medTab);
+                            tab.show();
+
+                            setTimeout(() => {
+                                const firstInput = document.querySelector(`#med-${recordId} input:not([disabled]), #med-${recordId} select:not([disabled])`);
+                                if (firstInput) {
+                                    firstInput.focus();
+                                    firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            }, 300);
+                        }
+
+                        return false;
+                    }
+
+                    const requiredInputs = this.querySelectorAll('input[required]:not([disabled]), select[required]:not([disabled])');
+                    let firstInvalidField = null;
+                    let invalidTabId = null;
+
+                    requiredInputs.forEach(input => {
+                        if (!input.value.trim()) {
+                            if (!firstInvalidField) {
+                                firstInvalidField = input;
+
+                                const procPane = document.getElementById(`proc-${recordId}`);
+                                const medPane = document.getElementById(`med-${recordId}`);
+
+                                if (procPane && procPane.contains(input)) {
+                                    invalidTabId = `proc-tab-${recordId}`;
+                                } else if (medPane && medPane.contains(input)) {
+                                    invalidTabId = `med-tab-${recordId}`;
+                                }
+                            }
+                        }
+                    });
+
+                    if (firstInvalidField) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (invalidTabId) {
+                            const tab = document.getElementById(invalidTabId);
+                            if (tab) {
+                                const bsTab = new bootstrap.Tab(tab);
+                                bsTab.show();
+
+                                tab.classList.add('tab-error');
+
+                                showTabValidationTooltip(tab, 'Preencha todos os campos obrigatórios marcados com (*)');
+                            }
+                        }
+
+                        setTimeout(() => {
+                            firstInvalidField.focus();
+                            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+
+                        return false;
+                    }
+
+                    return true;
+                });
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.toggle-detail')) {
+                setTimeout(setupFormValidation, 150);
+            }
+        });
+
+        setupFormValidation();
+    });
+</script>
 {% endblock %}

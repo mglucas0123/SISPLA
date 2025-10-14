@@ -26,6 +26,7 @@
     <div class="form-container">
         <div class="form-card">
             <form method="POST" action="{{ url_for('admin.repositories.update_repository', repo_id=repository.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-card-header">
                     <h2 class="form-title">Configurações do Repositório</h2>
                 </div>

@@ -20,6 +20,7 @@
         
         <div class="forms-container">
             <form method="POST" enctype="multipart/form-data" class="forms-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="forms-card">
                     <div class="forms-card-header">
                         <h5 class="forms-card-title">

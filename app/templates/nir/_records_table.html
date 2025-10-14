@@ -15,10 +15,10 @@
             <table class="nir-table-modern">
                 <thead>
                     <tr>
-                        <th><i class="bi bi-hash me-1"></i>ID</th>
                         <th><i class="bi bi-person me-1"></i>Paciente</th>
                         <th><i class="bi bi-calendar-date me-1"></i>Admissão</th>
-                        <th><i class="bi bi-person-vcard me-1"></i>Médico</th>
+                        <th><i class="bi bi-geo-alt me-1"></i>Origem</th>
+                        <th><i class="bi bi-wallet2 me-1"></i>Recurso</th>
                         <th><i class="bi bi-door-open me-1"></i>Entrada</th>
                         <th><i class="bi bi-activity me-1"></i>Internação</th>
                         <th><i class="bi bi-flag me-1"></i>Status</th>
@@ -30,9 +30,6 @@
                     {% set display_status = record._global_status or record.status %}
                     <tr
                         class="nir-row-status {% if display_status == 'PENDENTE' %}nir-row-pendente{% elif display_status == 'EM_ANDAMENTO' %}nir-row-andamento{% elif display_status == 'CONCLUIDO' %}nir-row-concluido{% elif display_status == 'CANCELADO' %}nir-row-pendente{% endif %}">
-                        <td class="cell-id">
-                            <span class="badge fw-bold">#{{ record.id }}</span>
-                        </td>
                         <td class="cell-patient">
                             <div class="d-flex flex-column">
                                 <a href="{{ url_for('nir.record_details', record_id=record.id) }}"
@@ -57,12 +54,23 @@
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <span class="text-muted small">{{ record.responsible_doctor or 'N/I' }}</span>
+                            {% if record.admitted_from_origin %}
+                            <span class="text-muted small">{{ record.admitted_from_origin }}</span>
+                            {% else %}
+                            <span class="text-muted">N/I</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if record.recurso %}
+                            <span class="badge bg-secondary rounded-pill">{{ record.recurso }}</span>
+                            {% else %}
+                            <span class="text-muted">N/I</span>
+                            {% endif %}
                         </td>
                         <td class="cell-entry text-center">
                             {% if record.entry_type %}
                             <span
-                                class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-primary{% elif record.entry_type == 'URGENCIA' %}bg-danger text-white{% else %}bg-secondary{% endif %}">
+                                class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-custom-blue{% elif record.entry_type == 'URGENCIA' %}bg-custom-red text-white{% else %}bg-custom-gray{% endif %}">
                                 {% if record.entry_type == 'ELETIVO' %}<i class="bi bi-calendar-check me-1"></i>{% elif
                                 record.entry_type == 'URGENCIA' %}<i class="bi bi-lightning me-1"></i>{% endif %}
                                 {{ record.entry_type }}
@@ -73,30 +81,30 @@
                         </td>
                         <td class="text-center">
                             {% if record.admission_type %}
-                            <span class="badge bg-info text-dark rounded-pill">{{ record.admission_type }}</span>
+                            <span class="badge bg-custom-gray text-light rounded-pill">{{ record.admission_type }}</span>
                             {% else %}
                             <span class="text-muted">N/D</span>
                             {% endif %}
                         </td>
                         <td class="cell-status text-center">
                             {% if display_status == 'PENDENTE' %}
-                            <span class="badge bg-danger text-white">
+                            <span class="badge rounded-pill bg-custom-red-pulse text-white">
                                 <i class="bi bi-exclamation-triangle me-1"></i>PENDENTE
                             </span>
                             {% elif display_status == 'EM_ANDAMENTO' %}
-                            <span class="badge bg-warning text-dark">
+                            <span class="badge rounded-pill bg-custom-yellow text-dark">
                                 <i class="bi bi-hourglass-split me-1"></i>EM ANDAMENTO
                             </span>
                             {% elif display_status == 'CONCLUIDO' %}
-                            <span class="badge bg-success text-white">
+                            <span class="badge rounded-pill bg-custom-green text-white">
                                 <i class="bi bi-check2-circle me-1"></i>CONCLUÍDO
                             </span>
                             {% elif display_status == 'CANCELADO' %}
-                            <span class="badge bg-dark text-white">
+                            <span class="badge rounded-pill bg-custom-red text-white">
                                 <i class="bi bi-x-octagon me-1"></i>CANCELADO
                             </span>
                             {% else %}
-                            <span class="badge bg-secondary">{{ display_status }}</span>
+                            <span class="badge rounded-pill bg-custom-gray">{{ display_status }}</span>
                             {% endif %}
                         </td>
                         <td class="forms-table-cell forms-table-center">
@@ -127,33 +135,8 @@
         </div>
     </div>
 
-    {% if records.pages > 1 %}
-    <nav aria-label="Navegação de páginas">
-        <ul class="pagination justify-content-center mt-4" id="paginationContainer">
-            <li class="page-item {% if not records.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="javascript:void(0)" {% if records.has_prev
-                    %}onclick="loadPage({{ records.prev_num }})" {% endif %}>Anterior</a>
-            </li>
-            {% for p in records.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-            {% if p %}
-            <li class="page-item {% if p == records.page %}active{% endif %}">
-                {% if p == records.page %}
-                <span class="page-link">{{ p }}</span>
-                {% else %}
-                <a class="page-link" href="javascript:void(0)" onclick="loadPage({{ p }})">{{ p }}</a>
-                {% endif %}
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
-            {% endif %}
-            {% endfor %}
-            <li class="page-item {% if not records.has_next %}disabled{% endif %}">
-                <a class="page-link" href="javascript:void(0)" {% if records.has_next
-                    %}onclick="loadPage({{ records.next_num }})" {% endif %}>Próxima</a>
-            </li>
-        </ul>
-    </nav>
-    {% endif %}
+    {% set pagination_params = {'pagination': records, 'js_function': 'loadPage', 'css_class': 'pagination-container', 'aria_label': 'Navegação de registros NIR'} %}
+    {% include 'partials/_pagination_ajax.html' %}
 </div>
 {% else %}
 <div class="text-center py-5">

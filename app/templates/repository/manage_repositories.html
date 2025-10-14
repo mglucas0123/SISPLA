@@ -120,6 +120,7 @@
                                         action="{{ url_for('admin.repositories.delete_repository', repo_id=repo.id) }}"
                                         style="display: inline-block;"
                                         onsubmit="return confirm('Tem certeza que deseja excluir este repositório? Todos os arquivos serão perdidos!');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger action-btn">
                                             <i class="bi bi-trash-fill me-1"></i> Excluir
                                         </button>
@@ -148,6 +149,7 @@
 <div class="modal fade" id="createRepoModal" tabindex="-1" aria-labelledby="createRepoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ url_for('admin.repositories.create_repository') }}" class="modal-content modern-modal">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="createRepoModalLabel">
                     <i class="bi bi-plus-circle-fill me-2 text-primary"></i>
@@ -221,6 +223,7 @@
 <div class="modal fade" id="editRepoModal" tabindex="-1" aria-labelledby="editRepoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <form method="POST" action="" id="editRepoForm" class="modal-content professional-modal">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header professional-header">
                 <div class="header-content">
                     <div class="header-icon">

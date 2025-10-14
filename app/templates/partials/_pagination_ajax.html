@@ -1,0 +1,56 @@
+{% if pagination_params and pagination_params.pagination and pagination_params.pagination.pages > 1 %}
+{% set pagination = pagination_params.pagination %}
+{% set js_function = pagination_params.get('js_function', 'loadPage') %}
+{% set css_class = pagination_params.get('css_class', 'pagination-container') %}
+{% set aria_label = pagination_params.get('aria_label', 'Navegação de páginas') %}
+
+<div class="{{ css_class }}">
+    <nav aria-label="{{ aria_label }}">
+        <ul class="pagination">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                {% if pagination.has_prev %}
+                    <a class="page-link" href="javascript:void(0)" onclick="{{ js_function }}({{ pagination.prev_num }})">
+                        <i class="bi bi-chevron-left me-1"></i>
+                        Anterior
+                    </a>
+                {% else %}
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left me-1"></i>
+                        Anterior
+                    </span>
+                {% endif %}
+            </li>
+
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        {% if p == pagination.page %}
+                            <span class="page-link">{{ p }}</span>
+                        {% else %}
+                            <a class="page-link" href="javascript:void(0)" onclick="{{ js_function }}({{ p }})">{{ p }}</a>
+                        {% endif %}
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                {% if pagination.has_next %}
+                    <a class="page-link" href="javascript:void(0)" onclick="{{ js_function }}({{ pagination.next_num }})">
+                        Próxima
+                        <i class="bi bi-chevron-right ms-1"></i>
+                    </a>
+                {% else %}
+                    <span class="page-link">
+                        Próxima
+                        <i class="bi bi-chevron-right ms-1"></i>
+                    </span>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endif %}

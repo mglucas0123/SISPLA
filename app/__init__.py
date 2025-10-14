@@ -5,6 +5,7 @@ import datetime
 from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 
@@ -25,12 +26,22 @@ def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.secret_key = os.getenv('SECRET_KEY', '')
     basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    instance_path = os.path.join(basedir, 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
+    app.config['SQLALCHEMY_BINDS'] = {
+        'procedures': 'sqlite:///' + os.path.join(instance_path, 'procedures.db')
+    }
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'app', 'uploads')
     app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600
+    
     db.init_app(app)
     Migrate(app, db)
+    csrf = CSRFProtect(app)
 
     login_config(app)
     registry_routes(app)
@@ -96,6 +107,51 @@ def initdb(app):
                 else:
                     print("Usuário admin padrão já existe com papel apropriado no RBAC.")
         print("Banco de dados inicializado com sistema RBac.")
+
+    @app.cli.command("assign-enfermagem-role")
+    def assign_enfermagem_role():
+        with app.app_context():
+            initialize_rbac()
+
+            role = Role.query.filter_by(name='Enfermagem').first()
+            if not role:
+                print("Role 'Enfermagem' não encontrada e não pôde ser criada. Abortando.")
+                return
+
+            users = db.session.execute(db.select(User)).scalars().all()
+            updated = 0
+            already = 0
+            skipped = 0
+            affected_usernames = []
+
+            for u in users:
+                legacy = (u.profile or '')
+                tokens = [t.strip().lower() for t in legacy.split(',') if t.strip()]
+
+                has_flag = ('criar_relatorios' in tokens) or ('enfermagem' in tokens)
+                if not has_flag:
+                    skipped += 1
+                    continue
+
+                if role in u.roles:
+                    already += 1
+                    continue
+
+                u.roles.append(role)
+                affected_usernames.append(u.username)
+                updated += 1
+
+            if updated:
+                db.session.commit()
+
+            print("Resumo da atribuição da Role 'Enfermagem':")
+            print(f" - Atualizados: {updated}")
+            print(f" - Já possuíam a role: {already}")
+            print(f" - Ignorados (sem flags no profile): {skipped}")
+            if affected_usernames:
+                print("Usuários atualizados:")
+                preview = ', '.join(affected_usernames[:50])
+                print(preview + (" ..." if len(affected_usernames) > 50 else ""))
     @app.cli.command("migrate-upgrade")
     def migrate_upgrade():
         msg = f"Auto migration - {datetime.datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}"

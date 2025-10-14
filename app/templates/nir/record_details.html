@@ -21,23 +21,48 @@
                             {% endif %}
                         </div>
 
-                        <div class="mt-3">
-                            <a href="{{ url_for('nir.list_records') }}" class="btn nir-btn-secondary me-2">
-                                <i class="bi bi-arrow-left me-2"></i>Voltar
+                        <div class="mt-3 d-flex flex-wrap gap-2">
+                            <a href="{{ url_for('nir.list_records') }}" 
+                               class="btn btn-outline-secondary d-flex align-items-center"
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="top" 
+                               title="Voltar para a lista de registros">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                <span>Voltar</span>
                             </a>
-                            {% if current_user.has_permission('editar-registro-nir') or current_user.has_permission('admin-total') %}
-                            <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" class="btn btn-warning me-2">
-                                <i class="bi bi-pencil me-2"></i>Editar
-                            </a>
-                            {% endif %}
-                            {% if current_user.has_permission('excluir-registro-nir') or current_user.has_permission('admin-total') %}
-                            <button class="btn btn-danger" onclick="deleteRecord('{{ record.id }}')">
-                                <i class="bi bi-trash me-2"></i>Excluir
-                            </button>
-                            {% endif %}
-                            <button class="btn btn-info" onclick="printRecord()">
-                                <i class="bi bi-printer me-2"></i>Imprimir
-                            </button>
+                            
+                            <div class="ms-auto d-flex flex-wrap gap-2">
+                                {% if current_user.has_permission('editar-registro-nir') or current_user.has_permission('admin-total') %}
+                                <a href="{{ url_for('nir.edit_record', record_id=record.id) }}" 
+                                   class="btn btn-warning d-flex align-items-center shadow-sm"
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top" 
+                                   title="Editar informações do registro">
+                                    <i class="bi bi-pencil-square me-2"></i>
+                                    <span>Editar</span>
+                                </a>
+                                {% endif %}
+                                
+                                <button class="btn btn-primary d-flex align-items-center shadow-sm" 
+                                        onclick="printRecord()"
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        title="Imprimir registro em formato PDF">
+                                    <i class="bi bi-printer-fill me-2"></i>
+                                    <span>Imprimir</span>
+                                </button>
+                                
+                                {% if current_user.has_permission('excluir-registro-nir') or current_user.has_permission('admin-total') %}
+                                <button class="btn btn-danger d-flex align-items-center shadow-sm" 
+                                        onclick="deleteRecord('{{ record.id }}')"
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        title="Excluir permanentemente este registro">
+                                    <i class="bi bi-trash3-fill me-2"></i>
+                                    <span>Excluir</span>
+                                </button>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
 
@@ -76,8 +101,55 @@
                                         <label class="form-label">Número SUS</label>
                                         <p class="text-monospace">{{ record.sus_number or '-' }}</p>
                                     </div>
+                                    <div class="col-md-12 nir-detail-item">
+                                        <label class="form-label">Paciente Paliativo</label>
+                                        <p>
+                                            {% if record.is_palliative %}
+                                            <span class="nir-badge badge bg-danger">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Sim
+                                            </span>
+                                            {% else %}
+                                            <span class="nir-badge badge bg-success">Não</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
+
+                            {% if record.entry_type == 'ELETIVO' and record.susfacil_protocol %}
+                            <div class="nir-details-section">
+                                <h5>
+                                    <i class="bi bi-check2-circle"></i>Confirmação de Aceite SUSFACIL
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Status do Aceite</label>
+                                        <p>
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-check-circle me-1"></i>Aceite Confirmado
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 nir-detail-item">
+                                        <label class="form-label">Data e Hora do Aceite</label>
+                                        <p class="fw-bold">{{ record.susfacil_accept_datetime.strftime('%d/%m/%Y às %H:%M') if record.susfacil_accept_datetime else '-' }}</p>
+                                    </div>
+                                    <div class="col-md-12 nir-detail-item">
+                                        <label class="form-label">Protocolo Gerado</label>
+                                        <div class="input-group" style="max-width: 500px;">
+                                            <input type="text" class="form-control bg-white" value="{{ record.susfacil_protocol }}" readonly id="protocol-readonly">
+                                            <button class="btn btn-primary" type="button" onclick="copyProtocol()" title="Copiar protocolo">
+                                                <i class="bi bi-clipboard" id="copy-icon"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Use este protocolo no campo de observação do sistema principal
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
 
                             <div class="nir-details-section">
                                 <h5>
@@ -112,7 +184,7 @@
                                             {% endif %}
                                         </p>
                                     </div>
-                                    <div class="col-md-6 nir-detail-item">
+                                    <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Local de Origem</label>
                                         <p>
                                             {% if record.admitted_from_origin %}
@@ -124,7 +196,19 @@
                                             {% endif %}
                                         </p>
                                     </div>
-                                    <div class="col-md-6 nir-detail-item">
+                                    <div class="col-md-4 nir-detail-item">
+                                        <label class="form-label">Recurso</label>
+                                        <p>
+                                            {% if record.recurso %}
+                                            <span class="nir-badge badge bg-{% if record.recurso == 'PMAE' %}primary{% elif record.recurso == 'PPI' %}info{% elif record.recurso == 'Valora Eletivo' %}success{% elif record.recurso == 'Valora Urgencia' %}warning{% elif record.recurso == 'Próprio' %}secondary{% else %}secondary{% endif %}">
+                                                {{ record.recurso }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">AIH</label>
                                         <p class="text-monospace">{{ record.aih or '-' }}</p>
                                     </div>
@@ -167,11 +251,11 @@
                                 {% else %}
                                     <div class="row">
                                         <div class="col-md-4 nir-detail-item">
-                                            <label class="form-label">Código do Procedimento (Legado)</label>
+                                            <label class="form-label">Código do Procedimento</label>
                                             <p class="text-monospace">{{ record.procedure_code or '-' }}</p>
                                         </div>
                                         <div class="col-md-8 nir-detail-item">
-                                            <label class="form-label">Descrição Cirúrgica (Legado)</label>
+                                            <label class="form-label">Descrição Cirúrgica</label>
                                             <p>{{ record.surgical_description or '-' }}</p>
                                         </div>
                                     </div>
@@ -351,20 +435,39 @@
         </div>
     </div>
 
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Exclusão</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title d-flex align-items-center" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Confirmar Exclusão
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
-                <div class="modal-body">
-                    Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.
+                <div class="modal-body py-4">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-trash3 text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="text-center mb-3 fs-5 fw-semibold">
+                        Tem certeza que deseja excluir este registro?
+                    </p>
+                    <div class="alert alert-warning d-flex align-items-start" role="alert">
+                        <i class="bi bi-exclamation-circle-fill me-2 flex-shrink-0"></i>
+                        <div>
+                            <strong>Atenção!</strong> Esta ação não pode ser desfeita. Todos os dados do registro NIR #{{ record.id }} serão permanentemente removidos do sistema.
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </button>
                     <form id="deleteForm" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-danger">Excluir</button>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger px-4 shadow-sm">
+                            <i class="bi bi-trash3-fill me-2"></i>Confirmar Exclusão
+                        </button>
                     </form>
                 </div>
             </div>
@@ -375,6 +478,25 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    function copyProtocol() {
+        const protocolInput = document.getElementById('protocol-readonly');
+        const copyIcon = document.getElementById('copy-icon');
+        const copyBtn = copyIcon.parentElement;
+        
+        protocolInput.select();
+        document.execCommand('copy');
+        
+        copyIcon.className = 'bi bi-check';
+        const originalClass = copyBtn.className;
+        copyBtn.classList.remove('btn-primary');
+        copyBtn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            copyIcon.className = 'bi bi-clipboard';
+            copyBtn.className = originalClass;
+        }, 2000);
+    }
+
     function deleteRecord(recordId) {
         const deleteForm = document.getElementById('deleteForm');
         deleteForm.action = `/nir/excluir/${recordId}`;
@@ -384,50 +506,513 @@
     }
 
     function printRecord() {
-        const printWindow = window.open('', '_blank');
+        const printBtn = event.target.closest('button');
+        const originalHTML = printBtn.innerHTML;
+        printBtn.disabled = true;
+        printBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i><span>Preparando...</span>';
         
-        const cardContent = document.querySelector('.nir-card').innerHTML;
+        setTimeout(() => {
+            const printWindow = window.open('', '_blank');
+            
+            if (!printWindow) {
+                alert('Por favor, habilite pop-ups para imprimir o documento.');
+                printBtn.disabled = false;
+                printBtn.innerHTML = originalHTML;
+                return;
+            }
+            
+            printBtn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i><span>Preparado!</span>';
+            setTimeout(() => {
+                printBtn.disabled = false;
+                printBtn.innerHTML = originalHTML;
+            }, 2000);
         
         const printHTML = `
             <!DOCTYPE html>
             <html>
             <head>
+                <meta charset="UTF-8">
                 <title>Registro NIR #{{ record.id }}</title>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    .nir-details-section { margin-bottom: 20px; page-break-inside: avoid; }
-                    .nir-details-section h5 { color: #333; border-bottom: 2px solid #dc3545; padding-bottom: 5px; }
-                    .row { display: flex; flex-wrap: wrap; }
-                    .col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-9, .col-12 { flex: 1; min-width: 200px; margin-right: 15px; }
-                    .nir-detail-item { margin-bottom: 15px; }
-                    .form-label { font-weight: bold; color: #666; font-size: 12px; }
-                    .nir-badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; }
-                    .bg-primary { background: #007bff !important; color: white; }
-                    .bg-success { background: #28a745 !important; color: white; }
-                    .bg-danger { background: #dc3545 !important; color: white; }
-                    .bg-warning { background: #ffc107 !important; color: black; }
-                    .bg-info { background: #17a2b8 !important; color: white; }
-                    .bg-secondary { background: #6c757d !important; color: white; }
-                    .text-monospace { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; }
-                    @media print { .no-print { display: none; } }
+                    @page {
+                        size: A4;
+                        margin: 15mm 12mm;
+                    }
+                    
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        font-size: 9pt;
+                        line-height: 1.3;
+                        color: #333;
+                        background: white;
+                    }
+                    
+                    /* Cabeçalho Principal */
+                    .print-header {
+                        text-align: center;
+                        padding: 12px 0;
+                        border-bottom: 3px solid #2563eb;
+                        margin-bottom: 12px;
+                        background: linear-gradient(to right, #f8fafc, #e2e8f0, #f8fafc);
+                    }
+                    
+                    .print-header h1 {
+                        font-size: 18pt;
+                        font-weight: 800;
+                        color: #1e293b;
+                        margin-bottom: 4px;
+                        letter-spacing: -0.5px;
+                    }
+                    
+                    .print-header .subtitle {
+                        font-size: 9pt;
+                        color: #64748b;
+                        font-weight: 600;
+                    }
+                    
+                    .print-info {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 8px 0;
+                        font-size: 8pt;
+                        color: #64748b;
+                        border-bottom: 1px solid #e2e8f0;
+                        margin-bottom: 10px;
+                    }
+                    
+                    /* Seções */
+                    .section {
+                        margin-bottom: 10px;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .section-title {
+                        background: linear-gradient(to right, #3b82f6, #2563eb);
+                        color: white;
+                        padding: 5px 10px;
+                        font-size: 10pt;
+                        font-weight: 700;
+                        border-radius: 4px;
+                        margin-bottom: 6px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        letter-spacing: 0.3px;
+                    }
+                    
+                    .section-content {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 8px 12px;
+                        padding: 6px 8px;
+                        background: #fafbfc;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 4px;
+                    }
+                    
+                    /* Grid responsivo para diferentes tamanhos */
+                    .section-content.grid-2 { grid-template-columns: repeat(2, 1fr); }
+                    .section-content.grid-3 { grid-template-columns: repeat(3, 1fr); }
+                    .section-content.grid-full { grid-template-columns: 1fr; }
+                    
+                    .field {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    
+                    .field.span-2 { grid-column: span 2; }
+                    .field.span-3 { grid-column: span 3; }
+                    .field.span-4 { grid-column: span 4; }
+                    
+                    .field-label {
+                        font-size: 7.5pt;
+                        font-weight: 700;
+                        color: #475569;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 2px;
+                    }
+                    
+                    .field-value {
+                        font-size: 9pt;
+                        color: #1e293b;
+                        font-weight: 500;
+                        padding: 3px 6px;
+                        background: white;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 3px;
+                        min-height: 24px;
+                        display: flex;
+                        align-items: center;
+                    }
+                    
+                    .field-value.empty {
+                        color: #94a3b8;
+                        font-style: italic;
+                    }
+                    
+                    /* Badges */
+                    .badge {
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 12px;
+                        font-size: 7.5pt;
+                        font-weight: 700;
+                        letter-spacing: 0.3px;
+                        text-transform: uppercase;
+                    }
+                    
+                    .badge-primary { background: #3b82f6; color: white; }
+                    .badge-success { background: #10b981; color: white; }
+                    .badge-danger { background: #ef4444; color: white; }
+                    .badge-warning { background: #f59e0b; color: #1f2937; }
+                    .badge-info { background: #06b6d4; color: white; }
+                    .badge-secondary { background: #6b7280; color: white; }
+                    .badge-dark { background: #1f2937; color: white; }
+                    
+                    /* Tabela de Procedimentos */
+                    .procedures-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 6px 0;
+                        font-size: 8pt;
+                        background: white;
+                    }
+                    
+                    .procedures-table thead {
+                        background: #f1f5f9;
+                    }
+                    
+                    .procedures-table th {
+                        padding: 5px 8px;
+                        text-align: left;
+                        font-weight: 700;
+                        color: #475569;
+                        border: 1px solid #e2e8f0;
+                        font-size: 7.5pt;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                    }
+                    
+                    .procedures-table td {
+                        padding: 5px 8px;
+                        border: 1px solid #e2e8f0;
+                        color: #1e293b;
+                    }
+                    
+                    .procedures-table tbody tr:nth-child(even) {
+                        background: #f8fafc;
+                    }
+                    
+                    /* Rodapé */
+                    .print-footer {
+                        margin-top: 12px;
+                        padding-top: 8px;
+                        border-top: 2px solid #2563eb;
+                        text-align: center;
+                        font-size: 7pt;
+                        color: #64748b;
+                    }
+                    
+                    /* Impressão */
+                    @media print {
+                        body { margin: 0; }
+                        .section { page-break-inside: avoid; }
+                        @page { margin: 15mm 12mm; }
+                    }
                 </style>
             </head>
             <body>
-                <h1>Registro NIR #{{ record.id }}</h1>
-                <p><strong>Data de Impressão:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-                <hr>
-                ${cardContent}
+                <!-- Cabeçalho -->
+                <div class="print-header">
+                    <h1>REGISTRO NIR #{{ record.id }}</h1>
+                    <div class="subtitle">Notificação de Internação Regulatória</div>
+                </div>
+                
+                <div class="print-info">
+                    <span><strong>Operador:</strong> {{ record.operator.name }}</span>
+                    <span><strong>Data de Criação:</strong> {{ record.creation_date.strftime('%d/%m/%Y às %H:%M') if record.creation_date else '-' }}</span>
+                    <span><strong>Impressão:</strong> ${new Date().toLocaleString('pt-BR')}</span>
+                </div>
+
+                <!-- Dados do Paciente -->
+                <div class="section">
+                    <div class="section-title">I. DADOS DO PACIENTE</div>
+                    <div class="section-content">
+                        <div class="field span-2">
+                            <div class="field-label">Nome do Paciente</div>
+                            <div class="field-value">{{ record.patient_name or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Data de Nascimento</div>
+                            <div class="field-value">{{ record.birth_date.strftime('%d/%m/%Y') if record.birth_date else '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Sexo</div>
+                            <div class="field-value">
+                                {% if record.gender == 'M' %}
+                                <span class="badge badge-primary">Masculino</span>
+                                {% elif record.gender == 'F' %}
+                                <span class="badge badge-danger">Feminino</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field span-2">
+                            <div class="field-label">SUSFacil</div>
+                            <div class="field-value">{{ record.susfacil or '-' }}</div>
+                        </div>
+                        <div class="field span-2">
+                            <div class="field-label">Número SUS</div>
+                            <div class="field-value">{{ record.sus_number or '-' }}</div>
+                        </div>
+                        <div class="field span-4">
+                            <div class="field-label">Paciente Paliativo</div>
+                            <div class="field-value">
+                                {% if record.is_palliative %}
+                                <span class="badge badge-danger">⚠ SIM - EM CUIDADOS PALIATIVOS</span>
+                                {% else %}
+                                <span class="badge badge-success">NÃO</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if record.entry_type == 'ELETIVO' and record.susfacil_protocol %}
+                <!-- Aceite SUSFACIL -->
+                <div class="section">
+                    <div class="section-title">II. CONFIRMAÇÃO DE ACEITE SUSFACIL</div>
+                    <div class="section-content grid-3">
+                        <div class="field">
+                            <div class="field-label">Status</div>
+                            <div class="field-value"><span class="badge badge-success">ACEITE CONFIRMADO</span></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Data/Hora Aceite</div>
+                            <div class="field-value">{{ record.susfacil_accept_datetime.strftime('%d/%m/%Y %H:%M') if record.susfacil_accept_datetime else '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Protocolo</div>
+                            <div class="field-value">{{ record.susfacil_protocol or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Dados da Internação -->
+                <div class="section">
+                    <div class="section-title">{% if record.entry_type == 'ELETIVO' and record.susfacil_protocol %}III{% else %}II{% endif %}. DADOS DA INTERNAÇÃO</div>
+                    <div class="section-content">
+                        <div class="field">
+                            <div class="field-label">Data Internação</div>
+                            <div class="field-value">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Tipo de Entrada</div>
+                            <div class="field-value">
+                                {% if record.entry_type %}
+                                <span class="badge badge-{% if record.entry_type in ['URGENCIA','CIRURGICO'] %}danger{% else %}primary{% endif %}">{{ record.entry_type }}</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Tipo Internação</div>
+                            <div class="field-value">
+                                {% if record.admission_type %}
+                                <span class="badge badge-{% if record.admission_type == 'CIRURGICO' %}warning{% else %}info{% endif %}">{{ record.admission_type }}</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Local de Origem</div>
+                            <div class="field-value">{{ record.admitted_from_origin or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Recurso</div>
+                            <div class="field-value">
+                                {% if record.recurso %}
+                                <span class="badge badge-{% if record.recurso == 'PMAE' %}primary{% elif record.recurso == 'PPI' %}info{% elif record.recurso == 'Valora Eletivo' %}success{% elif record.recurso == 'Valora Urgencia' %}warning{% elif record.recurso == 'Próprio' %}secondary{% else %}secondary{% endif %}">{{ record.recurso }}</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">AIH</div>
+                            <div class="field-value">{{ record.aih or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Procedimentos -->
+                <div class="section">
+                    <div class="section-title">{% if record.entry_type == 'ELETIVO' and record.susfacil_protocol %}IV{% else %}III{% endif %}. PROCEDIMENTOS</div>
+                    <div class="section-content grid-full">
+                        {% if record.procedures and record.procedures|length > 0 %}
+                        <table class="procedures-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:5%">#</th>
+                                    <th style="width:15%">Código</th>
+                                    <th>Descrição</th>
+                                    <th style="width:10%">Principal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in record.procedures|sort(attribute='sequence') %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ p.code }}</strong></td>
+                                    <td>{{ p.description }}</td>
+                                    <td>{% if p.is_primary %}<span class="badge badge-primary">Sim</span>{% else %}-{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="field span-4">
+                            <div class="field-label">Código/Descrição</div>
+                            <div class="field-value"><strong>{{ record.procedure_code or '-' }}</strong> - {{ record.surgical_description or '-' }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Informações Médicas -->
+                <div class="section">
+                    <div class="section-title">{% if record.entry_type == 'ELETIVO' and record.susfacil_protocol %}V{% else %}IV{% endif %}. INFORMAÇÕES MÉDICAS</div>
+                    <div class="section-content">
+                        <div class="field span-2">
+                            <div class="field-label">Médico Responsável</div>
+                            <div class="field-value">{{ record.responsible_doctor or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">CID Principal</div>
+                            <div class="field-value">{{ record.main_cid or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Especialidade</div>
+                            <div class="field-value">{{ record.surgical_specialty or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Anestesista</div>
+                            <div class="field-value">{{ record.anesthetist or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Anestesia</div>
+                            <div class="field-value">{{ record.anesthesia or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Auxiliar</div>
+                            <div class="field-value">{{ record.auxiliary or '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Pediatria</div>
+                            <div class="field-value">{{ record.pediatrics or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dados de Alta e Status -->
+                <div class="section">
+                    <div class="section-title">{% if record.entry_type == 'ELETIVO' and record.susfacil_protocol %}VI{% else %}V{% endif %}. DADOS DE ALTA E STATUS</div>
+                    <div class="section-content">
+                        <div class="field">
+                            <div class="field-label">Data Agendamento</div>
+                            <div class="field-value">{{ record.scheduling_date.strftime('%d/%m/%Y') if record.scheduling_date else '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Tipo de Alta</div>
+                            <div class="field-value">
+                                {% if record.discharge_type %}
+                                <span class="badge badge-{% if record.discharge_type == 'OBITO' %}dark{% else %}success{% endif %}">{{ record.discharge_type }}</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Data Alta</div>
+                            <div class="field-value">{{ record.discharge_date.strftime('%d/%m/%Y') if record.discharge_date else '-' }}</div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Dias Internado</div>
+                            <div class="field-value">
+                                {% if record.total_days_admitted is not none %}
+                                <span class="badge badge-info">{{ record.total_days_admitted }} dias</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Cancelado</div>
+                            <div class="field-value">
+                                {% if record.cancelled == 'SIM' %}
+                                <span class="badge badge-danger">Sim</span>
+                                {% elif record.cancelled in ['NAO','NÃO'] %}
+                                <span class="badge badge-success">Não</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Criticado</div>
+                            <div class="field-value">
+                                {% if record.criticized == 'SIM' %}
+                                <span class="badge badge-warning">Sim</span>
+                                {% elif record.criticized in ['NAO','NÃO'] %}
+                                <span class="badge badge-success">Não</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Faturado</div>
+                            <div class="field-value">
+                                {% if record.billed == 'SIM' %}
+                                <span class="badge badge-success">Sim</span>
+                                {% elif record.billed in ['NAO','NÃO'] %}
+                                <span class="badge badge-danger">Não</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Status</div>
+                            <div class="field-value">
+                                {% if record.status %}
+                                <span class="badge badge-{% if record.status == 'FINALIZADO' %}success{% else %}warning{% endif %}">{{ record.status }}</span>
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+                        {% if record.observation %}
+                        <div class="field span-4">
+                            <div class="field-label">Observações</div>
+                            <div class="field-value">{{ record.observation }}</div>
+                        </div>
+                        {% endif %}
+                        {% if record.cancelled == 'SIM' and record.cancellation_reason %}
+                        <div class="field span-4">
+                            <div class="field-label">Motivo do Cancelamento</div>
+                            <div class="field-value">{{ record.cancellation_reason }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Rodapé -->
+                <div class="print-footer">
+                    Sistema de Gestão Hospitalar - SISPLA | Documento gerado automaticamente
+                </div>
             </body>
             </html>
         `;
         
-        printWindow.document.write(printHTML);
-        printWindow.document.close();
-        
-        printWindow.onload = function() {
-            printWindow.print();
-            printWindow.close();
-        };
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        }, 300);
     }
 
     document.addEventListener('DOMContentLoaded', function() {

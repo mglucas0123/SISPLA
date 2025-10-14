@@ -14,7 +14,7 @@
                     <p class="forms-subtitle">Gerencie os registros das passagens de plantão</p>
                 </div>
             </div>
-        </div>  
+        </div>
     {% include 'partials/_flash_messages.html' %}
     {% if messages %}
     <div class="row mb-3">
@@ -169,27 +169,8 @@
                 </div>
             </div>
 
-        {% if pagination %}
-        <nav aria-label="Navegação de usuários">
-            <ul class="pagination justify-content-center mt-4">
-                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('shift_handover.shift_handover_records', page=pagination.prev_num) }}">Anterior</a>
-                </li>
-                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if p %}
-                <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('shift_handover.shift_handover_records', page=p) }}">{{ p }}</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-                {% endif %}
-                {% endfor %}
-                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('shift_handover.shift_handover_records', page=pagination.next_num) }}">Próxima</a>
-                </li>
-            </ul>
-        </nav>
-        {% endif %}
+        {% set pagination_params = {'pagination': pagination, 'endpoint': 'shift_handover.shift_handover_records', 'extra_params': {}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de registros'} %}
+        {% include 'partials/_pagination.html' %}
     </div>
 </div>
     </div>
