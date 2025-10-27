@@ -25,43 +25,8 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('nir.sector_new_record') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <!-- Seleção de Tipo de Registro - Cards Modernos -->
-                    <div class="mb-4">
-                        <h6 class="mb-3">
-                            <i class="bi bi-question-circle me-2"></i>
-                            Tipo de Registro:
-                        </h6>
-                        <div class="row g-3" id="record-type-card-selector">
-                            <div class="col-md-6">
-                                <input type="radio" class="d-none" name="record_type" id="type_observation" value="observation" checked>
-                                <label for="type_observation" class="record-type-card card shadow-sm p-3 mb-0 h-100 cursor-pointer">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="icon-box bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:2rem;">
-                                            <i class="bi bi-eye"></i>
-                                        </div>
-                                        <div>
-                                            <span class="fw-bold fs-5 text-primary">Observação</span>
-                                            <div class="text-muted small">Paciente em monitoramento inicial</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-6">
-                                <input type="radio" class="d-none" name="record_type" id="type_admission" value="admission">
-                                <label for="type_admission" class="record-type-card card shadow-sm p-3 mb-0 h-100 cursor-pointer">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="icon-box bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:2rem;">
-                                            <i class="bi bi-hospital"></i>
-                                        </div>
-                                        <div>
-                                            <span class="fw-bold fs-5 text-success">Internação</span>
-                                            <div class="text-muted small">Paciente já confirmado para internar</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Tipo de Registro - Sempre Observação -->
+                    <input type="hidden" name="record_type" value="observation">
 
                     <div class="nir-form-section mb-4">
                         <h6 class="section-title">
@@ -107,6 +72,30 @@
                                 <input type="text" class="form-control nir-form-control" name="sus_number" required
                                     placeholder="000 0000 0000 0000" maxlength="18" id="sus-number-input"
                                     title="Formato: 000 0000 0000 0000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Horário FA - Aparece apenas para Observação -->
+                    <div class="nir-form-section mb-4" id="fa-datetime-section" style="display: none;">
+                        <h6 class="section-title">
+                            <i class="bi bi-clock-history text-danger"></i>
+                            Horário FA
+                        </h6>
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Importante:</strong> Informe o horário exato que o paciente entrou na Fila de Atendimento (FA). 
+                            Este horário será usado para contar as 24 horas de observação.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="nir-form-label">Horário FA (Data e Hora) <span class="text-danger" id="fa-datetime-required">*</span></label>
+                                <input type="datetime-local" class="form-control nir-form-control" 
+                                    name="fa_datetime" id="fa-datetime-input">
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Informe exatamente a data e hora da entrada na FA
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -439,89 +428,57 @@
             }
         });
 
-        const recordTypeRadios = document.querySelectorAll('input[name="record_type"]');
+        // Como agora todas as solicitações são criadas como Observação,
+        // vamos configurar a página para esse fluxo único
         const admissionDateInput = document.querySelector('input[name="admission_date"]');
         const admissionTypeInput = document.querySelector('select[name="admission_type"]');
         const admittedFromInput = document.querySelector('select[name="admitted_from_origin"]');
         const agendamentoSection = document.getElementById('agendamento-inicial-section');
         const schedulingDateInput = document.getElementById('scheduling-date-initial');
-
+        const faDatetimeSection = document.getElementById('fa-datetime-section');
+        const faDatetimeInput = document.getElementById('fa-datetime-input');
         const admissionDataSection = document.querySelector('.nir-form-section:has([name="admission_date"])');
 
-        function toggleFieldsByRecordType() {
-            const recordType = document.querySelector('input[name="record_type"]:checked').value;
+        // Configurar página para modo Observação
+        function setupObservationMode() {
+            // Mostrar seção de Horário FA
+            if (faDatetimeSection) {
+                faDatetimeSection.style.display = 'block';
+            }
+            if (faDatetimeInput) {
+                faDatetimeInput.setAttribute('required', 'required');
+            }
+            
+            // Ocultar seções de internação
+            if (admissionDataSection) {
+                admissionDataSection.style.display = 'none';
+            }
+            if (agendamentoSection) {
+                agendamentoSection.style.display = 'none';
+            }
 
-            if (recordType === 'observation') {
-                if (admissionDataSection) {
-                    admissionDataSection.style.display = 'none';
-                }
-                if (agendamentoSection) {
-                    agendamentoSection.style.display = 'none';
-                }
+            // Remover required dos campos de internação
+            if (admissionDateInput) admissionDateInput.removeAttribute('required');
+            if (entryTypeSelect) entryTypeSelect.removeAttribute('required');
+            if (admissionTypeInput) admissionTypeInput.removeAttribute('required');
+            if (admittedFromInput) admittedFromInput.removeAttribute('required');
+            if (schedulingDateInput) schedulingDateInput.removeAttribute('required');
 
-                if (admissionDateInput) admissionDateInput.removeAttribute('required');
-                if (entryTypeSelect) entryTypeSelect.removeAttribute('required');
-                if (admissionTypeInput) admissionTypeInput.removeAttribute('required');
-                if (admittedFromInput) admittedFromInput.removeAttribute('required');
-                if (schedulingDateInput) schedulingDateInput.removeAttribute('required');
-
-                if (susfacilSection) {
-                    susfacilSection.style.display = 'none';
-                    if (susfacilCheckbox) susfacilCheckbox.required = false;
-                }
-
-            } else {
-                if (admissionDataSection) {
-                    admissionDataSection.style.display = 'block';
-                }
-                if (agendamentoSection) {
-                    agendamentoSection.style.display = 'block';
-                }
-
-                if (admissionDateInput) admissionDateInput.setAttribute('required', 'required');
-                if (entryTypeSelect) entryTypeSelect.setAttribute('required', 'required');
-                if (admissionTypeInput) admissionTypeInput.setAttribute('required', 'required');
-                if (admittedFromInput) admittedFromInput.setAttribute('required', 'required');
-                if (schedulingDateInput) schedulingDateInput.setAttribute('required', 'required');
-
-                if (entryTypeSelect && entryTypeSelect.value === 'ELETIVO') {
-                    if (susfacilSection) {
-                        susfacilSection.style.display = 'block';
-                        if (susfacilCheckbox) susfacilCheckbox.required = true;
-                    }
-                }
+            // Ocultar seção de aceite SUSFACIL
+            if (susfacilSection) {
+                susfacilSection.style.display = 'none';
+                if (susfacilCheckbox) susfacilCheckbox.required = false;
             }
         }
 
-        recordTypeRadios.forEach(radio => {
-            radio.addEventListener('change', toggleFieldsByRecordType);
-        });
+        // Aplicar configuração de Observação ao carregar a página
+        setupObservationMode();
 
-        toggleFieldsByRecordType();
-
+        // Validação do formulário (agora simplificada para Observação apenas)
         form.addEventListener('submit', function (e) {
-            const recordType = document.querySelector('input[name="record_type"]:checked').value;
-            const entryType = entryTypeSelect.value;
-
-            if (recordType === 'observation') {
-                return true;
-            }
-
-            if (entryType === 'ELETIVO') {
-                if (!susfacilCheckbox.checked) {
-                    e.preventDefault();
-                    alert('Para internações eletivas, você deve confirmar que realizou o aceite no SUSFACIL.');
-                    susfacilCheckbox.focus();
-                    return false;
-                }
-
-                if (!aceiteDatetimeInput.value) {
-                    e.preventDefault();
-                    alert('Por favor, informe a data e hora do aceite no SUSFACIL.');
-                    aceiteDatetimeInput.focus();
-                    return false;
-                }
-            }
+            // Como todas as solicitações são criadas como Observação,
+            // não é necessário validar aceite SUSFACIL neste momento
+            return true;
         });
 
         const admissionTypeSelect = document.getElementById('admission_type');
@@ -772,40 +729,6 @@
             updateCidOptions();
         };
 
-        form.addEventListener('submit', function(e) {
-            const recordType = document.querySelector('input[name="record_type"]:checked').value;
-            const admissionType = admissionTypeSelect.value;
-            
-            if (recordType === 'admission' && admissionType === 'CLINICO') {
-                if (addedProcedures.length === 0) {
-                    e.preventDefault();
-                    alert('Para internações clínicas, é necessário adicionar pelo menos um procedimento.');
-                    procedureCodeInput.focus();
-                    return false;
-                }
-                
-                if (!responsibleDoctorInput.value) {
-                    e.preventDefault();
-                    alert('Por favor, informe o médico responsável.');
-                    responsibleDoctorInput.focus();
-                    return false;
-                }
-                
-                if (!mainCidSelect.value) {
-                    e.preventDefault();
-                    alert('Por favor, selecione o CID principal.');
-                    mainCidSelect.focus();
-                    return false;
-                }
-                
-                if (!surgicalSpecialtySelect.value) {
-                    e.preventDefault();
-                    alert('Por favor, selecione a especialidade.');
-                    surgicalSpecialtySelect.focus();
-                    return false;
-                }
-            }
-        });
 
     });
 </script>

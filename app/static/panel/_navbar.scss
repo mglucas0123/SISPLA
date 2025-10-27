@@ -758,7 +758,6 @@
             rgba(59, 130, 246, 0.05) 100%);
         opacity: 0.8;
         pointer-events: none;
-        animation: gradientShift 8s ease-in-out infinite;
     }
     
     &::after {
@@ -776,11 +775,6 @@
             transparent 100%);
         box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
-}
-
-@keyframes gradientShift {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(10px); }
 }
 
 .navbar-custom .container-fluid {

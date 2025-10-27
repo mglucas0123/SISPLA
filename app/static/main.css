@@ -2718,7 +2718,6 @@ body {
   background: linear-gradient(120deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 25%, rgba(236, 72, 153, 0.05) 50%, rgba(59, 130, 246, 0.05) 100%);
   opacity: 0.8;
   pointer-events: none;
-  animation: gradientShift 8s ease-in-out infinite;
 }
 .navbar-custom::after {
   content: "";
@@ -2731,14 +2730,6 @@ body {
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
-@keyframes gradientShift {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(10px);
-  }
-}
 .navbar-custom .container-fluid {
   position: relative;
   z-index: 2;
@@ -11027,6 +11018,24 @@ body {
   box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.25), 0 4px 16px rgba(14, 165, 233, 0.3);
 }
 
+.nir-wait-chip.chip-cancelled.active {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border-color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25), 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.nir-wait-chip.chip-observation.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.observation-timer .timer-display {
+  font-weight: 600;
+  font-family: "Courier New", monospace;
+  margin-left: 0.25rem;
+}
+
 .nir-empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -11623,6 +11632,33 @@ input[type=radio][value=admission]:checked + .record-type-card span.text-success
     font-size: 0.8rem !important;
   }
 }
+.inline-detail-card {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.inline-detail-card.animate-in {
+  animation: slideDown 0.2s ease-out;
+}
+
+.inline-detail-body .btn {
+  transition: all 0.2s ease;
+}
+
+.inline-detail-body .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 .procedure-manage-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   border: none !important;

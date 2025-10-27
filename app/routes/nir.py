@@ -337,6 +337,7 @@ def list_records():
         'pendentes': 0,
         'andamento': 0,
         'concluidos': 0,
+        'cancelados': 0,
     }
     for r in filtered_records:
         status = getattr(r, '_global_status', None) or 'PENDENTE'
@@ -346,6 +347,8 @@ def list_records():
             stats_counts['andamento'] += 1
         elif status == 'CONCLUIDO':
             stats_counts['concluidos'] += 1
+        elif status == 'CANCELADO':
+            stats_counts['cancelados'] += 1
 
     entry_types = list(set(r.entry_type for r in all_basic_records if r.entry_type))
     admission_types = list(set(r.admission_type for r in all_basic_records if r.admission_type))
@@ -399,19 +402,74 @@ def evolve_observation(record_id):
         return redirect(url_for('nir.record_details', record_id=record_id))
     
     try:
-        if not record.admission_date and record.observation_start_time:
-            record.admission_date = record.observation_start_time.date()
+        admission_date_str = request.form.get('admission_date')
+        if admission_date_str:
+            from datetime import datetime
+            record.admission_date = datetime.strptime(admission_date_str, '%Y-%m-%d').date()
             record.day = record.admission_date.day
             record.month = record.admission_date.strftime('%B')
+        elif not record.admission_date and record.fa_datetime:
+            record.admission_date = record.fa_datetime.date()
+            record.day = record.admission_date.day
+            record.month = record.admission_date.strftime('%B')
+        
+        record.entry_type = request.form.get('entry_type')
+        record.admission_type = request.form.get('admission_type')
+        record.admitted_from_origin = request.form.get('admitted_from_origin')
+        
+        scheduling_date_str = request.form.get('scheduling_date')
+        if scheduling_date_str:
+            from datetime import datetime
+            record.scheduling_date = datetime.strptime(scheduling_date_str, '%Y-%m-%d').date()
+        
+        if record.entry_type == 'ELETIVO':
+            susfacil_accepted = request.form.get('susfacil_accepted') == 'on'
+            record.susfacil_accepted = susfacil_accepted
+            if susfacil_accepted:
+                susfacil_datetime_str = request.form.get('susfacil_accept_datetime')
+                if susfacil_datetime_str:
+                    from datetime import datetime
+                    record.susfacil_accept_datetime = datetime.strptime(susfacil_datetime_str, '%Y-%m-%dT%H:%M')
+        
+        if record.admission_type == 'CLINICO':
+            record.is_palliative = request.form.get('is_palliative') == 'on'
+            record.responsible_doctor = request.form.get('responsible_doctor')
+            record.surgical_specialty = request.form.get('surgical_specialty')
+            record.main_cid = request.form.get('main_cid')
+            
+            procedure_codes = request.form.getlist('procedure_codes[]')
+            procedure_descriptions = request.form.getlist('procedure_descriptions[]')
+            
+            if procedure_codes and procedure_descriptions:
+                NirProcedure.query.filter_by(nir_id=record.id).delete()
+                
+                for idx, (code, description) in enumerate(zip(procedure_codes, procedure_descriptions)):
+                    procedure = NirProcedure(
+                        nir_id=record.id,
+                        code=code,
+                        description=description,
+                        sequence=idx + 1,
+                        is_primary=(idx == 0)
+                    )
+                    db.session.add(procedure)
         
         record.evolve_to_admission()
         
         initialize_section_statuses(record)
         
+        config = record.get_section_control_config()
+        nir_sections = [section_name for section_name, sector in config.items() if sector == 'NIR']
+        
+        alta_sections = [s for s in nir_sections if 'alta' in s.lower()]
+        initial_sections = [s for s in nir_sections if s not in alta_sections]
+        
+        for section_name in initial_sections:
+            update_section_status(record.id, section_name, current_user.id)
+        
         db.session.commit()
         
-        flash(f'Observação evoluída para internação com sucesso! Preencha os dados iniciais de internação.', 'success')
-        return redirect(url_for('nir.sector_nir_form', record_id=record.id))
+        flash(f'Paciente {record.patient_name} evoluído para internação com sucesso! Dados iniciais preenchidos.', 'success')
+        return redirect(url_for('nir.sector_nir_list'))
         
     except Exception as e:
         db.session.rollback()
@@ -492,6 +550,70 @@ def search_procedures():
         traceback.print_exc()
         return jsonify({'error': str(e), 'results': []}), 500
 
+
+#<!--- Endpoint para Verificar Pendências (Sistema de Notificações) --->
+@nir_bp.route("/nir/check-pending-notifications", methods=['GET'])
+@login_required
+def check_pending_notifications():
+    """Verifica solicitações que precisam de atenção"""
+    try:
+        from datetime import datetime, timedelta
+        
+        notifications = []
+        
+        time_24h_ago = datetime.now() - timedelta(hours=24)
+        
+        pending_decision = Nir.query.filter(
+            Nir.status == 'AGUARDANDO_DECISAO',
+            Nir.fa_datetime <= time_24h_ago
+        ).count()
+        
+        if pending_decision > 0:
+            notifications.append({
+                'type': 'warning',
+                'priority': 'high',
+                'title': 'Solicitações Aguardando Decisão',
+                'message': f'{pending_decision} {"solicitação" if pending_decision == 1 else "solicitações"} aguardando decisão há mais de 24 horas.',
+                'action_url': url_for('nir.sector_nir_list'),
+                'action_text': 'Ver Solicitações',
+                'icon': 'bi-clock-history'
+            })
+        
+        time_22h_ago = datetime.now() - timedelta(hours=22)
+        
+        observation_critical = Nir.query.filter(
+            Nir.status == 'EM_OBSERVACAO',
+            Nir.fa_datetime <= time_22h_ago,
+            Nir.fa_datetime > time_24h_ago
+        ).count()
+        
+        if observation_critical > 0:
+            notifications.append({
+                'type': 'info',
+                'priority': 'medium',
+                'title': 'Observações Próximas do Limite',
+                'message': f'{observation_critical} {"paciente" if observation_critical == 1 else "pacientes"} em observação próximo(s) das 24 horas.',
+                'action_url': url_for('nir.sector_nir_list'),
+                'action_text': 'Ver Observações',
+                'icon': 'bi-hourglass-split'
+            })
+        
+        return jsonify({
+            'has_notifications': len(notifications) > 0,
+            'count': len(notifications),
+            'notifications': notifications
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar pendências: {str(e)}")
+        return jsonify({
+            'has_notifications': False,
+            'count': 0,
+            'notifications': [],
+            'error': str(e)
+        }), 500
+
+
 #<!--- Rota de Formulário e Criação de Registro NIR pelo Setor NIR --->
 @nir_bp.route("/nir/setor/novo", methods=['GET', 'POST'])
 @login_required
@@ -513,6 +635,17 @@ def sector_new_record():
         birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date() if birth_date_str else None
 
         if record_type == 'observation':
+            fa_datetime_str = request.form.get('fa_datetime')
+            if not fa_datetime_str:
+                flash('Por favor, informe o Horário FA (entrada na Fila de Atendimento).', 'warning')
+                return redirect(url_for('nir.sector_new_record'))
+            
+            try:
+                fa_datetime = datetime.strptime(fa_datetime_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                flash('Horário FA inválido. Use o formato correto de data e hora.', 'danger')
+                return redirect(url_for('nir.sector_new_record'))
+            
             new_nir = Nir(
                 patient_name=request.form.get('patient_name'),
                 birth_date=birth_date,
@@ -529,6 +662,7 @@ def sector_new_record():
                 
                 status='EM_OBSERVACAO',
                 observation_start_time=datetime.utcnow(),
+                fa_datetime=fa_datetime,
                 
                 observation=request.form.get('observation'),
                 operator_id=current_user.id
@@ -537,7 +671,7 @@ def sector_new_record():
             db.session.add(new_nir)
             db.session.commit()
             
-            flash(f'Solicitação de observação #{new_nir.id} criada com sucesso! O sistema monitorará automaticamente.', 'success')
+            flash(f'Solicitação de observação #{new_nir.id} criada com sucesso.', 'success')
             return redirect(url_for('nir.sector_nir_list'))
         
         admission_date_str = request.form.get('admission_date')
@@ -747,34 +881,46 @@ def record_details(record_id):
     header_wait_label = None
     header_wait_kind = None
     try:
-        prog = record.get_sector_progress()
-        billing_status = (prog.get('FATURAMENTO') or {}).get('status')
-        if billing_status == 'CONCLUIDO':
-            header_wait_label = 'Fluxo concluído'
-            header_wait_kind = 'done'
+        # Verifica se o registro está cancelado primeiro
+        if (record.cancelled or '').upper() == 'SIM' or record.status == 'CANCELADO':
+            header_wait_label = 'Fluxo cancelado'
+            header_wait_kind = 'cancelled'
+        # Verifica se está em observação
+        elif record.status == 'EM_OBSERVACAO':
+            header_wait_label = 'Em observação'
+            header_wait_kind = 'observation'
+        elif record.status == 'AGUARDANDO_DECISAO':
+            header_wait_label = 'Aguardando decisão'
+            header_wait_kind = 'observation'
         else:
-            current_sector = record.get_next_available_sector()
-            if current_sector == 'FATURAMENTO':
-                header_wait_label = 'Aguardando Faturamento'
-                header_wait_kind = 'billing'
-            elif current_sector == 'CENTRO_CIRURGICO':
-                header_wait_label = 'Aguardando Centro Cirúrgico'
-                header_wait_kind = 'surgery'
-            elif current_sector == 'NIR':
-                effective_entry = record.get_effective_entry_type()
-                config = record.get_section_control_config()
-                nir_sections = [s for s, sec in config.items() if sec == 'NIR']
-                alta_sections = [s for s in nir_sections if 'alta' in s]
-                initial_sections = [s for s in nir_sections if s not in alta_sections]
-                status_map = {s.section_name: s.status for s in record.section_statuses if s.responsible_sector == 'NIR'}
-                def sections_complete(lst):
-                    if not lst:
-                        return True
-                    return all(status_map.get(sec) == 'PREENCHIDO' for sec in lst)
-                if effective_entry in ('URGENCIA', 'ELETIVO') and sections_complete(initial_sections) and not sections_complete(alta_sections):
-                    header_wait_label = 'Aguardando dados de Alta'
-                else:
-                    header_wait_label = 'Aguardando NIR'
+            prog = record.get_sector_progress()
+            billing_status = (prog.get('FATURAMENTO') or {}).get('status')
+            if billing_status == 'CONCLUIDO':
+                header_wait_label = 'Fluxo concluído'
+                header_wait_kind = 'done'
+            else:
+                current_sector = record.get_next_available_sector()
+                if current_sector == 'FATURAMENTO':
+                    header_wait_label = 'Aguardando Faturamento'
+                    header_wait_kind = 'billing'
+                elif current_sector == 'CENTRO_CIRURGICO':
+                    header_wait_label = 'Aguardando Centro Cirúrgico'
+                    header_wait_kind = 'surgery'
+                elif current_sector == 'NIR':
+                    effective_entry = record.get_effective_entry_type()
+                    config = record.get_section_control_config()
+                    nir_sections = [s for s, sec in config.items() if sec == 'NIR']
+                    alta_sections = [s for s in nir_sections if 'alta' in s]
+                    initial_sections = [s for s in nir_sections if s not in alta_sections]
+                    status_map = {s.section_name: s.status for s in record.section_statuses if s.responsible_sector == 'NIR'}
+                    def sections_complete(lst):
+                        if not lst:
+                            return True
+                        return all(status_map.get(sec) == 'PREENCHIDO' for sec in lst)
+                    if effective_entry in ('URGENCIA', 'ELETIVO') and sections_complete(initial_sections) and not sections_complete(alta_sections):
+                        header_wait_label = 'Aguardando dados de Alta'
+                    else:
+                        header_wait_label = 'Aguardando NIR'
     except Exception:
         pass
     return render_template('nir/record_details.html', record=record, header_wait_label=header_wait_label, header_wait_kind=header_wait_kind)
@@ -1105,7 +1251,7 @@ def sector_nir_list():
         per_page = 100
 
     filter_status = request.args.get('filter_status', '').strip().lower()
-    valid_filters = {'pendente': 'PENDENTE', 'andamento': 'EM_ANDAMENTO', 'concluido': 'CONCLUIDO', 'observacao': 'OBSERVACAO'}
+    valid_filters = {'pendente': 'PENDENTE', 'andamento': 'EM_ANDAMENTO', 'concluido': 'CONCLUIDO', 'observacao': 'OBSERVACAO', 'aguardando_decisao': 'AGUARDANDO_DECISAO'}
     target_status = valid_filters.get(filter_status)
     waiting_for_param = request.args.get('waiting_for', '').strip().lower()
     valid_waiting = {'faturamento': 'FATURAMENTO', 'cirurgia': 'CENTRO CIRÚRGICO'}
@@ -1136,7 +1282,12 @@ def sector_nir_list():
             setattr(record, '_created_by_current', record.operator_id == current_user.id)
             setattr(record, '_nir_phase', 'OBSERVACAO')
             setattr(record, '_nir_locked', False)
-            setattr(record, '_nir_display_status', record.status)
+            
+            if record.status == 'AGUARDANDO_DECISAO':
+                setattr(record, '_nir_display_status', 'PENDENTE')
+            else:
+                setattr(record, '_nir_display_status', 'EM_OBSERVACAO')
+            
             setattr(record, '_nir_waiting_for', None)
             setattr(record, '_is_observation', True)
             nir_relevant_records.append(record)
@@ -1162,17 +1313,34 @@ def sector_nir_list():
         setattr(record, '_created_by_current', record.operator_id == current_user.id)
         setattr(record, '_is_observation', False)
         try:
+            progress = record.get_sector_progress()
+            billing_progress = progress.get('FATURAMENTO', {})
+            billing_complete = billing_progress.get('status') == 'CONCLUIDO'
+            
             phase_info = get_nir_phase(record)
-            setattr(record, '_nir_phase', phase_info.get('phase'))
-            setattr(record, '_nir_locked', phase_info.get('locked'))
             phase = phase_info.get('phase')
+            is_locked = phase_info.get('locked', False)
+            setattr(record, '_nir_phase', phase)
+            setattr(record, '_nir_locked', is_locked)
+            
             display_status = nir_sector_progress.get('status')
-            if phase in ('INITIAL', 'FULL'):
-                display_status = 'PENDENTE'
-            elif phase == 'FINAL':
-                if not alta_complete:
-                    if not record.discharge_date and not record.discharge_type:
-                        display_status = 'PENDENTE'
+            
+            if billing_complete:
+                display_status = 'CONCLUIDO'
+            elif is_locked:
+                if nir_sector_progress.get('filled', 0) > 0:
+                    if display_status == 'CONCLUIDO':
+                        display_status = 'CONCLUIDO'
+                    else:
+                        display_status = 'EM_ANDAMENTO'
+            else:
+                if phase in ('INITIAL', 'FULL'):
+                    display_status = 'PENDENTE'
+                elif phase == 'FINAL':
+                    if not alta_complete:
+                        if not record.discharge_date and not record.discharge_type:
+                            display_status = 'PENDENTE'
+            
             setattr(record, '_nir_display_status', display_status)
             setattr(record, '_nir_waiting_for', phase_info.get('waiting_for'))
         except Exception:
@@ -1193,7 +1361,9 @@ def sector_nir_list():
         display = getattr(rec, '_nir_display_status', None) or rec.get_sector_progress().get('NIR', {}).get('status')
         is_observation = getattr(rec, '_is_observation', False)
         
-        if display == 'PENDENTE':
+        if is_observation and rec.status == 'AGUARDANDO_DECISAO':
+            pri = -1
+        elif display == 'PENDENTE':
             pri = 0
         elif display == 'EM_ANDAMENTO':
             pri = 1
@@ -1246,10 +1416,16 @@ def sector_nir_list():
 
     if target_status:
         if target_status == 'OBSERVACAO':
+            # Filtra apenas observações < 24h (status EM_OBSERVACAO)
             nir_relevant_records = [
                 r for r in nir_relevant_records
-                if getattr(r, '_is_observation', False) or 
-                   (getattr(r, '_nir_display_status', None) or r.get_sector_progress().get('NIR', {}).get('status')) in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO')
+                if getattr(r, '_is_observation', False) and r.status == 'EM_OBSERVACAO'
+            ]
+        elif target_status == 'AGUARDANDO_DECISAO':
+            # Filtra apenas observações > 24h (status AGUARDANDO_DECISAO)
+            nir_relevant_records = [
+                r for r in nir_relevant_records
+                if getattr(r, '_is_observation', False) and r.status == 'AGUARDANDO_DECISAO'
             ]
         else:
             nir_relevant_records = [

@@ -14,9 +14,14 @@
                                 Registro NIR #{{ record.id }}
                             </h1>
                             {% if header_wait_label %}
-                            <span class="nir-wait-chip {% if header_wait_kind == 'surgery' %}chip-surgery{% elif header_wait_kind == 'billing' %}chip-billing{% endif %} active">
-                                <i class="bi {% if header_wait_kind == 'billing' %}bi-cash-stack{% elif header_wait_kind == 'surgery' %}bi-scissors{% elif header_wait_kind == 'done' %}bi-check2-circle{% else %}bi-hourglass-split{% endif %}"></i>
+                            <span class="nir-wait-chip {% if header_wait_kind == 'surgery' %}chip-surgery{% elif header_wait_kind == 'billing' %}chip-billing{% elif header_wait_kind == 'cancelled' %}chip-cancelled{% elif header_wait_kind == 'observation' %}chip-observation{% endif %} active">
+                                <i class="bi {% if header_wait_kind == 'billing' %}bi-cash-stack{% elif header_wait_kind == 'surgery' %}bi-scissors{% elif header_wait_kind == 'done' %}bi-check2-circle{% elif header_wait_kind == 'cancelled' %}bi-x-octagon{% elif header_wait_kind == 'observation' %}bi-eye-fill{% else %}bi-hourglass-split{% endif %}"></i>
                                 {{ header_wait_label }}
+                                {% if header_wait_kind == 'observation' and record.observation_start_datetime %}
+                                <span class="observation-timer" data-fa-datetime="{{ record.observation_start_datetime.isoformat() }}">
+                                    <span class="timer-display">0h 0m 0s</span>
+                                </span>
+                                {% endif %}
                             </span>
                             {% endif %}
                         </div>
@@ -73,14 +78,19 @@
                                     <i class="bi bi-person-circle"></i>Dados do Paciente
                                 </h5>
                                 <div class="row">
+                                    {% if record.patient_name and record.patient_name|string != 'None' %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Nome do Paciente</label>
                                         <p class="fw-bold">{{ record.patient_name }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.birth_date %}
                                     <div class="col-md-3 nir-detail-item">
                                         <label class="form-label">Data de Nascimento</label>
-                                        <p>{{ record.birth_date.strftime('%d/%m/%Y') if record.birth_date else '-' }}</p>
+                                        <p>{{ record.birth_date.strftime('%d/%m/%Y') }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.gender %}
                                     <div class="col-md-3 nir-detail-item">
                                         <label class="form-label">Sexo</label>
                                         <p>
@@ -88,19 +98,22 @@
                                             <span class="nir-badge badge bg-primary">Masculino</span>
                                             {% elif record.gender == 'F' %}
                                             <span class="nir-badge badge bg-danger">Feminino</span>
-                                            {% else %}
-                                            -
                                             {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.susfacil and record.susfacil|string != 'None' %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">SUSFacil</label>
-                                        <p class="text-monospace">{{ record.susfacil or '-' }}</p>
+                                        <p class="text-monospace">{{ record.susfacil }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.sus_number and record.sus_number|string != 'None' %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Número SUS</label>
-                                        <p class="text-monospace">{{ record.sus_number or '-' }}</p>
+                                        <p class="text-monospace">{{ record.sus_number }}</p>
                                     </div>
+                                    {% endif %}
                                     <div class="col-md-12 nir-detail-item">
                                         <label class="form-label">Paciente Paliativo</label>
                                         <p>
@@ -151,70 +164,71 @@
                             </div>
                             {% endif %}
 
+                            {% set has_admission_data = record.admission_date or record.entry_type or record.admission_type or record.admitted_from_origin or record.recurso or (record.aih and record.aih|string != 'None') %}
+                            {% if has_admission_data %}
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-clipboard-data"></i>Dados da Internação
                                 </h5>
                                 <div class="row">
+                                    {% if record.admission_date %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Data de Internação</label>
-                                        <p class="fw-bold">{{ record.admission_date or '-' | format_date_short }}</p>
+                                        <p class="fw-bold">{{ record.admission_date | format_date_short }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.entry_type %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Tipo de Entrada</label>
                                         <p>
-                                            {% if record.entry_type %}
                                             <span class="nir-badge badge bg-{% if record.entry_type == 'URGENCIA' or record.entry_type == 'CIRURGICO' %}danger{% else %}primary{% endif %}">
                                                 {{ record.entry_type }}
                                             </span>
-                                            {% else %}
-                                            -
-                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.admission_type %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Tipo de Internação</label>
                                         <p>
-                                            {% if record.admission_type %}
                                             <span class="nir-badge badge bg-{% if record.admission_type == 'CIRURGICO' %}warning{% else %}info{% endif %}">
                                                 {{ record.admission_type }}
                                             </span>
-                                            {% else %}
-                                            -
-                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.admitted_from_origin %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Local de Origem</label>
                                         <p>
-                                            {% if record.admitted_from_origin %}
                                             <span class="nir-badge badge bg-{% if record.admitted_from_origin == 'SIM' %}success{% else %}secondary{% endif %}">
                                                 {{ record.admitted_from_origin }}
                                             </span>
-                                            {% else %}
-                                            -
-                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.recurso %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Recurso</label>
                                         <p>
-                                            {% if record.recurso %}
                                             <span class="nir-badge badge bg-{% if record.recurso == 'PMAE' %}primary{% elif record.recurso == 'PPI' %}info{% elif record.recurso == 'Valora Eletivo' %}success{% elif record.recurso == 'Valora Urgencia' %}warning{% elif record.recurso == 'Próprio' %}secondary{% else %}secondary{% endif %}">
                                                 {{ record.recurso }}
                                             </span>
-                                            {% else %}
-                                            -
-                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.aih and record.aih|string != 'None' %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">AIH</label>
-                                        <p class="text-monospace">{{ record.aih or '-' }}</p>
+                                        <p class="text-monospace">{{ record.aih }}</p>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
+                            {% endif %}
 
+                            {% set has_procedures = (record.procedures and record.procedures|length > 0) or (record.procedure_code and record.procedure_code|string != 'None') or (record.surgical_description and record.surgical_description|string != 'None') %}
+                            {% if has_procedures %}
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-activity"></i>Procedimentos
@@ -250,51 +264,73 @@
                                     </div>
                                 {% else %}
                                     <div class="row">
+                                        {% if record.procedure_code and record.procedure_code|string != 'None' %}
                                         <div class="col-md-4 nir-detail-item">
                                             <label class="form-label">Código do Procedimento</label>
-                                            <p class="text-monospace">{{ record.procedure_code or '-' }}</p>
+                                            <p class="text-monospace">{{ record.procedure_code }}</p>
                                         </div>
+                                        {% endif %}
+                                        {% if record.surgical_description and record.surgical_description|string != 'None' %}
                                         <div class="col-md-8 nir-detail-item">
                                             <label class="form-label">Descrição Cirúrgica</label>
-                                            <p>{{ record.surgical_description or '-' }}</p>
+                                            <p>{{ record.surgical_description }}</p>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </div>
+                            {% endif %}
 
+                            {% set has_medical_info = (record.responsible_doctor and record.responsible_doctor|string != 'None') or (record.main_cid and record.main_cid|string != 'None') or (record.surgical_specialty and record.surgical_specialty|string != 'None') or (record.auxiliary and record.auxiliary|string != 'None') or (record.anesthetist and record.anesthetist|string != 'None') or (record.anesthesia and record.anesthesia|string != 'None') or (record.pediatrics and record.pediatrics|string != 'None') or record.surgical_type %}
+                            {% if has_medical_info %}
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-heart-pulse"></i>Informações Médicas
                                 </h5>
                                 <div class="row">
+                                    {% if record.responsible_doctor and record.responsible_doctor|string != 'None' %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Médico Responsável</label>
-                                        <p>{{ record.responsible_doctor or '-' }}</p>
+                                        <p>{{ record.responsible_doctor }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.main_cid and record.main_cid|string != 'None' %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">CID Principal</label>
-                                        <p class="text-monospace">{{ record.main_cid or '-' }}</p>
+                                        <p class="text-monospace">{{ record.main_cid }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.surgical_specialty and record.surgical_specialty|string != 'None' %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Especialidade Cirúrgica</label>
-                                        <p>{{ record.surgical_specialty or '-' }}</p>
+                                        <p>{{ record.surgical_specialty }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.auxiliary and record.auxiliary|string != 'None' %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Auxiliar</label>
-                                        <p>{{ record.auxiliary or '-' }}</p>
+                                        <p>{{ record.auxiliary }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.anesthetist and record.anesthetist|string != 'None' %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Anestesista</label>
-                                        <p>{{ record.anesthetist or '-' }}</p>
+                                        <p>{{ record.anesthetist }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.anesthesia and record.anesthesia|string != 'None' %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Anestesia</label>
-                                        <p>{{ record.anesthesia or '-' }}</p>
+                                        <p>{{ record.anesthesia }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.pediatrics and record.pediatrics|string != 'None' %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Pediatria</label>
-                                        <p>{{ record.pediatrics or '-' }}</p>
+                                        <p>{{ record.pediatrics }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.surgical_type %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Classificação</label>
                                         <p>
@@ -306,39 +342,44 @@
                                             <span class="nir-badge badge bg-secondary">Limpa</span>
                                             {% elif record.surgical_type == 'SUSPENSA' %}
                                             <span class="nir-badge badge bg-warning">Suspensa</span>
-                                            {% else %}
-                                            <span class="nir-badge badge bg-secondary">-</span>
                                             {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
+                            {% endif %}
 
+                            {% set has_discharge_data = record.scheduling_date or record.discharge_type or record.discharge_date or record.total_days_admitted %}
+                            {% if has_discharge_data %}
                             <div class="nir-details-section">
                                 <h5>
                                     <i class="bi bi-calendar-check"></i>Dados de Alta
                                 </h5>
                                 <div class="row">
+                                    {% if record.scheduling_date %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Data de Agendamento</label>
-                                        <p>{{ record.scheduling_date.strftime('%d/%m/%Y') if record.scheduling_date else '-' }}</p>
+                                        <p>{{ record.scheduling_date.strftime('%d/%m/%Y') }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.discharge_type %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Tipo de Alta</label>
                                         <p>
-                                            {% if record.discharge_type %}
                                             <span class="nir-badge badge bg-{% if record.discharge_type == 'OBITO' %}dark{% else %}success{% endif %}">
                                                 {{ record.discharge_type }}
                                             </span>
-                                            {% else %}
-                                            -
-                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.discharge_date %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Data da Alta</label>
-                                        <p>{{ record.discharge_date.strftime('%d/%m/%Y') if record.discharge_date else '-' }}</p>
+                                        <p>{{ record.discharge_date.strftime('%d/%m/%Y') }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.total_days_admitted is not none or (record.admission_date and record.discharge_date) %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Total de Dias Internado</label>
                                         <p>
@@ -347,13 +388,13 @@
                                             {% elif record.admission_date and record.discharge_date %}
                                                 {% set _dias = (record.discharge_date - record.admission_date).days %}
                                                 <span class="nir-badge badge bg-info">{{ _dias }} dias</span>
-                                            {% else %}
-                                                -
                                             {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
+                            {% endif %}
 
                             <div class="nir-details-section">
                                 <h5>
@@ -402,30 +443,34 @@
                                             {% endif %}
                                         </p>
                                     </div>
+                                    {% if record.status %}
                                     <div class="col-md-3 nir-detail-item">
                                         <label class="form-label">Status</label>
                                         <p>
-                                            {% if record.status %}
                                             <span class="nir-badge badge bg-{% if record.status == 'FINALIZADO' %}success{% else %}warning{% endif %}">
                                                 {{ record.status }}
                                             </span>
-                                            {% else %}
-                                            -
-                                            {% endif %}
                                         </p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.observation and record.observation|string != 'None' %}
                                     <div class="col-md-9 nir-detail-item">
                                         <label class="form-label">Observação</label>
-                                        <p>{{ record.observation or '-' }}</p>
+                                        <p>{{ record.observation }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.operator %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Operador</label>
                                         <p class="fw-bold">{{ record.operator.name }}</p>
                                     </div>
+                                    {% endif %}
+                                    {% if record.creation_date %}
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Data de Criação</label>
                                         <p>{{ record.creation_date | format_date_time }}</p>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -1020,6 +1065,41 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+        
+        // Função para formatar tempo decorrido
+        function formatElapsedTime(faDatetime) {
+            const now = new Date();
+            const fa = new Date(faDatetime);
+            const diffMs = now - fa;
+            
+            if (diffMs < 0) {
+                return '0h 0m 0s';
+            }
+            
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+        
+        // Função para atualizar os timers de observação
+        function updateObservationTimers() {
+            document.querySelectorAll('.observation-timer').forEach(timer => {
+                const faDatetime = timer.getAttribute('data-fa-datetime');
+                if (faDatetime) {
+                    const display = timer.querySelector('.timer-display');
+                    if (display) {
+                        display.textContent = formatElapsedTime(faDatetime);
+                    }
+                }
+            });
+        }
+        
+        // Atualizar os timers imediatamente e a cada segundo
+        updateObservationTimers();
+        setInterval(updateObservationTimers, 1000);
     });
 </script>
 {% endblock %}

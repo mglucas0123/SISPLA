@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf_token" content="{{ csrf_token() }}">
     <title>{% block title %}SISPLA{% endblock %}</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -306,6 +307,160 @@
             </div>
         </div>
     </footer>
+    
+    <!-- Modal de Notificações -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden !important;">
+                <div class="modal-header border-0 position-relative" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); padding: 2rem; margin: 0;">
+                    <div class="w-100">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title text-white fw-bold mb-0" id="notificationModalLabel">
+                                    Atenção: Pendências Críticas
+                                </h5>
+                                <small class="text-white opacity-75">
+                                    <i class="bi bi-clock-fill me-1"></i>
+                                    <span id="notificationTimestamp"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 1rem; right: 1rem;"></button>
+                </div>
+                <div class="modal-body p-4" id="notificationBody" style="background-color: #f8f9fa;">
+                    <!-- Conteúdo dinâmico das notificações -->
+                </div>
+                <div class="modal-footer border-0 bg-white" style="padding: 1.5rem;">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Dispensar
+                    </button>
+                    <button type="button" class="btn btn-danger px-4" onclick="window.location.href='/nir/setor/nir'">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Resolver Agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Script de Notificações Inteligentes -->
+    <script>
+        let notificationCheckInterval;
+        let isNotificationModalOpen = false;
+        
+        async function checkNotifications() {
+            if (isNotificationModalOpen) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/nir/check-pending-notifications');
+                const data = await response.json();
+                
+                if (data.has_notifications) {
+                    showNotificationModal(data.notifications);
+                }
+                                
+            } catch (error) {
+                console.error('❌ Erro ao verificar notificações:', error);
+            }
+        }
+        
+        function formatTimestamp() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        function showNotificationModal(notifications) {
+            const modalElement = document.getElementById('notificationModal');
+            const bodyElement = document.getElementById('notificationBody');
+            const timestampElement = document.getElementById('notificationTimestamp');
+            
+            if (!modalElement || !bodyElement) return;
+            
+            isNotificationModalOpen = true;
+            
+            if (timestampElement) {
+                timestampElement.textContent = `Verificado às ${formatTimestamp()}`;
+            }
+            
+            let html = '';
+            
+            notifications.forEach((notif, index) => {
+                const borderColor = notif.type === 'warning' ? '#ff6b6b' : '#4ecdc4';
+                const iconBg = notif.type === 'warning' ? '#ffe0e0' : '#e0f7f7';
+                const iconColor = notif.type === 'warning' ? '#ff6b6b' : '#4ecdc4';
+                
+                html += `
+                    <div class="card border-0 mb-3 shadow-sm" style="border-left: 4px solid ${borderColor} !important; border-radius: 12px; overflow: hidden;">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3 flex-shrink-0">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 56px; height: 56px; background-color: ${iconBg};">
+                                        <i class="bi ${notif.icon} fs-3" style="color: ${iconColor};"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h6 class="mb-0 fw-bold text-dark">${notif.title}</h6>
+                                        ${notif.priority === 'high' ? 
+                                            '<span class="badge bg-danger ms-2 px-2 py-1" style="font-size: 0.7rem;">URGENTE</span>' : 
+                                            '<span class="badge bg-info ms-2 px-2 py-1" style="font-size: 0.7rem;">ATENÇÃO</span>'
+                                        }
+                                    </div>
+                                    <p class="mb-0 text-muted" style="font-size: 0.95rem; line-height: 1.6;">
+                                        ${notif.message}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            bodyElement.innerHTML = html;
+            
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true
+            });
+            modal.show();
+            
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                isNotificationModalOpen = false;
+            }, { once: true });
+            
+        }
+        // Tempo definido em milissegundos ( 1000 ms = 1 segundo || 300000 ms = 5 minutos || 1800000 ms = 30 minutos)
+        function startNotificationSystem() {
+            notificationCheckInterval = setInterval(() => {
+                checkNotifications();
+            }, 300000);
+        }
+        
+        function stopNotificationSystem() {
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if current_user.is_authenticated and current_user.has_permission('show-notifications-nir') and not current_user.has_permission('admin-total') %}
+                startNotificationSystem();
+            {% endif %}
+        });
+        
+        window.addEventListener('beforeunload', function() {
+            stopNotificationSystem();
+        });
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

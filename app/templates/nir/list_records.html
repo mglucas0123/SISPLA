@@ -9,7 +9,7 @@
         {% if stats_counts %}
         {% set counts = stats_counts %}
         {% else %}
-        {% set counts = {'total': 0, 'pendentes': 0, 'andamento': 0, 'concluidos': 0} %}
+        {% set counts = {'total': 0, 'pendentes': 0, 'andamento': 0, 'concluidos': 0, 'cancelados': 0} %}
         {% endif %}
         
         <div class="nir-header mb-4">
@@ -62,6 +62,18 @@
                         <div class="nir-stat-card__number">{{ counts.concluidos or 0 }}</div>
                         <div class="nir-stat-card__label">Registros Concluídos</div>
                         <div class="nir-stat-card__subtitle">Fluxo finalizado</div>
+                    </div>
+                </a>
+
+                {% set active_cancelado = filters.sector_progress == 'CANCELADO' %}
+                <a
+                    href="{% if active_cancelado %}{{ url_for('nir.list_records', per_page=request.args.get('per_page')) }}{% else %}{{ url_for('nir.list_records', sector_progress='CANCELADO', per_page=request.args.get('per_page')) }}{% endif %}"
+                    class="nir-stat-card nir-stat-card--danger {% if active_cancelado %}is-active{% endif %}">
+                    <div class="nir-stat-card__icon"><i class="bi bi-x-octagon"></i></div>
+                    <div class="nir-stat-card__content">
+                        <div class="nir-stat-card__number">{{ counts.cancelados or 0 }}</div>
+                        <div class="nir-stat-card__label">Registros Cancelados</div>
+                        <div class="nir-stat-card__subtitle">Cancelados pelo sistema</div>
                     </div>
                 </a>
             </div>

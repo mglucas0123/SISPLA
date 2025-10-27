@@ -42,9 +42,29 @@ def handle_database_error(operation_name):
 @admin_required
 def permissions_page():
     """Página principal de gerenciamento de roles e permissões"""
+    from app.models import Permission
+    
     roles = Role.query.order_by(Role.name.asc()).all()
-    catalog = [p.name for p in PermissionCatalog.query.order_by(PermissionCatalog.name.asc()).all()]
-    return render_template('roles_permissions.html', roles=roles, catalog=catalog)
+    catalog = PermissionCatalog.query.order_by(PermissionCatalog.name.asc()).all()
+    
+    # Criar um dicionário com informações completas das permissões
+    catalog_details = {}
+    catalog_names = []  # Lista simples de nomes para o JavaScript
+    
+    for cat_perm in catalog:
+        perm_obj = Permission.query.filter_by(name=cat_perm.name).first()
+        catalog_details[cat_perm.name] = {
+            'name': cat_perm.name,
+            'description': cat_perm.description or (perm_obj.description if perm_obj else ''),
+            'module': perm_obj.module if perm_obj else 'custom'
+        }
+        catalog_names.append(cat_perm.name)
+    
+    return render_template('roles_permissions.html', 
+                         roles=roles, 
+                         catalog=catalog, 
+                         catalog_details=catalog_details,
+                         catalog_names=catalog_names)
 
 
 @roles_bp.route('/permissions/<int:role_id>', methods=['POST'])
@@ -155,8 +175,10 @@ def delete_role(role_id: int):
 @admin_required
 @handle_database_error('adicionar permissão no catálogo')
 def add_permission_to_catalog():
-    """Adiciona uma nova permissão ao catálogo"""
+    """Adiciona uma nova permissão ao catálogo e opcionalmente às roles selecionadas"""
     name = (request.form.get('permission_name') or '').strip()
+    description = (request.form.get('permission_description') or '').strip()
+    initial_roles = request.form.getlist('initial_roles')
     
     if name == 'admin-total':
         if not PermissionCatalog.query.filter_by(name=name).first():
@@ -178,14 +200,73 @@ def add_permission_to_catalog():
         flash('Já existe essa permissão no catálogo.', 'info')
         return redirect(url_for('admin.roles.permissions_page'))
 
-    db.session.add(PermissionCatalog(name=name))
+    # Inferir módulo baseado na primeira role selecionada ou usar 'custom'
+    module = 'custom'
+    if initial_roles:
+        first_role = Role.query.filter_by(name=initial_roles[0]).first()
+        if first_role and first_role.sector:
+            # Mapear setor da role para módulo
+            sector_to_module = {
+                'nir': 'nir',
+                'administrativo': 'admin',
+                'treinamento': 'training',
+                'repositorio': 'repository',
+                'formulario': 'form'
+            }
+            module = sector_to_module.get(first_role.sector.lower(), 'custom')
+        else:
+            # Inferir do nome da role
+            role_name_lower = first_role.name.lower() if first_role else ''
+            if 'nir' in role_name_lower:
+                module = 'nir'
+            elif 'admin' in role_name_lower:
+                module = 'admin'
+            elif 'treinamento' in role_name_lower or 'training' in role_name_lower:
+                module = 'training'
+            elif 'repositorio' in role_name_lower or 'repository' in role_name_lower:
+                module = 'repository'
     
+    # Adicionar ao catálogo
+    catalog_entry = PermissionCatalog(
+        name=name,
+        description=description if description else f'Permissão {name}'
+    )
+    db.session.add(catalog_entry)
+    
+    # Criar permissão na tabela de permissões
     from app.models import Permission
-    if not Permission.query.filter_by(name=name).first():
-        db.session.add(Permission(name=name, description=f'Permissão {name}', module='custom'))
+    permission_entry = Permission(
+        name=name,
+        description=description if description else f'Permissão {name}',
+        module=module
+    )
+    db.session.add(permission_entry)
+    
+    # Adicionar às roles selecionadas
+    roles_updated = []
+    if initial_roles:
+        for role_name in initial_roles:
+            role = Role.query.filter_by(name=role_name).first()
+            if role:
+                # Adicionar à lista de permissões da role
+                if role.permissions_list is None:
+                    role.permissions_list = []
+                if name not in role.permissions_list:
+                    role.permissions_list = role.permissions_list + [name]
+                
+                # Adicionar ao relacionamento many-to-many
+                if permission_entry not in role.permissions:
+                    role.permissions.append(permission_entry)
+                
+                roles_updated.append(role.name)
     
     db.session.commit()
-    flash(f"Permissão '{name}' adicionada ao catálogo.", 'success')
+    
+    if roles_updated:
+        flash(f"Permissão '{name}' criada no módulo '{module.upper()}' e atribuída às roles: {', '.join(roles_updated)}.", 'success')
+    else:
+        flash(f"Permissão '{name}' criada no módulo '{module.upper()}'. Atribua às roles conforme necessário.", 'success')
+    
     return redirect(url_for('admin.roles.permissions_page'))
 
 

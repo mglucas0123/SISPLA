@@ -119,17 +119,60 @@
               <!-- Formulário para adicionar nova permissão -->
               <form class="add-permission-form mb-4 p-4 rounded-3" method="POST" action="{{ url_for('admin.roles.add_permission_to_catalog') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="row g-3 align-items-end">
-                  <div class="col-md-8">
-                    <label for="permission_name" class="form-label fw-bold">Adicionar Nova Permissão</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-plus-circle"></i></span>
-                      <input type="text" class="form-control" id="permission_name" name="permission_name" placeholder="ex: view-reports" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" title="Use letras minúsculas, números e hífen (kebab-case)" required>
-                    </div>
-                    <div class="form-text mt-2">A nova permissão será adicionada ao catálogo e poderá ser usada nas roles.</div>
+                <div class="row g-3">
+                  <div class="col-md-12">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Adicionar Nova Permissão</h6>
                   </div>
-                  <div class="col-md-4 d-grid">
-                    <button type="submit" class="btn btn-success d-flex align-items-center justify-content-center"><i class="bi bi-check2-circle me-2"></i>Adicionar</button>
+                  
+                  <div class="col-md-12">
+                    <label for="permission_name" class="form-label fw-bold">Nome da Permissão <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                      <input type="text" class="form-control" id="permission_name" name="permission_name" placeholder="ex: show-notifications-nir" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" title="Use letras minúsculas, números e hífen (kebab-case)" required>
+                    </div>
+                    <div class="form-text">Use kebab-case (letras minúsculas, números e hífen)</div>
+                  </div>
+                  
+                  <div class="col-md-12">
+                    <label for="permission_description" class="form-label fw-bold">Descrição</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-chat-left-text-fill"></i></span>
+                      <input type="text" class="form-control" id="permission_description" name="permission_description" placeholder="Descrição clara da permissão (opcional)">
+                    </div>
+                    <div class="form-text">Descrição será exibida aos administradores ao gerenciar permissões</div>
+                  </div>
+                  
+                  <div class="col-md-12">
+                    <label class="form-label fw-bold">Atribuir a Roles (Opcional)</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+                      {% if roles %}
+                        <div class="row">
+                          {% for role in roles %}
+                          <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" name="initial_roles" value="{{ role.name }}" id="new_perm_role_{{ role.id }}">
+                              <label class="form-check-label" for="new_perm_role_{{ role.id }}">
+                                <i class="bi bi-person-badge text-primary"></i>
+                                {{ role.name }}
+                                {% if role.description %}
+                                <br><small class="text-muted">{{ role.description }}</small>
+                                {% endif %}
+                              </label>
+                            </div>
+                          </div>
+                          {% endfor %}
+                        </div>
+                      {% else %}
+                        <p class="text-muted mb-0">Nenhuma role cadastrada.</p>
+                      {% endif %}
+                    </div>
+                    <div class="form-text">Selecione as roles que terão esta permissão automaticamente</div>
+                  </div>
+                  
+                  <div class="col-md-12 d-grid">
+                    <button type="submit" class="btn btn-success d-flex align-items-center justify-content-center">
+                      <i class="bi bi-check2-circle me-2"></i>Adicionar Permissão e Atribuir às Roles
+                    </button>
                   </div>
                 </div>
               </form>
@@ -146,13 +189,20 @@
               </div>
     
               <div class="permissions-catalog list-group">
-                {% for perm in catalog|sort %}
+                {% for perm in catalog|sort(attribute='name') %}
+                {% set details = catalog_details.get(perm.name, {}) %}
                 <div class="permission-catalog-item list-group-item d-flex justify-content-between align-items-center">
-                  <span class="permission-name">
-                    <i class="bi bi-key-fill text-muted me-2"></i>
-                    <code>{{ perm }}</code>
-                  </span>
-                  <form method="POST" action="{{ url_for('admin.roles.delete_permission_from_catalog', name=perm) }}" data-perm-name="{{ perm }}" onsubmit="return confirmCatalogDeletion(this);" class="ms-2">
+                  <div class="permission-info flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                      <i class="bi bi-key-fill text-muted me-2"></i>
+                      <code class="fw-bold">{{ perm.name }}</code>
+                      <span class="badge bg-primary ms-2" style="font-size: 0.7rem;">{{ details.module|upper }}</span>
+                    </div>
+                    {% if details.description %}
+                    <small class="text-muted d-block ms-4">{{ details.description }}</small>
+                    {% endif %}
+                  </div>
+                  <form method="POST" action="{{ url_for('admin.roles.delete_permission_from_catalog', name=perm.name) }}" data-perm-name="{{ perm.name }}" onsubmit="return confirmCatalogDeletion(this);" class="ms-2">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir do catálogo e remover de todas as roles">
                       <i class="bi bi-trash3"></i>
@@ -306,9 +356,8 @@
 
     let currentRoleId = null;
     let currentPermissions = [];
-    let catalogPermissions = {{ catalog| tojson if catalog else '[]'
-  }};
-  const updatePermissionsUrlTemplate = "{{ url_for('admin.roles.update_role_permissions', role_id=0) }}";
+    let catalogPermissions = {{ catalog_names|tojson if catalog_names else '[]' }};
+    const updatePermissionsUrlTemplate = "{{ url_for('admin.roles.update_role_permissions', role_id=0) }}";
 
   console.log('Catalog permissions:', catalogPermissions);
 

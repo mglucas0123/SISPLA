@@ -62,21 +62,16 @@ class Role(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Sistema antigo (manter por compatibilidade durante migração)
     permissions = db.relationship('Permission', secondary=role_permissions, backref='roles')
     
-    # Novo sistema: lista de nomes de permissões armazenada como JSON
     permissions_list = db.Column(MutableList.as_mutable(JSON), nullable=True, default=list)
     
     def has_permission(self, permission_name):
-        # Verifica no novo sistema primeiro
         if self.permissions_list and permission_name in set(self.permissions_list):
             return True
-        # Fallback para sistema antigo durante migração
         return any(perm.name == permission_name for perm in self.permissions)
     
     def has_module_access(self, module_name):
-        # Sistema antigo
         return any(perm.module == module_name for perm in self.permissions)
     
     def __repr__(self):
@@ -109,19 +104,15 @@ class User(db.Model, UserMixin):
     
     def has_permission(self, permission_name):
         """Verifica se o usuário tem uma permissão específica (direto ou via role)"""
-        # Admin-total tem todas as permissões
         if any(p.name == 'admin-total' for p in self.permissions):
             return True
         
-        # Verifica permissões diretas do usuário
         if any(p.name == permission_name for p in self.permissions):
             return True
         
-        # Verifica permissões via roles (novo e antigo sistema)
         for role in self.roles:
             if role.has_permission(permission_name):
                 return True
-            # Verifica admin-total nas roles
             if role.has_permission('admin-total'):
                 return True
         
@@ -139,17 +130,13 @@ class User(db.Model, UserMixin):
         """Retorna todas as permissões do usuário (diretas + através de roles)"""
         permissions = set()
         
-        # Permissões diretas do usuário
         for permission in self.permissions:
             permissions.add(permission.name)
         
-        # Permissões via roles
         for role in self.roles:
-            # Novo sistema: permissions_list
             if role.permissions_list:
                 for perm_name in role.permissions_list:
                     permissions.add(perm_name)
-            # Sistema antigo: relationship permissions
             for permission in role.permissions:
                 permissions.add(permission.name)
         
@@ -241,6 +228,7 @@ class Nir(db.Model):
     operator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     observation_start_time = db.Column(db.DateTime, nullable=True)
+    fa_datetime = db.Column(db.DateTime, nullable=True)
     
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_modified = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -263,8 +251,6 @@ class Nir(db.Model):
         - FATURAMENTO: status_controle
         - (NÃO passa pelo Centro Cirúrgico)
         """
-        # Se o tipo de internação é CLÍNICO, todas as seções ficam com o NIR
-        # (não passa pelo Centro Cirúrgico)
         if self.admission_type == 'CLINICO':
             return {
                 'dados_paciente': 'NIR',
@@ -276,8 +262,6 @@ class Nir(db.Model):
                 'status_controle': 'FATURAMENTO'
             }
         
-        # Para CIRURGICO ou observações evoluídas sem tipo definido,
-        # usar o fluxo completo com Centro Cirúrgico
         effective_entry = 'URGENCIA' if self.entry_type == 'CIRURGICO' else (self.entry_type or '')
         
         if self.admission_type == 'CIRURGICO' or effective_entry in ('URGENCIA', 'ELETIVO') or not self.entry_type:
@@ -291,7 +275,6 @@ class Nir(db.Model):
                 'status_controle': 'FATURAMENTO'
             }
         else:
-            # Caso especial (fallback)
             return {
                 'dados_paciente': 'NIR',
                 'dados_internacao_iniciais': 'NIR',
@@ -332,7 +315,6 @@ class Nir(db.Model):
         if self.entry_type == 'CIRURGICO':
             return 'URGENCIA'
         elif not self.entry_type:
-            # Observações evoluídas sem entry_type definido seguem fluxo de URGENCIA
             return 'URGENCIA'
         else:
             return self.entry_type
@@ -396,17 +378,14 @@ class Nir(db.Model):
         
         progress = self.get_sector_progress()
         
-        # Verificar se alguma seção foi preenchida
         total_filled = sum(p['filled'] for p in progress.values())
         if total_filled == 0:
             return 'PENDENTE'
         
-        # Se FATURAMENTO está concluído, o registro está concluído
         faturamento_status = progress.get('FATURAMENTO', {}).get('status')
         if faturamento_status == 'CONCLUIDO':
             return 'CONCLUIDO'
         
-        # Caso contrário, se há algo preenchido, está em andamento
         return 'EM_ANDAMENTO'
     
     def is_ready_for_sector(self, sector):
@@ -424,7 +403,6 @@ class Nir(db.Model):
                 return True
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
-        # Para CLÍNICO, nunca está pronto para Centro Cirúrgico (pula essa etapa)
         if sector == 'CENTRO_CIRURGICO':
             if self.admission_type == 'CLINICO':
                 return False
@@ -438,11 +416,9 @@ class Nir(db.Model):
                 return nir_progress.get('status') == 'CONCLUIDO'
 
         if sector == 'FATURAMENTO':
-            # Para CLÍNICO, só precisa que o NIR esteja completo
             if self.admission_type == 'CLINICO':
                 return sections_complete(nir_sections)
             
-            # Para CIRURGICO, precisa do NIR E do Centro Cirúrgico completos
             if not sections_complete(nir_sections):
                 return False
             surgery_progress = progress.get('CENTRO_CIRURGICO')
@@ -471,7 +447,6 @@ class Nir(db.Model):
                 return True
             return all(section_status_map.get(sec) == 'PREENCHIDO' for sec in section_list)
 
-        # FLUXO PARA CLÍNICO: NIR (tudo) → FATURAMENTO
         if self.admission_type == 'CLINICO':
             if not sections_complete(nir_sections):
                 return 'NIR'
@@ -482,7 +457,6 @@ class Nir(db.Model):
             
             return None
 
-        # FLUXO PARA CIRURGICO: NIR (inicial) → CENTRO_CIRURGICO → NIR (alta) → FATURAMENTO
         if effective_entry in ('URGENCIA', 'ELETIVO') or self.admission_type == 'CIRURGICO':
             final_nir_sections = [s for s in nir_sections if 'alta' in s]
             initial_nir_sections = [s for s in nir_sections if s not in final_nir_sections]
@@ -503,7 +477,6 @@ class Nir(db.Model):
 
             return None
         else:
-            # Fallback para casos especiais
             if not sections_complete(nir_sections):
                 return 'NIR'
             billing_progress = progress.get('FATURAMENTO', {})
@@ -513,14 +486,14 @@ class Nir(db.Model):
     
     def is_in_observation(self):
         """Verifica se o registro está em período de observação"""
-        return self.status == 'EM_OBSERVACAO' and self.observation_start_time is not None
+        return self.status == 'EM_OBSERVACAO' and self.fa_datetime is not None
     
     def observation_hours_elapsed(self):
-        """Retorna quantas horas se passaram desde o início da observação"""
-        if not self.observation_start_time:
+        """Retorna quantas horas se passaram desde o Horário FA (entrada na Fila de Atendimento)"""
+        if not self.fa_datetime:
             return 0
-        delta = datetime.utcnow() - self.observation_start_time
-        return delta.total_seconds() / 3600  # Retorna em horas
+        delta = datetime.now() - self.fa_datetime
+        return delta.total_seconds() / 3600
     
     def should_transition_to_decision(self):
         """Verifica se o registro deve transitar para AGUARDANDO_DECISAO (>24h)"""
@@ -530,10 +503,10 @@ class Nir(db.Model):
         """Evolui um registro de observação para internação normal"""
         if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
             self.status = 'PENDENTE'
+            if not self.admission_date and self.fa_datetime:
+                self.admission_date = self.fa_datetime.date()
             self.observation_start_time = None
-            # Se não tem data de admissão, usa a data de início da observação
-            if not self.admission_date and self.observation_start_time:
-                self.admission_date = self.observation_start_time.date()
+            self.fa_datetime = None
             return True
         return False
     

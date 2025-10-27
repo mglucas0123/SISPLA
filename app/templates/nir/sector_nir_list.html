@@ -94,14 +94,15 @@
                         <div class="nir-stat-card__number">{{ counts.observacoes }}</div>
                         <div class="nir-stat-card__label">Em Observação</div>
                         <div class="nir-stat-card__subtitle">
-                            Monitoramento inicial (&lt;24h)
+                            Monitoramento inicial
                         </div>
                     </div>
                 </a>
                 
                 {% if counts.aguardando_decisao > 0 %}
-                <a href="{{ url_for('nir.sector_nir_list', filter_status='observacao', patient_name=request.args.get('patient_name','')) }}"
-                    class="nir-stat-card nir-stat-card--danger">
+                {% set aguardando_decisao_active = (filter_status == 'aguardando_decisao') %}
+                <a href="{{ aguardando_decisao_active and url_for('nir.sector_nir_list', patient_name=request.args.get('patient_name','')) or url_for('nir.sector_nir_list', filter_status='aguardando_decisao', patient_name=request.args.get('patient_name','')) }}"
+                    class="nir-stat-card nir-stat-card--danger {% if aguardando_decisao_active %}is-active{% endif %}">
                     <div class="nir-stat-card__icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
                     <div class="nir-stat-card__content">
                         <div class="nir-stat-card__number">{{ counts.aguardando_decisao }}</div>
@@ -260,10 +261,17 @@
                                         <i class="bi bi-hourglass me-1"></i>Aguardando Centro Cirúrgico
                                     </span>
                                     {% elif phase == 'OBSERVACAO' %}
-                                    <span class="badge bg-custom-blue rounded-pill"
-                                        title="Aguardando Observação">
-                                        <i class="bi bi-eye me-1"></i>Aguardando Observação
-                                    </span>
+                                        {% if record.status == 'AGUARDANDO_DECISAO' %}
+                                        <span class="badge bg-custom-red rounded-pill"
+                                            title="Mais de 24h - Requer decisão urgente">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Aguardando Decisão
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-custom-blue rounded-pill"
+                                            title="Observação em andamento (< 24h)">
+                                            <i class="bi bi-eye me-1"></i>Em Observação
+                                        </span>
+                                        {% endif %}
                                     {% elif phase == 'FINAL' %}
                                     <span class="badge bg-custom-purple rounded-pill" title="Preencher dados de alta">
                                         <i class="bi bi-hourglass me-1"></i>Aguardando dados de Alta
@@ -292,25 +300,27 @@
                                 </td>
                                 <td class="text-center">
                                     {% if record._is_observation %}
-                                        {% if status_display == 'EM_OBSERVACAO' %}
+                                        {% if record.status == 'AGUARDANDO_DECISAO' %}
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <span class="badge bg-custom-red-pulse rounded-pill">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>Pendente
+                                            </span>
+                                            <small class="text-danger fw-bold">
+                                                <i class="bi bi-alarm me-1"></i>> 24h
+                                            </small>
+                                        </div>
+                                        {% elif status_display == 'EM_OBSERVACAO' %}
                                         <div class="d-flex flex-column align-items-center gap-1">
                                             <span class="badge bg-custom-blue rounded-pill">
                                                 <i class="bi bi-eye me-1"></i>Em Observação
                                             </span>
-                                            {% if record.observation_start_time %}
-                                            <small class="text-muted">
-                                                <i class="bi bi-clock me-1"></i>{{ "%.1f"|format(record.observation_hours_elapsed()) }}h
+                                            {% if record.fa_datetime %}
+                                            <small class="text-muted observation-timer" 
+                                                   data-fa-datetime="{{ record.fa_datetime.isoformat() }}">
+                                                <i class="bi bi-clock-history me-1"></i>
+                                                <span class="timer-display">Calculando...</span>
                                             </small>
                                             {% endif %}
-                                        </div>
-                                        {% elif status_display == 'AGUARDANDO_DECISAO' %}
-                                        <div class="d-flex flex-column align-items-center gap-1">
-                                            <span class="badge bg-warning text-dark rounded-pill">
-                                                <i class="bi bi-exclamation-circle me-1"></i>Aguardando Decisão
-                                            </span>
-                                            <small class="text-danger">
-                                                <i class="bi bi-alarm me-1"></i>> 24h
-                                            </small>
                                         </div>
                                         {% elif status_display == 'CANCELADO' %}
                                         <span class="badge bg-secondary rounded-pill">
@@ -339,19 +349,13 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
-                                        {% if record._is_observation and status_display in ['EM_OBSERVACAO', 'AGUARDANDO_DECISAO'] %}
+                                        {% if record._is_observation and record.status in ['EM_OBSERVACAO', 'AGUARDANDO_DECISAO'] %}
                                         <button type="button" 
-                                                class="btn btn-sm btn-success rounded-pill shadow-sm"
-                                                onclick="evolveObservation({{ record.id }}, '{{ record.patient_name }}')"
-                                                title="Evoluir para Internação">
-
-                                            <i class="bi bi-arrow-up-circle me-1"></i>Internar
-                                        </button>
-                                        <button type="button" 
-                                                class="btn btn-sm btn-danger rounded-pill shadow-sm"
-                                                onclick="cancelObservation({{ record.id }}, '{{ record.patient_name }}')"
-                                                title="Cancelar Observação">
-                                            <i class="bi bi-x-circle me-1"></i>Cancelar
+                                                class="btn btn-sm btn-primary rounded-pill shadow-sm toggle-detail-observation" 
+                                                data-detail-id="detail-observation-{{ record.id }}"
+                                                title="Gerenciar observação">
+                                            <i class="bi bi-gear me-1"></i>
+                                            <span class="btn-text">Gerenciar Observação</span>
                                         </button>
                                         {% elif record._nir_phase == 'FINAL' %}
                                         <button type="button" 
@@ -377,6 +381,62 @@
                                     </div>
                                 </td>
                             </tr>
+                            {% if record._is_observation and record.status in ['EM_OBSERVACAO', 'AGUARDANDO_DECISAO'] %}
+                            <tr id="detail-observation-{{ record.id }}" class="detail-row" style="display:none;">
+                                <td colspan="7" class="p-0">
+                                    <div class="inline-detail-card">
+                                        <div class="inline-detail-header">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">
+                                                    <i class="bi bi-gear me-2"></i>
+                                                    Gerenciar Observação - {{ record.patient_name }}
+                                                </h5>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    {% if record.fa_datetime %}
+                                                    <span class="badge {% if record.status == 'AGUARDANDO_DECISAO' %}bg-danger{% else %}bg-info{% endif %} observation-timer" 
+                                                          data-fa-datetime="{{ record.fa_datetime.isoformat() }}">
+                                                        <i class="bi bi-clock-history me-1"></i>
+                                                        <span class="timer-display">Calculando...</span>
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="inline-detail-body">
+                                            {% if record.status == 'AGUARDANDO_DECISAO' %}
+                                            <div class="alert alert-danger mb-3 py-2">
+                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                <strong>Atenção!</strong> Mais de 24h em observação - Decisão urgente necessária.
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <p class="text-muted mb-3 text-center">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                Escolha uma ação para prosseguir com o atendimento do paciente.
+                                            </p>
+                                            
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <button type="button" 
+                                                        class="btn btn-success"
+                                                        onclick="evolveObservation({{ record.id }}, '{{ record.patient_name }}')">
+                                                    <i class="bi bi-arrow-up-circle me-1"></i>Internar Paciente
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-danger"
+                                                        onclick="cancelObservation({{ record.id }}, '{{ record.patient_name }}')">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancelar Observação
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-secondary cancel-observation-panel" 
+                                                        data-record-id="{{ record.id }}">
+                                                    <i class="bi bi-x-circle me-1"></i>Fechar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
                             {% if record._nir_phase == 'FINAL' %}
                             <tr id="detail-alta-{{ record.id }}" class="detail-row" style="display:none;">
                                 <td colspan="7" class="p-0">
@@ -464,43 +524,6 @@
     </div>
 </div>
 
-<!-- Modal para Evoluir Observação -->
-<div class="modal fade" id="evolveObservationModal" tabindex="-1" aria-labelledby="evolveObservationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="evolveObservationModalLabel">
-                    <i class="bi bi-arrow-up-circle me-2"></i>Evoluir para Internação
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <form id="evolveObservationForm" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>Paciente:</strong> <span id="evolvePatientName"></span>
-                    </div>
-                    <p class="mb-3">Ao confirmar, o paciente será convertido de <strong>Observação</strong> para <strong>Internação normal</strong>.</p>
-                    <p class="text-muted small mb-0">
-                        <i class="bi bi-lightbulb me-1"></i>
-                        O status será alterado para <strong>PENDENTE</strong> e você poderá preencher todos os dados de internação.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i>Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle me-1"></i>Confirmar Internação
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Cancelar Observação -->
 <div class="modal fade" id="cancelObservationModal" tabindex="-1" aria-labelledby="cancelObservationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -545,160 +568,6 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.toggle-detail-alta');
-            if (!btn) return;
-
-            const id = btn.getAttribute('data-detail-id');
-            if (!id) return;
-
-            const row = document.getElementById(id);
-            if (!row) return;
-
-            const visible = row.style.display !== 'none';
-
-            if (visible) {
-                const recordId = id.replace('detail-alta-', '');
-                resetAltaForm(recordId);
-            }
-
-            document.querySelectorAll('tr.detail-row').forEach(r => {
-                if (r !== row && r.style.display !== 'none') {
-                    r.style.display = 'none';
-
-                    const otherId = r.id;
-                    document.querySelectorAll(`button.toggle-detail-alta[data-detail-id="${otherId}"] .btn-text`).forEach(span => {
-                        if (span) span.textContent = 'Ver e gerenciar';
-                    });
-                }
-            });
-
-            row.style.display = visible ? 'none' : '';
-
-            const card = row.querySelector('.inline-detail-card');
-            if (!visible && card) {
-                card.classList.remove('animate-in');
-                void card.offsetWidth;
-                card.classList.add('animate-in');
-            }
-
-            document.querySelectorAll(`button.toggle-detail-alta[data-detail-id="${id}"] .btn-text`).forEach(span => {
-                if (!span) return;
-                span.textContent = row.style.display === 'none' ? 'Ver e gerenciar' : 'Ocultar painel';
-            });
-
-            if (row.style.display !== 'none') {
-                setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-            }
-        });
-
-        document.addEventListener('click', function (e) {
-            const cancelBtn = e.target.closest('.cancel-alta-form');
-            if (!cancelBtn) return;
-
-            const recordId = cancelBtn.getAttribute('data-record-id');
-            const detailRow = document.getElementById(`detail-alta-${recordId}`);
-            
-            if (detailRow) {
-                detailRow.style.display = 'none';
-                document.querySelectorAll(`button.toggle-detail-alta[data-detail-id="detail-alta-${recordId}"] .btn-text`).forEach(span => {
-                    if (span) span.textContent = 'Ver e gerenciar';
-                });
-                resetAltaForm(recordId);
-            }
-        });
-
-        function resetAltaForm(recordId) {
-            const form = document.getElementById(`alta-form-${recordId}`);
-            if (!form) return;
-
-            form.querySelectorAll('input[type="text"], input[type="date"], select').forEach(input => {
-                if (input.name !== 'csrf_token') {
-                    const originalValue = input.getAttribute('value');
-                    if (originalValue !== null) {
-                        input.value = originalValue;
-                    } else {
-                        input.value = '';
-                    }
-                }
-            });
-
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        }
-
-        document.querySelectorAll('form[id^="alta-form-"]').forEach(form => {
-            form.addEventListener('submit', function (e) {
-                const requiredInputs = this.querySelectorAll('input[required], select[required]');
-                let firstInvalidField = null;
-
-                requiredInputs.forEach(input => {
-                    if (!input.value.trim()) {
-                        input.classList.add('is-invalid');
-                        if (!firstInvalidField) {
-                            firstInvalidField = input;
-                        }
-                    } else {
-                        input.classList.remove('is-invalid');
-                    }
-                });
-
-                if (firstInvalidField) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    firstInvalidField.focus();
-                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return false;
-                }
-
-                const submitBtn = this.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
-
-                return true;
-            });
-        });
-    });
-
-    function evolveObservation(recordId, patientName) {
-        document.getElementById('evolvePatientName').textContent = patientName;
-        const form = document.getElementById('evolveObservationForm');
-        form.action = `/nir/observacao/${recordId}/evoluir`;
-        
-        const modal = new bootstrap.Modal(document.getElementById('evolveObservationModal'));
-        modal.show();
-    }
-
-    function cancelObservation(recordId, patientName) {
-        document.getElementById('cancelPatientName').textContent = patientName;
-        document.getElementById('cancelReason').value = '';
-        const form = document.getElementById('cancelObservationForm');
-        form.action = `/nir/observacao/${recordId}/cancelar`;
-        
-        const modal = new bootstrap.Modal(document.getElementById('cancelObservationModal'));
-        modal.show();
-    }
-
-    document.getElementById('evolveObservationForm').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processando...';
-    });
-
-    document.getElementById('cancelObservationForm').addEventListener('submit', function(e) {
-        const reason = document.getElementById('cancelReason').value.trim();
-        
-        if (!reason) {
-            e.preventDefault();
-            alert('Por favor, informe o motivo do cancelamento.');
-            return false;
-        }
-        
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processando...';
-    });
-</script>
+<script src="{{ url_for('static', filename='nir/nir-form.js') }}"></script>
 
 {% endblock %}

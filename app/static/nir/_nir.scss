@@ -1136,6 +1136,26 @@
     box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.25), 0 4px 16px rgba(14, 165, 233, 0.3);
 }
 
+.nir-wait-chip.chip-cancelled.active {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25), 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.nir-wait-chip.chip-observation.active {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.observation-timer {
+    .timer-display {
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        margin-left: 0.25rem;
+    }
+}
+
 .nir-empty-state {
     text-align: center;
     padding: 4rem 2rem;
@@ -1589,7 +1609,7 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
         transition: all 0.3s ease;
         border: none;
         font-size: 0.9rem;
-        
+
         i {
             font-size: 1.1em;
         }
@@ -1608,7 +1628,7 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
         border: 2px solid #cbd5e1;
         color: #475569;
         background: white;
-        
+
         &:hover {
             background-color: #f1f5f9;
             border-color: #94a3b8;
@@ -1622,7 +1642,7 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
         background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
         color: #78350f;
         box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-        
+
         &:hover {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: #78350f;
@@ -1635,18 +1655,18 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: #ffffff;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        
+
         &:hover {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: #ffffff;
             box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
         }
-        
+
         &:disabled {
             background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
             cursor: not-allowed;
             opacity: 0.6;
-            
+
             &:hover {
                 transform: none;
                 box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
@@ -1659,7 +1679,7 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #ffffff;
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        
+
         &:hover {
             background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
             color: #ffffff;
@@ -1672,7 +1692,7 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
 @media (max-width: 768px) {
     .nir-header .btn {
         padding: 0.5rem 0.75rem;
-        
+
         span {
             display: none;
         }
@@ -1736,7 +1756,7 @@ td .btn-group .nir-icon-btn+.nir-icon-btn {
 }
 
 // Estado quando o radio button está selecionado
-input[type="radio"]:checked + .record-type-card {
+input[type="radio"]:checked+.record-type-card {
     border-color: #3b82f6;
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 12px 32px rgba(59, 130, 246, 0.15);
@@ -1753,7 +1773,7 @@ input[type="radio"]:checked + .record-type-card {
 }
 
 // Estado selecionado para Observação (azul)
-input[type="radio"][value="observation"]:checked + .record-type-card {
+input[type="radio"][value="observation"]:checked+.record-type-card {
     border-color: #3b82f6;
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 
@@ -1767,7 +1787,7 @@ input[type="radio"][value="observation"]:checked + .record-type-card {
 }
 
 // Estado selecionado para Internação (verde)
-input[type="radio"][value="admission"]:checked + .record-type-card {
+input[type="radio"][value="admission"]:checked+.record-type-card {
     border-color: #10b981;
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 12px 32px rgba(16, 185, 129, 0.15);
@@ -1809,4 +1829,33 @@ input[type="radio"][value="admission"]:checked + .record-type-card {
             font-size: 0.8rem !important;
         }
     }
+}
+
+.inline-detail-card {
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inline-detail-card.animate-in {
+    animation: slideDown 0.2s ease-out;
+}
+
+.inline-detail-body .btn {
+    transition: all 0.2s ease;
+}
+
+.inline-detail-body .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
