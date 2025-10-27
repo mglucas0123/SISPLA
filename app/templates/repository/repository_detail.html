@@ -63,10 +63,37 @@
 
     <div class="form-card file-explorer-card">
         <div class="form-card-header">
-            <h3 class="form-title">
-                <i class="bi bi-files me-2"></i>
-                Explorador de Arquivos
-            </h3>
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="form-title mb-0">
+                    <i class="bi bi-files me-2"></i>
+                    Explorador de Arquivos
+                </h3>
+                <div class="search-filter-container" style="min-width: 250px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-color: #e0e0e0;">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            id="file-filter-input" 
+                            class="form-control border-start-0" 
+                            placeholder="Filtrar arquivos/pastas..."
+                            style="border-color: #e0e0e0;"
+                        >
+                        <button 
+                            class="btn btn-outline-secondary" 
+                            id="clear-filter-btn" 
+                            type="button"
+                            style="display: none;"
+                        >
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <span id="filter-result-count"></span>
+                    </small>
+                </div>
+            </div>
         </div>
         <div class="form-card-body">
             {% if not folders and not files %}
@@ -742,10 +769,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ====================================================================
-    //                      MODAL DE UPLOAD
-    // ====================================================================
-
     const uploadModal = document.getElementById('uploadModal');
     if (uploadModal) {
         const uploadZone = uploadModal.querySelector('#upload-zone');
@@ -819,10 +842,261 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ====================================================================
-    //                         INICIALIZAÇÃO
-    // ====================================================================
     applyFileIcons();
+
+    const filterInput = document.getElementById('file-filter-input');
+    const clearFilterBtn = document.getElementById('clear-filter-btn');
+    const filterResultCount = document.getElementById('filter-result-count');
+    let allRepositoryItems = [];
+    let isLoadingAllItems = false;
+
+    async function loadAllRepositoryItems() {
+        if (isLoadingAllItems) return;
+        isLoadingAllItems = true;
+        
+        try {
+            const response = await fetch(`/repository/${repoId}/all-files`);
+            if (!response.ok) throw new Error('Erro ao carregar arquivos');
+            
+            const data = await response.json();
+            allRepositoryItems = data.items || [];
+            console.log(`Carregados ${allRepositoryItems.length} itens do repositório`);
+        } catch (error) {
+            console.error('Erro ao carregar todos os itens:', error);
+            allRepositoryItems = [];
+        }
+    }
+
+    loadAllRepositoryItems();
+
+    if (filterInput) {
+        filterInput.addEventListener('input', function() {
+            const filterTerm = this.value.toLowerCase().trim();
+            
+            if (filterTerm) {
+                clearFilterBtn.style.display = 'block';
+                globalSearchFilter(filterTerm);
+            } else {
+                clearFilterBtn.style.display = 'none';
+                showAllRows();
+                updateResultCount();
+            }
+        });
+    }
+
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', function() {
+            filterInput.value = '';
+            clearFilterBtn.style.display = 'none';
+            showAllRows();
+            updateResultCount();
+            filterInput.focus();
+        });
+    }
+
+    function globalSearchFilter(term) {
+        if (!tableBody || allRepositoryItems.length === 0) {
+            filterRows(term);
+            return;
+        }
+
+        const filteredItems = allRepositoryItems.filter(item => 
+            item.name.toLowerCase().includes(term)
+        );
+
+        tableBody.querySelectorAll('.file-row').forEach(row => {
+            row.style.display = 'none';
+        });
+
+        hideNoResultsMessage();
+
+        let visibleCount = 0;
+        const visibleInCurrentFolder = [];
+        const inOtherFolders = [];
+
+        filteredItems.forEach(item => {
+            const row = tableBody.querySelector(`[data-file-id="${item.id}"]`);
+            if (row) {
+                row.style.display = '';
+                visibleCount++;
+                visibleInCurrentFolder.push(item);
+            } else {
+                inOtherFolders.push(item);
+            }
+        });
+
+        if (inOtherFolders.length > 0) {
+            inOtherFolders.forEach(item => {
+                createDynamicRow(item);
+            });
+            visibleCount += inOtherFolders.length;
+        }
+
+        updateResultCount(filteredItems.length, allRepositoryItems.length);
+
+        if (filteredItems.length === 0) {
+            showGlobalNoResultsMessage(term);
+        }
+    }
+
+    function createDynamicRow(item) {
+        if (!tableBody) return;
+
+        const row = document.createElement('tr');
+        row.className = `file-row ${item.type === 'folder' ? 'is-folder' : ''}`;
+        row.dataset.fileId = item.id;
+        row.dataset.fileName = item.name;
+        row.dataset.fileExt = item.extension || 'folder';
+        row.dataset.dynamic = 'true';
+        row.draggable = true;
+        row.tabIndex = 0;
+
+        let icon = '';
+        let type = '';
+        let size = '--';
+
+        if (item.type === 'folder') {
+            icon = '<i class="bi bi-folder-fill"></i>';
+            type = 'Pasta de arquivos';
+        } else {
+            icon = '<i class="bi"></i>';
+            type = (item.extension || '').replace('.', '').toUpperCase() || 'Arquivo';
+        }
+
+        row.innerHTML = `
+            <td class="ps-4">
+                <div class="file-item">
+                    <div class="file-icon ${item.type === 'folder' ? 'folder-icon' : ''}">
+                        ${icon}
+                    </div>
+                    <span class="file-name">${item.name}</span>
+                    <small class="text-muted ms-2" style="font-size: 0.75rem;">(em outra pasta)</small>
+                </div>
+            </td>
+            <td class="file-date">${item.date ? new Date(item.date).toLocaleString('pt-BR') : '-'}</td>
+            <td class="file-type-text">${type}</td>
+            <td class="text-end pe-4 file-size-text">${size}</td>
+        `;
+
+        tableBody.appendChild(row);
+
+        // Aplicar ícone se for arquivo
+        if (item.type === 'file') {
+            const iconClass = iconMap[item.extension] || defaultIcon;
+            const iconElement = row.querySelector('.file-icon i');
+            if (iconElement) {
+                iconElement.className = `bi ${iconClass}`;
+            }
+        }
+    }
+
+    function filterRows(term) {
+        if (!tableBody) return;
+
+        let visibleCount = 0;
+        const rows = tableBody.querySelectorAll('.file-row');
+
+        rows.forEach(row => {
+            const fileName = row.dataset.fileName ? row.dataset.fileName.toLowerCase() : '';
+            
+            if (fileName.includes(term)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        updateResultCount(visibleCount, rows.length);
+        
+        if (visibleCount === 0) {
+            showNoResultsMessage();
+        } else {
+            hideNoResultsMessage();
+        }
+    }
+
+    function showAllRows() {
+        if (!tableBody) return;
+        tableBody.querySelectorAll('.file-row').forEach(row => {
+            row.style.display = '';
+        });
+        // Remover linhas dinâmicas
+        tableBody.querySelectorAll('.file-row[data-dynamic="true"]').forEach(row => {
+            row.remove();
+        });
+        hideNoResultsMessage();
+    }
+
+    function updateResultCount(visibleCount, totalCount) {
+        if (!filterResultCount) return;
+
+        if (visibleCount === undefined || totalCount === undefined) {
+            // Modo sem filtro
+            const totalRows = tableBody ? tableBody.querySelectorAll('.file-row').length : 0;
+            if (totalRows > 0) {
+                filterResultCount.textContent = `${totalRows} ${totalRows === 1 ? 'item' : 'itens'}`;
+            } else {
+                filterResultCount.textContent = '';
+            }
+        } else {
+            // Modo com filtro
+            if (visibleCount === 0) {
+                filterResultCount.textContent = 'Nenhum resultado encontrado em todo o repositório';
+                filterResultCount.classList.add('text-danger');
+            } else {
+                filterResultCount.textContent = `${visibleCount} de ${totalCount} ${totalCount === 1 ? 'item' : 'itens'} encontrado(s) em todo o repositório`;
+                filterResultCount.classList.remove('text-danger');
+            }
+        }
+    }
+
+    function showNoResultsMessage() {
+        let noResultsRow = document.getElementById('no-results-row');
+        
+        if (!noResultsRow && tableBody) {
+            noResultsRow = document.createElement('tr');
+            noResultsRow.id = 'no-results-row';
+            noResultsRow.innerHTML = `
+                <td colspan="4" class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="bi bi-search" style="font-size: 2rem; opacity: 0.5;"></i>
+                        <p class="mt-3 mb-0">Nenhum arquivo ou pasta encontrado nesta pasta</p>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(noResultsRow);
+        }
+    }
+
+    function showGlobalNoResultsMessage(term) {
+        let noResultsRow = document.getElementById('no-results-row');
+        
+        if (!noResultsRow && tableBody) {
+            noResultsRow = document.createElement('tr');
+            noResultsRow.id = 'no-results-row';
+            noResultsRow.innerHTML = `
+                <td colspan="4" class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="bi bi-search" style="font-size: 2rem; opacity: 0.5;"></i>
+                        <p class="mt-3 mb-0">Nenhum resultado para "<strong>${term}</strong>" em todo o repositório</p>
+                        <small class="mt-2 d-block">Tente com outro termo de busca</small>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(noResultsRow);
+        }
+    }
+
+    function hideNoResultsMessage() {
+        const noResultsRow = document.getElementById('no-results-row');
+        if (noResultsRow) {
+            noResultsRow.remove();
+        }
+    }
+
+    // Inicializar contagem de resultados
+    updateResultCount();
 });
 </script>
 {% endblock %}

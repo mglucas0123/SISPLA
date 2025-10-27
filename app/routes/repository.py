@@ -399,3 +399,62 @@ def move_file():
         if os.path.exists(new_path):
             shutil.move(new_path, old_path)
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+#<!--- BUSCAR TODOS OS ARQUIVOS RECURSIVAMENTE NO REPOSITÓRIO --->
+@repository_bp.route('/repository/<int:repo_id>/all-files', methods=['GET'])
+@login_required
+def get_all_repository_files(repo_id):
+    """Retorna todos os arquivos e pastas do repositório em formato hierárquico"""
+    repo = Repository.query.get_or_404(repo_id)
+    if not has_repo_access(repo, current_user):
+        abort(403)
+
+    def get_file_tree(parent_id=None):
+        """Recursivamente obtém todos os arquivos e pastas"""
+        items = []
+        
+        # Obter pastas
+        folders = File.query.filter_by(
+            repository_id=repo.id,
+            is_folder=True,
+            parent_id=parent_id
+        ).order_by(File.name).all()
+        
+        # Obter arquivos
+        files = File.query.filter_by(
+            repository_id=repo.id,
+            is_folder=False,
+            parent_id=parent_id
+        ).order_by(File.name).all()
+        
+        # Adicionar pastas
+        for folder in folders:
+            folder_data = {
+                'id': folder.id,
+                'name': folder.name,
+                'type': 'folder',
+                'parent_id': folder.parent_id,
+                'date': folder.date_uploaded.isoformat() if folder.date_uploaded else None,
+            }
+            items.append(folder_data)
+            # Recursivamente adicionar subitens
+            items.extend(get_file_tree(folder.id))
+        
+        # Adicionar arquivos
+        for file_obj in files:
+            _, extension = os.path.splitext(file_obj.filename)
+            file_data = {
+                'id': file_obj.id,
+                'name': file_obj.name,
+                'type': 'file',
+                'extension': extension.lower(),
+                'parent_id': file_obj.parent_id,
+                'date': file_obj.date_uploaded.isoformat() if file_obj.date_uploaded else None,
+            }
+            items.append(file_data)
+        
+        return items
+    
+    all_items = get_file_tree()
+    return jsonify({'success': True, 'items': all_items})

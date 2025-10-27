@@ -94,10 +94,37 @@
 
         <div class="course-progress-table-section">
             <div class="course-progress-table-header">
-                <h5 class="course-progress-table-title">
-                    <i class="bi bi-person-lines-fill"></i>
-                    Desempenho por Aluno
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="course-progress-table-title mb-0">
+                        <i class="bi bi-person-lines-fill"></i>
+                        Desempenho por Aluno
+                    </h5>
+                    <div class="search-filter-container" style="min-width: 300px;">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0" style="border-color: #e0e0e0;">
+                                <i class="bi bi-search text-muted"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                id="student-filter-input" 
+                                class="form-control border-start-0" 
+                                placeholder="Buscar aluno..."
+                                style="border-color: #e0e0e0;"
+                            >
+                            <button 
+                                class="btn btn-outline-secondary" 
+                                id="clear-student-filter-btn" 
+                                type="button"
+                                style="display: none;"
+                            >
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <span id="student-filter-result-count"></span>
+                        </small>
+                    </div>
+                </div>
             </div>
             
             <div class="course-progress-table-wrapper">
@@ -113,13 +140,21 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for p in progress_data %}
-                        {% set user = p.user %}
+                    <tbody id="students-table-body">
+                        {% for item in progress_data %}
+                        {% set user = item.user %}
+                        {% set p = item.progress %}
+                        {% set has_progress = item.has_progress %}
                         {% set attempt_data = attempts_map.get(user.id) %}
-                        {% set percent = ((p.last_watched_timestamp / course.duration_seconds) * 100)|round if course.duration_seconds > 0 else 0 %}
-                        {% if p.completed_at %}{% set percent = 100 %}{% endif %}
-                        <tr>
+                        
+                        {% if p %}
+                            {% set percent = ((p.last_watched_timestamp / course.duration_seconds) * 100)|round if course.duration_seconds > 0 else 0 %}
+                            {% if p.completed_at %}{% set percent = 100 %}{% endif %}
+                        {% else %}
+                            {% set percent = 0 %}
+                        {% endif %}
+                        
+                        <tr class="student-row" data-student-name="{{ user.name.lower() }}" data-has-progress="{{ 'true' if has_progress else 'false' }}">
                             <td>{{ user.name }}</td>
                             <td>
                                 <div class="course-progress-bar-container">
@@ -139,12 +174,12 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if p.completed_at %}
+                                {% if p and p.completed_at %}
                                     <span class="course-progress-status status-completed">
                                         <i class="bi bi-check-circle-fill"></i>
                                         Concluído
                                     </span>
-                                {% elif p.last_watched_timestamp > 0 %}
+                                {% elif p and p.last_watched_timestamp > 0 %}
                                     <span class="course-progress-status status-in-progress">
                                         <i class="bi bi-play-circle-fill"></i>
                                         Em Andamento
@@ -157,14 +192,15 @@
                                 {% endif %}
                             </td>
                             <td class="text-muted">
-                                {{ p.created_at | format_date_time if p.created_at else '--' }}
+                                {{ p.created_at | format_date_time if p and p.created_at else '--' }}
                             </td>
                             <td class="text-muted">
-                                {{ p.completed_at | format_date_time if p.completed_at else '--' }}
+                                {{ p.completed_at | format_date_time if p and p.completed_at else '--' }}
                             </td>
                             <td>
+                                {% if has_progress %}
                                 <form method="POST" 
-                                    action="{{ url_for('admin.courses.reset_user_course_progress', course_id=course.id, user_id=p.user_id) }}" 
+                                    action="{{ url_for('admin.courses.reset_user_course_progress', course_id=course.id, user_id=user.id) }}" 
                                     onsubmit="return confirm('Tem certeza que deseja resetar todo o progresso deste aluno? Esta ação não pode ser desfeita.');"
                                     style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -172,6 +208,9 @@
                                         <i class="bi bi-arrow-counterclockwise"></i>
                                     </button>
                                 </form>
+                                {% else %}
+                                <span class="text-muted">--</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
@@ -182,7 +221,7 @@
                                         <i class="bi bi-person-x"></i>
                                     </div>
                                     <div class="course-progress-empty-text">
-                                        Ninguém iniciou este treinamento ainda.
+                                        Nenhum usuário cadastrado no sistema.
                                     </div>
                                 </div>
                             </td>
@@ -268,6 +307,98 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+    }
+
+    // Filtro de busca de alunos
+    const filterInput = document.getElementById('student-filter-input');
+    const clearFilterBtn = document.getElementById('clear-student-filter-btn');
+    const filterResultCount = document.getElementById('student-filter-result-count');
+    const tableBody = document.getElementById('students-table-body');
+
+    if (filterInput && tableBody) {
+        filterInput.addEventListener('input', function() {
+            const filterTerm = this.value.toLowerCase().trim();
+            
+            if (filterTerm) {
+                clearFilterBtn.style.display = 'block';
+                filterStudents(filterTerm);
+            } else {
+                clearFilterBtn.style.display = 'none';
+                showAllStudents();
+                updateResultCount();
+            }
+        });
+
+        if (clearFilterBtn) {
+            clearFilterBtn.addEventListener('click', function() {
+                filterInput.value = '';
+                clearFilterBtn.style.display = 'none';
+                showAllStudents();
+                updateResultCount();
+                filterInput.focus();
+            });
+        }
+
+        function filterStudents(term) {
+            const rows = tableBody.querySelectorAll('.student-row');
+            let visibleCount = 0;
+            let withProgress = 0;
+            let withoutProgress = 0;
+
+            rows.forEach(row => {
+                const studentName = row.dataset.studentName || '';
+                const hasProgress = row.dataset.hasProgress === 'true';
+                
+                if (studentName.includes(term)) {
+                    row.style.display = '';
+                    visibleCount++;
+                    if (hasProgress) {
+                        withProgress++;
+                    } else {
+                        withoutProgress++;
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            updateResultCount(visibleCount, rows.length, withProgress, withoutProgress);
+        }
+
+        function showAllStudents() {
+            const rows = tableBody.querySelectorAll('.student-row');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+        }
+
+        function updateResultCount(visibleCount, totalCount, withProgress, withoutProgress) {
+            if (!filterResultCount) return;
+
+            if (visibleCount === undefined || totalCount === undefined) {
+                const rows = tableBody ? tableBody.querySelectorAll('.student-row') : [];
+                const total = rows.length;
+                const started = Array.from(rows).filter(r => r.dataset.hasProgress === 'true').length;
+                const notStarted = total - started;
+                
+                if (total > 0) {
+                    filterResultCount.textContent = `${total} ${total === 1 ? 'aluno' : 'alunos'} (${started} iniciaram, ${notStarted} não iniciaram)`;
+                } else {
+                    filterResultCount.textContent = '';
+                }
+            } else {
+                if (visibleCount === 0) {
+                    filterResultCount.textContent = 'Nenhum aluno encontrado';
+                    filterResultCount.classList.add('text-danger');
+                } else {
+                    filterResultCount.textContent = `${visibleCount} de ${totalCount} ${totalCount === 1 ? 'aluno' : 'alunos'} (${withProgress} iniciaram, ${withoutProgress} não iniciaram)`;
+                    filterResultCount.classList.remove('text-danger');
+                }
+            }
+        }
+
+        // Inicializar contagem
+        updateResultCount();
     }
 });
 </script>

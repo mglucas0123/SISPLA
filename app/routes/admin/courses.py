@@ -213,20 +213,46 @@ def delete_course(course_id):
 @require_permission('admin-total')
 def view_course_progress(course_id):
     """Ver progresso dos usuários no curso"""
+    from app.models import User
     course = Course.query.get_or_404(course_id)
 
+    # Buscar todos os usuários ativos
+    all_users = User.query.filter_by(is_active=True).all()
+    
+    # Criar mapa de progresso dos usuários
+    progress_map = {}
     progress_records = UserCourseProgress.query.filter_by(course_id=course_id).all()
+    for progress in progress_records:
+        progress_map[progress.user_id] = progress
 
-    total_users = UserCourseProgress.query.filter_by(course_id=course_id).count()
+    # Criar lista de dados combinando todos os usuários
+    all_progress_data = []
+    for user in all_users:
+        if user.id in progress_map:
+            # Usuário tem progresso
+            all_progress_data.append({
+                'user': user,
+                'progress': progress_map[user.id],
+                'has_progress': True
+            })
+        else:
+            # Usuário não iniciou
+            all_progress_data.append({
+                'user': user,
+                'progress': None,
+                'has_progress': False
+            })
+
+    # Ordenar: primeiro quem tem progresso, depois por nome
+    all_progress_data.sort(key=lambda x: (not x['has_progress'], x['user'].name.lower()))
+
+    total_users = len(all_users)
     users_completed = UserCourseProgress.query.filter(
         UserCourseProgress.course_id == course_id,
         UserCourseProgress.completed_at.isnot(None)
     ).count()
     completion_rate = (users_completed / total_users * 100) if total_users > 0 else 0
-    users_with_progress = UserCourseProgress.query.filter(
-        UserCourseProgress.course_id == course_id,
-        UserCourseProgress.last_watched_timestamp > 0
-    ).count()
+    users_with_progress = len([x for x in all_progress_data if x['has_progress']])
 
     total_score = 0
     quiz_attempts = 0
@@ -250,12 +276,44 @@ def view_course_progress(course_id):
 
     average_score = (total_score / quiz_attempts) if quiz_attempts > 0 else 0
 
+    # Preparar dados do gráfico
+    chart_data = {'labels': [], 'data': []}
+    if course.quiz and quiz_attempts > 0:
+        score_ranges = {
+            '0-20%': 0,
+            '21-40%': 0,
+            '41-60%': 0,
+            '61-80%': 0,
+            '81-100%': 0
+        }
+        for user_id, attempt_data in attempts_map.items():
+            score = attempt_data.get('score', 0)
+            if score <= 20:
+                score_ranges['0-20%'] += 1
+            elif score <= 40:
+                score_ranges['21-40%'] += 1
+            elif score <= 60:
+                score_ranges['41-60%'] += 1
+            elif score <= 80:
+                score_ranges['61-80%'] += 1
+            else:
+                score_ranges['81-100%'] += 1
+        
+        chart_data = {
+            'labels': list(score_ranges.keys()),
+            'data': list(score_ranges.values())
+        }
+
+    import json
+    chart_data_json = json.dumps(chart_data)
+
     return render_template(
         'training/course_progress.html',
         course=course,
-        progress_data=progress_records,
+        progress_data=all_progress_data,
         average_score=average_score,
         attempts_map=attempts_map,
+        chart_data_json=chart_data_json,
         progress_stats={
             'total_users': total_users,
             'users_completed': users_completed,

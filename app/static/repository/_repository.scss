@@ -2338,3 +2338,157 @@
     }
   }
 }
+
+// ===================================================================
+//                    SEARCH FILTER STYLES
+// ===================================================================
+
+.repository-page .search-filter-container {
+  .input-group {
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: var(--repo-transition);
+
+    &:focus-within {
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+    }
+
+    .input-group-text {
+      padding: 0 1rem;
+      border: none;
+      background: white;
+      color: var(--repo-text-muted);
+      transition: var(--repo-transition);
+      font-weight: 500;
+    }
+
+    #file-filter-input {
+      padding: 0.875rem 1rem;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: var(--repo-transition);
+
+      &::placeholder {
+        color: var(--repo-text-muted);
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: none;
+        background: white;
+
+        &+.input-group-text {
+          color: var(--repo-primary);
+        }
+      }
+    }
+
+    #clear-filter-btn {
+      padding: 0 0.75rem;
+      border: none;
+      background: white;
+      color: var(--repo-text-muted);
+      transition: var(--repo-transition);
+      cursor: pointer;
+
+      &:hover {
+        color: var(--repo-danger);
+        background: rgba(239, 68, 68, 0.05);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      i {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  #filter-result-count {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--repo-text-muted);
+    transition: var(--repo-transition);
+
+    &.text-danger {
+      color: var(--repo-danger);
+      font-weight: 600;
+    }
+  }
+}
+
+// No results message styling
+.repository-page #no-results-row {
+  animation: fadeInUp 0.3s ease-out;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(239, 68, 68, 0.01) 100%);
+
+  td {
+    border: none;
+    padding: 3rem 2rem !important;
+  }
+
+  .text-muted {
+    color: var(--repo-text-muted) !important;
+
+    i {
+      color: var(--repo-danger);
+      opacity: 0.6;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+  }
+}
+
+// Animation for no results message
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive adjustments for search filter
+@media (max-width: 768px) {
+  .repository-page .form-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .repository-page .search-filter-container {
+    min-width: 100% !important;
+
+    .input-group {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .repository-page .search-filter-container {
+    min-width: 100% !important;
+
+    #file-filter-input {
+      font-size: 1rem;
+      padding: 1rem 0.75rem;
+    }
+
+    #filter-result-count {
+      font-size: 0.75rem;
+    }
+  }
+}
