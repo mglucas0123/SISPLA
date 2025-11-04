@@ -14,6 +14,7 @@ class RBACManager:
             {'name': 'editar-registro-nir', 'description': 'Editar qualquer parte de um registro NIR', 'module': 'nir'},
             {'name': 'salvar-registro-nir', 'description': 'Salvar um registro do NIR', 'module': 'nir'},
             {'name': 'excluir-registro-nir', 'description': 'Excluir um registro do NIR', 'module': 'nir'},
+            {'name': 'excluir-registro-nir-geral', 'description': 'Excluir um registro do NIR geral', 'module': 'nir'},
             
             # Módulo Passagem de Plantão
             {'name': 'criar-registro-plantao', 'description': 'Criar um novo registro de plantão', 'module': 'passagem_plantao'},

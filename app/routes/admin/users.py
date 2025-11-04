@@ -31,6 +31,7 @@ def create_user():
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
     email = request.form.get("email", "").strip()
+    job_title = request.form.get("job_title", "").strip()
     validation_errors = validate_user_data(name, username, email)
     if validation_errors:
         for error in validation_errors:
@@ -61,7 +62,8 @@ def create_user():
         username=username,
         password=password_hash,
         email=email,
-        profile="USER"
+        profile="USER",
+        job_title=job_title if job_title else None
     )
     if selected_roles:
         for role_name in selected_roles:
@@ -271,6 +273,7 @@ def edit_basic_data(user_id):
     name = request.form.get("name", "").strip()
     username = request.form.get("username", "").strip()
     email = request.form.get("email", "").strip()
+    job_title = request.form.get("job_title", "").strip()
     
     validation_errors = validate_user_data(name, username, email)
     if validation_errors:
@@ -297,6 +300,7 @@ def edit_basic_data(user_id):
     user_to_edit.name = name
     user_to_edit.username = username
     user_to_edit.email = email
+    user_to_edit.job_title = job_title if job_title else None
     
     db.session.commit()
     

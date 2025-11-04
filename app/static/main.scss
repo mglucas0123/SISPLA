@@ -2,7 +2,10 @@
 @import 'form/print_form';
 @import 'panel/panel';
 @import 'panel/notice';
+@import 'panel/panel_notices';
+@import 'panel/gestao_hub';
 @import 'panel/navbar';
+@import 'panel/jornal_section';
 @import 'repository/repository';
 @import 'course/manage_course';
 @import 'util/flash_messages'; 
@@ -18,3 +21,4 @@
 @import 'roles/roles_permissions';
 @import 'util/colors';
 @import 'nir/cc';
+@import 'course/certificate';

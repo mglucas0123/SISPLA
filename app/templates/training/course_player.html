@@ -2,12 +2,66 @@
 {% extends "navbar.html" %}
 {% block title %}{{ course.title }}{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+
+    .course-pdf-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .course-pdf-actions .course-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .course-pdf-actions .course-btn-outline {
+        background: transparent;
+        color: #e2e8f0;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .course-pdf-actions .course-btn-outline:hover {
+        background: rgba(226, 232, 240, 0.95);
+        color: #0f172a;
+        border-color: transparent;
+    }
+
+    .course-pdf-frame {
+        width: 100%;
+        height: 90vh;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #050b1a;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.35);
+        box-sizing: border-box;
+    }
+
+    .course-pdf-frame iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="course-page">
     <div class="container py-4">
         {% include 'partials/_flash_messages.html' %}
         
         <div class="course-player-container">
+            {% set content_type = course.content_type or "video" %}
+            {% set is_pdf = (content_type == "pdf") %}
+            {% set has_quiz = quiz and quiz.questions|length > 0 %}
             <div class="course-player-header">
                 <div class="course-player-breadcrumb">
                     <a href="{{ url_for('training.course_list_page') }}" class="course-breadcrumb-link">
@@ -31,11 +85,11 @@
                 </div>
             </div>
 
-            <div id="video-wrapper" class="course-video-card">
+            <div id="course-content-wrapper" class="course-video-card">
                 <div class="course-video-header">
                     <div class="course-video-title">
-                        <i class="bi bi-play-circle-fill"></i>
-                        Vídeo Principal
+                        <i class="bi {{ 'bi-file-earmark-pdf-fill' if is_pdf else 'bi-play-circle-fill' }}"></i>
+                        {{ 'Conteúdo em PDF' if is_pdf else 'Vídeo Principal' }}
                     </div>
                     <div class="course-video-status">
                         {% if is_completed %}
@@ -45,13 +99,18 @@
                             </span>
                         {% else %}
                             <span class="course-status-badge course-status-progress">
-                                <i class="bi bi-play-circle"></i>
-                                Em Progresso
+                                <i class="bi {{ 'bi-file-earmark-medical' if is_pdf else 'bi-play-circle' }}"></i>
+                                {{ 'Disponível' if is_pdf else 'Em Progresso' }}
                             </span>
                         {% endif %}
                     </div>
                 </div>
                 <div class="course-video-container">
+                    {% if is_pdf %}
+                        <div class="course-pdf-frame">
+                            <iframe class="course-pdf-viewer" src="{{ url_for('training.serve_video', course_id=course.id) }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" title="Visualizador de PDF do curso"></iframe>
+                        </div>
+                    {% else %}
                     <video id="course-video" class="course-video" controls controlsList="nodownload">
                         <source src="{{ url_for('training.serve_video', course_id=course.id) }}" type="video/mp4">
                         <div class="course-video-error">
@@ -61,10 +120,10 @@
                             <p>Seu navegador não suporta o player de vídeo.</p>
                         </div>
                     </video>
+                    {% endif %}
                 </div>
             </div>
-
-            <div id="quiz-container" class="course-quiz-card" {% if not is_completed %}style="display: none;"{% endif %}>
+            <div id="quiz-container" class="course-quiz-card" {% if not is_completed and content_type == "video" %}style="display: none;"{% endif %}>
                 <div class="course-quiz-header">
                     <div class="course-quiz-title">
                         <i class="bi bi-patch-question-fill"></i>
@@ -236,6 +295,13 @@
                             <h5 class="course-completion-subtitle">Curso Concluído com Sucesso</h5>
                             <p class="course-completion-text">Você finalizou o curso "{{ course.title }}" e está pronto para aplicar os conhecimentos adquiridos.</p>
                             <div class="course-completion-actions">
+                                <a href="{{ url_for('training.view_certificate', course_id=course.id) }}" 
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="course-btn course-btn-success course-btn-lg">
+                                    <i class="bi bi-award-fill"></i>
+                                    Imprimir Certificado
+                                </a>
                                 <a href="{{ url_for('training.course_list_page') }}" class="course-btn course-btn-primary course-btn-lg">
                                     <i class="bi bi-collection-play-fill"></i>
                                     Explorar Mais Cursos
@@ -254,34 +320,38 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const contentType = '{{ content_type }}';
     const video = document.getElementById('course-video');
-    const videoWrapper = document.getElementById('video-wrapper');
+    const contentWrapper = document.getElementById('course-content-wrapper');
     const statusContainer = document.getElementById('quiz-container');
     const courseId = '{{ course.id }}';
-    const hasQuiz = "{{ 'true' if quiz and quiz.questions|length > 0 else 'false' }}";
-    
-    const isCompleted = JSON.parse('{{ is_completed | tojson }}'); 
+    const hasQuiz = {{ has_quiz | default(false, true) | tojson }};
+    let isCompleted = {{ is_completed | tojson }};
 
-    if (video && !isCompleted) {
-        let lastUpdateTime = 0;
-
-        const saveProgress = (timestamp, finished = false) => {
-            fetch(`/course/${courseId}/progress`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    timestamp: timestamp,
-                    finished: finished
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.completed) {
-                    if (videoWrapper) videoWrapper.style.display = 'none';
-                    if (statusContainer) statusContainer.style.display = 'block';
+    const saveProgress = (timestamp, finished = false) => {
+        return fetch('/course/' + courseId + '/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ timestamp, finished })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.completed) {
+                isCompleted = true;
+                if (contentWrapper && contentType === 'video') {
+                    contentWrapper.style.display = 'none';
                 }
-            });
-        };
+                if (statusContainer) {
+                    statusContainer.style.display = 'block';
+                }
+            }
+            return data;
+        })
+        .catch(() => ({ success: false }));
+    };
+
+    if (contentType === 'video' && video && !isCompleted) {
+        let lastUpdateTime = 0;
 
         video.addEventListener('timeupdate', () => {
             const currentTime = Math.floor(video.currentTime);
@@ -292,12 +362,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         video.addEventListener('ended', () => {
-            saveProgress(video.duration, true);
-            
-            if (hasQuiz) {
-                if (videoWrapper) videoWrapper.style.display = 'none';
-                if (statusContainer) statusContainer.style.display = 'block';
-            }
+            saveProgress(video.duration, true).then(() => {
+                if (hasQuiz && statusContainer) {
+                    statusContainer.style.display = 'block';
+                }
+            });
         });
 
         window.addEventListener('beforeunload', () => {
@@ -305,7 +374,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveProgress(video.currentTime);
             }
         });
+    } else if (contentType === 'pdf' && !isCompleted && !hasQuiz) {
+        saveProgress(0, true);
     }
 });
 </script>
+
 {% endblock %}

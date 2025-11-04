@@ -411,6 +411,7 @@ function evolveObservation(recordId, patientName) {
                                 <option value="ORTOPEDISTA">Ortopedia</option>
                                 <option value="UROLOGISTA">Urologia</option>
                                 <option value="VASCULAR">Vascular</option>
+                                <option value="PEDIATRIA">Pediatria</option>
                             </select>
                         </div>
                         <div class="col-md-12">

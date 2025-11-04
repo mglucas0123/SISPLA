@@ -1,0 +1,229 @@
+<!-- Carousel de Informações - Estilo SBCD -->
+<div id="infoCarousel" class="carousel slide info-carousel-sbcd" data-bs-ride="carousel" data-bs-interval="6000">
+    <!-- Indicadores -->
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+
+    <!-- Slides -->
+    <div class="carousel-inner">
+        <!-- Slide 1 - Jornal SBCD -->
+        <div class="carousel-item active">
+            <div class="info-slide-bg" style="background-image: url('{{ url_for('static', filename='images/slide4.jpg') }}')">
+                <div class="info-slide-overlay"></div>
+                <div class="container">
+                    <div class="row align-items-center">
+                        <!-- Mockup dos Jornais -->
+                        <div class="col-lg-5 col-md-6">
+                            <div class="info-mockup-stack">
+                                <div class="info-mockup-item info-back">
+                                    <img src="{{ url_for('static', filename='images/jornal-sbcd.png') }}" alt="Jornal SBCD">
+                                </div>
+                                <div class="info-mockup-item info-middle">
+                                    <img src="{{ url_for('static', filename='images/jornal-sbcd.png') }}" alt="Jornal SBCD">
+                                </div>
+                                <div class="info-mockup-item info-front">
+                                    <img src="{{ url_for('static', filename='images/jornal-sbcd.png') }}" alt="Jornal SBCD">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo -->
+                        <div class="col-lg-7 col-md-6">
+                            <div class="info-slide-content">
+                                <div class="info-badge">
+                                    <i class="bi bi-newspaper"></i>
+                                    <span>INFORMATIVO</span>
+                                </div>
+                                <h2 class="info-title">JORNAL SBCD</h2>
+                                <div class="info-edition">OUTUBRO/2025</div>
+                                <h3 class="info-highlight">NOVAS UNIDADES NO PIAUÍ E SERGIPE AMPLIAM PRESENÇA DA SBCD NO PAÍS</h3>
+                                <p class="info-description">Confira também: SBCD promove primeiros encontros para formação de multiplicadores de educação em saúde e mais!</p>
+                                <a href="https://sbcdsaude.org.br/informativo-em-destaque/" class="btn-info-action"  target="_blank" rel="noopener noreferrer">
+                                    <span>SAIBA MAIS</span>
+                                    <i class="bi bi-arrow-right-circle-fill"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2 - Treinamentos -->
+        <div class="carousel-item">
+            <div class="info-slide-bg" style="background-image: url('{{ url_for('static', filename='images/slide4.jpg') }}')">
+                <div class="info-slide-overlay info-overlay-training"></div>
+                <div class="container">
+                    <div class="row align-items-center">
+                        <!-- Visual Animado de Treinamentos -->
+                        <div class="col-lg-5 col-md-6">
+                            <div class="training-visual-showcase">
+                                <!-- Círculos decorativos de fundo -->
+                                <div class="training-decoration-circles">
+                                    <div class="circle circle-1"></div>
+                                    <div class="circle circle-2"></div>
+                                    <div class="circle circle-3"></div>
+                                </div>
+                                
+                                <!-- Centro principal com ícone de livro -->
+                                <div class="training-center-container">
+                                    <div class="training-center-wrapper">
+                                        <!-- Ícone principal - Livro aberto -->
+                                        <div class="training-main-icon">
+                                            <i class="bi bi-book-half"></i>
+                                        </div>
+                                        
+                                        <!-- Elementos decorativos internos -->
+                                        <div class="training-decorative-dots">
+                                            <span class="dot dot-1"></span>
+                                            <span class="dot dot-2"></span>
+                                            <span class="dot dot-3"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Ícones flutuantes ao redor -->
+                                    <div class="floating-icons">
+                                        <div class="floating-icon icon-1">
+                                            <i class="bi bi-mortarboard-fill"></i>
+                                        </div>
+                                        <div class="floating-icon icon-2">
+                                            <i class="bi bi-award-fill"></i>
+                                        </div>
+                                        <div class="floating-icon icon-3">
+                                            <i class="bi bi-lightbulb-fill"></i>
+                                        </div>
+                                        <div class="floating-icon icon-4">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo -->
+                        <div class="col-lg-7 col-md-6">
+                            <div class="info-slide-content">
+                                <div class="info-badge info-badge-training">
+                                    <i class="bi bi-mortarboard"></i>
+                                    <span>EDUCAÇÃO CONTINUADA</span>
+                                </div>
+                                <h2 class="info-title">TREINAMENTOS</h2>
+                                <div class="training-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-number">+10</div>
+                                        <div class="stat-label">Cursos Disponíveis</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">100%</div>
+                                        <div class="stat-label">Online</div>
+                                    </div>
+                                </div>
+                                <h3 class="info-highlight">DESENVOLVA SUAS COMPETÊNCIAS PROFISSIONAIS</h3>
+                                <p class="info-description">Plataforma completa de treinamentos com cursos especializados, certificados digitais e acompanhamento de progresso em tempo real.</p>
+                                <a href="{{ url_for('training.course_list_page') }}" class="btn-info-action btn-training-special">
+                                    <span>COMEÇAR AGORA</span>
+                                    <i class="bi bi-play-circle-fill"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 - Repositório -->
+        <div class="carousel-item">
+            <div class="info-slide-bg" style="background-image: url('{{ url_for('static', filename='images/slide4.jpg') }}')">
+                <div class="info-slide-overlay info-overlay-repository"></div>
+                <div class="container">
+                    <div class="row align-items-center">
+                        <!-- Visual Animado de Repositório -->
+                        <div class="col-lg-5 col-md-6">
+                            <div class="repository-visual-showcase">
+                                <!-- Círculos decorativos de fundo -->
+                                <div class="repository-decoration-circles">
+                                    <div class="circle circle-1"></div>
+                                    <div class="circle circle-2"></div>
+                                    <div class="circle circle-3"></div>
+                                </div>
+                                
+                                <!-- Centro principal com ícone de pasta -->
+                                <div class="repository-center-container">
+                                    <div class="repository-center-wrapper">
+                                        <!-- Ícone principal - Pasta de arquivos -->
+                                        <div class="repository-main-icon">
+                                            <i class="bi bi-folder-fill"></i>
+                                        </div>
+                                        
+                                        <!-- Elementos decorativos internos -->
+                                        <div class="repository-decorative-dots">
+                                            <span class="dot dot-1"></span>
+                                            <span class="dot dot-2"></span>
+                                            <span class="dot dot-3"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Ícones flutuantes ao redor -->
+                                    <div class="floating-icons">
+                                        <div class="floating-icon icon-1">
+                                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                                        </div>
+                                        <div class="floating-icon icon-2">
+                                            <i class="bi bi-file-earmark-text-fill"></i>
+                                        </div>
+                                        <div class="floating-icon icon-3">
+                                            <i class="bi bi-file-earmark-image-fill"></i>
+                                        </div>
+                                        <div class="floating-icon icon-4">
+                                            <i class="bi bi-file-earmark-zip-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo -->
+                        <div class="col-lg-7 col-md-6">
+                            <div class="info-slide-content">
+                                <div class="info-badge info-badge-repository">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    <span>DOCUMENTOS</span>
+                                </div>
+                                <h2 class="info-title">REPOSITÓRIO</h2>
+                                <div class="repository-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-number"><i class="bi bi-shield-check"></i></div>
+                                        <div class="stat-label">100% Seguro</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number"><i class="bi bi-lightning-charge-fill"></i></div>
+                                        <div class="stat-label">Acesso Rápido</div>
+                                    </div>
+                                </div>
+                                <h3 class="info-highlight">CENTRAL DE DOCUMENTOS E ARQUIVOS</h3>
+                                <p class="info-description">Acesse protocolos, manuais, formulários e toda documentação institucional de forma organizada e segura. Tudo que você precisa, sempre à mão.</p>
+                                <a href="{{ url_for('repository.repository_list_page') }}" class="btn-info-action btn-repository-special">
+                                    <span>ACESSAR REPOSITÓRIO</span>
+                                    <i class="bi bi-arrow-right-circle-fill"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#infoCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#infoCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Próximo</span>
+    </button>
+</div>

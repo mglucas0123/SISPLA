@@ -79,4 +79,164 @@
         {% endif %}
     </div>
 </div>
+
+<div class="modal fade" id="courseEnrollmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-mortarboard-fill"></i> Termo de inscrição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">
+                    Para iniciar o curso <strong id="enrollmentCourseTitle"></strong>, confirme os dados abaixo e aceite o termo de inscricao.
+                </p>
+                <div class="alert alert-danger d-none" id="enrollmentError"></div>
+                <form id="courseEnrollmentForm" class="enrollment-form">
+                    <input type="hidden" name="course_id" id="enrollmentCourseId" value="">
+                    <input type="hidden" name="csrf_token" id="enrollmentCsrfToken" value="{{ csrf_token() }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="enrollmentFullName" class="form-label">Nome completo</label>
+                            <input type="text" class="form-control" id="enrollmentFullName" name="full_name" value="{{ current_user.name }}" required readonly style="background-color: #e9ecef; color: #6c757d;">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="enrollmentEmail" class="form-label">E-mail corporativo</label>
+                            <input type="email" class="form-control" id="enrollmentEmail" name="email" value="{{ current_user.email }}" required readonly style="background-color: #e9ecef; color: #6c757d;">
+                        </div>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" value="on" id="enrollmentAcceptedTerms" name="accepted_terms" required>
+                        <label class="form-check-label" for="enrollmentAcceptedTerms">
+                            Declaro que as informacoes acima sao verdadeiras e que estou ciente das responsabilidades ao participar deste curso.
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" form="courseEnrollmentForm" id="enrollmentSubmitBtn">
+                    Assinar e entrar no curso
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const enrollmentModalEl = document.getElementById('courseEnrollmentModal');
+    if (!enrollmentModalEl) {
+        return;
+    }
+
+    const enrollmentModal = new bootstrap.Modal(enrollmentModalEl);
+    const enrollmentForm = document.getElementById('courseEnrollmentForm');
+    const enrollmentCourseTitle = document.getElementById('enrollmentCourseTitle');
+    const enrollmentCourseId = document.getElementById('enrollmentCourseId');
+    const errorAlert = document.getElementById('enrollmentError');
+    const submitButton = document.getElementById('enrollmentSubmitBtn');
+    const nameInput = document.getElementById('enrollmentFullName');
+    const emailInput = document.getElementById('enrollmentEmail');
+    const acceptedTermsInput = document.getElementById('enrollmentAcceptedTerms');
+    const csrfTokenInput = document.getElementById('enrollmentCsrfToken');
+
+    const defaultValues = {
+        full_name: nameInput.value,
+        email: emailInput.value
+    };
+
+    let activeEnrollUrl = null;
+
+    function resetFormState() {
+        enrollmentForm.reset();
+        nameInput.value = defaultValues.full_name;
+        emailInput.value = defaultValues.email;
+        acceptedTermsInput.checked = false;
+        errorAlert.classList.add('d-none');
+        errorAlert.innerHTML = '';
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Assinar e entrar no curso';
+    }
+
+    function showErrors(errors) {
+        if (!errors || !errors.length) {
+            return;
+        }
+        errorAlert.innerHTML = '<ul class="mb-0">' + errors.map(function (err) {
+            return '<li>' + err + '</li>';
+        }).join('') + '</ul>';
+        errorAlert.classList.remove('d-none');
+    }
+
+    document.querySelectorAll('.course-card-btn-enroll').forEach(function (button) {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            resetFormState();
+            activeEnrollUrl = button.dataset.enrollUrl || '';
+            enrollmentCourseId.value = button.dataset.courseId || '';
+            enrollmentCourseTitle.textContent = button.dataset.courseTitle || '';
+            enrollmentModal.show();
+        });
+    });
+
+    enrollmentModalEl.addEventListener('hidden.bs.modal', function () {
+        activeEnrollUrl = null;
+        resetFormState();
+    });
+
+    enrollmentForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (!activeEnrollUrl) {
+            return;
+        }
+        errorAlert.classList.add('d-none');
+        errorAlert.innerHTML = '';
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando...';
+
+        const formData = new FormData(enrollmentForm);
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
+        fetch(activeEnrollUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            }
+        }).then(function (response) {
+            return response.json().then(function (data) {
+                return { ok: response.ok, data: data };
+            }).catch(function () {
+                return { ok: response.ok, data: {} };
+            });
+        }).then(function (result) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Assinar e entrar no curso';
+
+            if (!result.ok || !result.data || !result.data.success) {
+                const errors = (result.data && result.data.errors) ? result.data.errors : ['Ocorreu um erro ao salvar o termo de inscricao. Tente novamente.'];
+                showErrors(errors);
+                return;
+            }
+
+            enrollmentModal.hide();
+            const redirectUrl = result.data.redirect_url || '';
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                window.location.reload();
+            }
+        }).catch(function () {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Assinar e entrar no curso';
+            showErrors(['Nao foi possivel enviar as informacoes. Verifique a conexao e tente novamente.']);
+        });
+    });
+});
+</script>
 {% endblock %}

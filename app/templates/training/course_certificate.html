@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<title>Certificado - {{ course.title }}</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+	<style>
+		:root {
+			--certificate-bg-image: url('{{ url_for('static', filename='images/SBCD.png') }}');
+		}
+	</style>
+</head>
+<body>
+	<div class="certificate-container">
+		<div class="certificate-border"></div>
+		<div class="certificate-pattern"></div>
+		<div class="certificate-watermark">CERTIFICADO</div>
+		
+		<div class="certificate-content">
+			<div class="certificate-header">
+				<div class="certificate-logo">
+					<img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" onerror="this.style.display='none';">
+				</div>
+				<h1 class="certificate-title">Certificado</h1>
+				<p class="certificate-subtitle">De Conclusão de Treinamento</p>
+			</div>
+
+			<div class="certificate-body">
+				<p class="certificate-text">
+					Certificamos que
+				</p>
+				
+				<div class="certificate-recipient">
+					{{ enrollment.full_name or user.name }}
+				</div>
+
+				<p class="certificate-text">
+					concluiu com êxito o treinamento
+				</p>
+
+				<div class="certificate-course">
+					"{{ course.title }}"
+				</div>
+
+				<div class="certificate-details">
+					<div class="certificate-detail-item">
+						<div class="certificate-detail-label">Carga Horária</div>
+						<div class="certificate-detail-value">{{ (course.duration_seconds // 60) or 0 }} minutos</div>
+					</div>
+					<div class="certificate-detail-item">
+						<div class="certificate-detail-label">Data de Conclusão</div>
+						<div class="certificate-detail-value">
+							{{ progress.completed_at.strftime('%d/%m/%Y') if progress and progress.completed_at else '---' }}
+						</div>
+					</div>
+					{% if attempt and attempt.score is not none %}
+					<div class="certificate-detail-item">
+						<div class="certificate-detail-label">Nota Final</div>
+						<div class="certificate-detail-value">{{ "%.1f"|format(attempt.score) }}%</div>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+
+			<div class="certificate-footer">
+				<div class="certificate-signature">
+					<div class="certificate-signature-line"></div>
+					<div class="certificate-signature-name">
+						{% if course.created_by %}
+							{{ course.created_by.name }}
+						{% else %}
+							Responsável pelo Treinamento
+						{% endif %}
+					</div>
+					<div class="certificate-signature-title">
+						{% if course.created_by and course.created_by.job_title %}
+							{{ course.created_by.job_title }}
+						{% else %}
+							Coordenação de Capacitação
+						{% endif %}
+					</div>
+				</div>
+				<div class="certificate-signature">
+					<div class="certificate-signature-line"></div>
+					<div class="certificate-signature-name">SISPLA</div>
+					<div class="certificate-signature-title">Plataforma de Treinamentos</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="certificate-id">
+			<span class="certificate-id-text">Documento:</span>
+			<span class="certificate-id-number">#{{ '%04d'|format(enrollment.id if enrollment else user.id) }}-{{ progress.completed_at.strftime('%Y') if progress and progress.completed_at else '2025' }}</span>
+		</div>
+	</div>
+
+	<script>
+		window.addEventListener('load', function () {
+			setTimeout(function () { window.print(); }, 500);
+		});
+	</script>
+</body>
+</html>

@@ -6,8 +6,8 @@
 {% block content %}
 <div class="course-progress-page">
     <div class="container">
-        <div class="course-progress-header">
-            <div class="course-progress-header-content">
+    <div class="course-progress-header" style="overflow:visible;">
+                <div class="course-progress-header-content" style="overflow:visible;">
                 <div class="course-progress-title-section">
                     <h1 class="course-progress-main-title">
                         <i class="bi bi-graph-up-arrow"></i>
@@ -17,16 +17,155 @@
                         Análise de desempenho para o curso: <strong>{{ course.title }}</strong>
                     </p>
                 </div>
-                <a href="{{ url_for('admin.courses.manage_courses') }}" class="course-progress-back-btn">
-                    <i class="bi bi-arrow-left"></i>
-                    Voltar
-                </a>
+                <div class="course-progress-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; flex-direction: column; align-items: flex-end;">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; width: 100%; justify-content: flex-end; align-items: center;">
+                        <a href="{{ url_for('admin.courses.manage_courses') }}" class="course-progress-back-btn">
+                            <i class="bi bi-arrow-left"></i>
+                            Voltar
+                        </a>
+                        <div class="dropdown-print-group">
+                            <button class="dropdown-print-btn" id="dropdownPrintBtn" type="button">
+                                <i class="bi bi-printer"></i>
+                                Imprimir Lista <i class="bi bi-caret-down-fill"></i>
+                            </button>
+                            <div class="dropdown-print-menu" id="dropdownPrintMenu">
+                                <a href="{{ url_for('admin.courses.view_course_attendance', course_id=course.id) }}" target="_blank" rel="noopener">
+                                    <i class="bi bi-clipboard-check"></i> Presença
+                                </a>
+                                <a href="{{ url_for('admin.courses.view_course_in_progress', course_id=course.id) }}" target="_blank" rel="noopener">
+                                    <i class="bi bi-hourglass-split"></i> Em andamento
+                                </a>
+                                <a href="{{ url_for('admin.courses.view_course_not_started', course_id=course.id) }}" target="_blank" rel="noopener">
+                                    <i class="bi bi-person-x"></i> Não iniciaram
+                                </a>
+                                <a href="{{ url_for('admin.courses.view_course_all_attendance', course_id=course.id) }}" target="_blank" rel="noopener">
+                                    <i class="bi bi-list-ul"></i> Todos
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                @media (max-width: 600px) {
+                    .course-progress-actions > div {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                    }
+                    .course-progress-back-btn {
+                        width: 100%;
+                        margin-bottom: 6px;
+                    }
+                }
+                .dropdown-print-group {
+                    position: relative;
+                    display: inline-block;
+                }
+                .dropdown-print-btn {
+                    background: rgba(255,255,255,0.18);
+                    border: 1.5px solid #b3b3e6;
+                    color: #fff;
+                    padding: 8px 18px;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    min-width: 180px;
+                    transition: background 0.15s, border 0.15s, color 0.15s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 2px 8px rgba(102,126,234,0.06);
+                    text-align: left;
+                    backdrop-filter: blur(2px);
+                }
+                .dropdown-print-btn:focus, .dropdown-print-btn:hover {
+                    outline: none;
+                    border-color: #665eea;
+                    background: rgba(255,255,255,0.32);
+                    color: #fff;
+                }
+                .dropdown-print-menu {
+                    display: none;
+                    position: absolute;
+                    right: 0;
+                    top: 110%;
+                    min-width: 210px;
+                    background: #fff;
+                    border: 1.5px solid #b3b3e6;
+                    border-radius: 10px;
+                    box-shadow: 0 8px 32px rgba(60,60,120,0.18);
+                    z-index: 9999;
+                    padding: 6px 0;
+                }
+                .dropdown-print-menu a {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 18px;
+                    color: #3b3663;
+                    text-decoration: none;
+                    font-size: 1rem;
+                    border: 1.5px solid transparent;
+                    border-radius: 10px;
+                    background: none;
+                    font-weight: 600;
+                    margin: 2px 6px;
+                    transition: background 0.12s, border 0.12s;
+                }
+                .dropdown-print-menu a:hover {
+                    background: #f5f7ff;
+                    border-color: #b3b3e6;
+                }
+                .dropdown-print-group.open .dropdown-print-menu {
+                    display: block;
+                }
+                @media (max-width: 600px) {
+                    .course-progress-actions > div {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                    }
+                    .course-progress-back-btn, .dropdown-print-btn {
+                        width: 100%;
+                        margin-bottom: 6px;
+                    }
+                    .dropdown-print-menu {
+                        left: 0;
+                        right: auto;
+                        min-width: 180px;
+                    }
+                }
+                .course-progress-back-btn {
+                    min-width: 180px;
+                    text-align: left;
+                }
+                </style>
+
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var btn = document.getElementById('dropdownPrintBtn');
+                    var menu = document.getElementById('dropdownPrintMenu');
+                    var group = btn && btn.parentElement;
+                    if (btn && menu && group) {
+                        btn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            group.classList.toggle('open');
+                        });
+                        document.addEventListener('click', function (e) {
+                            if (!group.contains(e.target)) {
+                                group.classList.remove('open');
+                            }
+                        });
+                    }
+                });
+                </script>
+                </style>
             </div>
         </div>
 
-        {% set total_users = progress_data|length %}
-        {% set completed_users = progress_data|selectattr('completed_at')|list|length %}
-        {% set completion_rate = (completed_users / total_users * 100)|round if total_users > 0 else 0 %}
+        {% set total_users = total_users %}
+        {% set completed_users = users_completed %}
+        {% set not_started_users = users_not_started %}
+        {% set not_completed_users = users_not_completed %}
 
         <div class="course-progress-stats">
             <div class="course-progress-stat-card stat-primary">
@@ -35,7 +174,7 @@
                         <i class="bi bi-people-fill"></i>
                     </div>
                     <div class="course-progress-stat-details">
-                        <div class="course-progress-stat-label">Total de Inscritos</div>
+                        <div class="course-progress-stat-label">Total de Usuários</div>
                         <div class="course-progress-stat-value">{{ total_users }}</div>
                     </div>
                 </div>
@@ -53,26 +192,26 @@
                 </div>
             </div>
 
-            <div class="course-progress-stat-card stat-info">
+            <div class="course-progress-stat-card stat-warning">
                 <div class="course-progress-stat-content">
                     <div class="course-progress-stat-icon">
-                        <i class="bi bi-pie-chart-fill"></i>
+                        <i class="bi bi-hourglass-split"></i>
                     </div>
                     <div class="course-progress-stat-details">
-                        <div class="course-progress-stat-label">Taxa de Conclusão</div>
-                        <div class="course-progress-stat-value">{{ completion_rate }}%</div>
+                        <div class="course-progress-stat-label">Em Andamento</div>
+                        <div class="course-progress-stat-value">{{ not_completed_users }}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="course-progress-stat-card stat-warning">
+            <div class="course-progress-stat-card stat-info">
                 <div class="course-progress-stat-content">
                     <div class="course-progress-stat-icon">
-                        <i class="bi bi-star-half"></i>
+                        <i class="bi bi-person-x-fill"></i>
                     </div>
                     <div class="course-progress-stat-details">
-                        <div class="course-progress-stat-label">Média de Notas</div>
-                        <div class="course-progress-stat-value">{{ "%.1f"|format(average_score if average_score is defined else 0) }}%</div>
+                        <div class="course-progress-stat-label">Não Iniciaram</div>
+                        <div class="course-progress-stat-value">{{ not_started_users }}</div>
                     </div>
                 </div>
             </div>
@@ -83,7 +222,7 @@
             <div class="course-progress-chart-header">
                 <h5 class="course-progress-chart-title">
                     <i class="bi bi-bar-chart-line-fill"></i>
-                    Distribuição de Notas da Avaliação
+                    Distribuição de Notas da Avaliacao
                 </h5>
             </div>
             <div class="course-progress-chart-body">
@@ -133,7 +272,7 @@
                         <tr>
                             <th>Aluno</th>
                             <th>Progresso</th>
-                            <th>Nota Avaliação</th>
+                            <th>Nota Avaliacao</th>
                             <th>Status</th>
                             <th>Data Início</th>
                             <th>Data Conclusão</th>
@@ -145,6 +284,7 @@
                         {% set user = item.user %}
                         {% set p = item.progress %}
                         {% set has_progress = item.has_progress %}
+                        {% set enrollment = item.enrollment_term %}
                         {% set attempt_data = attempts_map.get(user.id) %}
                         
                         {% if p %}
@@ -198,17 +338,35 @@
                                 {{ p.completed_at | format_date_time if p and p.completed_at else '--' }}
                             </td>
                             <td>
+                                {% if p and p.completed_at %}
+                                <a href="{{ url_for('admin.courses.view_user_certificate', course_id=course.id, user_id=user.id) }}"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="course-progress-action-btn"
+                                   title="Imprimir certificado">
+                                    <i class="bi bi-award-fill"></i>
+                                </a>
+                                {% endif %}
+                                {% if enrollment %}
+                                <a href="{{ url_for('admin.courses.view_course_enrollment_term', course_id=course.id, user_id=user.id) }}"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="course-progress-action-btn"
+                                   title="Imprimir termo de inscricao">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </a>
+                                {% endif %}
                                 {% if has_progress %}
                                 <form method="POST" 
                                     action="{{ url_for('admin.courses.reset_user_course_progress', course_id=course.id, user_id=user.id) }}" 
-                                    onsubmit="return confirm('Tem certeza que deseja resetar todo o progresso deste aluno? Esta ação não pode ser desfeita.');"
+                                    onsubmit="return confirm('Tem certeza que deseja resetar todo o progresso deste aluno? Esta acao nao pode ser desfeita.');"
                                     style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="course-progress-action-btn" title="Resetar Progresso">
                                         <i class="bi bi-arrow-counterclockwise"></i>
                                     </button>
                                 </form>
-                                {% else %}
+                                {% elif not enrollment %}
                                 <span class="text-muted">--</span>
                                 {% endif %}
                             </td>
@@ -382,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const notStarted = total - started;
                 
                 if (total > 0) {
-                    filterResultCount.textContent = `${total} ${total === 1 ? 'aluno' : 'alunos'} (${started} iniciaram, ${notStarted} não iniciaram)`;
+                    filterResultCount.textContent = `${total} ${total === 1 ? 'aluno' : 'alunos'} (${started} iniciaram, ${notStarted} nao iniciaram)`;
                 } else {
                     filterResultCount.textContent = '';
                 }
@@ -391,13 +549,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     filterResultCount.textContent = 'Nenhum aluno encontrado';
                     filterResultCount.classList.add('text-danger');
                 } else {
-                    filterResultCount.textContent = `${visibleCount} de ${totalCount} ${totalCount === 1 ? 'aluno' : 'alunos'} (${withProgress} iniciaram, ${withoutProgress} não iniciaram)`;
+                    filterResultCount.textContent = `${visibleCount} de ${totalCount} ${totalCount === 1 ? 'aluno' : 'alunos'} (${withProgress} iniciaram, ${withoutProgress} nao iniciaram)`;
                     filterResultCount.classList.remove('text-danger');
                 }
             }
         }
 
-        // Inicializar contagem
         updateResultCount();
     }
 });

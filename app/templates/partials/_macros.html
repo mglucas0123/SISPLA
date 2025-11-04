@@ -50,9 +50,21 @@
                     <i class="bi bi-eye-fill"></i>
                     Revisar Material
                 </a>
+                <a href="{{ url_for('training.view_certificate', course_id=course.id) }}" 
+                   target="_blank"
+                   rel="noopener"
+                   class="course-card-btn course-card-btn-primary" 
+                   style="margin-top: 8px;"
+                   title="Ver Certificado">
+                    <i class="bi bi-award-fill"></i>
+                    Ver Certificado
+                </a>
             {% else %}
-                <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" 
-                   class="course-card-btn course-card-btn-secondary">
+                <a href="#" 
+                   class="course-card-btn course-card-btn-secondary course-card-btn-enroll"
+                   data-course-id="{{ course.id }}"
+                   data-course-title="{{ course.title }}"
+                   data-enroll-url="{{ url_for('training.enroll_course', course_id=course.id) }}">
                     <i class="bi bi-play-fill"></i>
                     Iniciar Curso
                 </a>

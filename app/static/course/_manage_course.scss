@@ -16,7 +16,7 @@
 // HEADER SECTION
 // ==========================================
 .manage-courses-header {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #0078d4 0%, #0056b3 100%);
     border-radius: 24px;
     padding: 3rem 2rem;
     margin-bottom: 3rem;
@@ -850,9 +850,34 @@
     animation: slideInUp 0.6s ease-out;
 }
 
-// Staggered animation for cards
 @for $i from 1 through 10 {
     .manage-course-card:nth-child(#{$i}) {
         animation-delay: #{$i * 0.1}s;
     }
 }
+.manage-courses-back-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-2px);
+      color: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    i {
+      font-size: 1.1rem;
+    }
+  }

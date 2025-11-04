@@ -1,0 +1,278 @@
+// ============================================
+// HUB DE GESTÃO - GESTAO_HUB.HTML
+// Central administrativa com cards modernos
+// ============================================
+
+$primary-color: #0078d4;
+$success-color: #107c10;
+$danger-color: #d13438;
+$warning-color: #f7630c;
+$info-color: #0078d4;
+$secondary-color: #8a8a8a;
+
+// Container
+.gestao-hub-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 70px);
+}
+
+// Header do Hub
+.gestao-hub-header {
+    background: linear-gradient(135deg, #0078d4 0%, #0056b3 100%);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    margin-bottom: 3rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: rotate(45deg);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .gestao-hub-header-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .gestao-hub-title-section {
+            .gestao-hub-main-title {
+                font-size: 2.75rem;
+                font-weight: 800;
+                margin-bottom: 0.75rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+
+                i {
+                    font-size: 2.5rem;
+                    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+                    animation: rotate-gear 20s linear infinite;
+                }
+            }
+
+            .gestao-hub-subtitle {
+                font-size: 1.25rem;
+                opacity: 0.95;
+                font-weight: 500;
+                margin: 0;
+            }
+        }
+
+        .gestao-hub-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+
+            i {
+                font-size: 1.5rem;
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 2rem 1.5rem;
+
+        .gestao-hub-header-content {
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+
+            .gestao-hub-main-title {
+                font-size: 2rem;
+                justify-content: center;
+            }
+
+            .gestao-hub-subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    }
+}
+
+@keyframes rotate-gear {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// Cards de Gestão - Simples e Limpos
+.gestao-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(20px);
+    padding: 2rem;
+
+    &:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        transform: translateY(-4px);
+
+        .gestao-card-icon i {
+            transform: scale(1.1);
+        }
+    }
+
+    .gestao-card-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #007bff 0%, #0056d2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+
+        i {
+            font-size: 1.75rem;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+    }
+
+    .gestao-card-content {
+        flex: 1;
+        margin-bottom: 1.5rem;
+
+        .gestao-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 0.75rem 0;
+            line-height: 1.2;
+        }
+ 
+        .gestao-card-description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #718096;
+            margin: 0;
+        }
+    }
+
+    .gestao-card-footer {
+        margin-top: auto;
+    }
+}
+
+// Botão Simples
+.btn-gestao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: #007bff;
+    color: white;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+
+    i {
+        font-size: 1.1rem;
+    }
+
+    &:hover {
+        background: #0056d2;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+    .gestao-hub-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .gestao-card {
+        .gestao-card-header {
+            padding: 1.5rem;
+
+            .gestao-icon-wrapper {
+                width: 64px;
+                height: 64px;
+
+                i {
+                    font-size: 2rem;
+                }
+            }
+
+            .gestao-card-meta {
+                .gestao-card-title {
+                    font-size: 1.2rem;
+                }
+
+                .gestao-card-category {
+                    font-size: 0.85rem;
+                }
+            }
+        }
+
+        .gestao-card-body {
+            padding: 1.5rem;
+
+            .gestao-card-description {
+                font-size: 0.95rem;
+            }
+
+            .gestao-features-list li {
+                font-size: 0.9rem;
+            }
+        }
+
+        .gestao-card-footer {
+            padding: 1.25rem 1.5rem 1.5rem;
+        }
+    }
+
+    .btn-gestao {
+        padding: 0.875rem 1.25rem;
+        font-size: 1rem;
+    }
+}

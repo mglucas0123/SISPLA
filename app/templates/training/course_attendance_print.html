@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<title>Lista de presença - {{ course.title }}</title>
+	<style>
+		@page {
+			size: A4 portrait;
+			margin: 10mm;
+		}
+		:root { color-scheme: only light; }
+		* { box-sizing: border-box; }
+		body {
+			font-family: "Segoe UI", Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background: #f0f3f7;
+			color: #0f172a;
+		}
+		.print-sheet {
+			width: 100%;
+			max-width: 190mm;
+			margin: 0 auto;
+			background: #ffffff;
+			border: 2px solid #0f4c81;
+			padding: 18px 20px;
+			box-sizing: border-box;
+			overflow: visible;
+			page-break-after: auto;
+			break-after: auto;
+		}
+		.print-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 18px;
+			border-bottom: 2px solid #0f4c81;
+			padding-bottom: 8px;
+		}
+		.print-header .print-title { text-align: center; flex: 1; }
+		.print-header h1 { margin: 0; font-size: 16px; letter-spacing: 0.8px; text-transform: uppercase; color: #0f4c81; }
+		.print-header h2 { margin: 2px 0 0; font-size: 11px; text-transform: uppercase; color: #4c6f99; }
+		.print-logo img { max-height: 72px; object-fit: contain; }
+
+		.section { margin-bottom: 6px; }
+		.section-title {
+			background: #0f4c81;
+			color: #ffffff;
+			padding: 5px 8px;
+			font-size: 12px;
+			text-transform: uppercase;
+			letter-spacing: 0.6px;
+			font-weight: 600;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+
+		table.section-table {
+			width: 100%;
+			border-collapse: collapse;
+			border: 1px solid #1e3a5f;
+			font-size: 12px;
+		}
+		table.section-table td, table.section-table th {
+			border: 1px solid #1e3a5f;
+			padding: 6px 8px;
+			vertical-align: top;
+		}
+		table.section-table th {
+			background: #f2f6fb;
+			text-transform: uppercase;
+			letter-spacing: 0.4px;
+			color: #1e3a5f;
+			width: 28%;
+		}
+
+		.attendance-table { width: 100%; border-collapse: collapse; border: 1px solid #1e3a5f; font-size: 12px; }
+		.attendance-table th, .attendance-table td { border: 1px solid #1e3a5f; padding: 6px 8px; }
+		.attendance-table th { background: #e7eff9; text-transform: uppercase; letter-spacing: 0.6px; }
+		.attendance-table td:nth-child(1) { width: 36px; text-align: center; }
+		.attendance-table td:nth-child(5) { text-align: center; font-weight: 600; }
+
+		.signature-area { display:flex; gap:20px; margin-top: 28px; justify-content: flex-end; }
+		.signature-box { width: 320px; text-align:center; }
+		.signature-line { border-top: 1px solid #1e3a5f; margin-top: 36px; padding-top:6px; font-size:12px; text-transform:uppercase; letter-spacing:0.4px; }
+
+		.print-footer { margin-top: 20px; text-align: center; font-size: 10.5px; color: #64748b; }
+
+		@media print {
+			body { background: #ffffff; padding: 0; }
+			.print-sheet { border-width: 2px; padding: 12px 14px; box-shadow: none; max-width:190mm; overflow: visible; }
+			body, .print-sheet { page-break-after: avoid; break-after: avoid; page-break-before: avoid; break-before: avoid; }
+			table.section-table { page-break-inside: auto; margin-bottom: 4px; }
+			.attendance-table { page-break-inside: auto; }
+			.attendance-table thead { display: table-header-group; }
+			.print-header h1 { font-size: 15px }
+			.print-header h2 { font-size: 10px }
+			table.section-table th, table.section-table td, .attendance-table th, .attendance-table td { font-size: 11.5px }
+			.section { page-break-inside: auto; }
+		}
+	</style>
+</head>
+<body>
+	<div class="print-sheet">
+		<header class="print-header">
+			<div class="print-logo">
+				<img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" onerror="this.style.display='none';">
+			</div>
+			<div class="print-title">
+				<h1>Lista de presença</h1>
+				<h2>SISPLA - Plataforma de Treinamentos</h2>
+			</div>
+			<div class="print-logo">
+				<img src="{{ url_for('static', filename='images/logo_secondary.png') }}" alt="" onerror="this.style.display='none';">
+			</div>
+		</header>
+
+		<section class="section">
+			<div class="section-title">Dados do Treinamento</div>
+			<table class="section-table">
+				<tr>
+					<th>Treinamento</th>
+					<td colspan="3">{{ course.title }}</td>
+				</tr>
+				<tr>
+					<th>Modalidade</th>
+					<td colspan="3">{{ 'TREINAMENTO ON-LINE' if is_online else 'Presencial' }}</td>
+				</tr>
+                <tr>
+					<th>Duração Estimada</th>
+					<td>{{ (course.duration_seconds // 60) or 0 }} MINUTOS</td>
+				</tr>
+			</table>
+		</section>
+
+		<section class="section">
+			<div class="section-title">Conteúdo programático</div>
+			<table class="section-table">
+				<tr>
+					<td>{{ course.description or '_______________________________' }}</td>
+				</tr>
+			</table>
+		</section>
+
+		<section class="section">
+			<div class="section-title">Informações do Treinamento</div>
+			<table class="section-table">
+				<tr>
+					<th>Responsável pelo Treinamento</th>
+					<td>
+						{% if course.created_by %}
+							{{ course.created_by.name }}
+						{% else %}
+							---
+						{% endif %}
+					</td>
+				</tr>
+				<tr>
+					<th>Fontes</th>
+					<td>{{ course.sources or '---' }}</td>
+				</tr>
+				<tr>
+					<th>Abrangência</th>
+					<td>{{ course.scope or '---' }}</td>
+				</tr>
+			</table>
+		</section>
+
+		<section class="section">
+			<table class="attendance-table">
+				<thead>
+					<tr>
+						<th colspan="5" style="background:#0f4c81; color:#fff; font-size:13px; text-transform:uppercase; letter-spacing:0.6px; font-weight:600; -webkit-print-color-adjust:exact; print-color-adjust:exact; text-align:left; padding-left:8px;">
+							{{ participants_title or 'Participantes' }}
+						</th>
+					</tr>
+					<tr>
+						<th>#</th>
+						<th>Nome</th>
+						<th>Cargo</th>
+						{% if show_status_column %}<th>Status</th>{% else %}{% if not hide_accept_column %}<th>Data do aceite</th>{% endif %}{% if not hide_score_column %}<th>Nota</th>{% endif %}{% endif %}
+					</tr>
+				</thead>
+				<tbody>
+					{% if enrollments %}
+						{% for enrollment in enrollments %}
+						<tr>
+							<td>{{ loop.index }}</td>
+							<td>{{ enrollment.full_name or (enrollment.user.name if enrollment.user else '') }}</td>
+							<td style="text-align:center;">
+								{% if enrollment.user and enrollment.user.job_title %}
+									{{ enrollment.user.job_title }}
+								{% else %}
+									---
+								{% endif %}
+							</td>
+							{% if show_status_column %}
+								<td style="text-align:center;">
+									{% if enrollment.progress and enrollment.progress.completed_at %}
+										Concluído
+									{% elif enrollment.progress and enrollment.progress.last_watched_timestamp > 0 %}
+										Em andamento
+									{% else %}
+										Não iniciou
+									{% endif %}
+								</td>
+							{% else %}
+								{% if not hide_accept_column %}<td style="text-align:center;">{{ enrollment.accepted_at.strftime('%d/%m/%Y %H:%M') if enrollment.accepted_at else '---' }}</td>{% endif %}
+								{% if not hide_score_column %}<td style="text-align:center;">{{ enrollment.score|default(enrollment.grade|default('---')) }}</td>{% endif %}
+							{% endif %}
+						</tr>
+						{% endfor %}
+					{% else %}
+						<tr>
+							<td colspan="5" style="text-align:center; font-weight:600; padding:16px;">Nenhum participante registrado.</td>
+						</tr>
+					{% endif %}
+				</tbody>
+			</table>
+		</section>
+
+		<div class="signature-area">
+			<div class="signature-box">
+				<div class="signature-line">Assinatura do gestor responsável</div>
+			</div>
+		</div>
+		   <div class="print-footer">
+			   Documento gerado em <span id="print-date"></span> |
+			   Arquive esta lista junto aos registros de capacitação da equipe.
+		   </div>
+	</div>
+
+	   <script>
+		   document.addEventListener('DOMContentLoaded', function () {
+			   var now = new Date();
+			   var pad = n => n.toString().padStart(2, '0');
+			   var dateStr = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear() + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+			   var el = document.getElementById('print-date');
+			   if (el) el.textContent = dateStr;
+		   });
+		   window.addEventListener('load', function () {
+			   setTimeout(function () { window.print(); }, 300);
+		   });
+	   </script>
+</body>
+</html>

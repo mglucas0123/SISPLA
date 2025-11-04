@@ -23,9 +23,9 @@
                         <i class="bi bi-plus-circle"></i>
                         Novo Usuário
                     </button>
-                    <a href="{{ url_for('main.panel') }}" class="manage-users-back-btn">
+                    <a href="{{ url_for('main.gestao_hub') }}" class="manage-users-back-btn">
                         <i class="bi bi-arrow-left-circle"></i>
-                        Voltar ao Painel
+                        Voltar
                     </a>
                 </div>
             </div>
@@ -116,6 +116,7 @@
                         <tr class="user-row" data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
                             data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
                             data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
+                            data-user-job-title="{{ user.job_title | default('') }}"
                             data-user-roles="{{ user.roles | map(attribute='name') | list | join(',') }}"
                             data-user-permissions="{{ user.get_permissions() | join(',') }}"
                             data-user-is-active="{{ user.is_active | tojson }}">
@@ -200,18 +201,28 @@
                             placeholder="Digite o username">
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">
-                        <i class="bi bi-envelope-fill"></i>
-                        E-mail
-                        <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">
                             <i class="bi bi-envelope-fill"></i>
-                        </span>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com"
-                            required>
+                            E-mail
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-envelope-fill"></i>
+                            </span>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com"
+                                required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="job_title" class="form-label">
+                            <i class="bi bi-briefcase-fill"></i>
+                            Cargo
+                        </label>
+                        <input type="text" class="form-control" id="job_title" name="job_title" 
+                            placeholder="Ex: Enfermeiro, Técnico de Enfermagem...">
                     </div>
                 </div>
                 <div class="mb-3">
@@ -291,6 +302,10 @@
                             <p class="info-value" id="modalUserEmail">-</p>
                         </div>
                         <div class="info-item">
+                            <div class="info-label">Cargo:</div>
+                            <p class="info-value" id="modalUserJobTitle">-</p>
+                        </div>
+                        <div class="info-item">
                             <div class="info-label">Status da Usuário:</div>
                             <div id="modalUserStatusDisplay">
                                 <span class="permission-badge badge-none">Carregando...</span>
@@ -349,6 +364,14 @@
                                 </span>
                                 <input type="email" class="form-control" id="edit_email" name="email" required>
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_job_title" class="form-label">
+                                <i class="bi bi-briefcase-fill"></i>
+                                Cargo
+                            </label>
+                            <input type="text" class="form-control" id="edit_job_title" name="job_title" 
+                                placeholder="Ex: Enfermeiro, Técnico de Enfermagem...">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-check-circle-fill"></i>
@@ -712,6 +735,7 @@
             var userNameData = triggeringRow.dataset.userNome;
             var userLoginData = triggeringRow.dataset.userUsuario;
             var userEmailData = triggeringRow.dataset.userEmail;
+            var userJobTitleData = triggeringRow.dataset.userJobTitle;
             var userProfileStrData = triggeringRow.dataset.userProfile;
             var userIsActiveStr = triggeringRow.dataset.userIsActive;
             var userIsActive = (userIsActiveStr === 'true');
@@ -719,11 +743,13 @@
             var editNameInput = infoUsuarioModalElement.querySelector('#edit_name');
             var editUsernameInput = infoUsuarioModalElement.querySelector('#edit_username');
             var editEmailInput = infoUsuarioModalElement.querySelector('#edit_email');
+            var editJobTitleInput = infoUsuarioModalElement.querySelector('#edit_job_title');
             var formEditarDadosBasicos = infoUsuarioModalElement.querySelector('#formEditarDadosBasicos');
 
             if (editNameInput) editNameInput.value = userNameData || '';
             if (editUsernameInput) editUsernameInput.value = userLoginData || '';
             if (editEmailInput) editEmailInput.value = userEmailData || '';
+            if (editJobTitleInput) editJobTitleInput.value = userJobTitleData || '';
             if (formEditarDadosBasicos) {
                 formEditarDadosBasicos.action = "{{ url_for('admin.users.edit_basic_data', user_id=0) }}".replace('0', userId);
             }
@@ -732,6 +758,9 @@
             if (modalUserNameSpan) modalUserNameSpan.textContent = userNameData || 'Não informado';
             if (modalUserLoginSpan) modalUserLoginSpan.textContent = userLoginData || 'Não informado';
             if (modalUserEmail) modalUserEmail.textContent = userEmailData || 'Não cadastrado';
+            
+            var modalUserJobTitle = infoUsuarioModalElement.querySelector('#modalUserJobTitle');
+            if (modalUserJobTitle) modalUserJobTitle.textContent = userJobTitleData || 'Não informado';
 
             if (modalUserStatusDisplay && btnToggleUserStatus) {
                 if (userIsActive) {

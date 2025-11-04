@@ -1,5 +1,4 @@
-
-{% extends "navbar.html" %}
+﻿{% extends "navbar.html" %}
 
 {% block title %}Gerenciar Cursos e Treinamentos{% endblock %}
 
@@ -11,16 +10,22 @@
                 <div class="manage-courses-title-section">
                     <h1 class="manage-courses-main-title">
                         <i class="bi bi-camera-reels-fill"></i>
-                        Gerenciar Cursos
+                        Gerenciar Treinamentos
                     </h1>
                     <p class="manage-courses-subtitle">
                         Administre todos os seus cursos e treinamentos em um só lugar
                     </p>
                 </div>
-                <button class="manage-courses-create-btn" data-bs-toggle="modal" data-bs-target="#createCourseModal">
-                    <i class="bi bi-plus-circle-fill"></i>
-                    Novo Curso
-                </button>
+                <div class="manage-courses-actions d-flex gap-2">
+                    <button class="manage-courses-create-btn" data-bs-toggle="modal" data-bs-target="#createCourseModal">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        Novo Treinamento
+                    </button>
+                    <a href="{{ url_for('main.gestao_hub') }}" class="manage-courses-back-btn">
+                        <i class="bi bi-arrow-left-circle"></i>
+                        Voltar
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -31,7 +36,7 @@
                 <div class="manage-courses-filters-left">
                     <div class="manage-courses-search-box">
                         <i class="bi bi-search"></i>
-                        <input type="text" id="searchInput" placeholder="Buscar cursos..." 
+                        <input type="text" id="searchInput" placeholder="Buscar treinamentos..." 
                                value="{{ request.args.get('search', '') }}">
                     </div>
                 </div>
@@ -69,7 +74,7 @@
             
             <div class="manage-courses-results-info">
                 <span class="manage-courses-results-text">
-                    Mostrando {{ courses.items|length }} de {{ courses.total if courses.total else 0 }} cursos
+                    Mostrando {{ courses.items|length }} de {{ courses.total if courses.total else 0 }} Treinamentos
                 </span>
             </div>
         </div>
@@ -81,7 +86,10 @@
                 <div class="manage-course-card course-row" data-course-id="{{ course.id }}" 
                      data-course-title="{{ course.title }}"
                      data-course-description="{{ course.description or '' }}"
-                     data-course-duration="{{ course.duration_seconds }}">
+                     data-course-duration="{{ course.duration_seconds }}"
+                     data-course-content-type="{{ course.content_type or 'video' }}"
+                     data-course-sources="{{ course.sources or '' }}"
+                     data-course-scope="{{ course.scope or '' }}">
                     
                     <div class="manage-course-card-image">
                         <img src="{{ url_for('training.serve_course_image', course_id=course.id) }}" 
@@ -137,7 +145,6 @@
                             <a href="{{ url_for('admin.courses.view_course_progress', course_id=course.id) }}" 
                                class="manage-course-card-btn btn-primary">
                                 <i class="bi bi-graph-up-arrow"></i>
-                                Ver Progresso
                             </a>
                             
                             <a href="{{ url_for('training.course_player_page', course_id=course.id) }}" 
@@ -202,7 +209,7 @@
             {% endif %}
         </div>
 
-        {% set pagination_params = {'pagination': courses, 'endpoint': 'admin.courses.manage_courses', 'extra_params': {}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de cursos'} %}
+        {% set pagination_params = {'pagination': courses, 'endpoint': 'admin.courses.manage_courses', 'extra_params': {}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de treinamentos'} %}
         {% include 'partials/_pagination.html' %}
     </div>
 </div>
@@ -231,27 +238,69 @@
                             <textarea class="form-control" id="create-description" name="description" 
                                       rows="4" placeholder="Descreva o conteúdo do curso..."></textarea>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="create-duration-time" class="form-label">Duração do Vídeo</label>
+                                <input type="time" class="form-control" id="create-duration-time" 
+                                       name="duration_time" step="1" value="00:00:00" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="create-scope" class="form-label">Abrangência</label>
+                                <select class="form-select" id="create-scope" name="scope">
+                                    <option value="">Selecione...</option>
+                                    <option value="Geral">Geral</option>
+                                    <option value="Enfermagem">Enfermagem</option>
+                                    <option value="Centro Cirúrgico">Centro Cirúrgico</option>
+                                    <option value="Faturamento">Faturamento</option>
+                                    <option value="NIR">NIR</option>
+                                    <option value="Administrativo">Administrativo</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="mb-3">
-                            <label for="create-duration-time" class="form-label">Duração do Vídeo</label>
-                            <input type="time" class="form-control" id="create-duration-time" 
-                                   name="duration_time" step="1" value="00:00:00" required>
+                            <label for="create-sources" class="form-label">Fontes</label>
+                            <textarea class="form-control" id="create-sources" name="sources" 
+                                      rows="2" placeholder="Liste as fontes de informação utilizadas..."></textarea>
                         </div>
                     </div>
                     <div class="col-md-5">
                         <div class="mb-3">
-                            <label class="form-label">Vídeo do Curso</label>
+                            <label class="form-label d-block">Formato do Conteúdo</label>
+                            <div class="btn-group w-100" role="group" aria-label="Formato do conteúdo do curso">
+                                <input type="radio" class="btn-check" name="create-content-type" id="create-type-video" value="video" checked>
+                                <label class="btn btn-outline-primary" for="create-type-video">
+                                    <i class="bi bi-film"></i> Vídeo
+                                </label>
+                                <input type="radio" class="btn-check" name="create-content-type" id="create-type-pdf" value="pdf">
+                                <label class="btn btn-outline-primary" for="create-type-pdf">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </label>
+                            </div>
+                            <input type="hidden" name="content_type" value="video">
+                        </div>
+                        <div class="mb-3 content-upload-wrapper" data-type="video">
+                            <label class="form-label">Ví­deo do Curso</label>
                             <div class="custom-file-upload">
                                 <i class="bi bi-film"></i>
-                                <span class="file-name">Selecione o arquivo de vídeo...</span>
-                                <input type="file" name="video" accept="video/mp4" required>
+                                <span class="file-name" data-default="Selecione o arquivo de ví­deo...">Selecione o arquivo de ví­deo...</span>
+                                <input type="file" name="video" data-original-name="video" accept="video/mp4" required>
                             </div>
                             <small class="form-text text-muted mt-2">Formato aceito: MP4</small>
+                        </div>
+                        <div class="mb-3 content-upload-wrapper d-none" data-type="pdf">
+                            <label class="form-label">PDF do Curso</label>
+                            <div class="custom-file-upload">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                                <span class="file-name" data-default="Selecione o arquivo PDF...">Selecione o arquivo PDF...</span>
+                                <input type="file" name="pdf" data-original-name="pdf" accept="application/pdf">
+                            </div>
+                            <small class="form-text text-muted mt-2">Formato aceito: PDF</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Imagem da Capa</label>
                             <div class="custom-file-upload">
                                 <i class="bi bi-image-alt"></i>
-                                <span class="file-name">Selecione a imagem da capa...</span>
+                                <span class="file-name" data-default="Selecione a imagem da capa...">Selecione a imagem da capa...</span>
                                 <input type="file" name="image" accept="image/jpeg,image/png,image/jpg">
                             </div>
                             <small class="form-text text-muted mt-2">Formatos aceitos: PNG, JPG, JPEG</small>
@@ -295,19 +344,61 @@
                             <label for="edit-description" class="form-label">Descrição</label>
                             <textarea class="form-control" id="edit-description" name="description" rows="4"></textarea>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-duration-time" class="form-label">Duração do Vídeo</label>
+                                <input type="time" class="form-control" id="edit-duration-time" 
+                                       name="duration_time" step="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-scope" class="form-label">Abrangência</label>
+                                <select class="form-select" id="edit-scope" name="scope">
+                                    <option value="">Selecione...</option>
+                                    <option value="Geral">Geral</option>
+                                    <option value="Enfermagem">Enfermagem</option>
+                                    <option value="Centro Cirúrgico">Centro Cirúrgico</option>
+                                    <option value="Faturamento">Faturamento</option>
+                                    <option value="NIR">NIR</option>
+                                    <option value="Administrativo">Administrativo</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="mb-3">
-                            <label for="edit-duration-time" class="form-label">Duração do Vídeo</label>
-                            <input type="time" class="form-control" id="edit-duration-time" 
-                                   name="duration_time" step="1" required>
+                            <label for="edit-sources" class="form-label">Fontes</label>
+                            <textarea class="form-control" id="edit-sources" name="sources" 
+                                      rows="2" placeholder="Liste as fontes de informação utilizadas..."></textarea>
                         </div>
                     </div>
                     <div class="col-md-5">
                         <div class="mb-3">
+                            <label class="form-label d-block">Formato do Conteúdo</label>
+                            <div class="btn-group w-100" role="group" aria-label="Formato do conteíºdo do curso">
+                                <input type="radio" class="btn-check" name="edit-content-type" id="edit-type-video" value="video" checked>
+                                <label class="btn btn-outline-primary" for="edit-type-video">
+                                    <i class="bi bi-film"></i> Vídeo
+                                </label>
+                                <input type="radio" class="btn-check" name="edit-content-type" id="edit-type-pdf" value="pdf">
+                                <label class="btn btn-outline-primary" for="edit-type-pdf">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </label>
+                            </div>
+                            <input type="hidden" name="content_type" value="video">
+                        </div>
+                        <div class="mb-3 content-upload-wrapper" data-type="video">
                             <label class="form-label">Vídeo do Curso</label>
                             <div class="custom-file-upload">
                                 <i class="bi bi-film"></i>
-                                <span class="file-name">Alterar arquivo de vídeo...</span>
-                                <input type="file" name="video" accept="video/mp4">
+                                <span class="file-name" data-default="Alterar arquivo de vídeo...">Alterar arquivo de vídeo...</span>
+                                <input type="file" name="video" data-original-name="video" accept="video/mp4">
+                            </div>
+                            <small class="form-text text-muted mt-2">Deixe em branco para não alterar</small>
+                        </div>
+                        <div class="mb-3 content-upload-wrapper d-none" data-type="pdf">
+                            <label class="form-label">PDF do Curso</label>
+                            <div class="custom-file-upload">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                                <span class="file-name" data-default="Alterar arquivo PDF...">Alterar arquivo PDF...</span>
+                                <input type="file" name="pdf" data-original-name="pdf" accept="application/pdf">
                             </div>
                             <small class="form-text text-muted mt-2">Deixe em branco para não alterar</small>
                         </div>
@@ -315,7 +406,7 @@
                             <label class="form-label">Imagem da Capa</label>
                             <div class="custom-file-upload">
                                 <i class="bi bi-image-alt"></i>
-                                <span class="file-name">Alterar imagem da capa...</span>
+                                <span class="file-name" data-default="Alterar imagem da capa...">Alterar imagem da capa...</span>
                                 <input type="file" name="image" accept="image/jpeg,image/png,image/jpg">
                             </div>
                             <small class="form-text text-muted mt-2">Deixe em branco para não alterar</small>
@@ -330,7 +421,7 @@
                 </button>
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-circle-fill"></i>
-                    Salvar Alterações
+                    Salvar Alteraçíµes
                 </button>
             </div>
         </form>
@@ -356,45 +447,130 @@ document.addEventListener('DOMContentLoaded', function () {
         return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
     };
 
+    const resetFileName = (span) => {
+        if (!span) return;
+        const defaultText = span.dataset.default || span.getAttribute('data-default') || span.textContent;
+        span.textContent = defaultText;
+        span.style.color = '#718096';
+        span.style.fontWeight = '500';
+    };
+
+    const resetWrapper = (wrapper) => {
+        if (!wrapper) return;
+        const input = wrapper.querySelector('input[type="file"]');
+        if (input) {
+            input.value = '';
+        }
+        const fileNameSpan = wrapper.querySelector('.file-name');
+        if (fileNameSpan) {
+            resetFileName(fileNameSpan);
+        }
+    };
+
+    const setupContentTypeToggle = (form, options = {}) => {
+        if (!form) return null;
+        const { radioName, requiredOnSelection = false } = options;
+        const hiddenField = form.querySelector('input[name="content_type"]');
+        const wrappers = form.querySelectorAll('.content-upload-wrapper');
+
+        if (!hiddenField || !wrappers.length) return null;
+
+        const update = (type) => {
+            hiddenField.value = type;
+            wrappers.forEach(wrapper => {
+                const isActive = wrapper.dataset.type === type;
+                wrapper.classList.toggle('d-none', !isActive);
+                const input = wrapper.querySelector('input[type="file"]');
+                if (input) {
+                    if (!input.dataset.originalName) {
+                        input.dataset.originalName = input.name;
+                    }
+                    const originalName = input.dataset.originalName;
+
+                    if (requiredOnSelection) {
+                        input.required = isActive;
+                    } else if (!isActive) {
+                        input.required = false;
+                    }
+
+                    input.disabled = !isActive;
+                    if (wrapper.dataset.type === 'pdf') {
+                        input.name = isActive ? 'video' : originalName;
+                    } else {
+                        input.name = originalName;
+                    }
+
+                    if (!isActive) {
+                        resetWrapper(wrapper);
+                    }
+                } else if (!isActive) {
+                    resetWrapper(wrapper);
+                }
+            });
+        };
+
+        const radios = form.querySelectorAll(`input[name="${radioName}"]`);
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    update(radio.value);
+                }
+            });
+        });
+
+        const initial = Array.from(radios).find(radio => radio.checked);
+        update(initial ? initial.value : 'video');
+
+        return { update };
+    };
+
     document.querySelectorAll('.custom-file-upload input[type="file"]').forEach(input => {
         input.addEventListener('change', function () {
             const fileNameSpan = this.parentElement.querySelector('.file-name');
+            if (!fileNameSpan) return;
             if (this.files.length > 0) {
                 fileNameSpan.textContent = this.files[0].name;
                 fileNameSpan.style.color = '#2d3748';
                 fileNameSpan.style.fontWeight = '600';
+            } else {
+                resetFileName(fileNameSpan);
             }
         });
     });
 
     const createModal = document.getElementById('createCourseModal');
     const createForm = document.getElementById('createCourseForm');
+    const createContentToggle = setupContentTypeToggle(createForm, { radioName: 'create-content-type', requiredOnSelection: true });
     
-    createModal.addEventListener('show.bs.modal', function () {
-        createForm.reset();
-        createForm.querySelectorAll('.file-name').forEach(span => {
-            const input = span.nextElementSibling;
-            const isVideo = input.name === 'video';
-            span.textContent = isVideo ? 'Selecione o arquivo de vídeo...' : 'Selecione a imagem da capa...';
-            span.style.color = '#718096';
-            span.style.fontWeight = '500';
+    if (createModal && createForm) {
+        createModal.addEventListener('show.bs.modal', function () {
+            createForm.reset();
+            createForm.querySelectorAll('.file-name').forEach(resetFileName);
+            if (createContentToggle) {
+                createContentToggle.update('video');
+            }
         });
-    });
     
-    createForm.addEventListener('submit', function () {
-        const timeValue = createForm.querySelector('input[name="duration_time"]').value;
-        createForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
-    });
+        createForm.addEventListener('submit', function () {
+            const timeValue = createForm.querySelector('input[name="duration_time"]').value;
+            createForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
+        });
+    }
 
-    const editModal = new bootstrap.Modal(document.getElementById('editCourseModal'));
+    const editModalElement = document.getElementById('editCourseModal');
     const editForm = document.getElementById('editCourseForm');
+    const editModal = editModalElement ? new bootstrap.Modal(editModalElement) : null;
+    const editContentToggle = setupContentTypeToggle(editForm, { radioName: 'edit-content-type' });
     
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', function (e) {
             e.preventDefault();
-            const card = e.target.closest('.course-row');
-            const courseId = card.dataset.courseId;
+            if (!editForm) return;
 
+            const card = e.target.closest('.course-row');
+            if (!card) return;
+
+            const courseId = card.dataset.courseId;
             editForm.action = `{{ url_for('admin.courses.edit_course', course_id=0) }}`.replace('0', courseId);
 
             const modalTitle = editForm.querySelector('#editCourseModalLabel');
@@ -404,23 +580,32 @@ document.addEventListener('DOMContentLoaded', function () {
             editForm.querySelector('#edit-title').value = card.dataset.courseTitle;
             editForm.querySelector('#edit-description').value = card.dataset.courseDescription;
             editForm.querySelector('#edit-duration-time').value = secondsToHMS(parseInt(card.dataset.courseDuration, 10));
+            editForm.querySelector('#edit-sources').value = card.dataset.courseSources || '';
+            editForm.querySelector('#edit-scope').value = card.dataset.courseScope || '';
+            editForm.querySelectorAll('.file-name').forEach(resetFileName);
 
-            editForm.querySelectorAll('.file-name').forEach(span => {
-                const input = span.nextElementSibling;
-                const isVideo = input.name === 'video';
-                span.textContent = isVideo ? 'Alterar arquivo de vídeo...' : 'Alterar imagem da capa...';
-                span.style.color = '#718096';
-                span.style.fontWeight = '500';
-            });
+            const contentType = card.dataset.courseContentType === 'pdf' ? 'pdf' : 'video';
+            const videoRadio = editForm.querySelector('#edit-type-video');
+            const pdfRadio = editForm.querySelector('#edit-type-pdf');
 
-            editModal.show();
+            if (videoRadio) videoRadio.checked = contentType === 'video';
+            if (pdfRadio) pdfRadio.checked = contentType === 'pdf';
+            if (editContentToggle) {
+                editContentToggle.update(contentType);
+            }
+
+            if (editModal) {
+                editModal.show();
+            }
         });
     });
     
-    editForm.addEventListener('submit', function () {
-        const timeValue = editForm.querySelector('input[name="duration_time"]').value;
-        editForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
-    });
+    if (editForm) {
+        editForm.addEventListener('submit', function () {
+            const timeValue = editForm.querySelector('input[name="duration_time"]').value;
+            editForm.querySelector('input[name="duration_seconds"]').value = hmsToSeconds(timeValue);
+        });
+    }
 
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');

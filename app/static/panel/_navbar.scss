@@ -1,4 +1,16 @@
-// Brand Styling
+// <!--- NAVBAR PRINCIPAL --->
+.navbar-custom {
+    //background: linear-gradient(120deg, #ffffff 0%, #00ff9f 30%, #2272e3 100%);
+    background: linear-gradient(120deg, #f8fafc 0%, #dff7ee 20%, #d0ffee 30%, #b6e0fe 60%, #2563eb 100%);
+    position: relative;
+    padding: 1.25rem 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+
+
 .navbar-brand-custom {
     font-weight: 700;
     font-size: 1.4rem;
@@ -53,7 +65,6 @@
         }
     }
     
-    // Fallback for browsers that don't support backdrop-filter
     @supports not (backdrop-filter: blur(20px)) {
         background: rgba(59, 130, 246, 0.3);
     }
@@ -149,7 +160,6 @@
     letter-spacing: 0.5px;
 }
 
-// Status Indicator
 .status-indicator {
     display: flex;
     align-items: center;
@@ -400,7 +410,7 @@
     }
 }
 
-.dropdown-item-custom .bi {
+.dropdown-item-custom .fas {
     font-size: 1.1rem;
     width: 24px;
     text-align: center;
@@ -408,7 +418,7 @@
     transition: all 0.3s ease;
 }
 
-.dropdown-item-custom:hover .bi {
+.dropdown-item-custom:hover .fas {
     color: #00ff9f;
     transform: scale(1.1);
 }
@@ -418,7 +428,7 @@
     margin-top: 0.5rem;
     padding-top: 0.75rem;
     
-    .bi {
+    .fas {
         color: #ff4757;
     }
     
@@ -426,7 +436,7 @@
         background: linear-gradient(135deg, rgba(255, 71, 87, 0.1) 0%, rgba(255, 71, 87, 0.2) 100%);
         color: #ff4757;
         
-        .bi {
+        .fas {
             color: #ff4757;
         }
     }
@@ -494,7 +504,7 @@
         height: 40px;
         border-radius: 50%;
         
-        .bi-chevron-down {
+        .fas-chevron-down {
             display: none;
         }
     }
@@ -734,49 +744,6 @@
     }
 }
 
-
-// Main Navbar Styling
-.navbar-custom {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #334155 100%);
-    position: relative;
-    padding: 1.25rem 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-    
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(120deg, 
-            rgba(59, 130, 246, 0.05) 0%, 
-            rgba(139, 92, 246, 0.05) 25%,
-            rgba(236, 72, 153, 0.05) 50%,
-            rgba(59, 130, 246, 0.05) 100%);
-        opacity: 0.8;
-        pointer-events: none;
-    }
-    
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, 
-            transparent 0%, 
-            rgba(59, 130, 246, 0.8) 20%,
-            rgba(139, 92, 246, 0.8) 50%,
-            rgba(236, 72, 153, 0.8) 80%,
-            transparent 100%);
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-    }
-}
-
 .navbar-custom .container-fluid {
     position: relative;
     z-index: 2;
@@ -804,31 +771,13 @@ body {
 }
 
 .footer-premium {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-    color: rgba(248, 250, 252, 0.9);
+    background: linear-gradient(120deg, #f8fafc 0%, #e0f7ef 20%, #b6e0fe 60%, #2563eb 100%);
+    color: rgba(0, 0, 0, 0.9);
     padding: 2rem 0 1.5rem 0; 
-    border-top: 2px solid rgba(59, 130, 246, 0.2);
-    box-shadow: 
-        0 -8px 32px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
     margin-top: auto;
     font-size: 0.95rem;
     position: relative;
-    
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, 
-            transparent 0%, 
-            rgba(59, 130, 246, 0.5) 25%,
-            rgba(139, 92, 246, 0.5) 50%,
-            rgba(236, 72, 153, 0.5) 75%,
-            transparent 100%);
-    }
+
 
     .footer-brand,
     .footer-credit-text,

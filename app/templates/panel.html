@@ -2,187 +2,141 @@
 {% block title %} Painel Principal {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="hero-card bg-gradient-primary text-white rounded-4 shadow-lg">
-                <div class="card-body p-5">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="avatar-circle me-3">
-                                    <i class="bi bi-person-circle fs-1"></i>
-                                </div>
-                                <div>
-                                    <h2 class="mb-1 fw-bold">Bem-vindo de volta!</h2>
-                                    <h4 class="mb-0 opacity-90">{{ current_user.name }}</h4>
-                                </div>
-                            </div>
-                            <p class="lead mb-0 opacity-75">Acesse suas ferramentas e gerencie suas atividades com
-                                facilidade</p>
-                        </div>
-                        <div class="col-md-4 text-end d-none d-md-block">
-                            <div class="stats-widget">
-                                <div class="row text-center">
-                                    <div class="col-4">
-                                        <div class="stat-item">
-                                            <h3 class="fw-bold mb-0">{{ notice|length }}</h3>
-                                            <small class="opacity-75">Avisos</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="stat-item">
-                                            <h3 class="fw-bold mb-0">4</h3>
-                                            <small class="opacity-75">Módulos</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Seção do Jornal SBCD -->
+{% include 'partials/_jornal_section.html' %}
+<div class="container-fluid px-4 py-4 dashboard-container">
+
     {% include 'partials/_flash_messages.html' %}
 
-    <div class="row mb-5">
+    <!-- Módulos do Sistema -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>
-                    Módulos do Sistema
-                </h3>
-                <span class="badge bg-light text-dark px-3 py-2">4 módulos disponíveis</span>
+            <div class="section-header-modern">
+                <div class="section-icon-wrapper">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </div>
+                <div class="section-header-content">
+                    <h2 class="section-title">Módulos do Sistema</h2>
+                    <p class="section-subtitle">Acesse os recursos e ferramentas disponíveis</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <!-- NIR -->
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card h-100 position-relative overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="feature-header mb-3">
-                        <div class="feature-icon bg-danger bg-opacity-10 rounded-3 p-3 mb-3 d-inline-flex">
-                            <i class="bi bi-hospital text-danger fs-3"></i>
-                        </div>
-                        <h5 class="fw-bold mb-2">NIR - Internações</h5>
-                        <p class="text-muted mb-3">Registre e acompanhe as notificações de internação por setor.</p>
+    <div class="row g-4 mb-4">
+        <!-- NIR - Internações -->
+        <div class="col-xl-3 col-lg-6">
+            <div class="enterprise-module-card card-accent-danger" data-aos="fade-up">
+                <div class="card-header-section">
+                    <div class="module-icon-enterprise danger">
+                        <i class="bi bi-hospital"></i>
                     </div>
-                    <div class="feature-actions">
-                        <div class="d-grid gap-2">
-                            {% for role in current_user.roles %}
-                            {% if role.sector in ['NIR', 'TI', 'CENTRO_CIRURGICO', 'FATURAMENTO'] %}
-                            <a href="{{ url_for('nir.my_work') }}" class="btn btn-danger w-100">
-                                <i class="bi bi-journal-plus me-2"></i>
-                                Meus Trabalhos
-                            </a>
-                            {% endif %}
-                            {% endfor %}
-                            <a href="{{ url_for('nir.list_records') }}"
-                                class="btn btn-outline-danger d-flex align-items-center justify-content-center">
-                                <i class="bi bi-clipboard-data me-2"></i>
-                                Ver Registros
-                            </a>
-                        </div>
+                    <div class="module-meta">
+                        <h3 class="module-name">NIR</h3>
+                        <span class="module-category">Notificações de Internação</span>
                     </div>
                 </div>
-                <div class="feature-decoration position-absolute top-0 end-0 opacity-10">
-                    <i class="bi bi-hospital" style="font-size: 8rem;"></i>
+                <div class="card-content-section">
+                    <p class="module-desc">Gerenciamento e acompanhamento de notificações de internação por setor e especialidade</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Repositório de Arquivos -->
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card h-100 position-relative overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="feature-header mb-3">
-                        <div class="feature-icon bg-primary bg-opacity-10 rounded-3 p-3 mb-3 d-inline-flex">
-                            <i class="bi bi-archive text-primary fs-3"></i>
-                        </div>
-                        <h5 class="fw-bold mb-2">Repositório de Arquivos</h5>
-                        <p class="text-muted mb-3">Gerencie documentos e arquivos importantes com segurança e
-                            organização</p>
-                    </div>
-                    <div class="feature-actions">
-                        <a href="{{ url_for('repository.repository_list_page') }}"
-                            class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
-                            <i class="bi bi-archive me-2"></i>
-                            Acessar Repositório
-                        </a>
-                    </div>
-                </div>
-                <div class="feature-decoration position-absolute top-0 end-0 opacity-10">
-                    <i class="bi bi-archive" style="font-size: 8rem;"></i>
+                <div class="card-actions-section">
+                    {% for role in current_user.roles %}
+                    {% if role.sector in ['NIR', 'TI', 'CENTRO_CIRURGICO', 'FATURAMENTO'] %}
+                    <a href="{{ url_for('nir.my_work') }}" class="btn-enterprise btn-primary-enterprise">
+                        <i class="bi bi-briefcase"></i>
+                        <span>Meus Trabalhos</span>
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                    <a href="{{ url_for('nir.list_records') }}" class="btn-enterprise btn-secondary-enterprise">
+                        <i class="bi bi-list-check"></i>
+                        <span>Ver Registros</span>
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Passagem de Plantão -->
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card h-100 position-relative overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="feature-header mb-3">
-                        <div class="feature-icon bg-success bg-opacity-10 rounded-3 p-3 mb-3 d-inline-flex">
-                            <i class="bi bi-arrow-left-right text-success fs-3"></i>
-                        </div>
-                        <h5 class="fw-bold mb-2">Passagem de Plantão</h5>
-                        <p class="text-muted mb-3">Registre e acompanhe as passagens de plantão e relatórios de turno
-                        </p>
+        <div class="col-xl-3 col-lg-6">
+            <div class="enterprise-module-card card-accent-success" data-aos="fade-up" data-aos-delay="200">
+                <div class="card-header-section">
+                    <div class="module-icon-enterprise success">
+                        <i class="bi bi-arrow-left-right"></i>
                     </div>
-                    <div class="feature-actions">
-                        <div class="d-grid gap-2">
-                            {% if current_user.has_permission('criar-registro-plantao') or current_user.has_permission('admin-total') %}
-                            <a href="{{ url_for('shift_handover.new_shift_handover_record') }}"
-                                class="btn btn-success d-flex align-items-center justify-content-center">
-                                <i class="bi bi-journal-plus me-2"></i>
-                                Novo Registro
-                            </a>
-                            {% endif %}
-                            <a href="{{ url_for('shift_handover.shift_handover_records') }}"
-                                class="btn btn-outline-success d-flex align-items-center justify-content-center">
-                                <i class="bi bi-clipboard-data me-2"></i>
-                                Ver Registros
-                            </a>
-                        </div>
+                    <div class="module-meta">
+                        <h3 class="module-name">Plantão</h3>
+                        <span class="module-category">Passagem de Turno</span>
                     </div>
                 </div>
-                <div class="feature-decoration position-absolute top-0 end-0 opacity-10">
-                    <i class="bi bi-arrow-left-right" style="font-size: 8rem;"></i>
+                <div class="card-content-section">
+                    <p class="module-desc">Sistema de registro e comunicação entre equipes nas transições de turnos</p>
+                </div>
+                <div class="card-actions-section">
+                    {% if current_user.has_permission('criar-registro-plantao') or current_user.has_permission('admin-total') %}
+                    <a href="{{ url_for('shift_handover.new_shift_handover_record') }}" class="btn-enterprise btn-primary-enterprise">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Novo Registro</span>
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('shift_handover.shift_handover_records') }}" class="btn-enterprise btn-secondary-enterprise">
+                        <i class="bi bi-list-check"></i>
+                        <span>Ver Registros</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repositório de Arquivos -->
+        <div class="col-xl-3 col-lg-6">
+            <div class="enterprise-module-card card-accent-primary" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header-section">
+                    <div class="module-icon-enterprise primary">
+                        <i class="bi bi-folder-fill"></i>
+                    </div>
+                    <div class="module-meta">
+                        <h3 class="module-name">Repositório</h3>
+                        <span class="module-category">Gestão Documental</span>
+                    </div>
+                </div>
+                <div class="card-content-section">
+                    <p class="module-desc">Central de armazenamento e organização de documentos e arquivos institucionais</p>
+                </div>
+                <div class="card-actions-section">
+                    <a href="{{ url_for('repository.repository_list_page') }}" class="btn-enterprise btn-primary-enterprise">
+                        <i class="bi bi-folder-open"></i>
+                        <span>Acessar Repositório</span>
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Treinamentos -->
-        <div class="col-lg-4 col-md-6">
-            <div class="feature-card h-100 position-relative overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="feature-header mb-3">
-                        <div class="feature-icon bg-warning bg-opacity-10 rounded-3 p-3 mb-3 d-inline-flex">
-                            <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
-                        </div>
-                        <h5 class="fw-bold mb-2">Treinamentos</h5>
-                        <p class="text-muted mb-3">Acesse cursos e materiais de treinamento para desenvolvimento
-                            profissional</p>
+        <div class="col-xl-3 col-lg-6">
+            <div class="enterprise-module-card card-accent-warning" data-aos="fade-up" data-aos-delay="300">
+                <div class="card-header-section">
+                    <div class="module-icon-enterprise warning">
+                        <i class="bi bi-mortarboard-fill"></i>
                     </div>
-                    <div class="feature-actions">
-                        <a href="{{ url_for('training.course_list_page') }}"
-                            class="btn btn-warning btn-lg w-100 d-flex align-items-center justify-content-center">
-                            <i class="bi bi-mortarboard-fill me-2"></i>
-                            Acessar Cursos
-                        </a>
+                    <div class="module-meta">
+                        <h3 class="module-name">Treinamentos</h3>
+                        <span class="module-category">Capacitação</span>
                     </div>
                 </div>
-                <div class="feature-decoration position-absolute top-0 end-0 opacity-10">
-                    <i class="bi bi-mortarboard-fill" style="font-size: 8rem;"></i>
+                <div class="card-content-section">
+                    <p class="module-desc">Plataforma de desenvolvimento profissional e educação continuada</p>
+                </div>
+                <div class="card-actions-section">
+                    <a href="{{ url_for('training.course_list_page') }}" class="btn-enterprise btn-primary-enterprise">
+                        <i class="bi bi-play-circle"></i>
+                        <span>Acessar Cursos</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Notices -->
-    <div class="row">
+</div>
+
+<div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold text-dark mb-0">
@@ -271,43 +225,51 @@
         </div>
     </div>
 </div>
+<!-- Modal de Comunicado Popup -->
 {% if popup_aviso %}
 <div class="modal fade" id="avisoModal" tabindex="-1" aria-labelledby="avisoModalLabel" aria-hidden="true">
     {% if popup_aviso.notice_type == 'IMAGE' and popup_aviso.image_filename %}
     <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content bg-transparent border-0">
-            <div class="modal-body p-0 position-relative text-center">
-
-                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2"
-                    style="z-index: 10; background-color: rgba(0,0,0,0.5); border-radius: 50%;" data-bs-dismiss="modal"
-                    aria-label="Fechar"></button>
-
+        <div class="modal-content enterprise-modal">
+            <button type="button" class="btn-close-modern" data-bs-dismiss="modal" aria-label="Fechar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="modal-body p-0">
                 <img src="{{ url_for('admin.notices.serve_notice_image', filename=popup_aviso.image_filename) }}"
-                    class="img-fluid rounded" alt="Imagem do Aviso" style="max-height: 90vh; object-fit: contain;">
+                    class="img-fluid w-100" alt="Comunicado" style="max-height: 85vh; object-fit: contain;">
             </div>
         </div>
     </div>
     {% else %}
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0 border-top border-primary border-5" style="border-radius: 0.5rem;">
-            <div class="modal-body p-4 p-lg-5">
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
-                    aria-label="Fechar"></button>
-                <div class="text-center">
-                    <i class="bi bi-megaphone-fill display-4 text-primary mb-3"></i>
-                    <h4 class="modal-title mb-3" id="avisoModalLabel">{{ popup_aviso.title }}</h4>
-                    <p class="text-secondary" style="white-space: pre-wrap;">{{ popup_aviso.content | safe }}</p>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content enterprise-modal">
+            <div class="modal-header-modern">
+                <div class="modal-icon-badge">
+                    <i class="bi bi-megaphone-fill"></i>
                 </div>
-                <hr class="my-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="small text-muted"><strong class="d-block">Publicado por:</strong><span>{{
-                            popup_aviso.author.name }}</span></div>
-                    <div class="small text-muted text-end"><strong class="d-block">Data:</strong><span>{{
-                            popup_aviso.date_registry | format_date_time }}</span></div>
+                <button type="button" class="btn-close-modern" data-bs-dismiss="modal" aria-label="Fechar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-modern">
+                <h3 class="modal-title-modern">{{ popup_aviso.title }}</h3>
+                <div class="modal-content-text">{{ popup_aviso.content | safe }}</div>
+                <div class="modal-meta-info">
+                    <div class="meta-info-item">
+                        <i class="bi bi-person-circle"></i>
+                        <span><strong>Publicado por:</strong> {{ popup_aviso.author.name }}</span>
+                    </div>
+                    <div class="meta-info-item">
+                        <i class="bi bi-calendar-check"></i>
+                        <span><strong>Data:</strong> {{ popup_aviso.date_registry | format_date_time }}</span>
+                    </div>
                 </div>
-                <div class="d-grid mt-4">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
-                </div>
+            </div>
+            <div class="modal-footer-modern">
+                <button type="button" class="btn-enterprise btn-primary-enterprise btn-lg" data-bs-dismiss="modal">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Compreendido</span>
+                </button>
             </div>
         </div>
     </div>
@@ -320,49 +282,80 @@
 {{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const featureCards = document.querySelectorAll('.feature-card');
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        function updateDateTime() {
+            const dateElement = document.getElementById('currentDate');
+            const timeElement = document.getElementById('currentTime');
+            
+            if (dateElement) {
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                const today = new Date().toLocaleDateString('pt-BR', options);
+                dateElement.textContent = today.replace('.', '').toUpperCase();
+            }
+            
+            if (timeElement) {
+                const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                timeElement.textContent = time;
+            }
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry, index) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }, index * 100);
-                }
-            });
-        }, observerOptions);
-
-        featureCards.forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            observer.observe(card);
-        });
-    });
-    document.addEventListener('DOMContentLoaded', function () {
-        var avisoModalElement = document.getElementById('avisoModal');
+        const avisoModalElement = document.getElementById('avisoModal');
         if (avisoModalElement) {
-            var avisoModal = new bootstrap.Modal(avisoModalElement);
+            const avisoModal = new bootstrap.Modal(avisoModalElement);
             avisoModal.show();
         }
 
+        const cards = document.querySelectorAll('[data-aos]');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        const heroCarousel = document.getElementById('heroCarousel');
+        if (heroCarousel) {
+            const bsCarousel = new bootstrap.Carousel(heroCarousel, {
+                interval: 6000,
+                pause: 'hover',
+                wrap: true
+            });
+            
+            heroCarousel.addEventListener('slide.bs.carousel', function (e) {
+                const activeSlide = e.relatedTarget;
+                const iconBox = activeSlide.querySelector('.hero-icon-box');
+                
+                if (iconBox) {
+                    iconBox.style.animation = 'none';
+                    setTimeout(() => {
+                        iconBox.style.animation = '';
+                    }, 10);
+                }
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    bsCarousel.prev();
+                } else if (e.key === 'ArrowRight') {
+                    bsCarousel.next();
+                }
+            });
+        }
+
+        // Modal de imagem - atualizar src quando abrir
         const imageNoticeModal = document.getElementById('imageNoticeModal');
         if (imageNoticeModal) {
-            const modalImage = document.getElementById('modalNoticeImage');
-
             imageNoticeModal.addEventListener('show.bs.modal', function (event) {
-                const triggerLink = event.relatedTarget;
-                const imageUrl = triggerLink.getAttribute('data-img-src');
-                modalImage.src = imageUrl;
+                const button = event.relatedTarget;
+                const imgSrc = button.getAttribute('data-img-src');
+                const modalImage = document.getElementById('modalNoticeImage');
+                if (modalImage && imgSrc) {
+                    modalImage.src = imgSrc;
+                }
             });
         }
     });
-
-
 </script>
 {% endblock %}

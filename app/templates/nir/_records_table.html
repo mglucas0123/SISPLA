@@ -122,7 +122,7 @@
                                     data-bs-toggle="tooltip">
                                     <i class="bi bi-eye-fill"></i>
                                 </a>
-                                {% if current_user.has_permission('editar-registro-nir') or current_user.has_permission('admin-total') %}
+                                {% if current_user.has_permission('editar-registro-nir-geral') or current_user.has_permission('admin-total') %}
                                 <a href="{{ url_for('nir.edit_record', record_id=record.id) }}"
                                     class="forms-action-btn forms-action-edit" title="Editar" data-bs-toggle="tooltip">
                                     <i class="bi bi-pencil-square"></i>

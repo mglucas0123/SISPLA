@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -13,19 +12,20 @@
 
 <body class="login-body">
     <div class="login-bg-animation"></div>
-    
+
     <div class="login-main-container">
         <div class="login-brand-panel">
             <div class="login-brand-overlay"></div>
             <div class="login-brand-content">
                 <div class="login-brand-icon-wrapper">
-                    <div class="login-heartbeat-effect"></div>
-                    <i class="bi bi-hospital login-brand-icon"></i>
+                    <img src="{{ url_for('static', filename='SISPLA_ICONE.png') }}" alt="Logo SISPLA"
+                        class="login-brand-icon"
+                        style="max-width: 64px; max-height: 64px; display: block; margin: 0 auto;">
                 </div>
-                
+
                 <div class="login-brand-info">
-                    <h1 class="login-brand-title">Central do Colaborador</h1>
-                    <p class="login-brand-subtitle">Sistema Integrado de Planejamento e Aprendizagem</p>
+                    <h1>SISPLA</h1>
+                    <p class="login-brand-subtitle">Sistema de Planejamento e Gestão Hospitalar</p>
                     <p class="login-brand-description">
                         Centralize e facilite o acesso a todos os serviços e informações do hospital em um só lugar.
                         Uma experiência moderna e intuitiva para nossos colaboradores.
@@ -74,14 +74,8 @@
                             Usuário
                         </label>
                         <div class="login-input-wrapper">
-                            <input 
-                                type="text" 
-                                class="login-form-input" 
-                                id="username" 
-                                name="username" 
-                                placeholder="Digite seu usuário"
-                                required
-                            >
+                            <input type="text" class="login-form-input" id="username" name="username"
+                                placeholder="Digite seu usuário" required>
                             <div class="login-input-focus-border"></div>
                         </div>
                     </div>
@@ -92,14 +86,8 @@
                             Senha
                         </label>
                         <div class="login-input-wrapper">
-                            <input 
-                                type="password" 
-                                class="login-form-input" 
-                                id="password" 
-                                name="password" 
-                                placeholder="Digite sua senha"
-                                required
-                            >
+                            <input type="password" class="login-form-input" id="password" name="password"
+                                placeholder="Digite sua senha" required>
                             <button type="button" class="login-password-toggle" id="togglePassword">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -158,11 +146,11 @@
 
         const inputs = document.querySelectorAll('.login-form-input');
         inputs.forEach(input => {
-            input.addEventListener('focus', function() {
+            input.addEventListener('focus', function () {
                 this.parentElement.classList.add('focused');
             });
-            
-            input.addEventListener('blur', function() {
+
+            input.addEventListener('blur', function () {
                 if (!this.value) {
                     this.parentElement.classList.remove('focused');
                 }
@@ -170,18 +158,18 @@
         });
 
         const loginBtn = document.querySelector('.login-submit-btn');
-        loginBtn.addEventListener('click', function(e) {
+        loginBtn.addEventListener('click', function (e) {
             const ripple = this.querySelector('.login-btn-ripple');
             const rect = this.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
             const x = e.clientX - rect.left - size / 2;
             const y = e.clientY - rect.top - size / 2;
-            
+
             ripple.style.width = ripple.style.height = size + 'px';
             ripple.style.left = x + 'px';
             ripple.style.top = y + 'px';
             ripple.classList.add('active');
-            
+
             setTimeout(() => {
                 ripple.classList.remove('active');
             }, 600);

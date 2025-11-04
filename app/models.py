@@ -1,5 +1,6 @@
-
+﻿
 import enum
+import os
 from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -42,7 +43,7 @@ class Permission(db.Model):
 
 
 class PermissionCatalog(db.Model):
-    """Catálogo centralizado de permissões disponíveis no sistema"""
+    """CatÃ¡logo centralizado de permissÃµes disponÃ­veis no sistema"""
     __tablename__ = 'permission_catalog'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -85,6 +86,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)
     profile = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    job_title = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
@@ -95,6 +97,7 @@ class User(db.Model, UserMixin):
     forms = db.relationship('Form', back_populates='worker', lazy='dynamic')
     nir = db.relationship('Nir', back_populates='operator', lazy='dynamic')
     shared_repositories = db.relationship('Repository', secondary=repository_access, back_populates='shared_with_users')
+    course_enrollments = db.relationship('CourseEnrollmentTerm', back_populates='user', lazy='dynamic')
     
     @property
     def has_private_repository(self): 
@@ -103,7 +106,7 @@ class User(db.Model, UserMixin):
         ).scalar()
     
     def has_permission(self, permission_name):
-        """Verifica se o usuário tem uma permissão específica (direto ou via role)"""
+        """Verifica se o usuÃ¡rio tem uma permissÃ£o especÃ­fica (direto ou via role)"""
         if any(p.name == 'admin-total' for p in self.permissions):
             return True
         
@@ -127,7 +130,7 @@ class User(db.Model, UserMixin):
         return False
     
     def get_permissions(self):
-        """Retorna todas as permissões do usuário (diretas + através de roles)"""
+        """Retorna todas as permissÃµes do usuÃ¡rio (diretas + atravÃ©s de roles)"""
         permissions = set()
         
         for permission in self.permissions:
@@ -157,7 +160,7 @@ class User(db.Model, UserMixin):
 
 
 class NirSectionStatus(db.Model):
-    """Controla o status de preenchimento de cada seção do NIR"""
+    """Controla o status de preenchimento de cada seÃ§Ã£o do NIR"""
     __tablename__ = 'nir_section_status'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -238,7 +241,7 @@ class Nir(db.Model):
     
     def get_section_control_config(self):
         """
-        Retorna a configuração de controle baseada no tipo de internação.
+        Retorna a configuraÃ§Ã£o de controle baseada no tipo de internaÃ§Ã£o.
         
         Para CIRURGICO (admission_type='CIRURGICO'):
         - NIR: dados_paciente, dados_internacao_iniciais, agendamento_inicial, dados_alta_finais
@@ -246,10 +249,10 @@ class Nir(db.Model):
         - FATURAMENTO: status_controle
         
         Para CLINICO (admission_type='CLINICO'):
-        - NIR: TODAS as seções (dados_paciente, dados_internacao_iniciais, agendamento_inicial, 
+        - NIR: TODAS as seÃ§Ãµes (dados_paciente, dados_internacao_iniciais, agendamento_inicial, 
                 procedimentos, informacoes_medicas, dados_alta_finais)
         - FATURAMENTO: status_controle
-        - (NÃO passa pelo Centro Cirúrgico)
+        - (NÃƒO passa pelo Centro CirÃºrgico)
         """
         if self.admission_type == 'CLINICO':
             return {
@@ -286,7 +289,7 @@ class Nir(db.Model):
             }
     
     def can_edit_section(self, section_name, user):
-        """Verifica se o usuário pode editar uma seção específica"""
+        """Verifica se o usuÃ¡rio pode editar uma seÃ§Ã£o especÃ­fica"""
         from app.routes.nir import get_user_sector
         
         config = self.get_section_control_config()
@@ -296,7 +299,7 @@ class Nir(db.Model):
         return user_sector == responsible_sector
     
     def get_section_status(self, section_name):
-        """Retorna o objeto NirSectionStatus de uma seção específica"""
+        """Retorna o objeto NirSectionStatus de uma seÃ§Ã£o especÃ­fica"""
         section_status = NirSectionStatus.query.filter_by(
             nir_id=self.id,
             section_name=section_name
@@ -306,11 +309,11 @@ class Nir(db.Model):
     
     def get_effective_entry_type(self):
         """
-        Retorna o tipo de entrada considerando valores legados e observações evoluídas.
+        Retorna o tipo de entrada considerando valores legados e observaÃ§Ãµes evoluÃ­das.
         
-        - CIRURGICO (legado) → URGENCIA
-        - None/vazio (observações evoluídas) → URGENCIA (para seguir fluxo completo)
-        - URGENCIA/ELETIVO → mantém o valor
+        - CIRURGICO (legado) â†’ URGENCIA
+        - None/vazio (observaÃ§Ãµes evoluÃ­das) â†’ URGENCIA (para seguir fluxo completo)
+        - URGENCIA/ELETIVO â†’ mantÃ©m o valor
         """
         if self.entry_type == 'CIRURGICO':
             return 'URGENCIA'
@@ -320,7 +323,7 @@ class Nir(db.Model):
             return self.entry_type
 
     def get_sector_sections(self):
-        """Mapeia setores para as seções que são de responsabilidade deles."""
+        """Mapeia setores para as seÃ§Ãµes que sÃ£o de responsabilidade deles."""
         config = self.get_section_control_config()
         sector_map = {}
         for section, sector in config.items():
@@ -364,14 +367,14 @@ class Nir(db.Model):
         Calcula o status geral do registro baseado no fluxo entre setores.
         
         Para entry_type URGENCIA/ELETIVO:
-        1. NIR preenche seções iniciais → EM_ANDAMENTO
-        2. CENTRO_CIRURGICO preenche suas seções → EM_ANDAMENTO
-        3. NIR preenche seções de alta → EM_ANDAMENTO
-        4. FATURAMENTO conclui → CONCLUIDO
+        1. NIR preenche seÃ§Ãµes iniciais â†’ EM_ANDAMENTO
+        2. CENTRO_CIRURGICO preenche suas seÃ§Ãµes â†’ EM_ANDAMENTO
+        3. NIR preenche seÃ§Ãµes de alta â†’ EM_ANDAMENTO
+        4. FATURAMENTO conclui â†’ CONCLUIDO
         
         Para outros tipos:
-        1. NIR preenche todas as seções → EM_ANDAMENTO
-        2. FATURAMENTO conclui → CONCLUIDO
+        1. NIR preenche todas as seÃ§Ãµes â†’ EM_ANDAMENTO
+        2. FATURAMENTO conclui â†’ CONCLUIDO
         """
         if not self.section_statuses:
             return 'PENDENTE'
@@ -430,10 +433,10 @@ class Nir(db.Model):
         
     def get_next_available_sector(self):
         """
-        Retorna o próximo setor que pode trabalhar no registro.
+        Retorna o prÃ³ximo setor que pode trabalhar no registro.
         
-        Para CLÍNICO: NIR → FATURAMENTO (pula Centro Cirúrgico)
-        Para CIRURGICO: NIR (inicial) → CENTRO_CIRURGICO → NIR (alta) → FATURAMENTO
+        Para CLÃNICO: NIR â†’ FATURAMENTO (pula Centro CirÃºrgico)
+        Para CIRURGICO: NIR (inicial) â†’ CENTRO_CIRURGICO â†’ NIR (alta) â†’ FATURAMENTO
         """
         progress = self.get_sector_progress()
         effective_entry = self.get_effective_entry_type()
@@ -485,11 +488,11 @@ class Nir(db.Model):
             return None
     
     def is_in_observation(self):
-        """Verifica se o registro está em período de observação"""
+        """Verifica se o registro estÃ¡ em perÃ­odo de observaÃ§Ã£o"""
         return self.status == 'EM_OBSERVACAO' and self.fa_datetime is not None
     
     def observation_hours_elapsed(self):
-        """Retorna quantas horas se passaram desde o Horário FA (entrada na Fila de Atendimento)"""
+        """Retorna quantas horas se passaram desde o HorÃ¡rio FA (entrada na Fila de Atendimento)"""
         if not self.fa_datetime:
             return 0
         delta = datetime.now() - self.fa_datetime
@@ -500,7 +503,7 @@ class Nir(db.Model):
         return self.is_in_observation() and self.observation_hours_elapsed() > 24
     
     def evolve_to_admission(self):
-        """Evolui um registro de observação para internação normal"""
+        """Evolui um registro de observaÃ§Ã£o para internaÃ§Ã£o normal"""
         if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
             self.status = 'PENDENTE'
             if not self.admission_date and self.fa_datetime:
@@ -511,7 +514,7 @@ class Nir(db.Model):
         return False
     
     def cancel_observation(self, reason):
-        """Cancela uma observação"""
+        """Cancela uma observaÃ§Ã£o"""
         if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
             self.cancelled = 'SIM'
             self.cancellation_reason = reason
@@ -604,10 +607,31 @@ class Course(db.Model):
     duration_seconds = db.Column(db.Integer, nullable=False, default=0)
     date_registry = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    sources = db.Column(db.Text, nullable=True)
+    scope = db.Column(db.String(100), nullable=True)
+
+    @property
+    def content_type(self):
+        if not self.video_filename:
+            return None
+        _, extension = os.path.splitext(self.video_filename)
+        extension = extension.lower()
+        return 'pdf' if extension == '.pdf' else 'video'
+
+    @property
+    def is_pdf(self):
+        return self.content_type == 'pdf'
+
+    @property
+    def is_video(self):
+        return self.content_type == 'video'
+
     quiz = db.relationship('Quiz', backref='course', uselist=False, cascade="all, delete-orphan")
 
     progress_records = db.relationship('UserCourseProgress', back_populates='course', cascade="all, delete-orphan", lazy='dynamic')
+    enrollment_terms = db.relationship('CourseEnrollmentTerm', back_populates='course', cascade="all, delete-orphan", lazy='dynamic')
+    created_by = db.relationship('User', foreign_keys=[created_by_id], backref='created_courses')
 
 class UserCourseProgress(db.Model):
     __tablename__ = 'user_course_progress'
@@ -623,6 +647,25 @@ class UserCourseProgress(db.Model):
     course = db.relationship('Course', back_populates='progress_records')
 
     __table_args__ = (db.UniqueConstraint('user_id', 'course_id', name='_user_course_uc'),)
+
+class CourseEnrollmentTerm(db.Model):
+    __tablename__ = 'course_enrollment_terms'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    full_name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(50), nullable=True)
+    department = db.Column(db.String(100), nullable=True)
+    role = db.Column(db.String(100), nullable=True)
+    observations = db.Column(db.Text, nullable=True)
+    accepted_terms = db.Column(db.Boolean, default=False, nullable=False)
+    accepted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    user = db.relationship('User', back_populates='course_enrollments')
+    course = db.relationship('Course', back_populates='enrollment_terms')
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'course_id', name='_user_course_enrollment_uc'),)
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
@@ -660,7 +703,7 @@ class QuizAttachment(db.Model):
         }
 
 class QuestionType(enum.Enum):
-    MULTIPLE_CHOICE = "Múltipla Escolha"
+    MULTIPLE_CHOICE = "MÃºltipla Escolha"
     TEXT_INPUT = "Resposta de Texto"
 
 class Question(db.Model):
@@ -706,3 +749,4 @@ class UserQuizAttempt(db.Model):
 
     user = db.relationship('User', backref='quiz_attempts')
     quiz = db.relationship('Quiz', backref=db.backref('attempts', cascade="all, delete-orphan"))
+
