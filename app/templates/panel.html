@@ -133,6 +133,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- Avaliação de Fornecedores -->
+        <div class="col-xl-3 col-lg-6">
+            <div class="enterprise-module-card card-accent-info" data-aos="fade-up" data-aos-delay="400">
+                <div class="card-header-section">
+                    <div class="module-icon-enterprise info">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div class="module-meta">
+                        <h3 class="module-name">Fornecedores</h3>
+                        <span class="module-category">Avaliação de Prestadores</span>
+                    </div>
+                </div>
+                <div class="card-content-section">
+                    <p class="module-desc">Sistema de avaliação mensal de fornecedores e prestadores de serviços com ranking de desempenho</p>
+                </div>
+                <div class="card-actions-section">
+                    <a href="{{ url_for('suppliers.dashboard') }}" class="btn-enterprise btn-primary-enterprise">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('suppliers.evaluate_supplier') }}" class="btn-enterprise btn-secondary-enterprise">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Avaliar</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

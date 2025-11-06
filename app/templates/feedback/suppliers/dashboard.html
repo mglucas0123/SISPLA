@@ -1,0 +1,719 @@
+{% extends "navbar.html" %}
+
+{% block title %}Dashboard de Fornecedores - SISPLA{% endblock %}
+
+{% block content %}
+
+{% include 'partials/_flash_messages.html' %}
+
+<div class="supplier-dashboard-container">
+    <div class="container-fluid">
+        <div class="dashboard-header">
+            <div class="header-content">
+                <div class="icon-wrapper-dash">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Dashboard de Fornecedores</h1>
+                    <p>Análise de desempenho e rankings mensais</p>
+                </div>
+            </div>
+            <div class="header-actions-dash">
+                <a href="{{ url_for('suppliers.evaluate_supplier') }}" class="btn btn-primary">
+                    <i class="bi bi-clipboard-check"></i> Nova Avaliação
+                </a>
+                <a href="{{ url_for('suppliers.supplier_list') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-ul"></i> Gerenciar
+                </a>
+            </div>
+        </div>
+
+        <!-- Estatísticas Gerais -->
+        <div class="stats-dashboard-row">
+            <div class="stat-card-dash primary">
+                <div class="stat-icon-dash">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stat-content-dash">
+                    <h3>{{ total_suppliers }}</h3>
+                    <p>Fornecedores Ativos</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+            </div>
+
+            <div class="stat-card-dash success">
+                <div class="stat-icon-dash">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+                <div class="stat-content-dash">
+                    <h3>{{ total_evaluations }}</h3>
+                    <p>Avaliações Realizadas</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+
+            <div class="stat-card-dash warning">
+                <div class="stat-icon-dash">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content-dash">
+                    <h3>{{ problematic_count }}</h3>
+                    <p>Precisam de Atenção</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="bi bi-arrow-down-circle"></i>
+                </div>
+            </div>
+
+            <div class="stat-card-dash info">
+                <div class="stat-icon-dash">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div class="stat-content-dash">
+                    {% if total_suppliers > 0 %}
+                    <h3>{{ "%.1f"|format((suppliers_data|selectattr('avg_score', 'gt', 0)|list|sum(attribute='avg_score') / suppliers_data|selectattr('avg_score', 'gt', 0)|list|length) if suppliers_data|selectattr('avg_score', 'gt', 0)|list|length > 0 else 0) }}%</h3>
+                    {% else %}
+                    <h3>0%</h3>
+                    {% endif %}
+                    <p>Score Médio Geral</p>
+                </div>
+                <div class="stat-trend">
+                    <i class="bi bi-bar-chart"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- COLUNA ESQUERDA: Rankings -->
+            <div class="col-lg-8">
+                <!-- TOP 3 Melhores Fornecedores -->
+                <div class="dashboard-card top-suppliers-card">
+                    <div class="card-header-dash">
+                        <div class="header-title">
+                            <h2><i class="bi bi-trophy"></i> Top 3 Melhores Fornecedores</h2>
+                            <span class="badge badge-success">Excelência</span>
+                        </div>
+                        <p class="header-subtitle">Fornecedores com melhor desempenho</p>
+                    </div>
+                    <div class="ranking-list premium">
+                        {% if top_suppliers %}
+                            {% for data in top_suppliers[:3] %}
+                            <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=data.supplier.id) }}" class="ranking-item-premium {{ 'rank-1' if loop.index == 1 else ('rank-2' if loop.index == 2 else 'rank-3') }}">
+                                <div class="rank-medal">
+                                    <div class="medal-wrapper {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else 'bronze') }}">
+                                        <i class="bi bi-award-fill"></i>
+                                    </div>
+                                    <span class="rank-badge">#{{ loop.index }}</span>
+                                </div>
+                                
+                                <div class="rank-content">
+                                    <div class="rank-header">
+                                        <h3>{{ data.supplier.company_name }}</h3>
+                                        <div class="rank-score-badge {{ 'excellent' if data.avg_score >= 80 else ('good' if data.avg_score >= 60 else 'poor') }}">
+                                            {{ "%.0f"|format(data.avg_score) }}%
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="rank-meta-info">
+                                        <span class="meta-item">
+                                            <i class="bi bi-star-fill"></i>
+                                            {% set stars = (data.avg_score / 10)|round|int // 2 %}
+                                            {% for i in range(stars) %}
+                                            <i class="bi bi-star-fill"></i>
+                                            {% endfor %}
+                                            {% for i in range(5 - stars) %}
+                                            <i class="bi bi-star"></i>
+                                            {% endfor %}
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="bi bi-clipboard-check"></i> {{ data.eval_count }} avaliações
+                                        </span>
+                                        {% if data.last_eval_date %}
+                                        <span class="meta-item">
+                                            <i class="bi bi-calendar-event"></i> {{ data.last_eval_date.strftime('%d/%m/%Y') }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="rank-progress">
+                                        <div class="progress-bar-container">
+                                            <div class="progress-fill {{ 'excellent' if data.avg_score >= 80 else ('good' if data.avg_score >= 60 else 'poor') }}" style="width: {{ data.avg_score }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-ranking">
+                                <div class="empty-icon">
+                                    <i class="bi bi-inbox"></i>
+                                </div>
+                                <p>Nenhum fornecedor avaliado ainda</p>
+                                <small>Realize avaliações para ver os melhores fornecedores</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Ranking Completo -->
+                <div class="dashboard-card">
+                    <div class="card-header-dash">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="d-flex align-items-center">
+                                <h2 class="mb-0"><i class="bi bi-list-ol"></i> Ranking de Fornecedores</h2>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted fw-semibold">
+                                    <i class="bi bi-list-check me-2"></i>{{ suppliers_data|length }} fornecedores
+                                </span>
+                                <select class="form-select form-select-sm" id="sortOrder" style="width: auto;">
+                                    <option value="desc">Maior Score</option>
+                                    <option value="asc">Menor Score</option>
+                                    <option value="name">Nome A-Z</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="nir-table-modern-wrapper">
+                        <div class="table-responsive">
+                            <table class="nir-table-modern" id="rankingTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th><i class="bi bi-building me-1"></i>Fornecedor</th>
+                                        <th><i class="bi bi-clipboard-check me-1"></i>Avaliações</th>
+                                        <th><i class="bi bi-graph-up me-1"></i>Score</th>
+                                        <th><i class="bi bi-flag me-1"></i>Status</th>
+                                        <th><i class="bi bi-gear me-1"></i>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in suppliers_data %}
+                                    {% set last_eval = data.last_eval %}
+                                    {% set needs_attention = data.needs_attention %}
+                                    {% set row_class = '' %}
+                                    {% if needs_attention and not data.supplier.issue_verified %}
+                                        {% set row_class = 'supplier-row-attention' %}
+                                    {% elif needs_attention and data.supplier.issue_verified %}
+                                        {% set row_class = 'supplier-row-verified' %}
+                                    {% elif data.eval_count > 0 and data.avg_score >= 80 %}
+                                        {% set row_class = 'supplier-row-excellent' %}
+                                    {% elif data.eval_count > 0 and data.avg_score >= 70 %}
+                                        {% set row_class = 'supplier-row-satisfactory' %}
+                                    {% endif %}
+                                    <tr class="supplier-row {{ row_class }}" 
+                                        data-score="{{ data.avg_score }}" 
+                                        data-name="{{ data.supplier.company_name }}"
+                                        data-supplier-id="{{ data.supplier.id }}"
+                                        data-priority="{{ data.priority }}">
+                                        <td class="cell-id">
+                                            <span class="badge fw-bold">#{{ loop.index }}</span>
+                                        </td>
+                                        <td class="cell-supplier">
+                                            <div class="d-flex flex-column">
+                                                <strong class="mb-1">
+                                                    {{ data.supplier.company_name }}
+                                                    {% if data.supplier.issue_verified %}
+                                                    <span class="badge bg-success rounded-pill ms-2" title="Problema verificado em {{ data.supplier.verified_at.strftime('%d/%m/%Y às %H:%M') if data.supplier.verified_at else '' }}">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Verificado
+                                                    </span>
+                                                    {% endif %}
+                                                </strong>
+                                                {% if data.supplier.cnpj %}
+                                                <small class="text-muted">CNPJ: {{ data.supplier.cnpj }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge {% if data.eval_count > 0 %}bg-custom-blue{% else %}bg-secondary{% endif %} rounded-pill">
+                                                {{ data.eval_count }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if data.eval_count > 0 %}
+                                            <div class="score-badge-sm {{ 'excellent' if data.avg_score >= 80 else ('good' if data.avg_score >= 60 else 'poor') }}">
+                                                {{ "%.0f"|format(data.avg_score) }}%
+                                            </div>
+                                            {% else %}
+                                            <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if data.eval_count == 0 %}
+                                            <span class="badge bg-custom-gray rounded-pill">Não Avaliado</span>
+                                            {% else %}
+                                            {% if last_eval and not last_eval.had_service_last_month %}
+                                            <span class="badge bg-custom-yellow rounded-pill">
+                                                <i class="bi bi-info-circle me-1"></i>Sem Serviço
+                                            </span>
+                                            {% elif data.avg_score >= 80 %}
+                                            <span class="badge bg-custom-green rounded-pill">
+                                                <i class="bi bi-check-circle me-1"></i>Excelente
+                                            </span>
+                                            {% elif data.avg_score >= 60 %}
+                                            <span class="badge bg-custom-blue rounded-pill">
+                                                <i class="bi bi-info-circle me-1"></i>Satisfatório
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-custom-red rounded-pill">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>Insatisfatório
+                                            </span>
+                                            {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-2">
+                                                {% if needs_attention and not data.supplier.issue_verified %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-primary rounded-pill shadow-sm toggle-detail-supplier" 
+                                                        data-detail-id="detail-supplier-{{ data.supplier.id }}"
+                                                        title="Ver motivo da atenção">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                                    <span class="btn-text">Verificar</span>
+                                                </button>
+                                                {% elif needs_attention and data.supplier.issue_verified %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-success rounded-pill shadow-sm toggle-detail-supplier" 
+                                                        data-detail-id="detail-supplier-{{ data.supplier.id }}"
+                                                        title="Ver detalhes da verificação">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>
+                                                    <span class="btn-text">Verificado</span>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% if needs_attention %}
+                                    <tr id="detail-supplier-{{ data.supplier.id }}" class="detail-row" style="display:none;">
+                                        <td colspan="7" class="p-0">
+                                            <div class="inline-detail-card">
+                                                <div class="inline-detail-header">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <h5 class="mb-0">
+                                                            <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                                                            Atenção Necessária - {{ data.supplier.company_name }}
+                                                        </h5>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            {% if data.eval_count > 0 %}
+                                                            <span class="badge {{ 'bg-danger' if data.avg_score < 60 else 'bg-warning' }}">
+                                                                <i class="bi bi-graph-down me-1"></i>Score: {{ "%.0f"|format(data.avg_score) }}%
+                                                            </span>
+                                                            {% endif %}
+                                                            {% if data.supplier.issue_verified %}
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-check-circle-fill me-1"></i>Verificado
+                                                            </span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="inline-detail-body">
+                                                    <div class="alert alert-warning mb-3 py-2">
+                                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                                        <strong>Motivo:</strong>
+                                                        {% if last_eval and not last_eval.had_service_last_month %}
+                                                        Sem fornecimento/prestação de serviço no último mês
+                                                        {% else %}
+                                                        Score abaixo do esperado ({{ "%.0f"|format(data.avg_score) }}%) - necessita revisão
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    {% if data.supplier.issue_verified %}
+                                                    <div class="alert alert-success mb-3 py-2">
+                                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                                        <strong>Status:</strong> Problema verificado
+                                                        {% if data.supplier.verified_at %}
+                                                        em {{ data.supplier.verified_at.strftime('%d/%m/%Y às %H:%M') }}
+                                                        {% endif %}
+                                                        {% if data.supplier.verified_by %}
+                                                        por {{ data.supplier.verified_by.name }}
+                                                        {% endif %}
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <p class="text-muted mb-3 text-center">
+                                                        <i class="bi bi-lightbulb me-2"></i>
+                                                        Escolha uma ação para revisar o desempenho do fornecedor.
+                                                    </p>
+                                                    
+                                                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                                        {% if last_eval %}
+                                                        <a href="{{ url_for('suppliers.evaluation_details', evaluation_id=last_eval.id) }}"
+                                                           class="btn btn-primary">
+                                                            <i class="bi bi-clipboard-check me-1"></i>Ver Última Avaliação
+                                                        </a>
+                                                        {% endif %}
+                                                        <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=data.supplier.id) }}"
+                                                           class="btn btn-info">
+                                                            <i class="bi bi-clock-history me-1"></i>Histórico Completo
+                                                        </a>
+                                                        
+                                                        {% if not data.supplier.issue_verified %}
+                                                        <form method="POST" action="{{ url_for('suppliers.verify_issue', supplier_id=data.supplier.id) }}" class="d-inline">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            <button type="submit" class="btn btn-success">
+                                                                <i class="bi bi-check-circle me-1"></i>Marcar como Resolvido
+                                                            </button>
+                                                        </form>
+                                                        {% else %}
+                                                        <form method="POST" action="{{ url_for('suppliers.unverify_issue', supplier_id=data.supplier.id) }}" class="d-inline">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            <button type="submit" class="btn btn-outline-warning">
+                                                                <i class="bi bi-arrow-counterclockwise me-1"></i>Desmarcar Verificação
+                                                            </button>
+                                                        </form>
+                                                        {% endif %}
+                                                        
+                                                        <button type="button" 
+                                                                class="btn btn-secondary cancel-supplier-panel" 
+                                                                data-supplier-id="{{ data.supplier.id }}">
+                                                            <i class="bi bi-x-circle me-1"></i>Fechar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA: Gráficos e Insights -->
+            <div class="col-lg-4">
+                <!-- Distribuição de Scores -->
+                <div class="dashboard-card performance-card">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-pie-chart"></i> Distribuição de Performance</h2>
+                    </div>
+                    <div class="chart-container">
+                        {% set excellent_count = suppliers_data|selectattr('avg_score', 'ge', 80)|list|length %}
+                        {% set good_count = suppliers_data|selectattr('avg_score', 'ge', 60)|selectattr('avg_score', 'lt', 80)|list|length %}
+                        {% set poor_count = suppliers_data|selectattr('avg_score', 'lt', 60)|selectattr('eval_count', 'gt', 0)|list|length %}
+                        {% set not_eval_count = suppliers_data|selectattr('eval_count', 'eq', 0)|list|length %}
+                        
+                        {% set excellent_pct = (excellent_count / total_suppliers * 100) if total_suppliers > 0 else 0 %}
+                        {% set good_pct = (good_count / total_suppliers * 100) if total_suppliers > 0 else 0 %}
+                        {% set poor_pct = (poor_count / total_suppliers * 100) if total_suppliers > 0 else 0 %}
+                        {% set not_eval_pct = (not_eval_count / total_suppliers * 100) if total_suppliers > 0 else 0 %}
+                        
+                        <div class="performance-content">
+                            <div class="performance-donut">
+                                <svg viewBox="0 0 140 140" class="donut-chart" preserveAspectRatio="xMidYMid meet">
+                                    <circle cx="70" cy="70" r="60" fill="none" stroke="#e2e5ee" stroke-width="25"></circle>
+                                    <circle cx="70" cy="70" r="40" fill="none" stroke="#e2e5ee" stroke-width="25"></circle>
+
+                                    <circle cx="70" cy="70" r="54" fill="none" stroke="#e3e6f0" stroke-width="25"></circle>
+                                    
+                                    {% if excellent_count > 0 %}
+                                    <circle cx="70" cy="70" r="54" fill="none" stroke="#10b981" stroke-width="25"
+                                        stroke-dasharray="{{ (excellent_pct / 100) * 339.3 }} 339.3"
+                                        stroke-dashoffset="0"
+                                        stroke-linecap="round"
+                                        class="donut-segment excellent"></circle>
+                                    {% endif %}
+                                    
+                                    {% if good_count > 0 %}
+                                    <circle cx="70" cy="70" r="54" fill="none" stroke="#f59e0b" stroke-width="25"
+                                        stroke-dasharray="{{ (good_pct / 100) * 339.3 }} 339.3"
+                                        stroke-dashoffset="-{{ (excellent_pct / 100) * 339.3 }}"
+                                        stroke-linecap="round"
+                                        class="donut-segment good"></circle>
+                                    {% endif %}
+                                    
+                                    {% if poor_count > 0 %}
+                                    <circle cx="70" cy="70" r="54" fill="none" stroke="#ef4444" stroke-width="25"
+                                        stroke-dasharray="{{ (poor_pct / 100) * 339.3 }} 339.3"
+                                        stroke-dashoffset="-{{ ((excellent_pct + good_pct) / 100) * 339.3 }}"
+                                        stroke-linecap="round"
+                                        class="donut-segment poor"></circle>
+                                    {% endif %}
+                                    
+                                    {% if not_eval_count > 0 %}
+                                    <circle cx="70" cy="70" r="54" fill="none" stroke="#cbd5e1" stroke-width="25"
+                                        stroke-dasharray="{{ (not_eval_pct / 100) * 339.3 }} 339.3"
+                                        stroke-dashoffset="-{{ ((excellent_pct + good_pct + poor_pct) / 100) * 339.3 }}"
+                                        stroke-linecap="round"
+                                        class="donut-segment not-eval"></circle>
+                                    {% endif %}
+                                    
+                                    <text x="70" y="75" text-anchor="middle" font-size="24" font-weight="bold" fill="#2c3e50">{{ total_suppliers }}</text>
+                                    <text x="70" y="88" text-anchor="middle" font-size="10" fill="#7f8c8d">Total</text>
+                                </svg>
+                            </div>
+                            
+                            <div class="performance-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color excellent"></div>
+                                    <div class="legend-content">
+                                        <span class="legend-label">Excelentes</span>
+                                        <span class="legend-value">{{ excellent_count }} ({{ "%.0f"|format(excellent_pct) }}%)</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="legend-item">
+                                    <div class="legend-color good"></div>
+                                    <div class="legend-content">
+                                        <span class="legend-label">Satisfatórios</span>
+                                        <span class="legend-value">{{ good_count }} ({{ "%.0f"|format(good_pct) }}%)</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="legend-item">
+                                    <div class="legend-color poor"></div>
+                                    <div class="legend-content">
+                                        <span class="legend-label">Insatisfatórios</span>
+                                        <span class="legend-value">{{ poor_count }} ({{ "%.0f"|format(poor_pct) }}%)</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="legend-item">
+                                    <div class="legend-color not-eval"></div>
+                                    <div class="legend-content">
+                                        <span class="legend-label">Não Avaliados</span>
+                                        <span class="legend-value">{{ not_eval_count }} ({{ "%.0f"|format(not_eval_pct) }}%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+
+                <!-- Insights e Dicas -->
+                <div class="dashboard-card insights-card">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-lightbulb"></i> Insights</h2>
+                    </div>
+                    <div class="insights-list">
+                        {% if problematic_count > 0 %}
+                        <div class="insight-item warning">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <p><strong>{{ problematic_count }}</strong> fornecedor(es) com score abaixo de 60%. Considere revisar os contratos.</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if top_suppliers|length > 0 %}
+                        <div class="insight-item success">
+                            <i class="bi bi-trophy-fill"></i>
+                            <p>Fornecedor destaque: <strong>{{ top_suppliers[0].supplier.company_name }}</strong> com {{ "%.0f"|format(top_suppliers[0].avg_score) }}%</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% set not_evaluated = suppliers_data|selectattr('eval_count', 'eq', 0)|list|length %}
+                        {% if not_evaluated > 0 %}
+                        <div class="insight-item info">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <p><strong>{{ not_evaluated }}</strong> fornecedor(es) ainda não possui(em) avaliação.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const suppliersData = {
+    excellent: [
+        {% for data in suppliers_data %}
+        {% if data.avg_score >= 80 %}
+        { name: "{{ data.supplier.company_name }}", score: {{ "%.1f"|format(data.avg_score) }} },
+        {% endif %}
+        {% endfor %}
+    ],
+    good: [
+        {% for data in suppliers_data %}
+        {% if data.avg_score >= 60 and data.avg_score < 80 %}
+        { name: "{{ data.supplier.company_name }}", score: {{ "%.1f"|format(data.avg_score) }} },
+        {% endif %}
+        {% endfor %}
+    ],
+    poor: [
+        {% for data in suppliers_data %}
+        {% if data.avg_score < 60 and data.eval_count > 0 %}
+        { name: "{{ data.supplier.company_name }}", score: {{ "%.1f"|format(data.avg_score) }} },
+        {% endif %}
+        {% endfor %}
+    ],
+    notEval: [
+        {% for data in suppliers_data %}
+        {% if data.eval_count == 0 %}
+        { name: "{{ data.supplier.company_name }}", score: 0 },
+        {% endif %}
+        {% endfor %}
+    ]
+};
+
+const tooltip = document.createElement('div');
+tooltip.className = 'donut-tooltip';
+tooltip.style.cssText = `
+    position: fixed;
+    background: white;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 9999;
+    max-width: 300px;
+    border-left: 4px solid #333;
+`;
+document.body.appendChild(tooltip);
+
+const donutSegments = document.querySelectorAll('.donut-segment');
+
+donutSegments.forEach(segment => {
+    segment.style.cursor = 'pointer';
+    
+    segment.addEventListener('mouseenter', function(e) {
+        const classList = this.classList;
+        let category, categoryName, color;
+        
+        if (classList.contains('excellent')) {
+            category = 'excellent';
+            categoryName = 'Excelentes (≥80%)';
+            color = '#10b981';
+        } else if (classList.contains('good')) {
+            category = 'good';
+            categoryName = 'Satisfatórios (60-79%)';
+            color = '#f59e0b';
+        } else if (classList.contains('poor')) {
+            category = 'poor';
+            categoryName = 'Insatisfatórios (<60%)';
+            color = '#ef4444';
+        } else if (classList.contains('not-eval')) {
+            category = 'notEval';
+            categoryName = 'Não Avaliados';
+            color = '#cbd5e1';
+        }
+        
+        const suppliers = suppliersData[category];
+        
+        if (suppliers && suppliers.length > 0) {
+            let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${color};">${categoryName}</div>`;
+            html += '<div style="max-height: 200px; overflow-y: auto;">';
+            
+            suppliers.forEach((supplier, index) => {
+                if (index < 10) {
+                    html += `<div style="padding: 4px 0; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                        <strong>${supplier.name}</strong>
+                        ${supplier.score > 0 ? `<span style="color: #7f8c8d; float: right;">${supplier.score}%</span>` : ''}
+                    </div>`;
+                }
+            });
+            
+            if (suppliers.length > 10) {
+                html += `<div style="padding: 8px 0; color: #7f8c8d; font-size: 12px; text-align: center;">
+                    +${suppliers.length - 10} fornecedor(es)...
+                </div>`;
+            }
+            
+            html += '</div>';
+            
+            tooltip.innerHTML = html;
+            tooltip.style.borderLeftColor = color;
+            tooltip.style.opacity = '1';
+        }
+    });
+    
+    segment.addEventListener('mousemove', function(e) {
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY + 15) + 'px';
+    });
+    
+    segment.addEventListener('mouseleave', function() {
+        tooltip.style.opacity = '0';
+    });
+});
+
+// Ordenação da tabela
+document.getElementById('sortOrder').addEventListener('change', function() {
+    const tbody = document.querySelector('#rankingTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr.supplier-row'));
+    
+    rows.sort((a, b) => {
+        const sortType = this.value;
+        
+        if (sortType === 'desc') {
+            // Ordenação por score decrescente (mantém prioridade)
+            const priorityA = parseInt(a.dataset.priority) || 999;
+            const priorityB = parseInt(b.dataset.priority) || 999;
+            
+            // Se ambos tem a mesma prioridade, ordena por score
+            if (priorityA === priorityB) {
+                return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            }
+            // Senão, mantém ordem de prioridade
+            return priorityA - priorityB;
+        } else if (sortType === 'asc') {
+            // Ordenação por score crescente (ignora prioridade)
+            return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
+        } else { 
+            // Ordenação alfabética por nome (ignora prioridade)
+            return a.dataset.name.localeCompare(b.dataset.name);
+        }
+    });
+    
+    // Reordenar mantendo as linhas de detalhe
+    rows.forEach((row, index) => {
+        row.querySelector('.cell-id .badge').textContent = '#' + (index + 1);
+        const supplierId = row.dataset.supplierId;
+        const detailRow = document.getElementById('detail-supplier-' + supplierId);
+        
+        tbody.appendChild(row);
+        if (detailRow) {
+            tbody.appendChild(detailRow);
+        }
+    });
+});
+
+// Toggle inline details - similar ao NIR
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle detalhes do fornecedor
+    document.querySelectorAll('.toggle-detail-supplier').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const detailId = this.dataset.detailId;
+            const detailRow = document.getElementById(detailId);
+            
+            if (detailRow) {
+                const isVisible = detailRow.style.display !== 'none';
+                
+                // Fechar todos os outros detalhes
+                document.querySelectorAll('.detail-row').forEach(row => {
+                    row.style.display = 'none';
+                });
+                
+                // Toggle o detalhe atual
+                if (!isVisible) {
+                    detailRow.style.display = 'table-row';
+                    detailRow.querySelector('.inline-detail-card').classList.add('animate-in');
+                } else {
+                    detailRow.style.display = 'none';
+                }
+            }
+        });
+    });
+    
+    // Fechar painel de detalhes
+    document.querySelectorAll('.cancel-supplier-panel').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const supplierId = this.dataset.supplierId;
+            const detailRow = document.getElementById('detail-supplier-' + supplierId);
+            if (detailRow) {
+                detailRow.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

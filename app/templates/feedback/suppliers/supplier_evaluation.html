@@ -1,0 +1,623 @@
+{% extends "navbar.html" %}
+
+{% block title %}Avaliar Fornecedor - SISPLA{% endblock %}
+
+{% block content %}
+<div class="supplier-evaluation-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header-eval">
+            <div class="header-content">
+                <div class="icon-wrapper-animated">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Avaliação de Fornecedor</h1>
+                    <p>Preencha a avaliação mensal do fornecedor/prestador de serviços</p>
+                </div>
+            </div>
+            <div class="progress-indicator">
+                <div class="progress-step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <span>Seleção</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <span>Avaliação</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <span>Finalização</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário Multi-Step -->
+        <form method="POST" action="{{ url_for('suppliers.evaluate_supplier') }}" id="evaluationForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- STEP 1: Seleção de Fornecedor e Mês -->
+            <div class="evaluation-step active" id="step1">
+                <div class="step-card">
+                    <div class="step-header">
+                        <i class="bi bi-1-circle-fill"></i>
+                        <h2>Informações Iniciais</h2>
+                    </div>
+
+                    <div class="form-row-custom">
+                        <!-- Seleção de Fornecedor -->
+                        <div class="form-group-custom">
+                            <label for="supplier_id" class="form-label-custom required">
+                                <i class="bi bi-building"></i>
+                                Selecione o Fornecedor/Prestador
+                            </label>
+                            <select class="form-select-custom" id="supplier_id" name="supplier_id" required>
+                                <option value="">Escolha um fornecedor...</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}" data-name="{{ supplier.company_name }}">
+                                    {{ supplier.company_name }}
+                                    {% if supplier.service_type %} - {{ supplier.service_type }}{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="selected-supplier-display" id="selectedSupplierDisplay" style="display: none;">
+                                <div class="supplier-badge-large">
+                                    <i class="bi bi-building-check"></i>
+                                    <span id="selectedSupplierName"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mês de Referência -->
+                        <div class="form-group-custom">
+                            <label for="month_reference" class="form-label-custom required">
+                                <i class="bi bi-calendar-month"></i>
+                                Mês de Referência
+                            </label>
+                            <input type="month" 
+                                   class="form-control-custom" 
+                                   id="month_reference" 
+                                   name="month_reference" 
+                                   value="{{ current_month }}" 
+                                   required>
+                            <small class="form-hint">Selecione o mês que está sendo avaliado</small>
+                        </div>
+                    </div>
+
+                    <!-- Primeira Pergunta -->
+                    <div class="question-card">
+                        <div class="question-header">
+                            <span class="question-number">1</span>
+                            <h3>Houve Fornecimento/Prestação de Serviços no último mês?</h3>
+                        </div>
+                        <div class="toggle-options">
+                            <label class="toggle-option">
+                                <input type="radio" name="had_service_last_month" value="true" required>
+                                <div class="toggle-card">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Sim</span>
+                                </div>
+                            </label>
+                            <label class="toggle-option">
+                                <input type="radio" name="had_service_last_month" value="false">
+                                <div class="toggle-card">
+                                    <i class="bi bi-x-circle"></i>
+                                    <span>Não</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-box" id="serviceJustificationBox" style="display: none;">
+                            <label class="form-label-custom">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta (opcional)
+                            </label>
+                            <textarea class="form-control-custom" 
+                                      name="service_justification" 
+                                      rows="3" 
+                                      placeholder="Descreva detalhes sobre o fornecimento/serviço..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-primary btn-next" onclick="nextStep(2)">
+                            Próximo <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Perguntas de Avaliação -->
+            <div class="evaluation-step" id="step2">
+                <div class="step-card">
+                    <div class="step-header">
+                        <i class="bi bi-2-circle-fill"></i>
+                        <h2>Critérios de Avaliação</h2>
+                    </div>
+
+                    <p class="step-description">
+                        Avalie os seguintes critérios de acordo com o desempenho do fornecedor
+                    </p>
+
+                    <!-- Questão 2: Conformidade com Contrato -->
+                    <div class="question-card-eval" data-question="2">
+                        <div class="question-header-eval">
+                            <span class="question-number">2</span>
+                            <h3>O Serviço é prestado integralmente conforme contrato firmado?</h3>
+                        </div>
+                        <div class="radio-options-modern">
+                            <label class="radio-option conforme">
+                                <input type="radio" name="contract_compliance" value="conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-conforme">
+                                <input type="radio" name="contract_compliance" value="nao_conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>Não Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-aplica">
+                                <input type="radio" name="contract_compliance" value="nao_aplica">
+                                <div class="radio-card">
+                                    <i class="bi bi-dash-circle-fill"></i>
+                                    <span>Não se Aplica</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-collapsible" data-target="contract_compliance_justification">
+                            <textarea class="form-control-custom" 
+                                      name="contract_compliance_justification" 
+                                      rows="2" 
+                                      placeholder="Justifique se necessário..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Questão 3: Equipamento -->
+                    <div class="question-card-eval" data-question="3">
+                        <div class="question-header-eval">
+                            <span class="question-number">3</span>
+                            <h3>O equipamento atende a necessidade e o serviço na unidade?</h3>
+                        </div>
+                        <div class="radio-options-modern">
+                            <label class="radio-option conforme">
+                                <input type="radio" name="equipment_adequacy" value="conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-conforme">
+                                <input type="radio" name="equipment_adequacy" value="nao_conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>Não Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-aplica">
+                                <input type="radio" name="equipment_adequacy" value="nao_aplica">
+                                <div class="radio-card">
+                                    <i class="bi bi-dash-circle-fill"></i>
+                                    <span>Não se Aplica</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-collapsible">
+                            <textarea class="form-control-custom" 
+                                      name="equipment_adequacy_justification" 
+                                      rows="2" 
+                                      placeholder="Informe quais equipamentos ou justifique..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Questão 4: Validação de Faturamento -->
+                    <div class="question-card-eval" data-question="4">
+                        <div class="question-header-eval">
+                            <span class="question-number">4</span>
+                            <h3>O valor faturado sempre é validado conforme contrato firmado?</h3>
+                        </div>
+                        <div class="radio-options-modern">
+                            <label class="radio-option conforme">
+                                <input type="radio" name="invoice_validation" value="conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-conforme">
+                                <input type="radio" name="invoice_validation" value="nao_conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>Não Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-aplica">
+                                <input type="radio" name="invoice_validation" value="nao_aplica">
+                                <div class="radio-card">
+                                    <i class="bi bi-dash-circle-fill"></i>
+                                    <span>Não se Aplica</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-collapsible">
+                            <textarea class="form-control-custom" 
+                                      name="invoice_validation_justification" 
+                                      rows="2" 
+                                      placeholder="Justifique se necessário..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Questão 5: Prazo de Atendimento -->
+                    <div class="question-card-eval" data-question="5">
+                        <div class="question-header-eval">
+                            <span class="question-number">5</span>
+                            <h3>Os chamados de serviços e fornecimentos ocorrem no tempo estipulado em contrato?</h3>
+                        </div>
+                        <div class="radio-options-modern">
+                            <label class="radio-option conforme">
+                                <input type="radio" name="service_timeliness" value="conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-conforme">
+                                <input type="radio" name="service_timeliness" value="nao_conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>Não Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-aplica">
+                                <input type="radio" name="service_timeliness" value="nao_aplica">
+                                <div class="radio-card">
+                                    <i class="bi bi-dash-circle-fill"></i>
+                                    <span>Não se Aplica</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-collapsible">
+                            <textarea class="form-control-custom" 
+                                      name="service_timeliness_justification" 
+                                      rows="2" 
+                                      placeholder="Justifique se necessário..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Questão 6: Quantitativo -->
+                    <div class="question-card-eval" data-question="6">
+                        <div class="question-header-eval">
+                            <span class="question-number">6</span>
+                            <h3>O quantitativo e descritivo dos Fornecimentos/Serviços estão sendo prestados conforme contrato?</h3>
+                        </div>
+                        <div class="radio-options-modern">
+                            <label class="radio-option conforme">
+                                <input type="radio" name="quantity_description_compliance" value="conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-conforme">
+                                <input type="radio" name="quantity_description_compliance" value="nao_conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>Não Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-aplica">
+                                <input type="radio" name="quantity_description_compliance" value="nao_aplica">
+                                <div class="radio-card">
+                                    <i class="bi bi-dash-circle-fill"></i>
+                                    <span>Não se Aplica</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-collapsible">
+                            <textarea class="form-control-custom" 
+                                      name="quantity_description_justification" 
+                                      rows="2" 
+                                      placeholder="Justifique se necessário..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Questão 7: Suporte -->
+                    <div class="question-card-eval" data-question="7">
+                        <div class="question-header-eval">
+                            <span class="question-number">7</span>
+                            <h3>A empresa oferece suporte de qualidade por meio de telefone, e-mail e presencial, bem como garante agilidade nos envios de relatórios, notas fiscais e demais documentos?</h3>
+                        </div>
+                        <div class="radio-options-modern">
+                            <label class="radio-option conforme">
+                                <input type="radio" name="support_quality" value="conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-conforme">
+                                <input type="radio" name="support_quality" value="nao_conforme">
+                                <div class="radio-card">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>Não Conforme</span>
+                                </div>
+                            </label>
+                            <label class="radio-option nao-aplica">
+                                <input type="radio" name="support_quality" value="nao_aplica">
+                                <div class="radio-card">
+                                    <i class="bi bi-dash-circle-fill"></i>
+                                    <span>Não se Aplica</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="justification-collapsible">
+                            <textarea class="form-control-custom" 
+                                      name="support_quality_justification" 
+                                      rows="2" 
+                                      placeholder="Justifique se necessário..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-prev" onclick="prevStep(1)">
+                            <i class="bi bi-arrow-left"></i> Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary btn-next" onclick="nextStep(3)">
+                            Próximo <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Nota Final e Observações -->
+            <div class="evaluation-step" id="step3">
+                <div class="step-card">
+                    <div class="step-header">
+                        <i class="bi bi-3-circle-fill"></i>
+                        <h2>Nota Final e Observações</h2>
+                    </div>
+
+                    <!-- Nota de 0 a 10 -->
+                    <div class="rating-section">
+                        <div class="question-header-eval">
+                            <span class="question-number">8</span>
+                            <h3>Qual nota daria a este fornecedor/prestador quanto ao fornecimento/serviços prestados?</h3>
+                        </div>
+                        <p class="rating-warning">
+                            <i class="bi bi-info-circle"></i>
+                            Fornecedor com nota igual ou menor que <strong>6</strong> será classificado como <strong>não conforme</strong>
+                        </p>
+                        
+                        <div class="rating-slider-container">
+                            <div class="rating-visual">
+                                <div class="rating-display" id="ratingDisplay">
+                                    <span class="rating-number" id="ratingNumber">5</span>
+                                    <div class="rating-stars" id="ratingStars"></div>
+                                    <span class="rating-label" id="ratingLabel">Médio</span>
+                                </div>
+                            </div>
+                            
+                            <input type="range" 
+                                   class="rating-slider" 
+                                   id="overall_rating" 
+                                   name="overall_rating" 
+                                   min="0" 
+                                   max="10" 
+                                   value="5" 
+                                   step="1"
+                                   required>
+                            
+                            <div class="rating-scale">
+                                <span>0</span>
+                                <span>1</span>
+                                <span>2</span>
+                                <span>3</span>
+                                <span>4</span>
+                                <span>5</span>
+                                <span>6</span>
+                                <span>7</span>
+                                <span>8</span>
+                                <span>9</span>
+                                <span>10</span>
+                            </div>
+                        </div>
+
+                        <div class="justification-box mt-3">
+                            <label class="form-label-custom">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique a nota atribuída (opcional)
+                            </label>
+                            <textarea class="form-control-custom" 
+                                      name="rating_justification" 
+                                      rows="3" 
+                                      placeholder="Explique os motivos da nota..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Observações Gerais -->
+                    <div class="observations-section">
+                        <label class="form-label-custom">
+                            <i class="bi bi-pencil-square"></i>
+                            Observações Gerais (opcional)
+                        </label>
+                        <textarea class="form-control-custom" 
+                                  name="general_observations" 
+                                  rows="4" 
+                                  placeholder="Adicione comentários gerais, sugestões de melhoria, pontos positivos ou negativos..."></textarea>
+                    </div>
+
+                    <!-- Preview do Score Estimado -->
+                    <div class="score-preview" id="scorePreview">
+                        <h4><i class="bi bi-calculator"></i> Preview do Score</h4>
+                        <p class="text-muted">O score será calculado automaticamente com base nas suas respostas</p>
+                        <div class="preview-circle">
+                            <span class="preview-value">Preencha o formulário</span>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-prev" onclick="prevStep(2)">
+                            <i class="bi bi-arrow-left"></i> Anterior
+                        </button>
+                        <button type="submit" class="btn btn-success btn-submit">
+                            <i class="bi bi-check-circle"></i> Finalizar Avaliação
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Controle de Steps
+let currentStep = 1;
+
+function nextStep(step) {
+    // Validar step atual antes de avançar
+    if (!validateStep(currentStep)) {
+        return;
+    }
+    
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+    document.querySelector(`[data-step="${step}"]`).classList.add('active');
+    
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevStep(step) {
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+    document.querySelector(`[data-step="${step}"]`).classList.add('active');
+    
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateStep(step) {
+    if (step === 1) {
+        const supplierId = document.getElementById('supplier_id').value;
+        const monthRef = document.getElementById('month_reference').value;
+        const hadService = document.querySelector('input[name="had_service_last_month"]:checked');
+        
+        if (!supplierId) {
+            alert('Por favor, selecione um fornecedor!');
+            return false;
+        }
+        if (!monthRef) {
+            alert('Por favor, selecione o mês de referência!');
+            return false;
+        }
+        if (!hadService) {
+            alert('Por favor, informe se houve serviço no último mês!');
+            return false;
+        }
+        
+        // Se não houve serviço, pular step 2
+        if (hadService.value === 'false') {
+            // Definir valores padrão para não bloquear o formulário
+            const complianceFields = [
+                'contract_compliance', 'equipment_adequacy', 'invoice_validation',
+                'service_timeliness', 'quantity_description_compliance', 'support_quality'
+            ];
+            complianceFields.forEach(field => {
+                const input = document.querySelector(`input[name="${field}"][value="nao_aplica"]`);
+                if (input) input.checked = true;
+            });
+        }
+    }
+    return true;
+}
+
+// Seleção de Fornecedor
+document.getElementById('supplier_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const supplierName = selectedOption.dataset.name;
+    
+    if (supplierName) {
+        document.getElementById('selectedSupplierName').textContent = supplierName;
+        document.getElementById('selectedSupplierDisplay').style.display = 'block';
+    } else {
+        document.getElementById('selectedSupplierDisplay').style.display = 'none';
+    }
+});
+
+// Toggle de justificação
+document.querySelectorAll('input[name="had_service_last_month"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('serviceJustificationBox').style.display = 'block';
+    });
+});
+
+// Rating Slider
+const ratingSlider = document.getElementById('overall_rating');
+const ratingNumber = document.getElementById('ratingNumber');
+const ratingLabel = document.getElementById('ratingLabel');
+const ratingStars = document.getElementById('ratingStars');
+const ratingDisplay = document.getElementById('ratingDisplay');
+
+function updateRating(value) {
+    ratingNumber.textContent = value;
+    
+    // Atualizar label
+    const labels = {
+        0: 'Péssimo', 1: 'Muito Ruim', 2: 'Ruim', 3: 'Insuficiente', 4: 'Regular',
+        5: 'Médio', 6: 'Aceitável', 7: 'Bom', 8: 'Muito Bom', 9: 'Ótimo', 10: 'Excelente'
+    };
+    ratingLabel.textContent = labels[value];
+    
+    // Atualizar estrelas
+    const fullStars = Math.floor(value / 2);
+    const halfStar = value % 2;
+    let starsHTML = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '<i class="bi bi-star-fill"></i>';
+    }
+    if (halfStar) {
+        starsHTML += '<i class="bi bi-star-half"></i>';
+    }
+    for (let i = fullStars + halfStar; i < 5; i++) {
+        starsHTML += '<i class="bi bi-star"></i>';
+    }
+    
+    ratingStars.innerHTML = starsHTML;
+    
+    // Atualizar cor
+    ratingDisplay.className = 'rating-display';
+    if (value <= 4) ratingDisplay.classList.add('poor');
+    else if (value <= 6) ratingDisplay.classList.add('medium');
+    else if (value <= 8) ratingDisplay.classList.add('good');
+    else ratingDisplay.classList.add('excellent');
+}
+
+ratingSlider.addEventListener('input', function() {
+    updateRating(parseInt(this.value));
+});
+
+// Inicializar rating
+updateRating(5);
+
+// Animação nos cards de pergunta
+document.querySelectorAll('.radio-option input').forEach(input => {
+    input.addEventListener('change', function() {
+        const card = this.closest('.question-card-eval');
+        card.classList.add('answered');
+        
+        // Animação de check
+        setTimeout(() => {
+            card.classList.remove('answered');
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

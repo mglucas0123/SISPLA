@@ -5,6 +5,7 @@
         <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
         <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
         <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
     </div>
 
     <!-- Slides -->
@@ -209,6 +210,106 @@
                                     <span>ACESSAR REPOSITÓRIO</span>
                                     <i class="bi bi-arrow-right-circle-fill"></i>
                                 </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4 - Funcionário do Mês -->
+        <div class="carousel-item">
+            <div class="info-slide-bg" style="background-image: url('{{ url_for('static', filename='images/slide4.jpg') }}')">
+                <div class="info-slide-overlay info-overlay-employee"></div>
+                <div class="container">
+                    <div class="row align-items-center">
+                        <!-- Visual do Funcionário do Mês -->
+                        <div class="col-lg-5 col-md-6">
+                            <div class="employee-visual-showcase">
+                                <!-- Círculos decorativos de fundo -->
+                                <div class="employee-decoration-circles">
+                                    <div class="circle circle-1"></div>
+                                    <div class="circle circle-2"></div>
+                                    <div class="circle circle-3"></div>
+                                </div>
+                                
+                                <!-- Centro principal com foto do funcionário -->
+                                <div class="employee-center-container">
+                                    <div class="employee-photo-wrapper">
+                                        <!-- Frame decorativo -->
+                                        <div class="employee-photo-frame">
+                                            <div class="frame-corner corner-tl"></div>
+                                            <div class="frame-corner corner-tr"></div>
+                                            <div class="frame-corner corner-bl"></div>
+                                            <div class="frame-corner corner-br"></div>
+                                        </div>
+                                        
+                                        <!-- Foto do funcionário (placeholder com ícone) -->
+                                        <div class="employee-photo-placeholder">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        
+                                        <!-- Badge de reconhecimento -->
+                                        <div class="employee-award-badge">
+                                            <i class="bi bi-trophy-fill"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Estrelas decorativas -->
+                                    <div class="floating-stars">
+                                        <div class="floating-star star-1">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                        <div class="floating-star star-2">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                        <div class="floating-star star-3">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                        <div class="floating-star star-4">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                        <div class="floating-star star-5">
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo -->
+                        <div class="col-lg-7 col-md-6">
+                            <div class="info-slide-content">
+                                <div class="info-badge info-badge-employee">
+                                    <i class="bi bi-award"></i>
+                                    <span>RECONHECIMENTO</span>
+                                </div>
+                                <h2 class="info-title">FUNCIONÁRIO DO MÊS</h2>
+                                <div class="employee-info-highlight">
+                                    <div class="employee-name">NOVEMBRO/2025</div>
+                                    <div class="employee-department">Aguardando Seleção</div>
+                                </div>
+                                <div class="employee-qualities">
+                                    <div class="quality-item">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span>Excelência</span>
+                                    </div>
+                                    <div class="quality-item">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span>Dedicação</span>
+                                    </div>
+                                    <div class="quality-item">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span>Comprometimento</span>
+                                    </div>
+                                </div>
+                                <h3 class="info-highlight">RECONHECENDO QUEM FAZ A DIFERENÇA</h3>
+                                <p class="info-description">Valorizamos aqueles que se destacam pela dedicação, profissionalismo e contribuição excepcional para o sucesso da nossa instituição. Seu trabalho inspira toda a equipe!</p>
+                                <div class="employee-achievement-quote">
+                                    <i class="bi bi-quote quote-left"></i>
+                                    <span class="quote-text">"A excelência não é um destino, é uma jornada contínua de dedicação e superação."</span>
+                                    <i class="bi bi-quote quote-right"></i>
+                                </div>
                             </div>
                         </div>
                     </div>

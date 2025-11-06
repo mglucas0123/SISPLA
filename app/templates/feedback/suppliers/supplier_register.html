@@ -1,0 +1,191 @@
+{% extends "navbar.html" %}
+
+{% block title %}Cadastrar Fornecedor - SISPLA{% endblock %}
+
+{% block content %}
+<div class="supplier-register-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="icon-wrapper">
+                    <i class="bi bi-building-add"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Cadastrar Novo Fornecedor</h1>
+                    <p>Preencha os dados do fornecedor/prestador de serviços</p>
+                </div>
+            </div>
+            <a href="{{ url_for('suppliers.supplier_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+
+        <!-- Formulário -->
+        <div class="form-card">
+            <form method="POST" action="{{ url_for('suppliers.register_supplier') }}" id="supplierForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- Informações Básicas -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="bi bi-info-circle"></i>
+                        <h3>Informações Básicas</h3>
+                    </div>
+
+                    <div class="row">
+                        <!-- Nome da Empresa (Obrigatório) -->
+                        <div class="col-md-12 mb-3">
+                            <label for="company_name" class="form-label required">
+                                <i class="bi bi-building"></i> Nome da Empresa
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="company_name" 
+                                   name="company_name" 
+                                   placeholder="Digite o nome completo da empresa" 
+                                   required>
+                            <div class="form-text">Campo obrigatório</div>
+                        </div>
+
+                        <!-- CNPJ (Opcional) -->
+                        <div class="col-md-6 mb-3">
+                            <label for="cnpj" class="form-label">
+                                <i class="bi bi-card-text"></i> CNPJ
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="cnpj" 
+                                   name="cnpj" 
+                                   placeholder="00.000.000/0000-00"
+                                   maxlength="18">
+                        </div>
+
+                        <!-- Tipo de Serviço (Opcional) -->
+                        <div class="col-md-6 mb-3">
+                            <label for="service_type" class="form-label">
+                                <i class="bi bi-tools"></i> Tipo de Serviço
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="service_type" 
+                                   name="service_type" 
+                                   placeholder="Ex: Manutenção, Limpeza, TI, etc.">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações de Contato -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="bi bi-telephone"></i>
+                        <h3>Informações de Contato</h3>
+                    </div>
+
+                    <div class="row">
+                        <!-- Nome do Contato -->
+                        <div class="col-md-12 mb-3">
+                            <label for="contact_name" class="form-label">
+                                <i class="bi bi-person"></i> Nome do Responsável
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="contact_name" 
+                                   name="contact_name" 
+                                   placeholder="Nome da pessoa de contato">
+                        </div>
+
+                        <!-- Telefone -->
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">
+                                <i class="bi bi-phone"></i> Telefone
+                            </label>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="phone" 
+                                   name="phone" 
+                                   placeholder="(00) 00000-0000">
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i> E-mail
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   placeholder="contato@empresa.com.br">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="bi bi-sticky"></i>
+                        <h3>Observações Adicionais</h3>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="bi bi-pencil-square"></i> Anotações
+                        </label>
+                        <textarea class="form-control" 
+                                  id="notes" 
+                                  name="notes" 
+                                  rows="4" 
+                                  placeholder="Informações adicionais sobre o fornecedor, particularidades do contrato, observações, etc."></textarea>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="form-actions">
+                    <button type="reset" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Limpar
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <i class="bi bi-check-circle"></i> Cadastrar Fornecedor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Máscara para CNPJ
+document.getElementById('cnpj').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 14) {
+        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+// Máscara para telefone
+document.getElementById('phone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+// Validação do formulário
+document.getElementById('supplierForm').addEventListener('submit', function(e) {
+    const companyName = document.getElementById('company_name').value.trim();
+    
+    if (!companyName) {
+        e.preventDefault();
+        alert('Por favor, informe o nome da empresa!');
+        document.getElementById('company_name').focus();
+        return false;
+    }
+});
+</script>
+{% endblock %}

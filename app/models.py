@@ -750,3 +750,165 @@ class UserQuizAttempt(db.Model):
     user = db.relationship('User', backref='quiz_attempts')
     quiz = db.relationship('Quiz', backref=db.backref('attempts', cascade="all, delete-orphan"))
 
+
+# ============================================
+# MÓDULO DE AVALIAÇÃO DE FORNECEDORES/PRESTADORES
+# ============================================
+
+class Supplier(db.Model):
+    """Modelo para armazenar fornecedores/prestadores de serviço"""
+    __tablename__ = 'suppliers'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(200), nullable=False, unique=True)
+    cnpj = db.Column(db.String(18), nullable=True)
+    contact_name = db.Column(db.String(100), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    service_type = db.Column(db.String(100), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    # Campo para marcar como verificado quando há problemas
+    issue_verified = db.Column(db.Boolean, default=False, nullable=False)
+    verified_at = db.Column(db.DateTime, nullable=True)
+    verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    # Relacionamentos
+    created_by = db.relationship('User', foreign_keys=[created_by_id])
+    verified_by = db.relationship('User', foreign_keys=[verified_by_id])
+    evaluations = db.relationship('SupplierEvaluation', back_populates='supplier', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def get_average_score(self):
+        """Calcula o score médio de todas as avaliações"""
+        evals = self.evaluations.all()
+        if not evals:
+            return 0
+        return round(sum(e.total_score for e in evals) / len(evals), 2)
+    
+    def get_last_evaluation_date(self):
+        """Retorna a data da última avaliação"""
+        last_eval = self.evaluations.order_by(SupplierEvaluation.evaluation_date.desc()).first()
+        return last_eval.evaluation_date if last_eval else None
+    
+    def get_evaluations_count(self):
+        """Retorna o total de avaliações"""
+        return self.evaluations.count()
+    
+    def __repr__(self):
+        return f'<Supplier {self.company_name}>'
+
+
+class SupplierEvaluation(db.Model):
+    """Modelo para armazenar avaliações mensais de fornecedores"""
+    __tablename__ = 'supplier_evaluations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'), nullable=False)
+    evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    evaluation_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    month_reference = db.Column(db.String(7), nullable=False)  # Formato: YYYY-MM
+    
+    # Perguntas do formulário
+    had_service_last_month = db.Column(db.Boolean, nullable=False)
+    service_justification = db.Column(db.Text, nullable=True)
+    
+    # Perguntas com opções: Conforme, Não Conforme, Não se Aplica
+    contract_compliance = db.Column(db.String(20), nullable=True)  # conforme, nao_conforme, nao_aplica
+    contract_compliance_justification = db.Column(db.Text, nullable=True)
+    
+    equipment_adequacy = db.Column(db.String(20), nullable=True)
+    equipment_adequacy_justification = db.Column(db.Text, nullable=True)
+    
+    invoice_validation = db.Column(db.String(20), nullable=True)
+    invoice_validation_justification = db.Column(db.Text, nullable=True)
+    
+    service_timeliness = db.Column(db.String(20), nullable=True)
+    service_timeliness_justification = db.Column(db.Text, nullable=True)
+    
+    quantity_description_compliance = db.Column(db.String(20), nullable=True)
+    quantity_description_justification = db.Column(db.Text, nullable=True)
+    
+    support_quality = db.Column(db.String(20), nullable=True)
+    support_quality_justification = db.Column(db.Text, nullable=True)
+    
+    # Nota de 0 a 10
+    overall_rating = db.Column(db.Integer, nullable=False)
+    rating_justification = db.Column(db.Text, nullable=True)
+    
+    # Score calculado automaticamente (%)
+    total_score = db.Column(db.Float, nullable=False)
+    
+    # Status da avaliação
+    is_compliant = db.Column(db.Boolean, nullable=False)  # True se nota >= 7
+    
+    # Observações gerais
+    general_observations = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relacionamentos
+    supplier = db.relationship('Supplier', back_populates='evaluations')
+    evaluator = db.relationship('User', foreign_keys=[evaluator_id])
+    
+    def calculate_score(self):
+        """
+        Calcula o score total baseado nas respostas
+        - Cada pergunta "conforme" vale pontos
+        - Nota final (0-10) tem peso maior
+        - Retorna percentual de 0 a 100
+        """
+        if not self.had_service_last_month:
+            self.is_compliant = False
+            return 0
+        
+        score = 0
+        total_questions = 6
+        
+        # Cada resposta "conforme" vale pontos
+        compliance_fields = [
+            self.contract_compliance,
+            self.equipment_adequacy,
+            self.invoice_validation,
+            self.service_timeliness,
+            self.quantity_description_compliance,
+            self.support_quality
+        ]
+        
+        # Pontos para respostas conformes (60% do score)
+        conformes = sum(1 for field in compliance_fields if field == 'conforme')
+        compliance_score = (conformes / total_questions) * 60
+        
+        # Nota final tem peso de 40%
+        rating_score = (self.overall_rating / 10) * 40
+        
+        total_score = compliance_score + rating_score
+        
+        # Define se é conforme (nota >= 7 e score >= 70%)
+        self.is_compliant = self.overall_rating >= 7 and total_score >= 70
+        
+        return round(total_score, 2)
+    
+    def get_status_badge(self):
+        """Retorna classe CSS para badge de status"""
+        if self.total_score >= 80:
+            return 'badge-success'
+        elif self.total_score >= 60:
+            return 'badge-warning'
+        else:
+            return 'badge-danger'
+    
+    def get_status_text(self):
+        """Retorna texto do status"""
+        if self.total_score >= 80:
+            return 'Excelente'
+        elif self.total_score >= 60:
+            return 'Satisfatório'
+        else:
+            return 'Insatisfatório'
+    
+    def __repr__(self):
+        return f'<SupplierEvaluation {self.supplier.company_name} - {self.month_reference}>'
+

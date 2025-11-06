@@ -1,0 +1,578 @@
+{% extends "navbar.html" %}
+
+{% block title %}Fornecedores - SISPLA{% endblock %}
+
+{% block content %}
+<div class="supplier-list-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="icon-wrapper">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Gerenciar Fornecedores</h1>
+                    <p>Lista de todos os fornecedores/prestadores cadastrados</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('suppliers.dashboard') }}" class="btn btn-outline-info">
+                    <i class="bi bi-graph-up"></i> Dashboard
+                </a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+                    <i class="bi bi-plus-circle"></i> Novo Fornecedor
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros e Busca -->
+        <div class="filters-card">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" 
+                       id="searchInput" 
+                       class="form-control" 
+                       placeholder="Buscar por nome da empresa, tipo de serviço...">
+            </div>
+            <div class="filter-options">
+                <select class="form-select" id="filterStatus">
+                    <option value="all">Todos os Status</option>
+                    <option value="active">Apenas Ativos</option>
+                    <option value="inactive">Apenas Inativos</option>
+                </select>
+                <select class="form-select" id="filterScore">
+                    <option value="all">Todas as Notas</option>
+                    <option value="excellent">Excelentes (≥80%)</option>
+                    <option value="good">Bons (60-79%)</option>
+                    <option value="poor">Ruins (<60%)</option>
+                    <option value="not_evaluated">Não Avaliados</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Estatísticas Rápidas -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ suppliers_info|length }}</h3>
+                    <p>Total de Fornecedores</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ suppliers_info|selectattr('supplier.is_active')|list|length }}</h3>
+                    <p>Ativos</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon yellow">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ suppliers_info|selectattr('avg_score', 'ge', 80)|list|length }}</h3>
+                    <p>Excelentes (≥80%)</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ suppliers_info|selectattr('avg_score', 'lt', 60)|list|length }}</h3>
+                    <p>Com Problemas (<60%)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Fornecedores -->
+        <div class="suppliers-grid" id="suppliersGrid">
+            {% if suppliers_info %}
+                {% for info in suppliers_info %}
+                <div class="supplier-card" 
+                     data-status="{{ 'active' if info.supplier.is_active else 'inactive' }}"
+                     data-score="{{ info.avg_score }}"
+                     data-name="{{ info.supplier.company_name|lower }}">
+                    
+                    <!-- Header do Card -->
+                    <div class="supplier-card-header">
+                        <div class="supplier-title">
+                            <h3>{{ info.supplier.company_name }}</h3>
+                            {% if info.supplier.service_type %}
+                            <span class="service-badge">
+                                <i class="bi bi-tools"></i> {{ info.supplier.service_type }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="supplier-status">
+                            {% if info.supplier.is_active %}
+                            <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Inativo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Score -->
+                    <div class="supplier-score-display">
+                        {% if info.avg_score > 0 %}
+                        <div class="score-circle {{ 'excellent' if info.avg_score >= 80 else ('good' if info.avg_score >= 60 else 'poor') }}">
+                            <div class="score-value">{{ "%.0f"|format(info.avg_score) }}%</div>
+                            <div class="score-label">Score Médio</div>
+                        </div>
+                        {% else %}
+                        <div class="score-circle not-evaluated">
+                            <div class="score-value"><i class="bi bi-dash-lg"></i></div>
+                            <div class="score-label">Não Avaliado</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Informações -->
+                    <div class="supplier-info-grid">
+                        <div class="info-item">
+                            <i class="bi bi-clipboard-check"></i>
+                            <div>
+                                <strong>{{ info.eval_count }}</strong>
+                                <span>Avaliações</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-calendar-event"></i>
+                            <div>
+                                {% if info.last_eval %}
+                                <strong>{{ info.last_eval.strftime('%d/%m/%Y') }}</strong>
+                                <span>Última Avaliação</span>
+                                {% else %}
+                                <strong>-</strong>
+                                <span>Sem Avaliações</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contatos (se disponível) -->
+                    {% if info.supplier.contact_name or info.supplier.phone or info.supplier.email %}
+                    <div class="supplier-contacts">
+                        {% if info.supplier.contact_name %}
+                        <div class="contact-item">
+                            <i class="bi bi-person"></i> {{ info.supplier.contact_name }}
+                        </div>
+                        {% endif %}
+                        {% if info.supplier.phone %}
+                        <div class="contact-item">
+                            <i class="bi bi-telephone"></i> {{ info.supplier.phone }}
+                        </div>
+                        {% endif %}
+                        {% if info.supplier.email %}
+                        <div class="contact-item">
+                            <i class="bi bi-envelope"></i> {{ info.supplier.email }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Ações -->
+                    <div class="supplier-actions">
+                        <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=info.supplier.id) }}" 
+                           class="btn btn-sm btn-outline-primary" 
+                           title="Ver Avaliações">
+                            <i class="bi bi-bar-chart-line"></i>
+                        </a>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-secondary" 
+                                onclick="openEditModal({{ info.supplier.id }})"
+                                title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        {% if info.supplier.is_active %}
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="confirmDeactivate({{ info.supplier.id }}, '{{ info.supplier.company_name }}')"
+                                title="Desativar">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h3>Nenhum Fornecedor Cadastrado</h3>
+                    <p>Comece cadastrando seu primeiro fornecedor/prestador de serviços</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        <i class="bi bi-plus-circle"></i> Cadastrar Primeiro Fornecedor
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cadastro -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-building-add"></i> Cadastrar Novo Fornecedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('suppliers.register_supplier') }}" id="registerSupplierForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <!-- Informações Básicas -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-info-circle"></i> Informações Básicas
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="register_company_name" class="form-label">
+                                    <i class="bi bi-building"></i> Nome da Empresa <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="register_company_name" 
+                                       name="company_name" placeholder="Digite o nome completo da empresa" required>
+                                <small class="form-text text-muted">Campo obrigatório</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="register_cnpj" class="form-label">
+                                    <i class="bi bi-card-text"></i> CNPJ
+                                </label>
+                                <input type="text" class="form-control" id="register_cnpj" 
+                                       name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="register_service_type" class="form-label">
+                                    <i class="bi bi-tools"></i> Tipo de Serviço
+                                </label>
+                                <input type="text" class="form-control" id="register_service_type" 
+                                       name="service_type" placeholder="Ex: Manutenção, Limpeza, TI, etc.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Contato -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-telephone"></i> Informações de Contato
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="register_contact_name" class="form-label">
+                                    <i class="bi bi-person"></i> Nome do Responsável
+                                </label>
+                                <input type="text" class="form-control" id="register_contact_name" 
+                                       name="contact_name" placeholder="Nome da pessoa de contato">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="register_phone" class="form-label">
+                                    <i class="bi bi-phone"></i> Telefone
+                                </label>
+                                <input type="tel" class="form-control" id="register_phone" 
+                                       name="phone" placeholder="(00) 00000-0000">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="register_email" class="form-label">
+                                    <i class="bi bi-envelope"></i> E-mail
+                                </label>
+                                <input type="email" class="form-control" id="register_email" 
+                                       name="email" placeholder="contato@empresa.com.br">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observações -->
+                    <div class="mb-3">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-sticky"></i> Observações Adicionais
+                        </h6>
+                        <label for="register_notes" class="form-label">
+                            <i class="bi bi-pencil-square"></i> Anotações
+                        </label>
+                        <textarea class="form-control" id="register_notes" name="notes" rows="3" 
+                                  placeholder="Informações adicionais sobre o fornecedor, particularidades do contrato, observações, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Cadastrar Fornecedor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square"></i> Editar Fornecedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editSupplierForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <!-- Informações Básicas -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-info-circle"></i> Informações Básicas
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="edit_company_name" class="form-label">
+                                    <i class="bi bi-building"></i> Nome da Empresa <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="edit_company_name" 
+                                       name="company_name" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_cnpj" class="form-label">
+                                    <i class="bi bi-card-text"></i> CNPJ
+                                </label>
+                                <input type="text" class="form-control" id="edit_cnpj" 
+                                       name="cnpj" maxlength="18">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_service_type" class="form-label">
+                                    <i class="bi bi-tools"></i> Tipo de Serviço
+                                </label>
+                                <input type="text" class="form-control" id="edit_service_type" 
+                                       name="service_type">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Contato -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-telephone"></i> Informações de Contato
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="edit_contact_name" class="form-label">
+                                    <i class="bi bi-person"></i> Nome do Responsável
+                                </label>
+                                <input type="text" class="form-control" id="edit_contact_name" 
+                                       name="contact_name">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_phone" class="form-label">
+                                    <i class="bi bi-phone"></i> Telefone
+                                </label>
+                                <input type="tel" class="form-control" id="edit_phone" 
+                                       name="phone">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_email" class="form-label">
+                                    <i class="bi bi-envelope"></i> E-mail
+                                </label>
+                                <input type="email" class="form-control" id="edit_email" 
+                                       name="email">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observações -->
+                    <div class="mb-3">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-sticky"></i> Observações
+                        </h6>
+                        <label for="edit_notes" class="form-label">
+                            <i class="bi bi-pencil-square"></i> Anotações
+                        </label>
+                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Desativação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Deseja realmente desativar o fornecedor <strong id="supplierNameModal"></strong>?</p>
+                <p class="text-muted">As avaliações anteriores serão mantidas, mas o fornecedor não aparecerá mais nas listagens ativas.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" id="deactivateForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Desativar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Busca em tempo real
+document.getElementById('searchInput').addEventListener('input', filterSuppliers);
+document.getElementById('filterStatus').addEventListener('change', filterSuppliers);
+document.getElementById('filterScore').addEventListener('change', filterSuppliers);
+
+function filterSuppliers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    const scoreFilter = document.getElementById('filterScore').value;
+    
+    const cards = document.querySelectorAll('.supplier-card');
+    
+    cards.forEach(card => {
+        const name = card.dataset.name;
+        const status = card.dataset.status;
+        const score = parseFloat(card.dataset.score);
+        
+        let show = true;
+        
+        // Filtro de busca
+        if (searchTerm && !name.includes(searchTerm)) {
+            show = false;
+        }
+        
+        // Filtro de status
+        if (statusFilter !== 'all' && statusFilter !== status) {
+            show = false;
+        }
+        
+        // Filtro de score
+        if (scoreFilter !== 'all') {
+            if (scoreFilter === 'excellent' && score < 80) show = false;
+            if (scoreFilter === 'good' && (score < 60 || score >= 80)) show = false;
+            if (scoreFilter === 'poor' && score >= 60) show = false;
+            if (scoreFilter === 'not_evaluated' && score > 0) show = false;
+        }
+        
+        card.style.display = show ? 'block' : 'none';
+    });
+}
+
+// Confirmação de desativação
+function confirmDeactivate(supplierId, supplierName) {
+    document.getElementById('supplierNameModal').textContent = supplierName;
+    document.getElementById('deactivateForm').action = `/feedback/suppliers/delete/${supplierId}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+    modal.show();
+}
+
+// Abrir modal de edição
+function openEditModal(supplierId) {
+    // Buscar dados do fornecedor via AJAX
+    fetch(`/feedback/suppliers/api/supplier/${supplierId}/stats`)
+        .then(response => response.json())
+        .then(data => {
+            // Preencher o formulário
+            document.getElementById('edit_company_name').value = data.company_name || '';
+            document.getElementById('edit_cnpj').value = data.cnpj || '';
+            document.getElementById('edit_service_type').value = data.service_type || '';
+            document.getElementById('edit_contact_name').value = data.contact_name || '';
+            document.getElementById('edit_phone').value = data.phone || '';
+            document.getElementById('edit_email').value = data.email || '';
+            document.getElementById('edit_notes').value = data.notes || '';
+            
+            // Definir action do formulário
+            document.getElementById('editSupplierForm').action = `/feedback/suppliers/edit/${supplierId}`;
+            
+            // Abrir modal
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados do fornecedor:', error);
+            alert('Erro ao carregar dados do fornecedor. Tente novamente.');
+        });
+}
+
+// Máscaras para CNPJ e telefone no modal de edição
+document.getElementById('edit_cnpj').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 14) {
+        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+document.getElementById('edit_phone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+// Máscaras para CNPJ e telefone no modal de cadastro
+document.getElementById('register_cnpj').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 14) {
+        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+document.getElementById('register_phone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+// Limpar formulário ao fechar modal de cadastro
+document.getElementById('registerModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('registerSupplierForm').reset();
+});
+</script>
+{% endblock %}

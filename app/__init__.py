@@ -19,6 +19,7 @@ from app.routes.shift_handover import shift_handover_bp
 from app.routes.repository import repository_bp
 from app.routes.training import training_bp
 from app.routes.nir import nir_bp
+from app.routes.feedback.suppliers import suppliers_bp
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ def create_app():
     instance_path = os.path.join(basedir, 'instance')
     os.makedirs(instance_path, exist_ok=True)
     
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_path, 'database.db')
     app.config['SQLALCHEMY_BINDS'] = {
         'procedures': 'sqlite:///' + os.path.join(instance_path, 'procedures.db')
     }
@@ -59,6 +60,7 @@ def registry_routes(app):
     app.register_blueprint(repository_bp)
     app.register_blueprint(training_bp)
     app.register_blueprint(nir_bp)
+    app.register_blueprint(suppliers_bp)
 
 def login_config(app):
     login_manager = LoginManager()

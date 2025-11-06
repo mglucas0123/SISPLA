@@ -1,0 +1,216 @@
+{% extends "navbar.html" %}
+
+{% block title %}Avaliações de {{ supplier.company_name }} - SISPLA{% endblock %}
+
+{% block content %}
+<div class="supplier-evaluations-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="icon-wrapper">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Histórico de Avaliações</h1>
+                    <p>{{ supplier.company_name }}</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('suppliers.supplier_list') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+                <a href="{{ url_for('suppliers.evaluate_supplier') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nova Avaliação
+                </a>
+            </div>
+        </div>
+
+        <!-- Informações do Fornecedor -->
+        <div class="supplier-info-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <h3><i class="bi bi-building"></i> {{ supplier.company_name }}</h3>
+                    {% if supplier.service_type %}
+                    <p class="service-type"><i class="bi bi-tools"></i> {{ supplier.service_type }}</p>
+                    {% endif %}
+                    
+                    <div class="contact-info">
+                        {% if supplier.contact_name %}
+                        <div class="info-item">
+                            <i class="bi bi-person"></i> <strong>Contato:</strong> {{ supplier.contact_name }}
+                        </div>
+                        {% endif %}
+                        {% if supplier.phone %}
+                        <div class="info-item">
+                            <i class="bi bi-telephone"></i> <strong>Telefone:</strong> {{ supplier.phone }}
+                        </div>
+                        {% endif %}
+                        {% if supplier.email %}
+                        <div class="info-item">
+                            <i class="bi bi-envelope"></i> <strong>E-mail:</strong> {{ supplier.email }}
+                        </div>
+                        {% endif %}
+                        {% if supplier.cnpj %}
+                        <div class="info-item">
+                            <i class="bi bi-card-text"></i> <strong>CNPJ:</strong> {{ supplier.cnpj }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4 text-center">
+                    <div class="average-score-display">
+                        {% if avg_score > 0 %}
+                        <div class="score-circle-large {{ 'excellent' if avg_score >= 80 else ('good' if avg_score >= 60 else 'poor') }}">
+                            <div class="score-value">{{ "%.1f"|format(avg_score) }}%</div>
+                            <div class="score-label">Score Médio Geral</div>
+                        </div>
+                        <p class="classification">
+                            {% if avg_score >= 80 %}
+                            <span class="badge badge-success"><i class="bi bi-star-fill"></i> Excelente</span>
+                            {% elif avg_score >= 60 %}
+                            <span class="badge badge-warning"><i class="bi bi-check-circle"></i> Satisfatório</span>
+                            {% else %}
+                            <span class="badge badge-danger"><i class="bi bi-exclamation-triangle"></i> Insatisfatório</span>
+                            {% endif %}
+                        </p>
+                        {% else %}
+                        <div class="score-circle-large not-evaluated">
+                            <div class="score-value"><i class="bi bi-dash-lg"></i></div>
+                            <div class="score-label">Sem Avaliações</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas Rápidas -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ evaluations|length }}</h3>
+                    <p>Total de Avaliações</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ evaluations|selectattr('is_compliant')|list|length }}</h3>
+                    <p>Conformes</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ evaluations|rejectattr('is_compliant')|list|length }}</h3>
+                    <p>Não Conformes</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon yellow">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ "%.1f"|format(avg_rating) if avg_rating > 0 else "-" }}</h3>
+                    <p>Nota Média (0-10)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Avaliações -->
+        <div class="evaluations-list">
+            <h2><i class="bi bi-list-check"></i> Histórico de Avaliações</h2>
+            
+            {% if evaluations %}
+                <div class="table-responsive">
+                    <table class="table evaluation-table">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-calendar-month"></i> Mês Referência</th>
+                                <th><i class="bi bi-calendar-event"></i> Data da Avaliação</th>
+                                <th><i class="bi bi-person"></i> Avaliador</th>
+                                <th class="text-center"><i class="bi bi-percent"></i> Score</th>
+                                <th class="text-center"><i class="bi bi-star"></i> Nota</th>
+                                <th class="text-center"><i class="bi bi-shield-check"></i> Status</th>
+                                <th class="text-center"><i class="bi bi-gear"></i> Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for eval in evaluations %}
+                            <tr>
+                                <td>
+                                    <strong>{{ eval.month_reference[:7] if eval.month_reference else '-' }}</strong>
+                                </td>
+                                <td>{{ eval.evaluation_date.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <i class="bi bi-person-circle"></i> 
+                                    {{ eval.evaluator.name if eval.evaluator else 'N/A' }}
+                                </td>
+                                <td class="text-center">
+                                    <span class="score-badge {{ 'excellent' if eval.total_score >= 80 else ('good' if eval.total_score >= 60 else 'poor') }}">
+                                        {{ "%.1f"|format(eval.total_score) }}%
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="rating-display">
+                                        {{ eval.overall_rating }}/10
+                                        <div class="stars-small">
+                                            {% for i in range(1, 11) %}
+                                                {% if i <= eval.overall_rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                                {% else %}
+                                                <i class="bi bi-star text-muted"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {% if eval.is_compliant %}
+                                    <span class="badge badge-success">
+                                        <i class="bi bi-check-circle"></i> Conforme
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-danger">
+                                        <i class="bi bi-x-circle"></i> Não Conforme
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('suppliers.evaluation_details', evaluation_id=eval.id) }}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Ver Detalhes">
+                                        <i class="bi bi-eye"></i> Detalhes
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h3>Nenhuma Avaliação Encontrada</h3>
+                    <p>Este fornecedor ainda não possui avaliações registradas</p>
+                    <a href="{{ url_for('suppliers.evaluate_supplier') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Fazer Primeira Avaliação
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

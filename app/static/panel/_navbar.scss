@@ -1,12 +1,12 @@
 // <!--- NAVBAR PRINCIPAL --->
 .navbar-custom {
-    //background: linear-gradient(120deg, #ffffff 0%, #00ff9f 30%, #2272e3 100%);
-    background: linear-gradient(120deg, #f8fafc 0%, #dff7ee 20%, #d0ffee 30%, #b6e0fe 60%, #2563eb 100%);
+    background: linear-gradient(135deg, #1a2332 0%, #2c3e50 50%, #34495e 100%);
     position: relative;
-    padding: 1.25rem 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 0.75rem 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.15);
 }
 
 
@@ -72,30 +72,14 @@
 
 .brand-icon {
     font-size: 1.6rem;
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     z-index: 3;
     position: relative;
     transition: all 0.3s ease;
-    filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3));
-    animation: heartbeat-icon 1.2s ease-in-out infinite;
-}
-
-@keyframes heartbeat-icon {
-    0%, 100% {
-        transform: scale(1);
-    }
-    25% {
-        transform: scale(1.05);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    75% {
-        transform: scale(1.05);
-    }
+    filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.3));
 }
 
 .heartbeat-effect {
@@ -106,37 +90,9 @@
     width: 100%;
     height: 100%;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(220, 38, 127, 0.1), rgba(239, 68, 68, 0.1));
-    animation: heartbeat 1.2s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.1));
     pointer-events: none;
-}
-
-@keyframes heartbeat {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.7;
-        box-shadow: 0 0 0 0 rgba(220, 38, 127, 0.4);
-    }
-    25% {
-        transform: translate(-50%, -50%) scale(1.05);
-        opacity: 0.8;
-        box-shadow: 0 0 0 5px rgba(220, 38, 127, 0.2);
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.1);
-        opacity: 1;
-        box-shadow: 0 0 0 10px rgba(220, 38, 127, 0.1);
-    }
-    75% {
-        transform: translate(-50%, -50%) scale(1.05);
-        opacity: 0.8;
-        box-shadow: 0 0 0 5px rgba(220, 38, 127, 0.2);
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.7;
-        box-shadow: 0 0 0 0 rgba(220, 38, 127, 0.4);
-    }
+    opacity: 0.5;
 }
 
 .brand-text {
@@ -165,8 +121,8 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.4rem 0.8rem;
-    background: rgba(0, 255, 159, 0.1);
-    border: 1px solid rgba(0, 255, 159, 0.3);
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
     border-radius: 20px;
     backdrop-filter: blur(10px);
 }
@@ -174,19 +130,13 @@
 .status-dot {
     width: 8px;
     height: 8px;
-    background: #00ff9f;
+    background: #22c55e;
     border-radius: 50%;
-    animation: status-pulse 2s infinite;
-}
-
-@keyframes status-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
 }
 
 .status-text {
     font-size: 0.8rem;
-    color: #00ff9f;
+    color: #22c55e;
     font-weight: 500;
 }
 
@@ -238,19 +188,17 @@
 
 // Access Dropdown Button
 .access-dropdown-button {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: #fff;
-    font-weight: 600;
-    border-radius: 14px;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(20px);
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
     position: relative;
     z-index: 9999;
-    box-shadow: 
-        0 4px 20px rgba(59, 130, 246, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     
     &::before {
         content: '';
@@ -271,13 +219,11 @@
     }
     
     &:hover, &:focus {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.25);
         color: #fff;
-        transform: translateY(-3px);
-        box-shadow: 
-            0 15px 35px rgba(59, 130, 246, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         outline: none;
         
         &::before {
@@ -771,12 +717,13 @@ body {
 }
 
 .footer-premium {
-    background: linear-gradient(120deg, #f8fafc 0%, #e0f7ef 20%, #b6e0fe 60%, #2563eb 100%);
-    color: rgba(0, 0, 0, 0.9);
-    padding: 2rem 0 1.5rem 0; 
+    background: linear-gradient(135deg, #1a2332 0%, #2c3e50 50%, #34495e 100%);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 1.5rem 0 1.25rem 0; 
     margin-top: auto;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 
 
     .footer-brand,
@@ -799,9 +746,9 @@ body {
 }
 
 .footer-brand {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    color: #f8fafc;
+    color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
@@ -809,20 +756,16 @@ body {
     gap: 0.5rem;
     
     i {
-        font-size: 1.2rem;
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-size: 1.15rem;
+        color: #60a5fa;
         transition: all 0.3s ease;
     }
     
     &:hover {
-        color: #f8fafc;
-        text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        color: #fff;
         
         i {
-            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+            color: #93c5fd;
         }
     }
 }

@@ -4,22 +4,22 @@
 // ============================================
 
 // Design Tokens - Enterprise Color Palette
-$enterprise-primary: #0078d4;
-$primary-color: #0078d4;
-$enterprise-primary-dark: #005a9e;
-$enterprise-primary-light: #50a3d9;
+$enterprise-primary: #2563eb;
+$primary-color: #2563eb;
+$enterprise-primary-dark: #1e40af;
+$enterprise-primary-light: #60a5fa;
 
-$enterprise-success: #107c10;
-$enterprise-success-light: #dff6dd;
+$enterprise-success: #059669;
+$enterprise-success-light: #d1fae5;
 
-$enterprise-danger: #d13438;
-$enterprise-danger-light: #fde7e9;
+$enterprise-danger: #dc2626;
+$enterprise-danger-light: #fee2e2;
 
-$enterprise-warning: #f7630c;
-$enterprise-warning-light: #fff4e5;
+$enterprise-warning: #d97706;
+$enterprise-warning-light: #fef3c7;
 
-$enterprise-info: #0078d4;
-$enterprise-info-light: #e5f3ff;
+$enterprise-info: #0891b2;
+$enterprise-info-light: #cffafe;
 
 $neutral-000: #ffffff;
 $neutral-050: #fafafa;
@@ -65,8 +65,9 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
 // DASHBOARD CONTAINER
 // ============================================
 .dashboard-container {
-    background: $neutral-050;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     min-height: calc(100vh - 70px);
+    padding-top: 2rem !important;
 }
 
 // ============================================
@@ -75,23 +76,24 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
 .section-header-modern {
     display: flex;
     align-items: center;
-    gap: $space-lg;
-    margin-bottom: $space-xl;
-    padding-bottom: $space-lg;
-    border-bottom: 2px solid $neutral-200;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
     .section-icon-wrapper {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         background: linear-gradient(135deg, $enterprise-primary 0%, $enterprise-primary-light 100%);
-        border-radius: $radius-md;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 
         i {
-            font-size: 1.5rem;
+            font-size: 1.375rem;
             color: $neutral-000;
         }
     }
@@ -100,18 +102,19 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
         flex: 1;
 
         .section-title {
-            font-size: 1.5rem;
-            font-weight: $font-weight-bold;
-            color: $neutral-900;
-            margin: 0 0 $space-xs 0;
-            line-height: 1.2;
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 0.25rem 0;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
         }
 
         .section-subtitle {
-            font-size: 0.9rem;
-            color: $neutral-600;
+            font-size: 0.875rem;
+            color: #64748b;
             margin: 0;
-            font-weight: $font-weight-regular;
+            font-weight: 500;
         }
     }
 }
@@ -121,24 +124,43 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
 // ============================================
 .enterprise-module-card {
     background: $neutral-000;
-    border-radius: $radius-lg;
-    box-shadow: $shadow-md;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid $neutral-200;
-    border-left: 4px solid transparent;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-left: 3px solid transparent;
     height: 100%;
     display: flex;
     flex-direction: column;
     opacity: 0;
     transform: translateY(20px);
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, currentColor, transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
     &:hover {
-        box-shadow: $shadow-xl;
-        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+        transform: translateY(-4px);
+        border-color: rgba(0, 0, 0, 0.08);
         border-left-color: currentColor;
 
+        &::before {
+            opacity: 1;
+        }
+
         .module-icon-enterprise {
-            transform: scale(1.05);
+            transform: scale(1.08);
         }
     }
 
@@ -158,24 +180,29 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
         border-left-color: $enterprise-warning;
     }
 
+    &.card-accent-info {
+        border-left-color: #17a2b8;
+    }
+
     .card-header-section {
-        padding: $space-xl $space-xl $space-lg;
+        padding: 1.75rem 1.75rem 1.25rem;
         display: flex;
         align-items: flex-start;
-        gap: $space-lg;
+        gap: 1.25rem;
 
         .module-icon-enterprise {
-            width: 64px;
-            height: 64px;
-            border-radius: $radius-lg;
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            transition: transform 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
             i {
-                font-size: 2rem;
+                font-size: 1.75rem;
                 color: $neutral-000;
             }
 
@@ -194,45 +221,53 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
             &.warning {
                 background: linear-gradient(135deg, $enterprise-warning 0%, lighten($enterprise-warning, 10%) 100%);
             }
+
+            &.info {
+                background: linear-gradient(135deg, #17a2b8 0%, #5bc0de 100%);
+            }
         }
 
         .module-meta {
             flex: 1;
 
             .module-name {
-                font-size: 1.25rem;
-                font-weight: $font-weight-bold;
-                color: $neutral-900;
-                margin: 0 0 $space-xs 0;
-                line-height: 1.2;
+                font-size: 1.125rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin: 0 0 0.375rem 0;
+                line-height: 1.3;
+                letter-spacing: -0.01em;
             }
 
             .module-category {
-                font-size: 0.875rem;
-                color: $neutral-600;
-                font-weight: $font-weight-medium;
+                font-size: 0.8125rem;
+                color: #64748b;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.025em;
             }
         }
     }
 
     .card-content-section {
-        padding: 0 $space-xl $space-lg;
+        padding: 0 1.75rem 1.25rem;
         flex: 1;
 
         .module-desc {
-            font-size: 0.9375rem;
-            line-height: 1.6;
-            color: $neutral-700;
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: #475569;
             margin: 0;
         }
     }
 
     .card-actions-section {
-        padding: $space-lg $space-xl $space-xl;
+        padding: 1.25rem 1.75rem 1.75rem;
         display: flex;
         flex-direction: column;
-        gap: $space-md;
-        border-top: 1px solid $neutral-200;
+        gap: 0.75rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.01));
     }
 }
 
@@ -243,20 +278,21 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: $space-sm;
-    padding: 0.75rem $space-lg;
-    border-radius: $radius-md;
-    font-size: 0.9375rem;
-    font-weight: $font-weight-semibold;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
     text-decoration: none;
     border: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    letter-spacing: 0.01em;
 
     i {
-        font-size: 1.125rem;
+        font-size: 1rem;
     }
 
     &::before {
@@ -267,9 +303,9 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
         width: 0;
         height: 0;
         border-radius: 50%;
-        background: rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.25);
         transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
+        transition: width 0.5s, height 0.5s;
     }
 
     &:hover::before {
@@ -278,30 +314,32 @@ $shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 
     }
 
     &.btn-primary-enterprise {
-        background: $enterprise-primary;
+        background: linear-gradient(135deg, $enterprise-primary 0%, $enterprise-primary-dark 100%);
         color: $neutral-000;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 
         &:hover {
-            background: $enterprise-primary-dark;
-            box-shadow: $shadow-md;
-            transform: translateY(-2px);
+            background: linear-gradient(135deg, $enterprise-primary-dark 0%, darken($enterprise-primary-dark, 5%) 100%);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transform: translateY(-1px);
         }
     }
 
     &.btn-secondary-enterprise {
-        background: $neutral-100;
-        color: $neutral-800;
-        border: 1px solid $neutral-300;
+        background: rgba(0, 0, 0, 0.04);
+        color: #475569;
+        border: 1px solid rgba(0, 0, 0, 0.08);
 
         &:hover {
-            background: $neutral-200;
-            border-color: $neutral-400;
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
         }
     }
 
     &.btn-lg {
-        padding: 1rem $space-xl;
-        font-size: 1rem;
+        padding: 0.875rem 1.75rem;
+        font-size: 0.9375rem;
     }
 }
 
