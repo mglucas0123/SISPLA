@@ -1,0 +1,127 @@
+<!-- Partial: experiencia_45_dias.html - conteúdo interno da seção 45 dias -->
+
+<!-- 13. Comunicação (45 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">13</span>
+        <h3>Comunicação (45 dias) <span style="color: red">*</span></h3>
+    </div>
+    <p class="text-muted mb-3">Avalie a comunicação do colaborador após o primeiro ciclo (45 dias).</p>
+    
+    <div class="table-responsive comm-table-box">
+        <table class="table table-borderless">
+            <thead>
+                <tr class="text-center">
+                    <th style="width: 40%;"></th>
+                    <th style="width: 15%;">1</th>
+                    <th style="width: 15%;">2</th>
+                    <th style="width: 15%;">3</th>
+                    <th style="width: 15%;">4</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field, label in [
+                    ('comm_verbal_45', 'Facilidade de comunicação verbal.'),
+                    ('comm_written_45', 'Comunicação escrita e clareza.'),
+                    ('comm_listening_45', 'Capacidade de escuta ativa.')
+                ] %}
+                <tr>
+                    <td>{{ label }}</td>
+                    {% for i in range(1, 5) %}
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="{{ field }}" value="{{ i }}" {% if form_data and form_data.get(field) == (i|string) %}checked{% endif %} {% if i == 1 %}required{% endif %}>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 14. Ambientação (45 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">14</span>
+        <h3>Ambientação (45 dias) <span style="color: red">*</span></h3>
+    </div>
+    <p class="text-muted mb-3">Marque o que foi trabalhado com o colaborador na ambientação inicial.</p>
+    
+    <div class="table-responsive comm-table-box">
+        <table class="table table-borderless">
+            <thead>
+                <tr class="text-center">
+                    <th style="width: 60%;"></th>
+                    <th style="width: 20%;">Sim</th>
+                    <th style="width: 20%;">Não</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field, label in [
+                    ('onboarding_unit_presentation_45', 'Apresentação da Unidade'),
+                    ('onboarding_team_welcome_45', 'Acolhimento pela equipe'),
+                    ('onboarding_expectations_45', 'Alinhamento de expectativas')
+                ] %}
+                <tr>
+                    <td>{{ label }}</td>
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="{{ field }}" value="true" {% if form_data and form_data.get(field) == 'true' %}checked{% endif %} required>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="{{ field }}" value="false" {% if form_data and form_data.get(field) == 'false' %}checked{% endif %}>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 15. Observações (45 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">15</span>
+        <h3>Observações do Ciclo (45 dias) <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <label>Registre pontos fortes e pontos a desenvolver observados no primeiro ciclo:</label>
+        <textarea class="form-control-custom" name="notes_45" rows="4" placeholder="Observações..." required>{{ form_data.get('notes_45') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- 16. Aprovação (45 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">16</span>
+        <h3>Decisão Após 45 dias <span style="color: red">*</span></h3>
+    </div>
+    <div class="radio-options-modern">
+        <label class="radio-option active">
+            <input type="radio" name="approval_status_45" value="continue" {% if form_data and form_data.get('approval_status_45') == 'continue' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span>Continuar</span>
+            </div>
+        </label>
+        <label class="radio-option partial">
+            <input type="radio" name="approval_status_45" value="needs_more_time" {% if form_data and form_data.get('approval_status_45') == 'needs_more_time' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-clock-fill text-warning"></i>
+                <span>Mais tempo (estender experiência)</span>
+            </div>
+        </label>
+        <label class="radio-option none">
+            <input type="radio" name="approval_status_45" value="dismissal" {% if form_data and form_data.get('approval_status_45') == 'dismissal' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill text-danger"></i>
+                <span>Iniciar desligamento</span>
+            </div>
+        </label>
+    </div>
+</div>

@@ -8,18 +8,33 @@
 @import 'panel/jornal_section';
 @import 'repository/repository';
 @import 'course/manage_course';
-@import 'util/flash_messages'; 
+@import 'util/flash_messages';
 @import 'util/pagination';
 @import 'form/forms';
 @import 'course/course';
 @import 'course/course_player';
-@import 'course/course_progress';
+@import 'course/course_progress'; 
 @import 'course/manage_quiz';
 @import 'users/manage_users';
 @import 'nir/nir';
 @import 'nir/procedure_management';
 @import 'roles/roles_permissions';
+@import 'roles/manage_role_permissions';
 @import 'util/colors';
 @import 'nir/cc';
 @import 'course/certificate';
+@import 'feedback/supplier_dashboard';
+@import 'feedback/supplier_list_modern';
+@import 'feedback/supplier_evaluations_modern';
 @import 'feedback/supplier_evaluation';
+@import 'feedback/evaluation_details_modern';
+@import 'feedback/supplier_tracking';
+@import 'avaliacao/funcionarios/dashboard_funcionarios';
+@import 'avaliacao/funcionarios/avaliacao_funcionarios';
+
+
+
+
+
+//Components
+@import 'components/modal-deletar';

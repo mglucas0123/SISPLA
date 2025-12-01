@@ -79,7 +79,7 @@
                             </td>
                             <td class="notice-date-cell">
                                 <span class="notice-date">{{ notice.date_registry.strftime('%d/%m/%Y') }}</span>
-                                <small class="notice-time">{{ notice.date_registry.strftime('%H:%M') }}</small>
+                                <small class="notice-time">{{ notice.date_registry | format_time }}</small>
                             </td>
                             <td class="notice-author-cell">
                                 <span class="notice-author">{{ notice.author.name }}</span>

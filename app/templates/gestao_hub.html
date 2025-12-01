@@ -117,9 +117,30 @@
             </div>
         </div>
 
-        <!-- Voltar ao Painel -->
+        <!-- Gerenciar Fornecedores -->
+        {% if current_user.has_permission('visualizar-fornecedores') or current_user.has_permission('admin-total') %}
         <div class="col-xl-4 col-lg-6">
             <div class="gestao-card" data-aos="fade-up" data-aos-delay="500">
+                <div class="gestao-card-icon">
+                    <i class="bi bi-truck-front-fill"></i>
+                </div>
+                <div class="gestao-card-content">
+                    <h3 class="gestao-card-title">Fornecedores</h3>
+                    <p class="gestao-card-description">Cadastre e avalie prestadores de serviço.</p>
+                </div>
+                <div class="gestao-card-footer">
+                    <a href="{{ url_for('suppliers.supplier_list') }}" class="btn-gestao">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        Gerenciar
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Voltar ao Painel -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="gestao-card" data-aos="fade-up" data-aos-delay="600">
                 <div class="gestao-card-icon">
                     <i class="bi bi-house-fill"></i>
                 </div>

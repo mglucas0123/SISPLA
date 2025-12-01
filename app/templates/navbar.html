@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br" class="h-100">
 
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,18 +12,23 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='SISPLA_ICONE.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
 
-    {% block styles %}{% endblock %}  {% block head_extra %}{% endblock %}
+    {% block styles %}{% endblock %} {% block head_extra %}{% endblock %}
 </head>
+
 
 <body>
     {% if current_user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark shadow-lg navbar-custom no-print">
         <div class="container-fluid">
-            <a class="navbar-brand navbar-brand-custom d-flex align-items-center py-0 ps-2" href="{{ url_for('main.panel') }}" style="min-width:120px; height:56px; align-items:center;">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo SISPLA" class="brand-logo-2025 d-inline-block align-middle" style="height:92px; max-height:none; width:auto; margin-top:-22px; margin-bottom:-22px; filter: brightness(1.2) drop-shadow(0 2px 8px rgba(0,0,0,0.15));">
+            <a class="navbar-brand navbar-brand-custom d-flex align-items-center py-0 ps-2"
+                href="{{ url_for('main.panel') }}" style="min-width:120px; height:56px; align-items:center;">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo SISPLA"
+                    class="brand-logo-2025 d-inline-block align-middle"
+                    style="height:92px; max-height:none; width:auto; margin-top:-22px; margin-bottom:-22px; filter: brightness(1.2) drop-shadow(0 2px 8px rgba(0,0,0,0.15));">
             </a>
             <div class="d-flex align-items-center ms-auto">
                 <div class="dropdown me-2">
@@ -77,6 +83,10 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" aria-labelledby="userDropdownGlobal">
                         <li>
+                            <a class="dropdown-item dropdown-item-custom"
+                                href="{{ url_for('user.profile') }}">
+                                <i class="fas fa-user me-2"></i>Perfil
+                            </a>
                             <button class="dropdown-item dropdown-item-custom" type="button" data-bs-toggle="modal"
                                 data-bs-target="#modalTrocarSenhaBase">
                                 <i class="fas fa-key me-2"></i>Trocar Senha
@@ -116,7 +126,8 @@
     <div class="modal fade" id="modalTrocarSenhaBase" tabindex="-1" aria-labelledby="modalTrocarSenhaBaseLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form class="modal-content password-change-modal" method="POST" action="{{ url_for('util.user_change_password') }}">
+            <form class="modal-content password-change-modal" method="POST"
+                action="{{ url_for('util.user_change_password') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header password-modal-header">
                     <div class="modal-title-container">
@@ -128,37 +139,40 @@
                             <p class="modal-subtitle text-dark">Mantenha sua conta segura</p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close password-modal-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    <button type="button" class="btn-close password-modal-close" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body password-modal-body">
                     <div class="security-notice">
                         <i class="bi bi-info-circle-fill me-2"></i>
                         <span>Sua nova senha deve ter pelo menos 8 caracteres</span>
                     </div>
-                    
+
                     <div class="password-field-group">
                         <label for="senha_atual_base" class="form-label password-label">
                             <i class="bi bi-lock-fill me-2"></i>Senha Atual
                         </label>
                         <div class="password-input-wrapper">
-                            <input type="password" class="form-control password-input" name="senha_atual" 
-                                   id="senha_atual_base" required autocomplete="current-password"
-                                   placeholder="Digite sua senha atual">
-                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('senha_atual_base', this)">
+                            <input type="password" class="form-control password-input" name="senha_atual"
+                                id="senha_atual_base" required autocomplete="current-password"
+                                placeholder="Digite sua senha atual">
+                            <button type="button" class="password-toggle"
+                                onclick="togglePasswordVisibility('senha_atual_base', this)">
                                 <i class="bi bi-eye-fill"></i>
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="password-field-group">
                         <label for="nova_senha_base" class="form-label password-label">
                             <i class="bi bi-shield-check-fill me-2"></i>Nova Senha
                         </label>
                         <div class="password-input-wrapper">
-                            <input type="password" class="form-control password-input" name="nova_senha" 
-                                   id="nova_senha_base" required autocomplete="new-password"
-                                   placeholder="Digite sua nova senha" minlength="8">
-                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('nova_senha_base', this)">
+                            <input type="password" class="form-control password-input" name="nova_senha"
+                                id="nova_senha_base" required autocomplete="new-password"
+                                placeholder="Digite sua nova senha" minlength="8">
+                            <button type="button" class="password-toggle"
+                                onclick="togglePasswordVisibility('nova_senha_base', this)">
                                 <i class="bi bi-eye-fill"></i>
                             </button>
                         </div>
@@ -186,7 +200,7 @@
         function togglePasswordVisibility(inputId, button) {
             const input = document.getElementById(inputId);
             const icon = button.querySelector('i');
-            
+
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.className = 'bi bi-eye-slash-fill';
@@ -195,22 +209,22 @@
                 icon.className = 'bi bi-eye-fill';
             }
         }
-        
-        document.getElementById('nova_senha_base').addEventListener('input', function(e) {
+
+        document.getElementById('nova_senha_base').addEventListener('input', function (e) {
             const password = e.target.value;
             const strengthFill = document.getElementById('strengthFill');
             const strengthText = document.getElementById('strengthText');
-            
+
             let strength = 0;
             let text = '';
             let color = '';
-            
+
             if (password.length >= 8) strength++;
             if (/[A-Z]/.test(password)) strength++;
             if (/[a-z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
             if (/[^A-Za-z0-9]/.test(password)) strength++;
-            
+
             switch (strength) {
                 case 0:
                 case 1:
@@ -234,7 +248,7 @@
                     color = '#00b894';
                     break;
             }
-            
+
             strengthFill.style.width = `${(strength / 5) * 100}%`;
             strengthFill.style.backgroundColor = color;
             strengthText.textContent = text;
@@ -279,15 +293,18 @@
             </div>
         </div>
     </footer>
-    
+
     <!-- Modal de Notificações -->
-    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel"
+        aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden !important;">
-                <div class="modal-header border-0 position-relative" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); padding: 2rem; margin: 0;">
+                <div class="modal-header border-0 position-relative"
+                    style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); padding: 2rem; margin: 0;">
                     <div class="w-100">
                         <div class="d-flex align-items-center mb-2">
-                            <div class="bg-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <div class="bg-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
+                                style="width: 48px; height: 48px;">
                                 <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
                             </div>
                             <div>
@@ -301,7 +318,8 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 1rem; right: 1rem;"></button>
+                    <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal"
+                        aria-label="Close" style="top: 1rem; right: 1rem;"></button>
                 </div>
                 <div class="modal-body p-4" id="notificationBody" style="background-color: #f8f9fa;">
                     <!-- Conteúdo dinâmico das notificações -->
@@ -317,57 +335,57 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Script de Notificações Inteligentes -->
     <script>
         let notificationCheckInterval;
         let isNotificationModalOpen = false;
-        
+
         async function checkNotifications() {
             if (isNotificationModalOpen) {
                 return;
             }
-            
+
             try {
                 const response = await fetch('/nir/check-pending-notifications');
                 const data = await response.json();
-                
+
                 if (data.has_notifications) {
                     showNotificationModal(data.notifications);
                 }
-                                
+
             } catch (error) {
                 console.error('❌ Erro ao verificar notificações:', error);
             }
         }
-        
+
         function formatTimestamp() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             return `${hours}:${minutes}`;
         }
-        
+
         function showNotificationModal(notifications) {
             const modalElement = document.getElementById('notificationModal');
             const bodyElement = document.getElementById('notificationBody');
             const timestampElement = document.getElementById('notificationTimestamp');
-            
+
             if (!modalElement || !bodyElement) return;
-            
+
             isNotificationModalOpen = true;
-            
+
             if (timestampElement) {
                 timestampElement.textContent = `Verificado às ${formatTimestamp()}`;
             }
-            
+
             let html = '';
-            
+
             notifications.forEach((notif, index) => {
                 const borderColor = notif.type === 'warning' ? '#ff6b6b' : '#4ecdc4';
                 const iconBg = notif.type === 'warning' ? '#ffe0e0' : '#e0f7f7';
                 const iconColor = notif.type === 'warning' ? '#ff6b6b' : '#4ecdc4';
-                
+
                 html += `
                     <div class="card border-0 mb-3 shadow-sm" style="border-left: 4px solid ${borderColor} !important; border-radius: 12px; overflow: hidden;">
                         <div class="card-body p-4">
@@ -381,10 +399,10 @@
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
                                         <h6 class="mb-0 fw-bold text-dark">${notif.title}</h6>
-                                        ${notif.priority === 'high' ? 
-                                            '<span class="badge bg-danger ms-2 px-2 py-1" style="font-size: 0.7rem;">URGENTE</span>' : 
-                                            '<span class="badge bg-info ms-2 px-2 py-1" style="font-size: 0.7rem;">ATENÇÃO</span>'
-                                        }
+                                        ${notif.priority === 'high' ?
+                        '<span class="badge bg-danger ms-2 px-2 py-1" style="font-size: 0.7rem;">URGENTE</span>' :
+                        '<span class="badge bg-info ms-2 px-2 py-1" style="font-size: 0.7rem;">ATENÇÃO</span>'
+                    }
                                     </div>
                                     <p class="mb-0 text-muted" style="font-size: 0.95rem; line-height: 1.6;">
                                         ${notif.message}
@@ -395,19 +413,19 @@
                     </div>
                 `;
             });
-            
+
             bodyElement.innerHTML = html;
-            
+
             const modal = new bootstrap.Modal(modalElement, {
                 backdrop: 'static',
                 keyboard: true
             });
             modal.show();
-            
+
             modalElement.addEventListener('hidden.bs.modal', function () {
                 isNotificationModalOpen = false;
             }, { once: true });
-            
+
         }
         // Tempo definido em milissegundos ( 1000 ms = 1 segundo || 300000 ms = 5 minutos || 1800000 ms = 30 minutos)
         function startNotificationSystem() {
@@ -415,24 +433,24 @@
                 checkNotifications();
             }, 300000);
         }
-        
+
         function stopNotificationSystem() {
             if (notificationCheckInterval) {
                 clearInterval(notificationCheckInterval);
             }
         }
-        
-        document.addEventListener('DOMContentLoaded', function() {
+
+        document.addEventListener('DOMContentLoaded', function () {
             {% if current_user.is_authenticated and current_user.has_permission('show-notifications-nir') and not current_user.has_permission('admin-total') %}
-                startNotificationSystem();
+            startNotificationSystem();
             {% endif %}
         });
-        
-        window.addEventListener('beforeunload', function() {
+
+        window.addEventListener('beforeunload', function () {
             stopNotificationSystem();
         });
     </script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

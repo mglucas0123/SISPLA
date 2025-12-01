@@ -1,73 +1,115 @@
 {% set icon_map = {
-    'success': 'bi-check-circle-fill',
-    'danger': 'bi-exclamation-triangle-fill',
-    'warning': 'bi-exclamation-triangle-fill',
-    'info': 'bi-info-circle-fill',
-    'error': 'bi-exclamation-triangle-fill'
+'success': 'bi-check-circle-fill',
+'danger': 'bi-x-circle-fill',
+'warning': 'bi-exclamation-triangle-fill',
+'info': 'bi-info-circle-fill',
+'error': 'bi-x-circle-fill'
 } %}
 
 {% set color_map = {
-    'success': 'success',
-    'danger': 'danger',
-    'warning': 'warning',
-    'info': 'info',
-    'error': 'danger'
+'success': 'success',
+'danger': 'danger',
+'warning': 'warning',
+'info': 'info',
+'error': 'danger'
 } %}
 
 <div id="toast-container"></div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const toastContainer = document.getElementById('toast-container');
-                const messages = {{ messages | tojson }};
-                const iconMap = {{ icon_map | tojson }};
-                const colorMap = {{ color_map | tojson }};
-                
-                messages.forEach(function(messageData, index) {
-                    setTimeout(function() {
-                        const category = messageData[0];
-                        const message = messageData[1];
-                        const toastColor = colorMap[category] || 'info';
-                        const toastIcon = iconMap[category] || 'bi-info-circle-fill';
-                        
-                        const toastElement = document.createElement('div');
-                        toastElement.className = `toast-notification alert alert-${toastColor} d-flex align-items-center`;
-                        toastElement.setAttribute('role', 'alert');
-                        
-                        toastElement.innerHTML = `
+{% if messages %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toastContainer = document.getElementById('toast-container');
+    const messages = {{ messages | tojson }};
+    const iconMap = {{ icon_map | tojson }};
+    const colorMap = {{ color_map | tojson }};
+
+    messages.forEach(function (messageData, index) {
+        // Pequeno delay em cascata para não empilhar tudo de uma vez visualmente
+        setTimeout(function () {
+            const category = messageData[0];
+            const message = messageData[1];
+            const toastColor = colorMap[category] || 'info';
+            const toastIcon = iconMap[category] || 'bi-info-circle-fill';
+
+            // Criar elemento
+            const toastElement = document.createElement('div');
+            toastElement.className = `toast-notification alert alert-${toastColor} d-flex align-items-center`;
+            toastElement.setAttribute('role', 'alert');
+
+            toastElement.innerHTML = `
+                            <div class="toast-progress"></div>
                             <div class="toast-icon me-3">
                                 <i class="bi ${toastIcon} fs-4"></i>
                             </div>
                             <div class="message-text flex-grow-1">${message}</div>
                             <button type="button" class="btn-close ms-2" aria-label="Fechar"></button>
                         `;
-                        
-                        toastContainer.appendChild(toastElement);
-                        
-                        const autoDismissTimer = setTimeout(function() {
-                            dismissToast(toastElement);
-                        }, 5000);
-                        
-                        const closeBtn = toastElement.querySelector('.btn-close');
-                        closeBtn.addEventListener('click', function() {
-                            clearTimeout(autoDismissTimer);
-                            dismissToast(toastElement);
-                        });
-                        
-                        function dismissToast(toast) {
-                            toast.classList.add('fade-out');
-                            setTimeout(function() {
-                                if (toast && toast.parentNode) {
-                                    toast.remove();
-                                }
-                            }, 500);
-                        }
-                        
-                    }, index * 200);
-                });
+
+            toastContainer.appendChild(toastElement);
+
+            // Lógica de Timer com Pausa
+            let autoDismissTimer;
+            const duration = 6000; // 6 segundos
+            const progressBar = toastElement.querySelector('.toast-progress');
+
+            // Função para iniciar o timer
+            function startTimer() {
+                // Reinicia a animação da barra
+                progressBar.style.transition = `width ${duration}ms linear`;
+                progressBar.style.width = '0%';
+
+                autoDismissTimer = setTimeout(function () {
+                    dismissToast(toastElement);
+                }, duration);
+            }
+
+            // Função para pausar (cancelar o timer atual)
+            function stopTimer() {
+                clearTimeout(autoDismissTimer);
+                // Pausa visual da barra (opcional, aqui apenas resetamos o width para visual de 'parado' ou mantemos cheio)
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '100%';
+            }
+
+            // Iniciar imediatamente
+            // Pequeno delay para permitir que o CSS renderize a largura inicial
+            setTimeout(() => {
+                progressBar.style.width = '100%'; // Começa cheio
+                // Força reflow
+                void progressBar.offsetWidth;
+                startTimer();
+            }, 50);
+
+            // Event Listeners para Mouse (Pausar/Retomar)
+            toastElement.addEventListener('mouseenter', stopTimer);
+            toastElement.addEventListener('mouseleave', startTimer);
+
+            // Botão fechar
+            const closeBtn = toastElement.querySelector('.btn-close');
+            closeBtn.addEventListener('click', function () {
+                stopTimer();
+                dismissToast(toastElement);
             });
-        </script>
-    {% endif %}
+
+            function dismissToast(toast) {
+                // Remove listeners para evitar bugs de memória
+                toast.removeEventListener('mouseenter', stopTimer);
+                toast.removeEventListener('mouseleave', startTimer);
+
+                toast.classList.add('fade-out');
+                // Aguarda a animação de saída (0.5s)
+                setTimeout(function () {
+                    if (toast && toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 500);
+            }
+
+        }, index * 250); // Intervalo entre toasts
+    });
+});
+</script>
+{% endif %}
 {% endwith %}

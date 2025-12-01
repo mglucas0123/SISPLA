@@ -3,115 +3,234 @@
 {% block title %}Detalhes da Avaliação - SISPLA{% endblock %}
 
 {% block content %}
-<div class="evaluation-details-container">
-    <div class="container">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-content">
-                <div class="icon-wrapper">
-                    <i class="bi bi-file-earmark-text"></i>
-                </div>
-                <div class="header-text">
-                    <h1>Detalhes da Avaliação</h1>
-                    <p>Informações completas da avaliação realizada</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=evaluation.supplier_id) }}" 
-                   class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar
+<div class="evaluations-modern-container">
+    <div class="evaluations-hero">
+        <div class="container">
+            <div class="hero-navigation">
+                <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=evaluation.supplier_id) }}"
+                    class="btn-back-hero">
+                    <i class="bi bi-arrow-left-circle"></i>
+                    <span>Voltar para Histórico</span>
                 </a>
-                <button onclick="window.print()" class="btn btn-outline-primary">
-                    <i class="bi bi-printer"></i> Imprimir
-                </button>
             </div>
-        </div>
 
-        <!-- Card de Informações Gerais -->
-        <div class="evaluation-summary-card">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h2><i class="bi bi-building"></i> {{ evaluation.supplier.company_name }}</h2>
-                    {% if evaluation.supplier.service_type %}
-                    <p class="service-type"><i class="bi bi-tools"></i> {{ evaluation.supplier.service_type }}</p>
-                    {% endif %}
-                    
-                    <div class="eval-meta">
-                        <div class="meta-item">
-                            <i class="bi bi-calendar-month"></i>
-                            <strong>Mês de Referência:</strong> {{ evaluation.month_reference[:7] if evaluation.month_reference else 'N/A' }}
+            <div class="hero-content-eval">
+                <div class="hero-supplier-info">
+                    <div class="supplier-avatar-large">
+                        <i class="bi bi-building-fill"></i>
+                    </div>
+                    <div class="supplier-details">
+                        <span class="supplier-label">Detalhes da Avaliação</span>
+                        <h1 class="supplier-name-hero">{{ evaluation.supplier.get_display_name() }}</h1>
+                        {% if evaluation.supplier.trade_name %}
+                        <div class="supplier-legal-name-hero">
+                            <i class="bi bi-building"></i>
+                            Razão Social: {{ evaluation.supplier.company_name }}
                         </div>
-                        <div class="meta-item">
-                            <i class="bi bi-calendar-event"></i>
-                            <strong>Data da Avaliação:</strong> {{ evaluation.evaluation_date.strftime('%d/%m/%Y às %H:%M') }}
+                        {% endif %}
+                        {% if evaluation.supplier.service_type %}
+                        <div class="service-tag-hero">
+                            <i class="bi bi-tools"></i>
+                            {{ evaluation.supplier.service_type }}
                         </div>
-                        <div class="meta-item">
-                            <i class="bi bi-person-circle"></i>
-                            <strong>Avaliador:</strong> {{ evaluation.evaluator.name if evaluation.evaluator else 'N/A' }}
+                        {% endif %}
+                        <div class="eval-meta-hero">
+                            <span><i class="bi bi-calendar-month"></i> {{ evaluation.month_reference[:7] if
+                                evaluation.month_reference else 'N/A' }}</span>
+                            <span><i class="bi bi-calendar-event"></i> {{
+                                evaluation.evaluation_date.strftime('%d/%m/%Y') }}</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-4 text-center">
-                    <div class="score-display-large {{ 'excellent' if evaluation.total_score >= 80 else ('good' if evaluation.total_score >= 60 else 'poor') }}">
-                        <div class="score-value">{{ "%.1f"|format(evaluation.total_score) }}%</div>
-                        <div class="score-label">Score Final</div>
+
+                <div class="hero-score-display">
+                    <div
+                        class="score-circular-hero {{ 'excellent' if evaluation.total_score >= 80 else ('good' if evaluation.total_score >= 60 else 'poor') }}">
+                        <svg width="140" height="140">
+                            <circle cx="70" cy="70" r="60" class="score-bg-hero"></circle>
+                            <circle cx="70" cy="70" r="60" class="score-fill-hero"
+                                style="stroke-dashoffset: {{ 377 - (377 * evaluation.total_score / 100) }}"></circle>
+                        </svg>
+                        <div class="score-text-hero">
+                            <span class="score-number-hero">{{ "%.0f"|format(evaluation.total_score) }}</span>
+                            <span class="score-percent-hero">%</span>
+                        </div>
                     </div>
-                    <div class="status-badge">
+                    <div class="score-classification">
                         {% if evaluation.is_compliant %}
-                        <span class="badge badge-success badge-lg">
-                            <i class="bi bi-check-circle-fill"></i> Fornecedor Conforme
-                        </span>
+                        <i class="bi bi-check-circle-fill text-success"></i> Fornecedor Conforme
                         {% else %}
-                        <span class="badge badge-danger badge-lg">
-                            <i class="bi bi-x-circle-fill"></i> Fornecedor Não Conforme
-                        </span>
+                        <i class="bi bi-x-circle-fill text-danger"></i> Fornecedor Não Conforme
                         {% endif %}
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Pergunta Inicial -->
-        <div class="detail-section">
-            <div class="section-title">
-                <i class="bi bi-question-circle"></i>
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="eval-stats-dashboard">
+            <div class="eval-stat-card primary">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-clipboard-check-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ [evaluation.contract_compliance, evaluation.equipment_adequacy,
+                        evaluation.invoice_validation, evaluation.service_timeliness,
+                        evaluation.quantity_description_compliance, evaluation.support_quality]|select('equalto',
+                        'conforme')|list|length }}</h3>
+                    <p>Critérios Conformes</p>
+                </div>
+                <div class="stat-chart-mini">
+                    <span class="stat-fraction">/ 6</span>
+                </div>
+            </div>
+
+            <div class="eval-stat-card danger">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ [evaluation.contract_compliance, evaluation.equipment_adequacy,
+                        evaluation.invoice_validation, evaluation.service_timeliness,
+                        evaluation.quantity_description_compliance, evaluation.support_quality]|select('equalto',
+                        'nao_conforme')|list|length }}</h3>
+                    <p>Não Conformes</p>
+                </div>
+                {% if [evaluation.contract_compliance, evaluation.equipment_adequacy, evaluation.invoice_validation,
+                evaluation.service_timeliness, evaluation.quantity_description_compliance,
+                evaluation.support_quality]|select('equalto', 'nao_conforme')|list|length > 0 %}
+                <div class="stat-pulse-eval"></div>
+                {% endif %}
+            </div>
+
+            <div class="eval-stat-card warning">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ evaluation.overall_rating }}</h3>
+                    <p>Nota Atribuída</p>
+                </div>
+                <div class="rating-stars-mini">
+                    {% for i in range(1, 6) %}
+                    {% if i <= (evaluation.overall_rating / 2) %} <i class="bi bi-star-fill"></i>
+                        {% else %}
+                        <i class="bi bi-star"></i>
+                        {% endif %}
+                        {% endfor %}
+                </div>
+            </div>
+
+            <div class="eval-stat-card success">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ evaluation.evaluator.name.split()[0] if evaluation.evaluator else 'N/A' }}</h3>
+                    <p>Avaliador</p>
+                </div>
+                <div class="stat-chart-mini">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supplier Details Card -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-info-circle-fill"></i>
+                <h3>Informações do Fornecedor</h3>
+            </div>
+
+            <div class="details-grid-modern">
+                {% if evaluation.supplier.contact_name %}
+                <div class="detail-item-modern">
+                    <i class="bi bi-person-badge"></i>
+                    <div>
+                        <span class="detail-label-modern">Contato</span>
+                        <strong>{{ evaluation.supplier.contact_name }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if evaluation.supplier.phone %}
+                <div class="detail-item-modern">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                        <span class="detail-label-modern">Telefone</span>
+                        <strong>{{ evaluation.supplier.phone }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if evaluation.supplier.email %}
+                <div class="detail-item-modern">
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                        <span class="detail-label-modern">E-mail</span>
+                        <strong>{{ evaluation.supplier.email }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if evaluation.supplier.cnpj %}
+                <div class="detail-item-modern">
+                    <i class="bi bi-file-text"></i>
+                    <div>
+                        <span class="detail-label-modern">CNPJ</span>
+                        <strong>{{ evaluation.supplier.cnpj }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Service Question Section -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-question-circle-fill"></i>
                 <h3>Fornecimento/Prestação de Serviços</h3>
             </div>
-            <div class="answer-box">
-                <strong>Houve fornecimento/prestação de serviços no mês de referência?</strong>
-                <div class="answer-value">
-                    {% if evaluation.had_service_last_month %}
-                    <span class="badge badge-success"><i class="bi bi-check-lg"></i> Sim</span>
-                    {% else %}
-                    <span class="badge badge-secondary"><i class="bi bi-x-lg"></i> Não</span>
-                    {% endif %}
+
+            <div class="service-question-card">
+                <div class="question-display">
+                    <strong>Houve fornecimento/prestação de serviços no mês de referência?</strong>
+                    <div class="answer-badge {{ 'yes' if evaluation.had_service_last_month else 'no' }}">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.had_service_last_month else 'bi-x-circle-fill' }}"></i>
+                        <span>{{ 'Sim' if evaluation.had_service_last_month else 'Não' }}</span>
+                    </div>
                 </div>
                 {% if evaluation.service_justification %}
                 <div class="justification-box">
-                    <strong>Justificativa:</strong>
+                    <i class="bi bi-chat-left-text"></i>
                     <p>{{ evaluation.service_justification }}</p>
                 </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Avaliação por Critérios -->
-        <div class="detail-section">
-            <div class="section-title">
-                <i class="bi bi-clipboard-check"></i>
-                <h3>Avaliação por Critérios</h3>
+        <!-- Criteria Evaluation -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-clipboard-check-fill"></i>
+                <h3>Critérios de Avaliação</h3>
             </div>
 
-            <div class="criteria-list">
-                <!-- 1. Conformidade com Contrato -->
-                <div class="criteria-item">
-                    <div class="criteria-header">
-                        <span class="criteria-number">1</span>
-                        <h4>O Serviço é prestado integralmente conforme contrato firmado?</h4>
+            <div class="criteria-list-details">
+                <!-- Criterion 1 -->
+                <div
+                    class="criterion-item-details {{ 'conforme' if evaluation.contract_compliance == 'conforme' else ('nao-conforme' if evaluation.contract_compliance == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">01</span>
+                        <h4>Conformidade com Contrato</h4>
                     </div>
-                    <div class="criteria-answer {{ 'conforme' if evaluation.contract_compliance == 'conforme' else ('nao-conforme' if evaluation.contract_compliance == 'nao_conforme' else 'nao-aplica') }}">
-                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.contract_compliance == 'conforme' else ('bi-x-circle-fill' if evaluation.contract_compliance == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                    <p class="criterion-question">O Serviço é prestado integralmente conforme contrato firmado?</p>
+                    <div class="criterion-answer">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.contract_compliance == 'conforme' else ('bi-x-circle-fill' if evaluation.contract_compliance == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
                         <span>
                             {% if evaluation.contract_compliance == 'conforme' %}Conforme
                             {% elif evaluation.contract_compliance == 'nao_conforme' %}Não Conforme
@@ -120,21 +239,24 @@
                         </span>
                     </div>
                     {% if evaluation.contract_compliance_justification %}
-                    <div class="criteria-justification">
-                        <i class="bi bi-chat-left-text"></i>
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
                         <p>{{ evaluation.contract_compliance_justification }}</p>
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- 2. Adequação de Equipamentos -->
-                <div class="criteria-item">
-                    <div class="criteria-header">
-                        <span class="criteria-number">2</span>
-                        <h4>O equipamento atende a necessidade e o serviço na unidade?</h4>
+                <!-- Criterion 2 -->
+                <div
+                    class="criterion-item-details {{ 'conforme' if evaluation.equipment_adequacy == 'conforme' else ('nao-conforme' if evaluation.equipment_adequacy == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">02</span>
+                        <h4>Adequação de Equipamentos</h4>
                     </div>
-                    <div class="criteria-answer {{ 'conforme' if evaluation.equipment_adequacy == 'conforme' else ('nao-conforme' if evaluation.equipment_adequacy == 'nao_conforme' else 'nao-aplica') }}">
-                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.equipment_adequacy == 'conforme' else ('bi-x-circle-fill' if evaluation.equipment_adequacy == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                    <p class="criterion-question">O equipamento atende a necessidade e o serviço na unidade?</p>
+                    <div class="criterion-answer">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.equipment_adequacy == 'conforme' else ('bi-x-circle-fill' if evaluation.equipment_adequacy == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
                         <span>
                             {% if evaluation.equipment_adequacy == 'conforme' %}Conforme
                             {% elif evaluation.equipment_adequacy == 'nao_conforme' %}Não Conforme
@@ -143,21 +265,24 @@
                         </span>
                     </div>
                     {% if evaluation.equipment_adequacy_justification %}
-                    <div class="criteria-justification">
-                        <i class="bi bi-chat-left-text"></i>
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
                         <p>{{ evaluation.equipment_adequacy_justification }}</p>
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- 3. Validação de Nota Fiscal -->
-                <div class="criteria-item">
-                    <div class="criteria-header">
-                        <span class="criteria-number">3</span>
-                        <h4>O valor faturado sempre é validado conforme contrato firmado?</h4>
+                <!-- Criterion 3 -->
+                <div
+                    class="criterion-item-details {{ 'conforme' if evaluation.invoice_validation == 'conforme' else ('nao-conforme' if evaluation.invoice_validation == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">03</span>
+                        <h4>Validação de Nota Fiscal</h4>
                     </div>
-                    <div class="criteria-answer {{ 'conforme' if evaluation.invoice_validation == 'conforme' else ('nao-conforme' if evaluation.invoice_validation == 'nao_conforme' else 'nao-aplica') }}">
-                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.invoice_validation == 'conforme' else ('bi-x-circle-fill' if evaluation.invoice_validation == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                    <p class="criterion-question">O valor faturado sempre é validado conforme contrato firmado?</p>
+                    <div class="criterion-answer">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.invoice_validation == 'conforme' else ('bi-x-circle-fill' if evaluation.invoice_validation == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
                         <span>
                             {% if evaluation.invoice_validation == 'conforme' %}Conforme
                             {% elif evaluation.invoice_validation == 'nao_conforme' %}Não Conforme
@@ -166,21 +291,25 @@
                         </span>
                     </div>
                     {% if evaluation.invoice_validation_justification %}
-                    <div class="criteria-justification">
-                        <i class="bi bi-chat-left-text"></i>
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
                         <p>{{ evaluation.invoice_validation_justification }}</p>
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- 4. Pontualidade -->
-                <div class="criteria-item">
-                    <div class="criteria-header">
-                        <span class="criteria-number">4</span>
-                        <h4>Os chamados de serviços e fornecimentos ocorrem no tempo estipulado em contrato?</h4>
+                <!-- Criterion 4 -->
+                <div
+                    class="criterion-item-details {{ 'conforme' if evaluation.service_timeliness == 'conforme' else ('nao-conforme' if evaluation.service_timeliness == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">04</span>
+                        <h4>Pontualidade</h4>
                     </div>
-                    <div class="criteria-answer {{ 'conforme' if evaluation.service_timeliness == 'conforme' else ('nao-conforme' if evaluation.service_timeliness == 'nao_conforme' else 'nao-aplica') }}">
-                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.service_timeliness == 'conforme' else ('bi-x-circle-fill' if evaluation.service_timeliness == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                    <p class="criterion-question">Os chamados de serviços e fornecimentos ocorrem no tempo estipulado em
+                        contrato?</p>
+                    <div class="criterion-answer">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.service_timeliness == 'conforme' else ('bi-x-circle-fill' if evaluation.service_timeliness == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
                         <span>
                             {% if evaluation.service_timeliness == 'conforme' %}Conforme
                             {% elif evaluation.service_timeliness == 'nao_conforme' %}Não Conforme
@@ -189,21 +318,25 @@
                         </span>
                     </div>
                     {% if evaluation.service_timeliness_justification %}
-                    <div class="criteria-justification">
-                        <i class="bi bi-chat-left-text"></i>
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
                         <p>{{ evaluation.service_timeliness_justification }}</p>
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- 5. Conformidade de Quantidade/Descrição -->
-                <div class="criteria-item">
-                    <div class="criteria-header">
-                        <span class="criteria-number">5</span>
-                        <h4>O quantitativo e descritivo dos Fornecimentos/Serviços estão sendo prestados conforme contrato?</h4>
+                <!-- Criterion 5 -->
+                <div
+                    class="criterion-item-details {{ 'conforme' if evaluation.quantity_description_compliance == 'conforme' else ('nao-conforme' if evaluation.quantity_description_compliance == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">05</span>
+                        <h4>Conformidade de Quantidade/Descrição</h4>
                     </div>
-                    <div class="criteria-answer {{ 'conforme' if evaluation.quantity_description_compliance == 'conforme' else ('nao-conforme' if evaluation.quantity_description_compliance == 'nao_conforme' else 'nao-aplica') }}">
-                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.quantity_description_compliance == 'conforme' else ('bi-x-circle-fill' if evaluation.quantity_description_compliance == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                    <p class="criterion-question">O quantitativo e descritivo dos Fornecimentos/Serviços estão sendo
+                        prestados conforme contrato?</p>
+                    <div class="criterion-answer">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.quantity_description_compliance == 'conforme' else ('bi-x-circle-fill' if evaluation.quantity_description_compliance == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
                         <span>
                             {% if evaluation.quantity_description_compliance == 'conforme' %}Conforme
                             {% elif evaluation.quantity_description_compliance == 'nao_conforme' %}Não Conforme
@@ -212,21 +345,26 @@
                         </span>
                     </div>
                     {% if evaluation.quantity_description_compliance_justification %}
-                    <div class="criteria-justification">
-                        <i class="bi bi-chat-left-text"></i>
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
                         <p>{{ evaluation.quantity_description_compliance_justification }}</p>
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- 6. Qualidade do Suporte -->
-                <div class="criteria-item">
-                    <div class="criteria-header">
-                        <span class="criteria-number">6</span>
-                        <h4>A empresa oferece suporte de qualidade por meio de telefone, e-mail e presencial, bem como garante agilidade nos envios de relatórios, notas fiscais e demais documentos e solicitações referentes ao contrato firmado?</h4>
+                <!-- Criterion 6 -->
+                <div
+                    class="criterion-item-details {{ 'conforme' if evaluation.support_quality == 'conforme' else ('nao-conforme' if evaluation.support_quality == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">06</span>
+                        <h4>Qualidade do Suporte</h4>
                     </div>
-                    <div class="criteria-answer {{ 'conforme' if evaluation.support_quality == 'conforme' else ('nao-conforme' if evaluation.support_quality == 'nao_conforme' else 'nao-aplica') }}">
-                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.support_quality == 'conforme' else ('bi-x-circle-fill' if evaluation.support_quality == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                    <p class="criterion-question">A empresa oferece suporte de qualidade por meio de telefone, e-mail e
+                        presencial, bem como garante agilidade nos envios de relatórios, notas fiscais e demais
+                        documentos e solicitações referentes ao contrato firmado?</p>
+                    <div class="criterion-answer">
+                        <i
+                            class="bi {{ 'bi-check-circle-fill' if evaluation.support_quality == 'conforme' else ('bi-x-circle-fill' if evaluation.support_quality == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
                         <span>
                             {% if evaluation.support_quality == 'conforme' %}Conforme
                             {% elif evaluation.support_quality == 'nao_conforme' %}Não Conforme
@@ -235,8 +373,8 @@
                         </span>
                     </div>
                     {% if evaluation.support_quality_justification %}
-                    <div class="criteria-justification">
-                        <i class="bi bi-chat-left-text"></i>
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
                         <p>{{ evaluation.support_quality_justification }}</p>
                     </div>
                     {% endif %}
@@ -244,98 +382,109 @@
             </div>
         </div>
 
-        <!-- Nota Final -->
-        <div class="detail-section">
-            <div class="section-title">
+        <!-- Rating and Justification -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
                 <i class="bi bi-star-fill"></i>
-                <h3>Avaliação Final</h3>
+                <h3>Avaliação Final e Justificativa</h3>
             </div>
-            
-            <div class="rating-display-box">
-                <div class="rating-value-large">
-                    <span class="rating-number">{{ evaluation.overall_rating }}</span>
-                    <span class="rating-max">/10</span>
-                </div>
-                <div class="stars-display">
+
+            <div class="rating-display-details">
+                <div class="rating-number-large">{{ evaluation.overall_rating }}<span>/10</span></div>
+                <div class="rating-stars-large">
                     {% for i in range(1, 11) %}
-                        {% if i <= evaluation.overall_rating %}
-                        <i class="bi bi-star-fill text-warning"></i>
+                    {% if i <= evaluation.overall_rating %} <i class="bi bi-star-fill"></i>
                         {% else %}
-                        <i class="bi bi-star text-muted"></i>
+                        <i class="bi bi-star"></i>
                         {% endif %}
-                    {% endfor %}
+                        {% endfor %}
                 </div>
-                <p class="rating-question">Qual nota daria a este fornecedor/prestador quanto ao fornecimento/serviços prestados?</p>
+                <p class="rating-question-text">Qual nota daria a este fornecedor/prestador quanto ao
+                    fornecimento/serviços prestados?</p>
             </div>
 
             {% if evaluation.rating_justification %}
             <div class="justification-box">
-                <strong><i class="bi bi-chat-square-text"></i> Justificativa da Nota:</strong>
-                <p>{{ evaluation.rating_justification }}</p>
+                <i class="bi bi-chat-square-text"></i>
+                <p><strong>Justificativa:</strong> {{ evaluation.rating_justification }}</p>
             </div>
             {% endif %}
         </div>
 
-        <!-- Observações Gerais -->
+        <!-- General Observations -->
         {% if evaluation.general_observations %}
-        <div class="detail-section">
-            <div class="section-title">
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
                 <i class="bi bi-journal-text"></i>
                 <h3>Observações Gerais</h3>
             </div>
-            <div class="observations-box">
+
+            <div class="observations-box-details">
                 <p>{{ evaluation.general_observations }}</p>
             </div>
         </div>
         {% endif %}
 
-        <!-- Cálculo do Score -->
-        <div class="detail-section">
-            <div class="section-title">
-                <i class="bi bi-calculator"></i>
+        <!-- Score Calculation -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-calculator-fill"></i>
                 <h3>Cálculo do Score</h3>
             </div>
-            
-            <div class="score-calculation-box">
-                <div class="calc-formula">
-                    <h4>Fórmula Aplicada:</h4>
-                    <div class="formula-display">
-                        <span class="formula-part">
-                            <strong>60%</strong> × (Respostas Conformes ÷ 6)
-                        </span>
-                        <span class="formula-operator">+</span>
-                        <span class="formula-part">
-                            <strong>40%</strong> × (Nota Final ÷ 10)
-                        </span>
-                        <span class="formula-operator">=</span>
-                        <span class="formula-result">
-                            <strong>{{ "%.1f"|format(evaluation.total_score) }}%</strong>
-                        </span>
+
+            <div class="calculation-card-details">
+                <div class="formula-header">
+                    <h4>Fórmula Aplicada</h4>
+                </div>
+                <div class="formula-display-details">
+                    <div class="formula-part">
+                        <span class="formula-weight">60%</span>
+                        <span class="formula-x">×</span>
+                        <span class="formula-text">(Conformes ÷ 6)</span>
+                    </div>
+                    <span class="formula-plus">+</span>
+                    <div class="formula-part">
+                        <span class="formula-weight">40%</span>
+                        <span class="formula-x">×</span>
+                        <span class="formula-text">(Nota ÷ 10)</span>
+                    </div>
+                    <span class="formula-equals">=</span>
+                    <div
+                        class="formula-result {{ 'excellent' if evaluation.total_score >= 80 else ('good' if evaluation.total_score >= 60 else 'poor') }}">
+                        {{ "%.1f"|format(evaluation.total_score) }}%
                     </div>
                 </div>
 
-                <div class="calc-breakdown">
+                <div class="calculation-breakdown">
                     <div class="breakdown-item">
-                        <span class="breakdown-label">Critérios Conformes:</span>
-                        <span class="breakdown-value">
-                            {{ [evaluation.contract_compliance, evaluation.equipment_adequacy, evaluation.invoice_validation, evaluation.service_timeliness, evaluation.quantity_description_compliance, evaluation.support_quality]|select('equalto', 'conforme')|list|length }} / 6
-                        </span>
+                        <i class="bi bi-check2-square"></i>
+                        <div>
+                            <span>Critérios Conformes</span>
+                            <strong>{{ [evaluation.contract_compliance, evaluation.equipment_adequacy,
+                                evaluation.invoice_validation, evaluation.service_timeliness,
+                                evaluation.quantity_description_compliance,
+                                evaluation.support_quality]|select('equalto', 'conforme')|list|length }} / 6</strong>
+                        </div>
                     </div>
                     <div class="breakdown-item">
-                        <span class="breakdown-label">Nota Final:</span>
-                        <span class="breakdown-value">{{ evaluation.overall_rating }} / 10</span>
+                        <i class="bi bi-star-half"></i>
+                        <div>
+                            <span>Nota Atribuída</span>
+                            <strong>{{ evaluation.overall_rating }} / 10</strong>
+                        </div>
                     </div>
                     <div class="breakdown-item">
-                        <span class="breakdown-label">Classificação:</span>
-                        <span class="breakdown-value">
-                            {% if evaluation.total_score >= 80 %}
-                            <span class="badge badge-success">Excelente</span>
-                            {% elif evaluation.total_score >= 60 %}
-                            <span class="badge badge-warning">Satisfatório</span>
-                            {% else %}
-                            <span class="badge badge-danger">Insatisfatório</span>
-                            {% endif %}
-                        </span>
+                        <i class="bi bi-award-fill"></i>
+                        <div>
+                            <span>Classificação</span>
+                            <strong
+                                class="{{ 'text-success' if evaluation.total_score >= 80 else ('text-warning' if evaluation.total_score >= 60 else 'text-danger') }}">
+                                {% if evaluation.total_score >= 80 %}Excelente
+                                {% elif evaluation.total_score >= 60 %}Satisfatório
+                                {% else %}Insatisfatório
+                                {% endif %}
+                            </strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -344,11 +493,27 @@
 </div>
 
 <style>
-@media print {
-    .page-header .header-actions,
-    .no-print {
-        display: none !important;
+    @media print {
+
+        .hero-navigation,
+        .hero-actions-eval,
+        .no-print {
+            display: none !important;
+        }
+
+        .evaluations-hero {
+            padding: 20px 0 !important;
+        }
+
+        .evaluations-modern-container {
+            background: white !important;
+        }
     }
-}
 </style>
+
+<script>
+    function exportToPDF() {
+        window.print();
+    }
+</script>
 {% endblock %}

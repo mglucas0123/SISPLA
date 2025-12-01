@@ -226,7 +226,8 @@ def course_player_page(course_id):
         course=course, 
         quiz=course.quiz,
         is_completed=is_completed,
-        user_attempt=user_attempt
+        user_attempt=user_attempt,
+        content_type=course.content_type or 'video'
     )
     
 @training_bp.route("/quiz/submit/<int:quiz_id>", methods=['POST'])
@@ -261,7 +262,8 @@ def submit_quiz(quiz_id):
                 user_answers_data[str(question.id)] = {'answer': user_submitted_value, 'is_correct': False}
 
         elif question.question_type == QuestionType.TEXT_INPUT:
-            correct_answer = question.options.first()
+            # Get the first option from the list (not a query, so use list indexing)
+            correct_answer = question.options[0] if question.options else None
             
             if correct_answer and user_submitted_value.strip().lower() == correct_answer.text.strip().lower():
                 correct_answers_count += 1

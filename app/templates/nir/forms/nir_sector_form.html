@@ -121,8 +121,8 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="nir-form-label">Data de Internação</label>
-                                <input type="date" class="form-control nir-form-control" name="admission_date"
-                                    value="{{ record.admission_date.strftime('%Y-%m-%d') if record.admission_date else '' }}"
+                                <input type="datetime-local" class="form-control nir-form-control" name="admission_date"
+                                    value="{{ record.admission_date.strftime('%Y-%m-%dT%H:%M') if record.admission_date else '' }}"
                                     {% if not section_editable %}disabled data-readonly="1" {% endif %}>
                             </div>
                             <div class="col-md-4">
@@ -545,8 +545,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="nir-form-label">Data de Alta <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control nir-form-control" name="discharge_date"
-                                    value="{{ record.discharge_date.strftime('%Y-%m-%d') if record.discharge_date else '' }}"
+                                <input type="datetime-local" class="form-control nir-form-control" name="discharge_date"
+                                    value="{{ record.discharge_date.strftime('%Y-%m-%dT%H:%M') if record.discharge_date else '' }}"
                                     {% if section_editable %}required{% else %}disabled data-readonly="1" {% endif %}>
                             </div>
                             <div class="col-md-4">

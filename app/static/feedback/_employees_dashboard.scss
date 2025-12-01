@@ -1,0 +1,556 @@
+/* app/static/css/employees/dashboard.css */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+}
+
+body {
+    background-color: var(--light-color);
+}
+
+.card {
+    transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.ranking-card .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ranking-card .display-4 {
+    font-size: 3.5rem;
+}
+
+.badge-score {
+    font-size: 1rem;
+    padding: 0.5em 0.8em;
+}
+
+.table-responsive {
+    max-height: 400px;
+}
+
+.btn-2fa {
+    animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+#evaluationsChart {
+    max-height: 300px;
+}
+
+
+/* DASHBOARD DE COLABORADORES - MODERN DESIGN */
+/* Converted from _employees_dashboard.scss */
+
+.employee-dashboard-container {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    padding-bottom: 60px;
+}
+
+/* Cards Gerais */
+.employee-dashboard-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    margin-bottom: 24px;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.employee-dashboard-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.employee-dashboard-card .card-header-dash {
+    padding: 20px 24px;
+    background: white;
+    border-bottom: 1px solid #f0f2f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.employee-dashboard-card .card-header-dash h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.employee-dashboard-card .card-header-dash h2 i {
+    color: #4facfe;
+    /* Accent color */
+}
+
+/* Hero Stats (Topo) */
+.hero-stats-row {
+    margin-bottom: 20px;
+}
+
+.employee-hero-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    border-left: 5px solid transparent;
+}
+
+.employee-hero-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.employee-hero-card .hero-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.employee-hero-card .hero-content h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1;
+    color: #2d3748;
+}
+
+.employee-hero-card .hero-content p {
+    margin: 5px 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #718096;
+}
+
+/* Variantes de Cor */
+.employee-hero-card.green {
+    border-left-color: #11998e;
+}
+
+.employee-hero-card.green .hero-icon {
+    background: rgba(17, 153, 142, 0.1);
+    color: #11998e;
+}
+
+.employee-hero-card.blue {
+    border-left-color: #4facfe;
+}
+
+.employee-hero-card.blue .hero-icon {
+    background: rgba(79, 172, 254, 0.1);
+    color: #4facfe;
+}
+
+.employee-hero-card.purple {
+    border-left-color: #9b59b6;
+}
+
+.employee-hero-card.purple .hero-icon {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+}
+
+/* Ranking (Medalhas) - Estilo Premium */
+.employee-ranking-list {
+    padding: 0;
+}
+
+.employee-ranking-list .ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background 0.2s;
+}
+
+.employee-ranking-list .ranking-item:last-child {
+    border-bottom: none;
+}
+
+.employee-ranking-list .ranking-item:hover {
+    background-color: #f8fafc;
+}
+
+.employee-ranking-list .ranking-item .rank-medal {
+    margin-right: 20px;
+    position: relative;
+}
+
+.employee-ranking-list .ranking-item .rank-medal .medal-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.employee-ranking-list .ranking-item .rank-medal .medal-wrapper.gold {
+    background: linear-gradient(135deg, #ffd700, #ffb700);
+}
+
+.employee-ranking-list .ranking-item .rank-medal .medal-wrapper.silver {
+    background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+}
+
+.employee-ranking-list .ranking-item .rank-medal .medal-wrapper.bronze {
+    background: linear-gradient(135deg, #cd7f32, #a0522d);
+}
+
+.employee-ranking-list .ranking-item .rank-content {
+    flex: 1;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2d3748;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-header .rank-score-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-header .rank-score-badge.excellent {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-header .rank-score-badge.good {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-header .rank-score-badge.poor {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-meta-info {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: #718096;
+    margin-bottom: 8px;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-meta-info span {
+    display: flex;
+    align-items: center;
+}
+
+.employee-ranking-list .ranking-item .rank-content .rank-meta-info i {
+    margin-right: 5px;
+}
+
+.employee-ranking-list .ranking-item .rank-content .progress-bar-container {
+    height: 6px;
+    background: #edf2f7;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.employee-ranking-list .ranking-item .rank-content .progress-bar-container .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.employee-ranking-list .ranking-item .rank-content .progress-bar-container .progress-fill.excellent {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.employee-ranking-list .ranking-item .rank-content .progress-bar-container .progress-fill.good {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.employee-ranking-list .ranking-item .rank-content .progress-bar-container .progress-fill.poor {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+/* Tabelas Modernas (Estilo NIR) */
+.employee-table-modern-wrapper {
+    overflow-x: auto;
+}
+
+.employee-table-modern {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.employee-table-modern thead th {
+    background: #f8f9fa;
+    color: #718096;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.employee-table-modern tbody td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f2f5;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.employee-table-modern tbody tr:hover {
+    background-color: #fcfcfc;
+}
+
+/* Avatares com iniciais */
+.employee-table-modern .avatar-initials {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-right: 12px;
+}
+
+/* Gráfico Donut (Performance) */
+.employee-performance-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+}
+
+.employee-performance-content .donut-chart {
+    width: 180px;
+    height: 180px;
+    transform: rotate(-90deg);
+}
+
+.employee-performance-content .donut-chart .donut-segment {
+    transition: stroke-dasharray 0.6s ease;
+    cursor: pointer;
+}
+
+.employee-performance-content .donut-chart .donut-segment:hover {
+    opacity: 0.8;
+}
+
+.employee-performance-content .donut-chart text {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.employee-performance-content .performance-legend {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.employee-performance-content .performance-legend .legend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    font-size: 0.9rem;
+}
+
+.employee-performance-content .performance-legend .legend-item .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+.employee-performance-content .performance-legend .legend-item .legend-color.excellent {
+    background-color: #10b981;
+}
+
+.employee-performance-content .performance-legend .legend-item .legend-color.good {
+    background-color: #f59e0b;
+}
+
+.employee-performance-content .performance-legend .legend-item .legend-color.poor {
+    background-color: #ef4444;
+}
+
+/* Banner Plano de Carreira (CTA) */
+.employee-career-cta-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+    text-align: center;
+    padding: 30px;
+}
+
+.employee-career-cta-card i.display-icon {
+    font-size: 3rem;
+    opacity: 0.8;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.employee-career-cta-card h4 {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.employee-career-cta-card p {
+    opacity: 0.8;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.employee-career-cta-card .btn-cta {
+    background: white;
+    color: #1e3a8a;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 10px 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.employee-career-cta-card .btn-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Badges e Status */
+.badge-pill {
+    padding: 0.4em 0.8em;
+    border-radius: 50rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.bg-soft-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.bg-soft-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.bg-soft-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.bg-soft-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+/* Insights List */
+.employee-insights-list .insight-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    align-items: flex-start;
+}
+
+.employee-insights-list .insight-item i {
+    font-size: 1.1rem;
+    margin-top: 2px;
+}
+
+.employee-insights-list .insight-item p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.employee-insights-list .insight-item.info {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+}
+
+.employee-insights-list .insight-item.info i {
+    color: #2563eb;
+}
+
+.employee-insights-list .insight-item.warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+}
+
+.employee-insights-list .insight-item.warning i {
+    color: #d97706;
+}
+
+.employee-insights-list .insight-item.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #065f46;
+}
+
+.employee-insights-list .insight-item.success i {
+    color: #059669;
+}

@@ -50,23 +50,15 @@
                         <div class="form-group-custom">
                             <label for="supplier_id" class="form-label-custom required">
                                 <i class="bi bi-building"></i>
-                                Selecione o Fornecedor/Prestador
+                                Selecione o Fornecedor
                             </label>
-                            <select class="form-select-custom" id="supplier_id" name="supplier_id" required>
-                                <option value="">Escolha um fornecedor...</option>
-                                {% for supplier in suppliers %}
-                                <option value="{{ supplier.id }}" data-name="{{ supplier.company_name }}">
-                                    {{ supplier.company_name }}
-                                    {% if supplier.service_type %} - {{ supplier.service_type }}{% endif %}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <div class="selected-supplier-display" id="selectedSupplierDisplay" style="display: none;">
-                                <div class="supplier-badge-large">
-                                    <i class="bi bi-building-check"></i>
-                                    <span id="selectedSupplierName"></span>
-                                </div>
+                            <div class="supplier-search-container">
+                                <input type="text" class="form-control-custom supplier-search-input" id="supplierSearch"
+                                    placeholder="Digite o nome do fornecedor..." autocomplete="off" required>
+                                <ul class="supplier-suggestions-list" id="supplierSuggestions"></ul>
+                                <input type="hidden" name="supplier_id" id="supplier_id" value="">
                             </div>
+
                         </div>
 
                         <!-- Mês de Referência -->
@@ -75,13 +67,9 @@
                                 <i class="bi bi-calendar-month"></i>
                                 Mês de Referência
                             </label>
-                            <input type="month" 
-                                   class="form-control-custom" 
-                                   id="month_reference" 
-                                   name="month_reference" 
-                                   value="{{ current_month }}" 
-                                   required>
-                            <small class="form-hint">Selecione o mês que está sendo avaliado</small>
+                            <input type="month" class="form-control-custom" id="month_reference" name="month_reference"
+                                value="{{ current_month }}" required>
+                            <small class="form-hint">Avaliação referente ao mês anterior</small>
                         </div>
                     </div>
 
@@ -108,14 +96,12 @@
                             </label>
                         </div>
                         <div class="justification-box" id="serviceJustificationBox" style="display: none;">
-                            <label class="form-label-custom">
+                            <label class="form-label-custom required">
                                 <i class="bi bi-chat-left-text"></i>
-                                Justifique sua resposta (opcional)
+                                Justifique sua resposta <span style="color: red">*</span>
                             </label>
-                            <textarea class="form-control-custom" 
-                                      name="service_justification" 
-                                      rows="3" 
-                                      placeholder="Descreva detalhes sobre o fornecimento/serviço..."></textarea>
+                            <textarea class="form-control-custom" name="service_justification" rows="4" required
+                                placeholder="Descreva detalhes sobre o fornecimento/serviço, contexto ou observações importantes..."></textarea>
                         </div>
                     </div>
 
@@ -143,25 +129,26 @@
                     <div class="question-card-eval" data-question="2">
                         <div class="question-header-eval">
                             <span class="question-number">2</span>
-                            <h3>O Serviço é prestado integralmente conforme contrato firmado?</h3>
+                            <h3>O Serviço é prestado integralmente conforme contrato firmado? <span
+                                    style="color: red">*</span></h3>
                         </div>
                         <div class="radio-options-modern">
                             <label class="radio-option conforme">
-                                <input type="radio" name="contract_compliance" value="conforme">
+                                <input type="radio" name="contract_compliance" value="conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-check-circle-fill"></i>
                                     <span>Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-conforme">
-                                <input type="radio" name="contract_compliance" value="nao_conforme">
+                                <input type="radio" name="contract_compliance" value="nao_conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-x-circle-fill"></i>
                                     <span>Não Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-aplica">
-                                <input type="radio" name="contract_compliance" value="nao_aplica">
+                                <input type="radio" name="contract_compliance" value="nao_aplica" required>
                                 <div class="radio-card">
                                     <i class="bi bi-dash-circle-fill"></i>
                                     <span>Não se Aplica</span>
@@ -169,10 +156,13 @@
                             </label>
                         </div>
                         <div class="justification-collapsible" data-target="contract_compliance_justification">
-                            <textarea class="form-control-custom" 
-                                      name="contract_compliance_justification" 
-                                      rows="2" 
-                                      placeholder="Justifique se necessário..."></textarea>
+                            <label for="contract_compliance_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="contract_compliance_justification"
+                                name="contract_compliance_justification" rows="2" required
+                                placeholder="Descreva os detalhes ou motivos da sua resposta..."></textarea>
                         </div>
                     </div>
 
@@ -180,25 +170,26 @@
                     <div class="question-card-eval" data-question="3">
                         <div class="question-header-eval">
                             <span class="question-number">3</span>
-                            <h3>O equipamento atende a necessidade e o serviço na unidade?</h3>
+                            <h3>O equipamento atende a necessidade e o serviço na unidade? <span
+                                    style="color: red">*</span></h3>
                         </div>
                         <div class="radio-options-modern">
                             <label class="radio-option conforme">
-                                <input type="radio" name="equipment_adequacy" value="conforme">
+                                <input type="radio" name="equipment_adequacy" value="conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-check-circle-fill"></i>
                                     <span>Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-conforme">
-                                <input type="radio" name="equipment_adequacy" value="nao_conforme">
+                                <input type="radio" name="equipment_adequacy" value="nao_conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-x-circle-fill"></i>
                                     <span>Não Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-aplica">
-                                <input type="radio" name="equipment_adequacy" value="nao_aplica">
+                                <input type="radio" name="equipment_adequacy" value="nao_aplica" required>
                                 <div class="radio-card">
                                     <i class="bi bi-dash-circle-fill"></i>
                                     <span>Não se Aplica</span>
@@ -206,10 +197,13 @@
                             </label>
                         </div>
                         <div class="justification-collapsible">
-                            <textarea class="form-control-custom" 
-                                      name="equipment_adequacy_justification" 
-                                      rows="2" 
-                                      placeholder="Informe quais equipamentos ou justifique..."></textarea>
+                            <label for="equipment_adequacy_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="equipment_adequacy_justification"
+                                name="equipment_adequacy_justification" rows="2" required
+                                placeholder="Informe quais equipamentos ou justifique..."></textarea>
                         </div>
                     </div>
 
@@ -217,25 +211,26 @@
                     <div class="question-card-eval" data-question="4">
                         <div class="question-header-eval">
                             <span class="question-number">4</span>
-                            <h3>O valor faturado sempre é validado conforme contrato firmado?</h3>
+                            <h3>O valor faturado sempre é validado conforme contrato firmado? <span
+                                    style="color: red">*</span></h3>
                         </div>
                         <div class="radio-options-modern">
                             <label class="radio-option conforme">
-                                <input type="radio" name="invoice_validation" value="conforme">
+                                <input type="radio" name="invoice_validation" value="conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-check-circle-fill"></i>
                                     <span>Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-conforme">
-                                <input type="radio" name="invoice_validation" value="nao_conforme">
+                                <input type="radio" name="invoice_validation" value="nao_conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-x-circle-fill"></i>
                                     <span>Não Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-aplica">
-                                <input type="radio" name="invoice_validation" value="nao_aplica">
+                                <input type="radio" name="invoice_validation" value="nao_aplica" required>
                                 <div class="radio-card">
                                     <i class="bi bi-dash-circle-fill"></i>
                                     <span>Não se Aplica</span>
@@ -243,10 +238,13 @@
                             </label>
                         </div>
                         <div class="justification-collapsible">
-                            <textarea class="form-control-custom" 
-                                      name="invoice_validation_justification" 
-                                      rows="2" 
-                                      placeholder="Justifique se necessário..."></textarea>
+                            <label for="invoice_validation_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="invoice_validation_justification"
+                                name="invoice_validation_justification" rows="2" required
+                                placeholder="Descreva os detalhes ou motivos..."></textarea>
                         </div>
                     </div>
 
@@ -254,25 +252,26 @@
                     <div class="question-card-eval" data-question="5">
                         <div class="question-header-eval">
                             <span class="question-number">5</span>
-                            <h3>Os chamados de serviços e fornecimentos ocorrem no tempo estipulado em contrato?</h3>
+                            <h3>Os chamados de serviços e fornecimentos ocorrem no tempo estipulado em contrato? <span
+                                    style="color: red">*</span></h3>
                         </div>
                         <div class="radio-options-modern">
                             <label class="radio-option conforme">
-                                <input type="radio" name="service_timeliness" value="conforme">
+                                <input type="radio" name="service_timeliness" value="conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-check-circle-fill"></i>
                                     <span>Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-conforme">
-                                <input type="radio" name="service_timeliness" value="nao_conforme">
+                                <input type="radio" name="service_timeliness" value="nao_conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-x-circle-fill"></i>
                                     <span>Não Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-aplica">
-                                <input type="radio" name="service_timeliness" value="nao_aplica">
+                                <input type="radio" name="service_timeliness" value="nao_aplica" required>
                                 <div class="radio-card">
                                     <i class="bi bi-dash-circle-fill"></i>
                                     <span>Não se Aplica</span>
@@ -280,10 +279,13 @@
                             </label>
                         </div>
                         <div class="justification-collapsible">
-                            <textarea class="form-control-custom" 
-                                      name="service_timeliness_justification" 
-                                      rows="2" 
-                                      placeholder="Justifique se necessário..."></textarea>
+                            <label for="service_timeliness_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="service_timeliness_justification"
+                                name="service_timeliness_justification" rows="2" required
+                                placeholder="Descreva os prazos e contexto..."></textarea>
                         </div>
                     </div>
 
@@ -291,25 +293,27 @@
                     <div class="question-card-eval" data-question="6">
                         <div class="question-header-eval">
                             <span class="question-number">6</span>
-                            <h3>O quantitativo e descritivo dos Fornecimentos/Serviços estão sendo prestados conforme contrato?</h3>
+                            <h3>O quantitativo e descritivo dos Fornecimentos/Serviços estão sendo prestados conforme
+                                contrato? <span style="color: red">*</span></h3>
                         </div>
                         <div class="radio-options-modern">
                             <label class="radio-option conforme">
-                                <input type="radio" name="quantity_description_compliance" value="conforme">
+                                <input type="radio" name="quantity_description_compliance" value="conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-check-circle-fill"></i>
                                     <span>Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-conforme">
-                                <input type="radio" name="quantity_description_compliance" value="nao_conforme">
+                                <input type="radio" name="quantity_description_compliance" value="nao_conforme"
+                                    required>
                                 <div class="radio-card">
                                     <i class="bi bi-x-circle-fill"></i>
                                     <span>Não Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-aplica">
-                                <input type="radio" name="quantity_description_compliance" value="nao_aplica">
+                                <input type="radio" name="quantity_description_compliance" value="nao_aplica" required>
                                 <div class="radio-card">
                                     <i class="bi bi-dash-circle-fill"></i>
                                     <span>Não se Aplica</span>
@@ -317,10 +321,13 @@
                             </label>
                         </div>
                         <div class="justification-collapsible">
-                            <textarea class="form-control-custom" 
-                                      name="quantity_description_justification" 
-                                      rows="2" 
-                                      placeholder="Justifique se necessário..."></textarea>
+                            <label for="quantity_description_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="quantity_description_justification"
+                                name="quantity_description_justification" rows="2" required
+                                placeholder="Descreva os detalhes e quantitativos..."></textarea>
                         </div>
                     </div>
 
@@ -328,25 +335,27 @@
                     <div class="question-card-eval" data-question="7">
                         <div class="question-header-eval">
                             <span class="question-number">7</span>
-                            <h3>A empresa oferece suporte de qualidade por meio de telefone, e-mail e presencial, bem como garante agilidade nos envios de relatórios, notas fiscais e demais documentos?</h3>
+                            <h3>A empresa oferece suporte de qualidade por meio de telefone, e-mail e presencial, bem
+                                como garante agilidade nos envios de relatórios, notas fiscais e demais documentos?
+                                <span style="color: red">*</span></h3>
                         </div>
                         <div class="radio-options-modern">
                             <label class="radio-option conforme">
-                                <input type="radio" name="support_quality" value="conforme">
+                                <input type="radio" name="support_quality" value="conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-check-circle-fill"></i>
                                     <span>Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-conforme">
-                                <input type="radio" name="support_quality" value="nao_conforme">
+                                <input type="radio" name="support_quality" value="nao_conforme" required>
                                 <div class="radio-card">
                                     <i class="bi bi-x-circle-fill"></i>
                                     <span>Não Conforme</span>
                                 </div>
                             </label>
                             <label class="radio-option nao-aplica">
-                                <input type="radio" name="support_quality" value="nao_aplica">
+                                <input type="radio" name="support_quality" value="nao_aplica" required>
                                 <div class="radio-card">
                                     <i class="bi bi-dash-circle-fill"></i>
                                     <span>Não se Aplica</span>
@@ -354,10 +363,13 @@
                             </label>
                         </div>
                         <div class="justification-collapsible">
-                            <textarea class="form-control-custom" 
-                                      name="support_quality_justification" 
-                                      rows="2" 
-                                      placeholder="Justifique se necessário..."></textarea>
+                            <label for="support_quality_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justifique sua resposta <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="support_quality_justification"
+                                name="support_quality_justification" rows="2" required
+                                placeholder="Descreva a qualidade do suporte recebido..."></textarea>
                         </div>
                     </div>
 
@@ -382,15 +394,24 @@
 
                     <!-- Nota de 0 a 10 -->
                     <div class="rating-section">
-                        <div class="question-header-eval">
-                            <span class="question-number">8</span>
-                            <h3>Qual nota daria a este fornecedor/prestador quanto ao fornecimento/serviços prestados?</h3>
+                        <div class="rating-header">
+                            <span class="rating-question-number">8</span>
+                            <div class="rating-question-text">
+                                <h3>Nota Final do Fornecedor</h3>
+                                <p>Qual nota daria a este fornecedor/prestador quanto ao fornecimento/serviços
+                                    prestados?</p>
+                            </div>
                         </div>
-                        <p class="rating-warning">
+
+                        <div class="rating-info-box">
                             <i class="bi bi-info-circle"></i>
-                            Fornecedor com nota igual ou menor que <strong>6</strong> será classificado como <strong>não conforme</strong>
-                        </p>
-                        
+                            <div class="info-text">
+                                <span class="info-label">Critério de Conformidade:</span>
+                                Fornecedor com nota ≤ <strong>6</strong> será classificado como <strong>não
+                                    conforme</strong>
+                            </div>
+                        </div>
+
                         <div class="rating-slider-container">
                             <div class="rating-visual">
                                 <div class="rating-display" id="ratingDisplay">
@@ -399,17 +420,10 @@
                                     <span class="rating-label" id="ratingLabel">Médio</span>
                                 </div>
                             </div>
-                            
-                            <input type="range" 
-                                   class="rating-slider" 
-                                   id="overall_rating" 
-                                   name="overall_rating" 
-                                   min="0" 
-                                   max="10" 
-                                   value="5" 
-                                   step="1"
-                                   required>
-                            
+
+                            <input type="range" class="rating-slider" id="overall_rating" name="overall_rating" min="0"
+                                max="10" value="5" step="1" required>
+
                             <div class="rating-scale">
                                 <span>0</span>
                                 <span>1</span>
@@ -425,36 +439,37 @@
                             </div>
                         </div>
 
-                        <div class="justification-box mt-3">
-                            <label class="form-label-custom">
+                        <div class="justification-box">
+                            <label for="rating_justification" class="form-label-custom required">
                                 <i class="bi bi-chat-left-text"></i>
-                                Justifique a nota atribuída (opcional)
+                                Justifique a nota atribuída <span style="color: red">*</span>
                             </label>
-                            <textarea class="form-control-custom" 
-                                      name="rating_justification" 
-                                      rows="3" 
-                                      placeholder="Explique os motivos da nota..."></textarea>
+                            <textarea class="form-control-custom" id="rating_justification" name="rating_justification"
+                                rows="3" required
+                                placeholder="Explique os motivos da nota, pontos positivos e negativos..."></textarea>
                         </div>
                     </div>
 
                     <!-- Observações Gerais -->
                     <div class="observations-section">
-                        <label class="form-label-custom">
-                            <i class="bi bi-pencil-square"></i>
-                            Observações Gerais (opcional)
-                        </label>
-                        <textarea class="form-control-custom" 
-                                  name="general_observations" 
-                                  rows="4" 
-                                  placeholder="Adicione comentários gerais, sugestões de melhoria, pontos positivos ou negativos..."></textarea>
-                    </div>
+                        <div class="observations-header">
+                            <span class="observations-question-number">9</span>
+                            <div class="observations-question-text">
+                                <h3>Observações Gerais</h3>
+                                <p>Adicione comentários adicionais sobre este fornecedor</p>
+                            </div>
+                        </div>
 
-                    <!-- Preview do Score Estimado -->
-                    <div class="score-preview" id="scorePreview">
-                        <h4><i class="bi bi-calculator"></i> Preview do Score</h4>
-                        <p class="text-muted">O score será calculado automaticamente com base nas suas respostas</p>
-                        <div class="preview-circle">
-                            <span class="preview-value">Preencha o formulário</span>
+                        <div class="observations-content">
+                            <label for="general_observations" class="form-label-custom">
+                                <i class="bi bi-pencil-square"></i>
+                                Observações (opcional)
+                            </label>
+                            <textarea class="form-control-custom" id="general_observations" name="general_observations"
+                                rows="4"
+                                placeholder="Comentários gerais, sugestões de melhoria, pontos positivos ou negativos, situações especiais..."></textarea>
+                            <small class="form-hint">Use este espaço para informações adicionais que não foram
+                                contempladas nas seções anteriores</small>
                         </div>
                     </div>
 
@@ -473,151 +488,405 @@
 </div>
 
 <script>
-// Controle de Steps
-let currentStep = 1;
+    // Controle de Steps
+    let currentStep = 1;
 
-function nextStep(step) {
-    // Validar step atual antes de avançar
-    if (!validateStep(currentStep)) {
-        return;
+    function nextStep(step) {
+        // Validar step atual antes de avançar
+        if (!validateStep(currentStep)) {
+            return;
+        }
+
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        document.getElementById(`step${step}`).classList.add('active');
+
+        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+        document.querySelector(`[data-step="${step}"]`).classList.add('active');
+
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    
-    document.getElementById(`step${currentStep}`).classList.remove('active');
-    document.getElementById(`step${step}`).classList.add('active');
-    
-    document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-    document.querySelector(`[data-step="${step}"]`).classList.add('active');
-    
-    currentStep = step;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
 
-function prevStep(step) {
-    document.getElementById(`step${currentStep}`).classList.remove('active');
-    document.getElementById(`step${step}`).classList.add('active');
-    
-    document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-    document.querySelector(`[data-step="${step}"]`).classList.add('active');
-    
-    currentStep = step;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+    function prevStep(step) {
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        document.getElementById(`step${step}`).classList.add('active');
 
-function validateStep(step) {
-    if (step === 1) {
-        const supplierId = document.getElementById('supplier_id').value;
-        const monthRef = document.getElementById('month_reference').value;
-        const hadService = document.querySelector('input[name="had_service_last_month"]:checked');
-        
-        if (!supplierId) {
-            alert('Por favor, selecione um fornecedor!');
-            return false;
+        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+        document.querySelector(`[data-step="${step}"]`).classList.add('active');
+
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(step) {
+        if (step === 1) {
+            const supplierId = document.getElementById('supplier_id').value;
+            const monthRef = document.getElementById('month_reference').value;
+            const hadService = document.querySelector('input[name="had_service_last_month"]:checked');
+            const justification = document.querySelector('textarea[name="service_justification"]');
+
+            if (!supplierId) {
+                alert('Por favor, selecione um fornecedor!');
+                document.getElementById('supplierSearch').focus();
+                return false;
+            }
+            if (!monthRef) {
+                alert('Por favor, selecione o mês de referência!');
+                return false;
+            }
+            if (!hadService) {
+                alert('Por favor, informe se houve serviço no último mês!');
+                return false;
+            }
+            if (!justification.value.trim()) {
+                alert('Por favor, justifique sua resposta na primeira pergunta!');
+                justification.focus();
+                return false;
+            }
+
+            // Se não houve serviço, pular step 2
+            if (hadService.value === 'false') {
+                // Definir valores padrão para não bloquear o formulário
+                const complianceFields = [
+                    { name: 'contract_compliance', justificationName: 'contract_compliance_justification' },
+                    { name: 'equipment_adequacy', justificationName: 'equipment_adequacy_justification' },
+                    { name: 'invoice_validation', justificationName: 'invoice_validation_justification' },
+                    { name: 'service_timeliness', justificationName: 'service_timeliness_justification' },
+                    { name: 'quantity_description_compliance', justificationName: 'quantity_description_justification' },
+                    { name: 'support_quality', justificationName: 'support_quality_justification' }
+                ];
+                complianceFields.forEach(field => {
+                    const input = document.querySelector(`input[name="${field.name}"][value="nao_aplica"]`);
+                    if (input) input.checked = true;
+
+                    // Preencher justificativas também
+                    const textarea = document.querySelector(`textarea[name="${field.justificationName}"]`);
+                    if (textarea && !textarea.value.trim()) {
+                        textarea.value = 'Não houve fornecimento/prestação de serviços no último mês.';
+                    }
+                });
+            }
         }
-        if (!monthRef) {
-            alert('Por favor, selecione o mês de referência!');
-            return false;
-        }
-        if (!hadService) {
-            alert('Por favor, informe se houve serviço no último mês!');
-            return false;
-        }
-        
-        // Se não houve serviço, pular step 2
-        if (hadService.value === 'false') {
-            // Definir valores padrão para não bloquear o formulário
-            const complianceFields = [
-                'contract_compliance', 'equipment_adequacy', 'invoice_validation',
-                'service_timeliness', 'quantity_description_compliance', 'support_quality'
+
+        if (step === 2) {
+            // Validar todas as questões da seção "Critérios de Avaliação"
+            const criteriaFields = [
+                { name: 'contract_compliance', justificationName: 'contract_compliance_justification', label: 'Conformidade com Contrato' },
+                { name: 'equipment_adequacy', justificationName: 'equipment_adequacy_justification', label: 'Equipamento' },
+                { name: 'invoice_validation', justificationName: 'invoice_validation_justification', label: 'Validação de Faturamento' },
+                { name: 'service_timeliness', justificationName: 'service_timeliness_justification', label: 'Prazo de Atendimento' },
+                { name: 'quantity_description_compliance', justificationName: 'quantity_description_justification', label: 'Quantitativo' },
+                { name: 'support_quality', justificationName: 'support_quality_justification', label: 'Suporte' }
             ];
-            complianceFields.forEach(field => {
-                const input = document.querySelector(`input[name="${field}"][value="nao_aplica"]`);
-                if (input) input.checked = true;
-            });
+
+            for (const field of criteriaFields) {
+                // Verificar se a opção foi selecionada
+                const selected = document.querySelector(`input[name="${field.name}"]:checked`);
+                if (!selected) {
+                    alert(`Por favor, selecione uma opção para: ${field.label} (Questão dos Critérios de Avaliação)`);
+                    const firstInput = document.querySelector(`input[name="${field.name}"]`);
+                    if (firstInput) firstInput.focus();
+                    return false;
+                }
+
+                // Verificar se a justificativa foi preenchida
+                const justificationName = field.justificationName || `${field.name}_justification`;
+                const justification = document.querySelector(`textarea[name="${justificationName}"]`);
+                if (!justification) {
+                    console.error(`Campo de justificativa não encontrado: ${justificationName}`);
+                    alert(`Erro: Campo de justificativa não encontrado para ${field.label}`);
+                    return false;
+                }
+                if (!justification.value.trim()) {
+                    alert(`Por favor, justifique sua resposta para: ${field.label} (Questão dos Critérios de Avaliação)`);
+                    justification.focus();
+                    return false;
+                }
+            }
         }
-    }
-    return true;
-}
 
-// Seleção de Fornecedor
-document.getElementById('supplier_id').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    const supplierName = selectedOption.dataset.name;
-    
-    if (supplierName) {
-        document.getElementById('selectedSupplierName').textContent = supplierName;
-        document.getElementById('selectedSupplierDisplay').style.display = 'block';
-    } else {
-        document.getElementById('selectedSupplierDisplay').style.display = 'none';
-    }
-});
+        if (step === 3) {
+            // Validar a justificativa da nota final
+            const ratingJustification = document.getElementById('rating_justification');
+            if (!ratingJustification.value.trim()) {
+                alert('Por favor, justifique a nota atribuída ao fornecedor!');
+                ratingJustification.focus();
+                return false;
+            }
+        }
 
-// Toggle de justificação
-document.querySelectorAll('input[name="had_service_last_month"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        document.getElementById('serviceJustificationBox').style.display = 'block';
+        return true;
+    }
+
+    // ============================================
+    // SUPPLIER SEARCH AUTOCOMPLETE
+    // ============================================
+
+    const suppliers = {{ suppliers| tojson | safe }};
+
+    console.log('Fornecedores carregados:', suppliers.length);
+
+    const searchInput = document.getElementById('supplierSearch');
+    const suggestionsList = document.getElementById('supplierSuggestions');
+    const supplierIdInput = document.getElementById('supplier_id');
+
+    // Verificar se há fornecedores disponíveis
+    if (suppliers.length === 0) {
+        const formStep1 = document.getElementById('step1');
+        formStep1.innerHTML = `
+            <div class="step-card">
+                <div class="alert alert-info" style="text-align: center; padding: 2rem;">
+                    <i class="bi bi-info-circle" style="font-size: 3rem; color: #0dcaf0;"></i>
+                    <h3 style="margin-top: 1rem;">Nenhum fornecedor disponível para avaliação</h3>
+                    <p style="margin-top: 1rem; color: #6c757d;">
+                        Você já avaliou todos os fornecedores atribuídos para o mês de referência atual.<br>
+                        Ou não há fornecedores atribuídos para você avaliar.
+                    </p>
+                    <a href="{{ url_for('suppliers.dashboard') }}" class="btn btn-primary" style="margin-top: 1rem;">
+                        <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    // Função auxiliar para fechar a lista
+    function closeSuggestionsList() {
+        suggestionsList.classList.remove('active');
+        suggestionsList.style.display = 'none';
+    }
+
+    // Função para mostrar todas as sugestões
+    function showAllSuggestions() {
+        if (suppliers.length === 0) {
+            suggestionsList.innerHTML = '<li class="suggestion-empty">Nenhum fornecedor disponível</li>';
+            suggestionsList.classList.add('active');
+            suggestionsList.style.display = 'block';
+            return;
+        }
+
+        suggestionsList.innerHTML = suppliers.map(supplier => `
+        <li class="suggestion-item" data-id="${supplier.id}" data-name="${supplier.name}" data-type="${supplier.type}">
+            <i class="bi bi-building"></i>
+            <div class="suggestion-content">
+                <div class="suggestion-name">${supplier.name}</div>
+                ${supplier.type ? `<div class="suggestion-type">${supplier.type}</div>` : ''}
+            </div>
+        </li>
+    `).join('');
+        suggestionsList.classList.add('active');
+        suggestionsList.style.display = 'block';
+
+        // Adicionar event listeners aos itens
+        document.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                selectSupplier(
+                    this.dataset.id,
+                    this.dataset.name,
+                    this.dataset.type
+                );
+            });
+        });
+    }
+
+    // Event listener para focus (mostrar todos os fornecedores)
+    searchInput.addEventListener('focus', function () {
+        // Só mostra se não houver fornecedor selecionado ou se o campo estiver vazio
+        if (!supplierIdInput.value || this.value === '') {
+            showAllSuggestions();
+        }
     });
-});
 
-// Rating Slider
-const ratingSlider = document.getElementById('overall_rating');
-const ratingNumber = document.getElementById('ratingNumber');
-const ratingLabel = document.getElementById('ratingLabel');
-const ratingStars = document.getElementById('ratingStars');
-const ratingDisplay = document.getElementById('ratingDisplay');
+    // Event listener para busca
+    searchInput.addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase().trim();
 
-function updateRating(value) {
-    ratingNumber.textContent = value;
-    
-    // Atualizar label
-    const labels = {
-        0: 'Péssimo', 1: 'Muito Ruim', 2: 'Ruim', 3: 'Insuficiente', 4: 'Regular',
-        5: 'Médio', 6: 'Aceitável', 7: 'Bom', 8: 'Muito Bom', 9: 'Ótimo', 10: 'Excelente'
-    };
-    ratingLabel.textContent = labels[value];
-    
-    // Atualizar estrelas
-    const fullStars = Math.floor(value / 2);
-    const halfStar = value % 2;
-    let starsHTML = '';
-    
-    for (let i = 0; i < fullStars; i++) {
-        starsHTML += '<i class="bi bi-star-fill"></i>';
-    }
-    if (halfStar) {
-        starsHTML += '<i class="bi bi-star-half"></i>';
-    }
-    for (let i = fullStars + halfStar; i < 5; i++) {
-        starsHTML += '<i class="bi bi-star"></i>';
-    }
-    
-    ratingStars.innerHTML = starsHTML;
-    
-    // Atualizar cor
-    ratingDisplay.className = 'rating-display';
-    if (value <= 4) ratingDisplay.classList.add('poor');
-    else if (value <= 6) ratingDisplay.classList.add('medium');
-    else if (value <= 8) ratingDisplay.classList.add('good');
-    else ratingDisplay.classList.add('excellent');
-}
+        if (searchTerm.length === 0) {
+            showAllSuggestions();
+            return;
+        }
 
-ratingSlider.addEventListener('input', function() {
-    updateRating(parseInt(this.value));
-});
+        // Filtrar fornecedores
+        const filtered = suppliers.filter(supplier =>
+            supplier.name.toLowerCase().includes(searchTerm)
+        );
 
-// Inicializar rating
-updateRating(5);
+        // Mostrar sugestões
+        if (filtered.length > 0) {
+            suggestionsList.innerHTML = filtered.map((supplier, index) => `
+            <li class="suggestion-item" data-id="${supplier.id}" data-name="${supplier.name}" data-type="${supplier.type}">
+                <i class="bi bi-building"></i>
+                <div class="suggestion-content">
+                    <div class="suggestion-name">${supplier.name}</div>
+                    ${supplier.type ? `<div class="suggestion-type">${supplier.type}</div>` : ''}
+                </div>
+            </li>
+        `).join('');
+            suggestionsList.classList.add('active');
 
-// Animação nos cards de pergunta
-document.querySelectorAll('.radio-option input').forEach(input => {
-    input.addEventListener('change', function() {
-        const card = this.closest('.question-card-eval');
-        card.classList.add('answered');
-        
-        // Animação de check
-        setTimeout(() => {
-            card.classList.remove('answered');
-        }, 500);
+            // Adicionar event listeners aos itens
+            document.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    selectSupplier(
+                        this.dataset.id,
+                        this.dataset.name,
+                        this.dataset.type
+                    );
+                });
+            });
+        } else {
+            suggestionsList.innerHTML = '<li class="suggestion-empty"><i class="bi bi-search me-2"></i>Nenhum fornecedor encontrado</li>';
+            suggestionsList.classList.add('active');
+        }
     });
-});
+
+    // Fechar sugestões ao clicar fora
+    document.addEventListener('click', function (e) {
+        if (e.target !== searchInput && !suggestionsList.contains(e.target)) {
+            closeSuggestionsList();
+        }
+    });
+
+    // Função para selecionar um fornecedor
+    function selectSupplier(id, name, type) {
+        // Fechar a lista IMEDIATAMENTE
+        closeSuggestionsList();
+
+        // Preencher os dados
+        supplierIdInput.value = id;
+        searchInput.value = name;
+
+        // Atualizar validação
+        searchInput.classList.remove('is-invalid');
+
+        // Remover foco do input
+        searchInput.blur();
+    }
+
+    // Event listener para permitir mudança de fornecedor ao clicar novamente
+    searchInput.addEventListener('click', function (e) {
+        e.stopPropagation();
+        // Se já tem um fornecedor selecionado e o usuário clica no campo, mostra todas as opções
+        if (supplierIdInput.value) {
+            showAllSuggestions();
+        }
+    });
+
+    // Função para limpar a seleção
+    function clearSupplierSelection() {
+        supplierIdInput.value = '';
+        searchInput.value = '';
+        closeSuggestionsList();
+        searchInput.focus();
+    }
+
+    // Validação ao enviar o formulário
+    document.getElementById('evaluationForm').addEventListener('submit', function (e) {
+        if (!supplierIdInput.value) {
+            e.preventDefault();
+            searchInput.classList.add('is-invalid');
+            alert('Por favor, selecione um fornecedor!');
+            searchInput.focus();
+        }
+    });
+
+    // Configurar campo de mês de referência
+    document.addEventListener('DOMContentLoaded', function () {
+        const monthInput = document.getElementById('month_reference');
+
+        // O valor já vem correto do backend (mês anterior)
+        const referenceMonth = monthInput.value;
+
+        // Definir como readonly para que não possa ser alterado
+        monthInput.readOnly = true;
+        monthInput.style.backgroundColor = '#f8f9fc';
+        monthInput.style.cursor = 'not-allowed';
+
+        // Bloquear tentativas de alteração
+        monthInput.addEventListener('change', function () {
+            this.value = referenceMonth;
+        });
+    });
+
+    // Toggle de justificação
+    document.querySelectorAll('input[name="had_service_last_month"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            document.getElementById('serviceJustificationBox').style.display = 'block';
+        });
+    });
+
+    // Rating Slider
+    const ratingSlider = document.getElementById('overall_rating');
+    const ratingNumber = document.getElementById('ratingNumber');
+    const ratingLabel = document.getElementById('ratingLabel');
+    const ratingStars = document.getElementById('ratingStars');
+    const ratingDisplay = document.getElementById('ratingDisplay');
+
+    function updateRating(value) {
+        ratingNumber.textContent = value;
+
+        // Atualizar label
+        const labels = {
+            0: 'Péssimo', 1: 'Muito Ruim', 2: 'Ruim', 3: 'Insuficiente', 4: 'Regular',
+            5: 'Médio', 6: 'Aceitável', 7: 'Bom', 8: 'Muito Bom', 9: 'Ótimo', 10: 'Excelente'
+        };
+        ratingLabel.textContent = labels[value];
+
+        // Atualizar estrelas
+        const fullStars = Math.floor(value / 2);
+        const halfStar = value % 2;
+        let starsHTML = '';
+
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="bi bi-star-fill"></i>';
+        }
+        if (halfStar) {
+            starsHTML += '<i class="bi bi-star-half"></i>';
+        }
+        for (let i = fullStars + halfStar; i < 5; i++) {
+            starsHTML += '<i class="bi bi-star"></i>';
+        }
+
+        ratingStars.innerHTML = starsHTML;
+
+        // Atualizar cor
+        ratingDisplay.className = 'rating-display';
+        if (value <= 4) ratingDisplay.classList.add('poor');
+        else if (value <= 6) ratingDisplay.classList.add('medium');
+        else if (value <= 8) ratingDisplay.classList.add('good');
+        else ratingDisplay.classList.add('excellent');
+    }
+
+    ratingSlider.addEventListener('input', function () {
+        updateRating(parseInt(this.value));
+    });
+
+    // Inicializar rating
+    updateRating(5);
+
+    // Animação nos cards de pergunta
+    document.querySelectorAll('.radio-option input').forEach(input => {
+        input.addEventListener('change', function () {
+            const card = this.closest('.question-card-eval');
+            card.classList.add('answered');
+
+            // Animação de check
+            setTimeout(() => {
+                card.classList.remove('answered');
+            }, 500);
+        });
+    });
 </script>
 {% endblock %}

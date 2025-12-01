@@ -1,0 +1,204 @@
+{% macro supplier_row(data, index) %}
+    {% set last_eval = data.last_eval %}
+    {% set failing_eval = data.failing_eval %}
+    {% set needs_attention = data.needs_attention %}
+    {% set row_class = '' %}
+    {% if needs_attention and not data.supplier.issue_verified %}
+        {% set row_class = 'supplier-row-attention' %}
+    {% elif needs_attention and data.supplier.issue_verified %}
+        {% set row_class = 'supplier-row-verified' %}
+    {% elif data.eval_count > 0 and data.avg_score >= 80 %}
+        {% set row_class = 'supplier-row-excellent' %}
+    {% elif data.eval_count > 0 and data.avg_score >= 70 %}
+        {% set row_class = 'supplier-row-satisfactory' %}
+    {% endif %}
+    <tr class="supplier-row {{ row_class }}"
+        data-score="{{ data.avg_score }}"
+        data-name="{{ data.supplier.get_display_name() }}"
+        data-supplier-id="{{ data.supplier.id }}"
+        data-priority="{{ data.priority }}">
+        <td class="cell-id">
+            <span class="badge fw-bold">#{{ index }}</span>
+        </td>
+        <td class="cell-supplier">
+            <div class="d-flex flex-column">
+                <strong class="mb-1">
+                    {{ data.supplier.get_display_name() }}
+                    {% if data.supplier.issue_verified %}
+                    <span class="badge bg-success rounded-pill ms-2" title="Problema verificado">
+                        <i class="bi bi-check-circle-fill me-1"></i>Verificado
+                    </span>
+                    {% endif %}
+                </strong>
+                {% if data.supplier.trade_name %}
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    <i class="bi bi-building me-1"></i>{{ data.supplier.company_name }}
+                </small>
+                {% endif %}
+                {% if data.supplier.cnpj %}
+                <small class="text-muted">CNPJ: {{ data.supplier.cnpj }}</small>
+                {% endif %}
+            </div>
+        </td>
+        <td class="text-center">
+            <span class="badge {{ 'bg-custom-blue' if data.eval_count > 0 else 'bg-secondary' }} rounded-pill">
+                {{ data.eval_count }}
+            </span>
+        </td>
+        <td class="text-center">
+            {% if data.eval_count > 0 %}
+            <div class="score-badge-sm {{ 'excellent' if data.avg_score >= 80 else ('good' if data.avg_score >= 60 else 'poor') }}">
+                {{ '%.0f'|format(data.avg_score) }}%
+            </div>
+            {% else %}
+            <span class="text-muted">N/A</span>
+            {% endif %}
+        </td>
+        <td class="text-center">
+            {% if data.eval_count == 0 %}
+            <span class="badge bg-custom-gray rounded-pill">Não Avaliado</span>
+            {% else %}
+                {% if last_eval and not last_eval.had_service_last_month %}
+                <span class="badge bg-custom-yellow rounded-pill">
+                    <i class="bi bi-info-circle me-1"></i>Sem Serviço
+                </span>
+                {% elif data.avg_score >= 80 %}
+                <span class="badge bg-custom-green rounded-pill">
+                    <i class="bi bi-check-circle me-1"></i>Excelente
+                </span>
+                {% elif data.avg_score >= 60 %}
+                <span class="badge bg-custom-blue rounded-pill">
+                    <i class="bi bi-info-circle me-1"></i>Satisfatório
+                </span>
+                {% else %}
+                <span class="badge bg-custom-red rounded-pill">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Insatisfatório
+                </span>
+                {% endif %}
+            {% endif %}
+        </td>
+        <td class="text-center">
+            <div class="d-flex justify-content-center gap-2">
+                {% if needs_attention and not data.supplier.issue_verified %}
+                <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm toggle-detail-supplier"
+                    data-detail-id="detail-supplier-{{ data.supplier.id }}" title="Ver motivo da atenção">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <span class="btn-text">Verificar</span>
+                </button>
+                {% elif needs_attention and data.supplier.issue_verified %}
+                <button type="button" class="btn btn-sm btn-success rounded-pill shadow-sm toggle-detail-supplier"
+                    data-detail-id="detail-supplier-{{ data.supplier.id }}" title="Ver detalhes da verificação">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    <span class="btn-text">Verificado</span>
+                </button>
+                {% endif %}
+            </div>
+        </td>
+    </tr>
+    {% if needs_attention %}
+    <tr id="detail-supplier-{{ data.supplier.id }}" class="detail-row" style="display:none;">
+        <td colspan="7" class="p-0">
+            <div class="inline-detail-card">
+                <div class="inline-detail-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                            Atenção Necessária - {{ data.supplier.get_display_name() }}
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if data.eval_count > 0 %}
+                            <span class="badge {{ 'bg-danger' if data.avg_score < 60 else 'bg-warning' }}">
+                                <i class="bi bi-graph-down me-1"></i>Score: {{ '%.0f'|format(data.avg_score) }}%
+                            </span>
+                            {% endif %}
+                            {% if data.supplier.issue_verified %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle-fill me-1"></i>Verificado
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="inline-detail-body">
+                    <div class="alert alert-warning mb-3 py-2">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Motivo:</strong>
+                        {% if last_eval and not last_eval.had_service_last_month %}
+                        Sem fornecimento/prestação de serviço no último mês
+                        {% else %}
+                        Score abaixo do esperado ({{ '%.0f'|format(data.avg_score) }}%) - necessita revisão
+                        {% endif %}
+                    </div>
+
+                    {% if data.supplier.issue_verified %}
+                    <div class="alert alert-success mb-3 py-2">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong>Status:</strong> Problema verificado
+                        {% if data.supplier.verified_at %}
+                        em {{ data.supplier.verified_at | format_date_time }}
+                        {% endif %}
+                        {% if data.supplier.verified_by %}
+                        por {{ data.supplier.verified_by.name }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <p class="text-muted mb-3 text-center">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Escolha uma ação para revisar o desempenho do fornecedor.
+                    </p>
+
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        {% if failing_eval %}
+                        <a href="{{ url_for('suppliers.evaluation_details', evaluation_id=failing_eval.id) }}"
+                            class="btn btn-primary">
+                            <i class="bi bi-clipboard-check me-1"></i>Ver Detalhes
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=data.supplier.id) }}"
+                            class="btn btn-info">
+                            <i class="bi bi-clock-history me-1"></i>Histórico de Avaliações
+                        </a>
+                        <button type="button"
+                            class="btn btn-{{ 'success' if not data.supplier.issue_verified else 'warning' }} btn-lg open-tracking-modal"
+                            data-supplier-id="{{ data.supplier.id }}"
+                            data-supplier-name="{{ data.supplier.get_display_name() }}"
+                            data-supplier-cnpj="{{ data.supplier.cnpj }}">
+                            <i class="bi bi-clipboard-check-fill me-1"></i>
+                            Gerenciar Acompanhamento
+                        </button>
+                        <button type="button" class="btn btn-secondary cancel-supplier-panel"
+                            data-supplier-id="{{ data.supplier.id }}">
+                            <i class="bi bi-x-circle me-1"></i>Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+    {% endif %}
+{% endmacro %}
+
+{% macro ranking_table(suppliers_data) %}
+<div class="nir-table-modern-wrapper">
+    <div class="table-responsive">
+        <table class="nir-table-modern" id="rankingTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th><i class="bi bi-building me-1"></i>Fornecedor</th>
+                    <th><i class="bi bi-clipboard-check me-1"></i>Avaliações</th>
+                    <th><i class="bi bi-graph-up me-1"></i>Score</th>
+                    <th><i class="bi bi-flag me-1"></i>Status</th>
+                    <th><i class="bi bi-gear me-1"></i>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in suppliers_data %}
+                    {{ supplier_row(data, loop.index) }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}

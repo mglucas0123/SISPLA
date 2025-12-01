@@ -1,578 +1,677 @@
-{% extends "navbar.html" %}
+{% extends "feedback/suppliers/base.html" %}
+{% import 'partials/feedback/suppliers/_hero.html' as supplier_hero %}
 
-{% block title %}Fornecedores - SISPLA{% endblock %}
+{% block supplier_title %}Gerenciar Fornecedores{% endblock %}
 
-{% block content %}
-<div class="supplier-list-container">
-    <div class="container">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-content">
-                <div class="icon-wrapper">
-                    <i class="bi bi-building"></i>
-                </div>
-                <div class="header-text">
-                    <h1>Gerenciar Fornecedores</h1>
-                    <p>Lista de todos os fornecedores/prestadores cadastrados</p>
-                </div>
+{% set stats = namespace(total=suppliers_info|length, active=0, pending=0) %}
+{% for info in suppliers_info %}
+{% if info.supplier.is_active %}
+{% set stats.active = stats.active + 1 %}
+{% endif %}
+{% if info.avg_score <= 0 %} {% set stats.pending=stats.pending + 1 %} {% endif %} {% endfor %} {% set hero_actions %}
+    <button type="button" class="btn btn-hero-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+    <i class="bi bi-plus-circle-fill"></i>
+    Novo Fornecedor
+    </button>
+    <a href="{{ url_for('main.gestao_hub') }}" class="btn btn-hero-secondary">
+        <i class="bi bi-arrow-left-circle"></i>
+        Voltar para o Hub
+    </a>
+    {% endset %}
+
+    {% block supplier_hero %}
+    {{ supplier_hero.hero(
+    title='Gerenciar Fornecedores',
+    subtitle='Gerencie, avalie e acompanhe o desempenho de todos os parceiros.',
+    stats=[
+    {'icon': 'bi bi-buildings', 'value': stats.total, 'label': 'Total'},
+    {'icon': 'bi bi-toggle-on', 'value': stats.active, 'label': 'Ativos'},
+    {'icon': 'bi bi-hourglass-split', 'value': stats.pending, 'label': 'Sem Avaliação'}
+    ],
+    actions=hero_actions
+    ) }}
+    {% endblock %}
+
+    {% block supplier_content %}
+    <section class="supplier-list-section">
+        <div class="filters-modern-card">
+            <div class="filters-header">
+                <i class="bi bi-funnel-fill"></i>
+                <h3>Filtros Inteligentes</h3>
             </div>
-            <div class="header-actions">
-                <a href="{{ url_for('suppliers.dashboard') }}" class="btn btn-outline-info">
-                    <i class="bi bi-graph-up"></i> Dashboard
-                </a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
-                    <i class="bi bi-plus-circle"></i> Novo Fornecedor
-                </button>
+            <div class="filters-content">
+                <div class="search-advanced">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por nome, serviço ou contato"
+                        autocomplete="off">
+                    <button type="button" class="search-clear" id="clearSearch" title="Limpar busca">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label><i class="bi bi-toggle-on"></i>Status</label>
+                        <select id="filterStatus" class="filter-select">
+                            <option value="all" selected>Todos</option>
+                            <option value="active">Ativos</option>
+                            <option value="inactive">Inativos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="bi bi-graph-up"></i>Performance</label>
+                        <select id="filterScore" class="filter-select">
+                            <option value="all" selected>Todas</option>
+                            <option value="excellent">Excelente (≥80%)</option>
+                            <option value="good">Bom (60-79%)</option>
+                            <option value="poor">Atenção (&lt;60%)</option>
+                            <option value="not_evaluated">Não Avaliados</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="bi bi-sort-alpha-down"></i>Ordenar por</label>
+                        <select id="sortBy" class="filter-select">
+                            <option value="name" selected>Nome (A-Z)</option>
+                            <option value="score-desc">Maior Score</option>
+                            <option value="score-asc">Menor Score</option>
+                            <option value="evaluations">Mais Avaliações</option>
+                            <option value="recent">Manter Ordem Atual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="button" class="btn-filter-reset" id="clearFilters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Limpar filtros
+                    </button>
+                    <button type="button" class="btn-filter-export" id="exportSuppliers">
+                        <i class="bi bi-download"></i>
+                        Exportar CSV
+                    </button>
+                </div>
+
+                <div class="filters-results">
+                    <span id="resultsCount">Mostrando {{ suppliers_info|length }} fornecedores</span>
+                </div>
             </div>
         </div>
 
-        <!-- Filtros e Busca -->
-        <div class="filters-card">
-            <div class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" 
-                       id="searchInput" 
-                       class="form-control" 
-                       placeholder="Buscar por nome da empresa, tipo de serviço...">
-            </div>
-            <div class="filter-options">
-                <select class="form-select" id="filterStatus">
-                    <option value="all">Todos os Status</option>
-                    <option value="active">Apenas Ativos</option>
-                    <option value="inactive">Apenas Inativos</option>
-                </select>
-                <select class="form-select" id="filterScore">
-                    <option value="all">Todas as Notas</option>
-                    <option value="excellent">Excelentes (≥80%)</option>
-                    <option value="good">Bons (60-79%)</option>
-                    <option value="poor">Ruins (<60%)</option>
-                    <option value="not_evaluated">Não Avaliados</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Estatísticas Rápidas -->
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-icon blue">
-                    <i class="bi bi-building"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>{{ suppliers_info|length }}</h3>
-                    <p>Total de Fornecedores</p>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon green">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>{{ suppliers_info|selectattr('supplier.is_active')|list|length }}</h3>
-                    <p>Ativos</p>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon yellow">
-                    <i class="bi bi-star-fill"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>{{ suppliers_info|selectattr('avg_score', 'ge', 80)|list|length }}</h3>
-                    <p>Excelentes (≥80%)</p>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon red">
-                    <i class="bi bi-exclamation-triangle"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>{{ suppliers_info|selectattr('avg_score', 'lt', 60)|list|length }}</h3>
-                    <p>Com Problemas (<60%)</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lista de Fornecedores -->
-        <div class="suppliers-grid" id="suppliersGrid">
-            {% if suppliers_info %}
-                {% for info in suppliers_info %}
-                <div class="supplier-card" 
-                     data-status="{{ 'active' if info.supplier.is_active else 'inactive' }}"
-                     data-score="{{ info.avg_score }}"
-                     data-name="{{ info.supplier.company_name|lower }}">
-                    
-                    <!-- Header do Card -->
-                    <div class="supplier-card-header">
-                        <div class="supplier-title">
-                            <h3>{{ info.supplier.company_name }}</h3>
+        {% if suppliers_info %}
+        <div class="suppliers-table-container" aria-live="polite">
+            <table class="suppliers-table-modern" id="suppliersTable">
+                <thead>
+                    <tr>
+                        <th class="th-expand"></th>
+                        <th class="th-company"><i class="bi bi-building"></i>Empresa</th>
+                        <th class="th-service"><i class="bi bi-tools"></i>Serviço</th>
+                        <th class="th-score"><i class="bi bi-graph-up"></i>Performance</th>
+                        <th class="th-evaluations"><i class="bi bi-clipboard-data"></i>Avaliações</th>
+                        <th class="th-evaluators"><i class="bi bi-people"></i>Responsáveis</th>
+                        <th class="th-status"><i class="bi bi-toggle-on"></i>Status</th>
+                        <th class="th-actions">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for info in suppliers_info %}
+                    <tr class="supplier-row" data-status="{{ 'active' if info.supplier.is_active else 'inactive' }}"
+                        data-score="{{ info.avg_score|default(0, true) }}"
+                        data-name="{{ info.supplier.company_name|lower }}"
+                        data-service="{{ (info.supplier.service_type or '')|lower }}"
+                        data-contact="{{ (info.supplier.contact_name or '')|lower }}"
+                        data-evaluations="{{ info.eval_count }}" data-supplier-id="{{ info.supplier.id }}">
+                        <td class="td-expand">
+                            <button type="button" class="btn-expand" data-action="toggle-row"
+                                aria-label="Alternar detalhes">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </td>
+                        <td class="td-company">
+                            <div class="company-cell">
+                                <div class="company-avatar">
+                                    <i class="bi bi-building-fill"></i>
+                                </div>
+                                <div class="company-info">
+                                    <div class="company-name">{{ info.supplier.get_display_name() }}</div>
+                                    {% if info.supplier.trade_name %}
+                                    <div class="company-legal-name">
+                                        <i class="bi bi-building"></i>
+                                        {{ info.supplier.company_name }}
+                                    </div>
+                                    {% endif %}
+                                    {% if info.supplier.contact_name %}
+                                    <div class="company-contact">
+                                        <i class="bi bi-person"></i>
+                                        {{ info.supplier.contact_name }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="td-service">
                             {% if info.supplier.service_type %}
                             <span class="service-badge">
-                                <i class="bi bi-tools"></i> {{ info.supplier.service_type }}
+                                <i class="bi bi-tools"></i>
+                                {{ info.supplier.service_type }}
                             </span>
-                            {% endif %}
-                        </div>
-                        <div class="supplier-status">
-                            {% if info.supplier.is_active %}
-                            <span class="badge badge-success">Ativo</span>
                             {% else %}
-                            <span class="badge badge-secondary">Inativo</span>
+                            <span class="text-muted">-</span>
                             {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Score -->
-                    <div class="supplier-score-display">
-                        {% if info.avg_score > 0 %}
-                        <div class="score-circle {{ 'excellent' if info.avg_score >= 80 else ('good' if info.avg_score >= 60 else 'poor') }}">
-                            <div class="score-value">{{ "%.0f"|format(info.avg_score) }}%</div>
-                            <div class="score-label">Score Médio</div>
-                        </div>
-                        {% else %}
-                        <div class="score-circle not-evaluated">
-                            <div class="score-value"><i class="bi bi-dash-lg"></i></div>
-                            <div class="score-label">Não Avaliado</div>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Informações -->
-                    <div class="supplier-info-grid">
-                        <div class="info-item">
-                            <i class="bi bi-clipboard-check"></i>
-                            <div>
-                                <strong>{{ info.eval_count }}</strong>
-                                <span>Avaliações</span>
+                        </td>
+                        <td class="td-score">
+                            {% if info.avg_score > 0 %}
+                            <div
+                                class="score-display {{ 'excellent' if info.avg_score >= 80 else ('good' if info.avg_score >= 60 else 'poor') }}">
+                                <div class="score-bar">
+                                    <div class="score-fill" data-score-fill="{{ info.avg_score|default(0, true) }}">
+                                    </div>
+                                </div>
+                                <div class="score-value">{{ "%.0f"|format(info.avg_score) }}%</div>
+                                <div class="score-badge">
+                                    {% if info.avg_score >= 80 %}
+                                    <i class="bi bi-emoji-smile-fill"></i> Excelente
+                                    {% elif info.avg_score >= 60 %}
+                                    <i class="bi bi-emoji-neutral-fill"></i> Bom
+                                    {% else %}
+                                    <i class="bi bi-emoji-frown-fill"></i> Atenção
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="bi bi-calendar-event"></i>
-                            <div>
+                            {% else %}
+                            <div class="score-empty-inline">
+                                <i class="bi bi-dash-circle"></i>
+                                <span>Não avaliado</span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="td-evaluations">
+                            <div class="eval-stats">
+                                <div class="eval-count">
+                                    <i class="bi bi-clipboard-check-fill"></i>
+                                    <strong>{{ info.eval_count }}</strong>
+                                </div>
                                 {% if info.last_eval %}
-                                <strong>{{ info.last_eval.strftime('%d/%m/%Y') }}</strong>
-                                <span>Última Avaliação</span>
-                                {% else %}
-                                <strong>-</strong>
-                                <span>Sem Avaliações</span>
+                                <div class="eval-date">
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ info.last_eval.strftime('%d/%m/%Y') }}
+                                </div>
                                 {% endif %}
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Contatos (se disponível) -->
-                    {% if info.supplier.contact_name or info.supplier.phone or info.supplier.email %}
-                    <div class="supplier-contacts">
-                        {% if info.supplier.contact_name %}
-                        <div class="contact-item">
-                            <i class="bi bi-person"></i> {{ info.supplier.contact_name }}
-                        </div>
-                        {% endif %}
-                        {% if info.supplier.phone %}
-                        <div class="contact-item">
-                            <i class="bi bi-telephone"></i> {{ info.supplier.phone }}
-                        </div>
-                        {% endif %}
-                        {% if info.supplier.email %}
-                        <div class="contact-item">
-                            <i class="bi bi-envelope"></i> {{ info.supplier.email }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <!-- Ações -->
-                    <div class="supplier-actions">
-                        <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=info.supplier.id) }}" 
-                           class="btn btn-sm btn-outline-primary" 
-                           title="Ver Avaliações">
-                            <i class="bi bi-bar-chart-line"></i>
-                        </a>
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-secondary" 
-                                onclick="openEditModal({{ info.supplier.id }})"
-                                title="Editar">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        {% if info.supplier.is_active %}
-                        <button class="btn btn-sm btn-outline-danger" 
-                                onclick="confirmDeactivate({{ info.supplier.id }}, '{{ info.supplier.company_name }}')"
-                                title="Desativar">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="bi bi-inbox"></i>
-                    <h3>Nenhum Fornecedor Cadastrado</h3>
-                    <p>Comece cadastrando seu primeiro fornecedor/prestador de serviços</p>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
-                        <i class="bi bi-plus-circle"></i> Cadastrar Primeiro Fornecedor
-                    </button>
-                </div>
-            {% endif %}
+                        </td>
+                        <td class="td-evaluators">
+                            {% if info.supplier.assigned_evaluators %}
+                            <div class="evaluators-inline">
+                                {% for evaluator in info.supplier.assigned_evaluators[:3] %}
+                                <div class="evaluator-avatar-sm"
+                                    title="{{ evaluator.name }}{% if evaluator.job_title %} - {{ evaluator.job_title }}{% endif %}">
+                                    {{ evaluator.name[0]|upper }}
+                                </div>
+                                {% endfor %}
+                                {% if info.supplier.assigned_evaluators|length > 3 %}
+                                <div class="evaluator-more">+{{ info.supplier.assigned_evaluators|length - 3 }}</div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">Nenhum</span>
+                            {% endif %}
+                        </td>
+                        <td class="td-status">
+                            <span class="status-badge {{ 'active' if info.supplier.is_active else 'inactive' }}">
+                                <i
+                                    class="bi bi-{{ 'check-circle-fill' if info.supplier.is_active else 'pause-circle-fill' }}"></i>
+                                {{ 'Ativo' if info.supplier.is_active else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td class="td-actions">
+                            <div class="action-buttons">
+                                <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=info.supplier.id) }}"
+                                    class="btn-action primary" title="Ver avaliações">
+                                    <i class="bi bi-graph-up"></i>
+                                </a>
+                                <button type="button" class="btn-action secondary" data-action="open-edit"
+                                    data-supplier-id="{{ info.supplier.id }}" title="Editar fornecedor">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                {% if info.supplier.is_active %}
+                                <button type="button" class="btn-action danger" data-action="open-deactivate"
+                                    data-supplier-id="{{ info.supplier.id }}"
+                                    data-supplier-name="{{ info.supplier.company_name }}" title="Desativar fornecedor">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="details-row" data-supplier-id="{{ info.supplier.id }}">
+                        <td colspan="8">
+                            <div class="details-content">
+                                <div class="details-grid">
+                                    <div class="detail-section">
+                                        <div class="detail-header">
+                                            <i class="bi bi-telephone-fill"></i>
+                                            <h6>Informações de Contato</h6>
+                                        </div>
+                                        <div class="detail-items">
+                                            {% if info.supplier.phone %}
+                                            <div class="detail-item">
+                                                <i class="bi bi-phone"></i>
+                                                <span>{{ info.supplier.phone }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if info.supplier.email %}
+                                            <div class="detail-item">
+                                                <i class="bi bi-envelope"></i>
+                                                <span>{{ info.supplier.email }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if info.supplier.cnpj %}
+                                            <div class="detail-item">
+                                                <i class="bi bi-card-text"></i>
+                                                <span>{{ info.supplier.cnpj }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if not info.supplier.phone and not info.supplier.email and not
+                                            info.supplier.cnpj %}
+                                            <div class="detail-item">
+                                                <i class="bi bi-info-circle"></i>
+                                                <span class="text-muted">Sem informações de contato</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="detail-section">
+                                        <div class="detail-header">
+                                            <i class="bi bi-people-fill"></i>
+                                            <h6>Gestores Responsáveis</h6>
+                                        </div>
+                                        <div class="detail-items">
+                                            {% if info.supplier.assigned_evaluators %}
+                                            <div class="evaluators-list-detail">
+                                                {% for evaluator in info.supplier.assigned_evaluators %}
+                                                <div class="evaluator-item-detail">
+                                                    <div class="evaluator-avatar-detail">{{ evaluator.name[0]|upper }}
+                                                    </div>
+                                                    <div class="evaluator-info-detail">
+                                                        <strong>{{ evaluator.name }}</strong>
+                                                        {% if evaluator.job_title %}
+                                                        <span>{{ evaluator.job_title }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% else %}
+                                            <div class="detail-item">
+                                                <i class="bi bi-info-circle"></i>
+                                                <span class="text-muted">Nenhum gestor atribuído</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="detail-section">
+                                        <div class="detail-header">
+                                            <i class="bi bi-sticky-fill"></i>
+                                            <h6>Observações</h6>
+                                        </div>
+                                        <div class="detail-items">
+                                            {% if info.supplier.notes %}
+                                            <div class="detail-notes">{{ info.supplier.notes }}</div>
+                                            {% else %}
+                                            <div class="detail-item">
+                                                <i class="bi bi-info-circle"></i>
+                                                <span class="text-muted">Sem observações registradas</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </div>
-</div>
-
-<!-- Modal de Cadastro -->
-<div class="modal fade" id="registerModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-building-add"></i> Cadastrar Novo Fornecedor
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" action="{{ url_for('suppliers.register_supplier') }}" id="registerSupplierForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-body">
-                    <!-- Informações Básicas -->
-                    <div class="mb-4">
-                        <h6 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-info-circle"></i> Informações Básicas
-                        </h6>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="register_company_name" class="form-label">
-                                    <i class="bi bi-building"></i> Nome da Empresa <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="register_company_name" 
-                                       name="company_name" placeholder="Digite o nome completo da empresa" required>
-                                <small class="form-text text-muted">Campo obrigatório</small>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="register_cnpj" class="form-label">
-                                    <i class="bi bi-card-text"></i> CNPJ
-                                </label>
-                                <input type="text" class="form-control" id="register_cnpj" 
-                                       name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="register_service_type" class="form-label">
-                                    <i class="bi bi-tools"></i> Tipo de Serviço
-                                </label>
-                                <input type="text" class="form-control" id="register_service_type" 
-                                       name="service_type" placeholder="Ex: Manutenção, Limpeza, TI, etc.">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Informações de Contato -->
-                    <div class="mb-4">
-                        <h6 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-telephone"></i> Informações de Contato
-                        </h6>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="register_contact_name" class="form-label">
-                                    <i class="bi bi-person"></i> Nome do Responsável
-                                </label>
-                                <input type="text" class="form-control" id="register_contact_name" 
-                                       name="contact_name" placeholder="Nome da pessoa de contato">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="register_phone" class="form-label">
-                                    <i class="bi bi-phone"></i> Telefone
-                                </label>
-                                <input type="tel" class="form-control" id="register_phone" 
-                                       name="phone" placeholder="(00) 00000-0000">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="register_email" class="form-label">
-                                    <i class="bi bi-envelope"></i> E-mail
-                                </label>
-                                <input type="email" class="form-control" id="register_email" 
-                                       name="email" placeholder="contato@empresa.com.br">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Observações -->
-                    <div class="mb-3">
-                        <h6 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-sticky"></i> Observações Adicionais
-                        </h6>
-                        <label for="register_notes" class="form-label">
-                            <i class="bi bi-pencil-square"></i> Anotações
-                        </label>
-                        <textarea class="form-control" id="register_notes" name="notes" rows="3" 
-                                  placeholder="Informações adicionais sobre o fornecedor, particularidades do contrato, observações, etc."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Cadastrar Fornecedor
-                    </button>
-                </div>
-            </form>
+        {% else %}
+        <div class="empty-state-modern">
+            <div class="empty-icon"><i class="bi bi-inbox"></i></div>
+            <h2>Nenhum Fornecedor Cadastrado</h2>
+            <p>Comece cadastrando seu primeiro fornecedor para acompanhar o desempenho.</p>
+            <button type="button" class="btn btn-hero-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Cadastrar Fornecedor</span>
+            </button>
         </div>
-    </div>
-</div>
+        {% endif %}
+    </section>
 
-<!-- Modal de Edição -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-pencil-square"></i> Editar Fornecedor
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" id="editSupplierForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-body">
-                    <!-- Informações Básicas -->
-                    <div class="mb-4">
-                        <h6 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-info-circle"></i> Informações Básicas
-                        </h6>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="edit_company_name" class="form-label">
-                                    <i class="bi bi-building"></i> Nome da Empresa <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="edit_company_name" 
-                                       name="company_name" required>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_cnpj" class="form-label">
-                                    <i class="bi bi-card-text"></i> CNPJ
-                                </label>
-                                <input type="text" class="form-control" id="edit_cnpj" 
-                                       name="cnpj" maxlength="18">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_service_type" class="form-label">
-                                    <i class="bi bi-tools"></i> Tipo de Serviço
-                                </label>
-                                <input type="text" class="form-control" id="edit_service_type" 
-                                       name="service_type">
-                            </div>
+    <!-- Modal de Cadastro -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-modern success">
+                    <div class="modal-header-content">
+                        <div class="modal-icon"><i class="bi bi-building-add"></i></div>
+                        <div>
+                            <h5 class="modal-title" id="registerModalLabel">Cadastrar Novo Fornecedor</h5>
+                            <p class="modal-subtitle">Preencha as informações do fornecedor/prestador</p>
                         </div>
                     </div>
-
-                    <!-- Informações de Contato -->
-                    <div class="mb-4">
-                        <h6 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-telephone"></i> Informações de Contato
-                        </h6>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="edit_contact_name" class="form-label">
-                                    <i class="bi bi-person"></i> Nome do Responsável
-                                </label>
-                                <input type="text" class="form-control" id="edit_contact_name" 
-                                       name="contact_name">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_phone" class="form-label">
-                                    <i class="bi bi-phone"></i> Telefone
-                                </label>
-                                <input type="tel" class="form-control" id="edit_phone" 
-                                       name="phone">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_email" class="form-label">
-                                    <i class="bi bi-envelope"></i> E-mail
-                                </label>
-                                <input type="email" class="form-control" id="edit_email" 
-                                       name="email">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Observações -->
-                    <div class="mb-3">
-                        <h6 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-sticky"></i> Observações
-                        </h6>
-                        <label for="edit_notes" class="form-label">
-                            <i class="bi bi-pencil-square"></i> Anotações
-                        </label>
-                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
-                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Salvar Alterações
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Confirmação -->
-<div class="modal fade" id="deactivateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirmar Desativação</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Deseja realmente desativar o fornecedor <strong id="supplierNameModal"></strong>?</p>
-                <p class="text-muted">As avaliações anteriores serão mantidas, mas o fornecedor não aparecerá mais nas listagens ativas.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" id="deactivateForm">
+                <form method="POST" action="{{ url_for('suppliers.register_supplier') }}" id="registerSupplierForm" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">Desativar</button>
+                    <div class="modal-body modal-body-modern">
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <h6>Informações Básicas</h6>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern required"><i class="bi bi-building"></i>Razão Social
+                                    (Nome da Empresa)</label>
+                                <input type="text" class="form-control-modern" name="company_name"
+                                    placeholder="Digite a razão social completa da empresa" required>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern"><i class="bi bi-shop"></i>Nome Fantasia</label>
+                                <input type="text" class="form-control-modern" name="trade_name"
+                                    placeholder="Digite o nome fantasia (opcional)">
+                                <small class="form-text text-muted">Nome comercial pelo qual o fornecedor é
+                                    conhecido</small>
+                            </div>
+                            <div class="form-row-modern">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-card-text"></i>CNPJ</label>
+                                    <input type="text" class="form-control-modern" id="register_cnpj" name="cnpj"
+                                        placeholder="00.000.000/0000-00" maxlength="18">
+                                </div>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-tools"></i>Tipo de Serviço</label>
+                                    <input type="text" class="form-control-modern" name="service_type"
+                                        placeholder="Ex: Manutenção, Limpeza, TI">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-telephone-fill"></i>
+                                <h6>Informações de Contato</h6>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern"><i class="bi bi-person"></i>Nome do Responsável</label>
+                                <input type="text" class="form-control-modern" name="contact_name"
+                                    placeholder="Nome da pessoa de contato">
+                            </div>
+                            <div class="form-row-modern">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-phone"></i>Telefone</label>
+                                    <input type="tel" class="form-control-modern" id="register_phone" name="phone"
+                                        placeholder="(00) 00000-0000">
+                                </div>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-envelope"></i>E-mail</label>
+                                    <input type="email" class="form-control-modern" name="email"
+                                        placeholder="contato@empresa.com.br">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-sticky-fill"></i>
+                                <h6>Observações Adicionais</h6>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern"><i class="bi bi-pencil-square"></i>Anotações</label>
+                                <textarea class="form-control-modern" name="notes" rows="3"
+                                    placeholder="Informações adicionais sobre o fornecedor..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Anexar Documentos (Contratos, Aditivos, PDFs) -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-paperclip"></i>
+                                <h3>Anexar Documentos</h3>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="documents" class="form-label">
+                                    <i class="bi bi-file-earmark-pdf"></i> Documentos (PDF)
+                                </label>
+                                <input type="file" class="form-control" id="documents" name="documents"
+                                    accept="application/pdf" multiple>
+                                <div class="form-text">Anexe contratos, aditivos e outros arquivos em PDF. Máx. 500MB
+                                    por arquivo.</div>
+                                <div id="selectedFiles" class="mt-2" style="font-size:0.95rem;color:#374151;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer modal-footer-modern">
+                        <button type="button" class="btn-modern secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn-modern primary">
+                            <i class="bi bi-check-circle-fill"></i>Cadastrar Fornecedor
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-// Busca em tempo real
-document.getElementById('searchInput').addEventListener('input', filterSuppliers);
-document.getElementById('filterStatus').addEventListener('change', filterSuppliers);
-document.getElementById('filterScore').addEventListener('change', filterSuppliers);
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-modern success">
+                    <div class="modal-header-content">
+                        <div class="modal-icon edit"><i class="bi bi-pencil-square"></i></div>
+                        <div>
+                            <h5 class="modal-title" id="editModalLabel">Editar Fornecedor</h5>
+                            <p class="modal-subtitle">Atualize as informações do fornecedor</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" id="editSupplierForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body modal-body-modern">
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <h6>Informações Básicas</h6>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern required"><i class="bi bi-building"></i>Razão Social
+                                    (Nome da Empresa)</label>
+                                <input type="text" class="form-control-modern" id="edit_company_name"
+                                    name="company_name" required>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern"><i class="bi bi-shop"></i>Nome Fantasia</label>
+                                <input type="text" class="form-control-modern" id="edit_trade_name" name="trade_name"
+                                    placeholder="Nome comercial do fornecedor">
+                                <small class="form-text text-muted">Nome comercial pelo qual o fornecedor é
+                                    conhecido</small>
+                            </div>
+                            <div class="form-row-modern">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-card-text"></i>CNPJ</label>
+                                    <input type="text" class="form-control-modern" id="edit_cnpj" name="cnpj"
+                                        maxlength="18">
+                                </div>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-tools"></i>Tipo de Serviço</label>
+                                    <input type="text" class="form-control-modern" id="edit_service_type"
+                                        name="service_type">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-telephone-fill"></i>
+                                <h6>Informações de Contato</h6>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern"><i class="bi bi-person"></i>Nome do Responsável</label>
+                                <input type="text" class="form-control-modern" id="edit_contact_name"
+                                    name="contact_name">
+                            </div>
+                            <div class="form-row-modern">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-phone"></i>Telefone</label>
+                                    <input type="tel" class="form-control-modern" id="edit_phone" name="phone">
+                                </div>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern"><i class="bi bi-envelope"></i>E-mail</label>
+                                    <input type="email" class="form-control-modern" id="edit_email" name="email">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-sticky-fill"></i>
+                                <h6>Observações</h6>
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern"><i class="bi bi-pencil-square"></i>Anotações</label>
+                                <textarea class="form-control-modern" id="edit_notes" name="notes" rows="3"></textarea>
+                            </div>
+                        </div>
+                        {% if current_user.has_permission('assign-supplier-evaluators') or
+                        current_user.has_permission('admin-total') %}
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="bi bi-people-fill"></i>
+                                <h6>Gestores Responsáveis</h6>
+                            </div>
+                            <div class="evaluators-manager">
+                                <div class="evaluators-search">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" id="evaluatorSearch"
+                                        placeholder="Buscar por nome, usuário ou cargo...">
+                                </div>
+                                <div class="evaluators-actions-bar">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn-mini primary" id="selectAllEvaluators">
+                                            <i class="bi bi-check-all"></i> Selecionar Todos
+                                        </button>
+                                        <button type="button" class="btn-mini secondary" id="clearAllEvaluators">
+                                            <i class="bi bi-x-lg"></i> Limpar Seleção
+                                        </button>
+                                    </div>
+                                    <span class="evaluators-counter">
+                                        <span id="selectedCount">0</span> / <span id="totalCount">{{ all_users|length
+                                            }}</span> selecionados
+                                    </span>
+                                </div>
+                                <div class="evaluators-list-modern">
+                                    {% for user in all_users %}
+                                    <div class="evaluator-item-modern" data-name="{{ user.name|lower }}"
+                                        data-username="{{ user.username|lower }}"
+                                        data-jobtitle="{{ user.job_title|lower if user.job_title else '' }}">
+                                        <input type="checkbox" class="evaluator-checkbox" name="evaluator_ids"
+                                            value="{{ user.id }}" id="evaluator_{{ user.id }}">
+                                        <label for="evaluator_{{ user.id }}">
+                                            <div class="evaluator-avatar-label">{{ user.name[0]|upper }}</div>
+                                            <div class="evaluator-info">
+                                                <strong>{{ user.name }}</strong>
+                                                <span class="username">@{{ user.username }}</span>
+                                                {% if user.job_title %}<span class="job-title">{{ user.job_title
+                                                    }}</span>{% endif %}
+                                            </div>
+                                            <div class="evaluator-check"><i class="bi bi-check-circle-fill"></i></div>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer modal-footer-modern">
+                        <button type="button" class="btn-modern secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn-modern primary">
+                            <i class="bi bi-check-circle-fill"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-function filterSuppliers() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const statusFilter = document.getElementById('filterStatus').value;
-    const scoreFilter = document.getElementById('filterScore').value;
-    
-    const cards = document.querySelectorAll('.supplier-card');
-    
-    cards.forEach(card => {
-        const name = card.dataset.name;
-        const status = card.dataset.status;
-        const score = parseFloat(card.dataset.score);
-        
-        let show = true;
-        
-        // Filtro de busca
-        if (searchTerm && !name.includes(searchTerm)) {
-            show = false;
-        }
-        
-        // Filtro de status
-        if (statusFilter !== 'all' && statusFilter !== status) {
-            show = false;
-        }
-        
-        // Filtro de score
-        if (scoreFilter !== 'all') {
-            if (scoreFilter === 'excellent' && score < 80) show = false;
-            if (scoreFilter === 'good' && (score < 60 || score >= 80)) show = false;
-            if (scoreFilter === 'poor' && score >= 60) show = false;
-            if (scoreFilter === 'not_evaluated' && score > 0) show = false;
-        }
-        
-        card.style.display = show ? 'block' : 'none';
-    });
-}
+    <!-- Modal de Confirmação -->
+    <div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-modern danger">
+                    <div class="modal-header-content">
+                        <div class="modal-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div>
+                            <h5 class="modal-title" id="deactivateModalLabel">Confirmar Desativação</h5>
+                            <p class="modal-subtitle">Esta ação pode ser revertida posteriormente</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body modal-body-modern">
+                    <div class="alert-modern warning">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>
+                            <p>Deseja realmente desativar o fornecedor <strong id="supplierNameModal"></strong>?</p>
+                            <small>As avaliações anteriores serão mantidas, mas o fornecedor não aparecerá mais nas
+                                listagens ativas.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-modern">
+                    <button type="button" class="btn-modern secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-arrow-left"></i>Voltar
+                    </button>
+                    <form method="POST" id="deactivateForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-modern danger">
+                            <i class="bi bi-trash3-fill"></i>Desativar Fornecedor
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
 
-// Confirmação de desativação
-function confirmDeactivate(supplierId, supplierName) {
-    document.getElementById('supplierNameModal').textContent = supplierName;
-    document.getElementById('deactivateForm').action = `/feedback/suppliers/delete/${supplierId}`;
-    
-    const modal = new bootstrap.Modal(document.getElementById('deactivateModal'));
-    modal.show();
-}
-
-// Abrir modal de edição
-function openEditModal(supplierId) {
-    // Buscar dados do fornecedor via AJAX
-    fetch(`/feedback/suppliers/api/supplier/${supplierId}/stats`)
-        .then(response => response.json())
-        .then(data => {
-            // Preencher o formulário
-            document.getElementById('edit_company_name').value = data.company_name || '';
-            document.getElementById('edit_cnpj').value = data.cnpj || '';
-            document.getElementById('edit_service_type').value = data.service_type || '';
-            document.getElementById('edit_contact_name').value = data.contact_name || '';
-            document.getElementById('edit_phone').value = data.phone || '';
-            document.getElementById('edit_email').value = data.email || '';
-            document.getElementById('edit_notes').value = data.notes || '';
-            
-            // Definir action do formulário
-            document.getElementById('editSupplierForm').action = `/feedback/suppliers/edit/${supplierId}`;
-            
-            // Abrir modal
-            const modal = new bootstrap.Modal(document.getElementById('editModal'));
-            modal.show();
-        })
-        .catch(error => {
-            console.error('Erro ao carregar dados do fornecedor:', error);
-            alert('Erro ao carregar dados do fornecedor. Tente novamente.');
-        });
-}
-
-// Máscaras para CNPJ e telefone no modal de edição
-document.getElementById('edit_cnpj').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 14) {
-        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-        value = value.replace(/(\d{4})(\d)/, '$1-$2');
-        e.target.value = value;
+    {% block supplier_scripts %}
+    {{ super() }}
+    {% set endpoints = {
+    'stats': url_for('suppliers.api_supplier_stats', supplier_id=0)|replace('/0/', '/{id}/'),
+    'evaluators': url_for('suppliers.get_supplier_evaluators', supplier_id=0)|replace('/0/', '/{id}/'),
+    'edit': url_for('suppliers.edit_supplier', supplier_id=0)|replace('/0', '/{id}'),
+    'deactivate': url_for('suppliers.delete_supplier', supplier_id=0)|replace('/0', '/{id}')
+    } %}
+    {% set suppliers_list_config = {
+    'totalSuppliers': suppliers_info|length,
+    'endpoints': endpoints,
+    'permissions': {
+    'manageEvaluators': current_user.has_permission('assign-supplier-evaluators') or
+    current_user.has_permission('admin-total')
     }
-});
-
-document.getElementById('edit_phone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 11) {
-        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
-        value = value.replace(/(\d{5})(\d)/, '$1-$2');
-        e.target.value = value;
-    }
-});
-
-// Máscaras para CNPJ e telefone no modal de cadastro
-document.getElementById('register_cnpj').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 14) {
-        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-        value = value.replace(/(\d{4})(\d)/, '$1-$2');
-        e.target.value = value;
-    }
-});
-
-document.getElementById('register_phone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 11) {
-        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
-        value = value.replace(/(\d{5})(\d)/, '$1-$2');
-        e.target.value = value;
-    }
-});
-
-// Limpar formulário ao fechar modal de cadastro
-document.getElementById('registerModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('registerSupplierForm').reset();
-});
+    } %}
+    <script src="{{ url_for('static', filename='js/suppliers/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/suppliers/list.js') }}"></script>
+    <script id="supplierListConfig" type="application/json">
+{{ suppliers_list_config|tojson }}
 </script>
-{% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const configElement = document.getElementById('supplierListConfig');
+            const suppliersListConfig = configElement ? JSON.parse(configElement.textContent) : {};
+            if (window.SuppliersList) {
+                window.SuppliersList.init(suppliersListConfig);
+            }
+        });
+    </script>
+    {% endblock %}

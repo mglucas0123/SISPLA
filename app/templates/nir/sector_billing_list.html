@@ -138,7 +138,7 @@
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}</span>
+                                    <span class="fw-semibold">{{ record.admission_date | format_date_time if record.admission_date else 'N/I' }}</span>
                                 </td>
                                 <td class="cell-entry text-center">
                                     <span class="badge rounded-pill {% if record.entry_type == 'ELETIVO' %}bg-custom-blue{% elif record.entry_type == 'URGENCIA' %}bg-custom-red text-white{% else %}bg-custom-gray{% endif %}">

@@ -27,7 +27,7 @@
                     </div>
                     <div class="col-md-3">
                         <strong>Data de Internação:</strong><br>
-                        {{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else 'N/I' }}
+                        {{ record.admission_date | format_date_time if record.admission_date else 'N/I' }}
                     </div>
                     <div class="col-md-3">
                         <strong>Tipo de Entrada:</strong><br>

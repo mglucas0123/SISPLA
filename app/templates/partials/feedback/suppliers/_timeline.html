@@ -1,0 +1,48 @@
+{% macro timeline(history) %}
+<div class="timeline mt-4">
+    {% for item in history %}
+    {{ timeline_item(item) }}
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro timeline_item(item) %}
+{% set deadline = item.deadline %}
+<div class="timeline-item">
+    <div class="timeline-marker {{ item.action_color }}"></div>
+    <div class="timeline-line"></div>
+    <div class="timeline-content">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <span class="badge bg-{{ item.action_color }} me-2">
+                    <i class="bi bi-{{ item.action_icon }} me-1"></i>
+                    {{ item.action_label }}
+                </span>
+                {% if item.priority %}
+                <span class="badge priority-badge">{{ item.priority.upper() }}</span>
+                {% endif %}
+            </div>
+            <small class="text-muted">
+                <i class="bi bi-clock me-1"></i>{{ item.created_at }}
+            </small>
+        </div>
+        <p class="mb-3">{{ item.description }}</p>
+        <div class="d-flex justify-content-between align-items-center">
+            {% if deadline %}
+            <div class="small">
+                <i class="bi bi-calendar-event me-1"></i>
+                Prazo: {{ deadline }}
+            </div>
+            {% else %}
+            <div></div>
+            {% endif %}
+            <div class="small text-muted">
+                <i class="bi bi-person-circle me-1"></i>{{ item.user_name or '' }}
+                {% if item.user_job %}
+                <span class="text-muted">• {{ item.user_job }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

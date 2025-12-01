@@ -151,6 +151,18 @@
                     </div>
 
                     <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Tipo de Alta</label>
+                        <select id="dischargeTypeFilter" name="discharge_type" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            {% if discharge_types %}
+                                {% for dt in discharge_types %}
+                                <option value="{{ dt }}" {{ 'selected' if filters.discharge_type == dt else '' }}>{{ dt }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
                         <label class="form-label fw-semibold small">Local de Origem</label>
                         <select id="originFilter" name="origin" class="form-select form-select-sm">
                             <option value="">Todos</option>
@@ -238,6 +250,7 @@
     const searchUnified = document.getElementById('searchUnified');
         const entryTypeFilter = document.getElementById('entryTypeFilter');
         const admissionTypeFilter = document.getElementById('admissionTypeFilter');
+        const dischargeTypeFilter = document.getElementById('dischargeTypeFilter');
         const palliativeFilter = document.getElementById('palliativeFilter');
         const originFilter = document.getElementById('originFilter');
         const recursoFilter = document.getElementById('recursoFilter');
@@ -252,6 +265,7 @@
                 search: searchUnified.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
+                discharge_type: dischargeTypeFilter ? dischargeTypeFilter.value : undefined,
                 is_palliative: palliativeFilter.value,
                 origin: originFilter.value,
                 recurso: recursoFilter.value,
@@ -307,6 +321,7 @@
                 search: searchUnified.value.trim(),
                 entry_type: entryTypeFilter.value,
                 admission_type: admissionTypeFilter.value,
+                discharge_type: dischargeTypeFilter ? dischargeTypeFilter.value : undefined,
                 start_date: startDateFilter.value,
                 end_date: endDateFilter.value,
                 per_page: perPageSelect ? perPageSelect.value : undefined,
@@ -361,6 +376,9 @@
         });
         entryTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
         admissionTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
+        if (dischargeTypeFilter) {
+            dischargeTypeFilter.addEventListener('change', () => filterRecordsWithAjax());
+        }
         palliativeFilter.addEventListener('change', () => filterRecordsWithAjax());
         originFilter.addEventListener('change', () => filterRecordsWithAjax());
         recursoFilter.addEventListener('change', () => filterRecordsWithAjax());
@@ -371,6 +389,7 @@
             searchUnified.value = '';
             entryTypeFilter.value = '';
             admissionTypeFilter.value = '';
+            if (dischargeTypeFilter) dischargeTypeFilter.value = '';
             palliativeFilter.value = '';
             originFilter.value = '';
             recursoFilter.value = '';
@@ -392,6 +411,7 @@
                     search: searchUnified.value.trim(),
                     entry_type: entryTypeFilter.value,
                     admission_type: admissionTypeFilter.value,
+                    discharge_type: dischargeTypeFilter ? dischargeTypeFilter.value : undefined,
                     start_date: startDateFilter.value,
                     end_date: endDateFilter.value,
                     sector_progress: getSectorProgressFromUrl()

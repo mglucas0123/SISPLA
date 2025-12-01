@@ -1,0 +1,607 @@
+{% extends "navbar.html" %}
+
+{% block title %}Avaliar Colaborador - SISPLA{% endblock %}
+
+{% block content %}
+<div class="employee-evaluation-container">
+    <div class="container">
+        <div class="page-header-eval">
+            <div class="header-content">
+                <div class="icon-wrapper-animated">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Avaliação de Colaborador</h1>
+                    <p>Preencha a avaliação mensal do colaborador</p>
+                </div>
+            </div>
+            {% set current_step = form_step if form_step else 'step1' %}
+            <div class="progress-indicator">
+                {% set step_num = 1 if current_step == 'step1' else (2 if current_step == 'step2' else 3) %}
+                <div class="progress-step {% if step_num == 1 %}active{% elif step_num > 1 %}completed{% endif %}"
+                    data-step="1">
+                    <div class="step-circle">1</div>
+                    <span>Seleção</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step {% if step_num == 2 %}active{% elif step_num > 2 %}completed{% endif %}"
+                    data-step="2">
+                    <div class="step-circle">2</div>
+                    <span>Avaliação</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step {% if step_num == 3 %}active{% elif step_num > 3 %}completed{% endif %}"
+                    data-step="3">
+                    <div class="step-circle">3</div>
+                    <span>Finalização</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário Multi-Step -->
+        {% include 'partials/_flash_messages.html' %}
+        <form method="POST" action="{{ url_for('employee_evaluation.evaluate') }}" id="evaluationForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="form_action_input" name="form_action" value="">
+            <!-- STEP 1: Seleção de Colaborador e Mês -->
+            <div class="evaluation-step {{ 'active' if current_step == 'step1' else '' }}" id="step1">
+                <div class="step-card">
+                    <div class="step-header">
+                        <i class="bi bi-1-circle-fill"></i>
+                        <h2>Informações Iniciais</h2>
+                    </div>
+
+                    <div class="form-row-custom">
+                        <!-- Seleção de Colaborador -->
+                        <div class="form-group-custom">
+                            <label for="evaluated_id" class="form-label-custom required">
+                                <i class="bi bi-person"></i>
+                                Selecione o Colaborador
+                            </label>
+                            <div class="employee-search-container">
+                                <select class="form-select-custom" id="evaluated_id" name="evaluated_id" required>
+                                    <option value="">Selecione...</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" {% if form_data and
+                                        form_data.get('evaluated_id')==(user.id|string) or (evaluated_id and
+                                        evaluated_id==(user.id|string)) %}selected{% endif %}>{{ user.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Mês de Referência -->
+                        <div class="form-group-custom">
+                            <label for="month_reference" class="form-label-custom required">
+                                <i class="bi bi-calendar-month"></i>
+                                Mês de Referência
+                            </label>
+                            <input type="month" class="form-control-custom" id="month_reference" name="month_reference"
+                                value="{{ form_data.get('month_reference') if form_data else (month_reference if month_reference else '') }}"
+                                required>
+                            <small class="form-hint">Selecione o mês referente à avaliação</small>
+                        </div>
+
+                        <!-- Tipo de Avaliação -->
+                        <div class="form-group-custom">
+                            <label for="evaluation_type" class="form-label-custom required">
+                                <i class="bi bi-list-check"></i>
+                                Tipo de Avaliação
+                            </label>
+                            <select class="form-select-custom" id="evaluation_type" name="evaluation_type" required
+                                onchange="toggleEvaluationType()">
+                                <option value="mensal" {% if (form_data and form_data.get('evaluation_type')=='mensal' )
+                                    or (evaluation_type=='mensal' ) %}selected{% endif %}>Avaliação Mensal</option>
+                                <option value="experiencia_45" {% if (form_data and
+                                    form_data.get('evaluation_type')=='experiencia_45' ) or
+                                    (evaluation_type=='experiencia_45' ) %}selected{% endif %}>Avaliação de Experiência
+                                    (45 Dias)</option>
+                                <option value="experiencia_90" {% if (form_data and
+                                    form_data.get('evaluation_type')=='experiencia_90' ) or
+                                    (evaluation_type=='experiencia_90' ) %}selected{% endif %}>Avaliação de Experiência
+                                    (90 Dias)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button type="button" onclick="submitAction('to_step2')" class="btn btn-primary btn-next">
+                            Próximo <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Perguntas Qualitativas -->
+            <div class="evaluation-step {{ 'active' if current_step == 'step2' else '' }}" id="step2">
+                <div class="step-card">
+                    <div class="step-header">
+                        <i class="bi bi-2-circle-fill"></i>
+                        <h2>Critérios Qualitativos</h2>
+                    </div>
+
+                    <p class="step-description">
+                        Avalie o desempenho e contribuição do colaborador
+                    </p>
+
+                    <!-- SEÇÃO MENSAL -->
+                    <div id="monthly_section" {% if not ((form_data and form_data.get('evaluation_type')=='mensal' ) or
+                        (evaluation_type=='mensal' )) %}style="display:none;" {% endif %}>
+                        {% include 'avaliacao/funcionarios/avaliacoes/mensal.html' %}
+                    </div>
+
+                    <!-- SEÇÃO EXPERIÊNCIA (45 DIAS) -->
+                    <div id="experience_45_section" style="display: none;">
+                        {% include 'avaliacao/funcionarios/avaliacoes/experiencia_45_dias.html' %}
+                    </div>
+
+                    <!-- SEÇÃO EXPERIÊNCIA (90 DIAS) -->
+                    <div id="experience_90_section" style="display: none;">
+                        {% include 'avaliacao/funcionarios/avaliacoes/experiencia_90_dias.html' %}
+                    </div>
+
+                    <div class="step-actions">
+                        <button type="button" onclick="submitAction('back_to_step1')"
+                            class="btn btn-outline-secondary btn-prev">
+                            <i class="bi bi-arrow-left"></i> Anterior
+                        </button>
+                        <button type="button" onclick="submitAction('to_step3')" class="btn btn-primary btn-next">
+                            Próximo <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Nota Final -->
+            <div class="evaluation-step {{ 'active' if current_step == 'step3' else '' }}" id="step3">
+                <div class="step-card">
+                    <div class="step-header">
+                        <i class="bi bi-3-circle-fill"></i>
+                        <h2>Nota Final</h2>
+                    </div>
+
+                    <!-- Nota de 0 a 10 -->
+                    <div class="rating-section">
+                        <div class="rating-header">
+                            <span class="rating-question-number">4</span>
+                            <div class="rating-question-text">
+                                <h3>Nota de Desempenho</h3>
+                                <p>Atribua uma nota geral para o desempenho do colaborador neste mês</p>
+                            </div>
+                        </div>
+
+                        <div class="rating-slider-container">
+                            <div class="rating-visual">
+                                <div class="rating-display" id="ratingDisplay">
+                                    <span class="rating-number" id="ratingNumber">5</span>
+                                    <div class="rating-stars" id="ratingStars"></div>
+                                    <span class="rating-label" id="ratingLabel">Médio</span>
+                                </div>
+                            </div>
+
+                            <input type="range" class="rating-slider" id="rating" name="rating" min="0" max="10"
+                                value="5" step="1" required>
+
+                            <div class="rating-scale">
+                                <span>0</span>
+                                <span>1</span>
+                                <span>2</span>
+                                <span>3</span>
+                                <span>4</span>
+                                <span>5</span>
+                                <span>6</span>
+                                <span>7</span>
+                                <span>8</span>
+                                <span>9</span>
+                                <span>10</span>
+                            </div>
+                        </div>
+
+                        <div class="justification-box">
+                            <label for="rating_justification" class="form-label-custom required">
+                                <i class="bi bi-chat-left-text"></i>
+                                Justificativa da Nota <span style="color: red">*</span>
+                            </label>
+                            <textarea class="form-control-custom" id="rating_justification" name="rating_justification"
+                                rows="3" required placeholder="Justifique a nota atribuída..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-prev" onclick="prevStep(2)">
+                            <i class="bi bi-arrow-left"></i> Anterior
+                        </button>
+                        <button type="button" onclick="submitAction('submit')" class="btn btn-success btn-submit">
+                            <i class="bi bi-check-circle"></i> Finalizar Avaliação
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .comm-table-box {
+        background: white;
+        border-radius: 12px;
+        padding: 18px;
+        border: 1px solid #e6edf6;
+        box-shadow: 0 6px 20px rgba(2, 35, 85, 0.04);
+    }
+
+    // Remove `required` from controls that are not visible so browser HTML5
+    // validation doesn't try to focus them and throw "not focusable" errors.
+    function disableRequiredForHiddenControls(form) {
+        const disabled = [];
+        const requiredControls = form.querySelectorAll('[required]');
+        requiredControls.forEach(ctrl => {
+            // If element is not visible (display: none or not in layout), disable required
+            const style = window.getComputedStyle(ctrl);
+            const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && ctrl.offsetParent !== null;
+            if (!isVisible) {
+                ctrl.dataset._savedRequired = '1';
+                ctrl.removeAttribute('required');
+                disabled.push(ctrl);
+            }
+        });
+        return disabled;
+    }
+
+    function restoreRequiredControls(list) {
+        if (!list || !list.length) return;
+        list.forEach(ctrl => {
+            if (ctrl && ctrl.dataset && ctrl.dataset._savedRequired) {
+                ctrl.setAttribute('required', '');
+                delete ctrl.dataset._savedRequired;
+            }
+        });
+    }
+
+    #experience_45_section .comm-table-box table,
+    #experience_90_section .comm-table-box table {
+        width: 100%;
+        border-collapse: collapse
+    }
+
+    #experience_45_section .comm-table-box td,
+    #experience_45_section .comm-table-box th,
+    #experience_90_section .comm-table-box td,
+    #experience_90_section .comm-table-box th {
+        padding: 14px 12px;
+        vertical-align: middle
+    }
+
+    #experience_45_section .comm-table-box thead th,
+    #experience_90_section .comm-table-box thead th {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 13px
+    }
+
+    #experience_45_section .comm-table-box tbody tr td:first-child,
+    #experience_90_section .comm-table-box tbody tr td:first-child {
+        color: #34495e;
+        font-size: 14px;
+        padding-right: 18px
+    }
+
+    #experience_45_section .comm-table-box input[type="radio"],
+    #experience_90_section .comm-table-box input[type="radio"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #d1d5db;
+        display: inline-block;
+        vertical-align: middle;
+        position: relative;
+        transition: all .15s ease;
+        background-clip: padding-box
+    }
+
+    #experience_45_section .comm-table-box input[type="radio"]:hover,
+    #experience_90_section .comm-table-box input[type="radio"]:hover {
+        border-color: #0078d4
+    }
+
+    #experience_45_section .comm-table-box input[type="radio"]:checked,
+    #experience_90_section .comm-table-box input[type="radio"]:checked {
+        background: #0078d4;
+        border-color: #0078d4;
+        box-shadow: 0 0 0 6px rgba(0, 120, 212, 0.12)
+    }
+
+    #experience_45_section .comm-table-box .text-muted,
+    #experience_90_section .comm-table-box .text-muted {
+        color: #6b7280;
+        font-size: 13px
+    }
+</style>
+
+<script>
+    let currentStep = {{ 1 if current_step == 'step1' else (2 if current_step == 'step2' else 3) }};
+
+    function nextStep(step) {
+        if (!validateStep(currentStep)) {
+            return;
+        }
+        // Hide current and show target
+        const currentStepEl = document.getElementById(`step${currentStep}`);
+        const targetStepEl = document.getElementById(`step${step}`);
+        if (currentStepEl) currentStepEl.classList.remove('active');
+        if (targetStepEl) targetStepEl.classList.add('active');
+
+        // Update progress indicator classes
+        const currentIndicator = document.querySelector(`[data-step="${currentStep}"]`);
+        const targetIndicator = document.querySelector(`[data-step="${step}"]`);
+        if (currentIndicator) {
+            currentIndicator.classList.remove('active');
+            currentIndicator.classList.add('completed');
+        }
+        if (targetIndicator) {
+            targetIndicator.classList.remove('completed');
+            targetIndicator.classList.add('active');
+        }
+
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function prevStep(step) {
+        const currentStepEl = document.getElementById(`step${currentStep}`);
+        const targetStepEl = document.getElementById(`step${step}`);
+        if (currentStepEl) currentStepEl.classList.remove('active');
+        if (targetStepEl) targetStepEl.classList.add('active');
+
+        // Update progress indicator classes: remove 'completed' from the step we left
+        const currentIndicator = document.querySelector(`[data-step="${currentStep}"]`);
+        const targetIndicator = document.querySelector(`[data-step="${step}"]`);
+        if (currentIndicator) {
+            currentIndicator.classList.remove('active');
+            currentIndicator.classList.remove('completed');
+        }
+        if (targetIndicator) {
+            targetIndicator.classList.remove('completed');
+            targetIndicator.classList.add('active');
+        }
+
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(step) {
+        const evalType = document.getElementById('evaluation_type').value;
+
+        if (step === 1) {
+            const evaluatedId = document.getElementById('evaluated_id').value;
+            const monthRef = document.getElementById('month_reference').value;
+
+            if (!evaluatedId) {
+                alert('Por favor, selecione um colaborador!');
+                document.getElementById('evaluated_id').focus();
+                return false;
+            }
+            if (!monthRef) {
+                alert('Por favor, selecione o mês de referência!');
+                return false;
+            }
+        }
+
+        if (step === 2) {
+            if (evalType === 'mensal') {
+                const participation = document.querySelector('input[name="participation_score"]:checked');
+                if (!participation) {
+                    alert('Por favor, selecione o nível de participação!');
+                    return false;
+                }
+            } else if (evalType === 'experiencia_45') {
+                // Validação específica para 45 dias
+                const commFields45 = ['comm_verbal_45', 'comm_written_45', 'comm_listening_45'];
+                for (const field of commFields45) {
+                    if (!document.querySelector(`input[name="${field}"]:checked`)) {
+                        alert('Por favor, responda todas as perguntas de Comunicação (45 dias)!');
+                        return false;
+                    }
+                }
+
+                const onboarding45 = ['onboarding_unit_presentation_45', 'onboarding_team_welcome_45', 'onboarding_expectations_45'];
+                for (const field of onboarding45) {
+                    if (!document.querySelector(`input[name="${field}"]:checked`)) {
+                        alert('Por favor, responda todas as perguntas sobre a Ambientação (45 dias)!');
+                        return false;
+                    }
+                }
+
+                const notes45 = document.querySelector('textarea[name="notes_45"]');
+                if (!notes45 || !notes45.value.trim()) {
+                    alert('Por favor, preencha as observações do ciclo (45 dias)!');
+                    return false;
+                }
+
+                if (!document.querySelector('input[name="approval_status_45"]:checked')) {
+                    alert('Por favor, selecione a decisão após 45 dias!');
+                    return false;
+                }
+            } else if (evalType === 'experiencia_90') {
+                // Validação específica para 90 dias
+                const commFields90 = ['comm_verbal_90', 'comm_written_90', 'comm_collab_90'];
+                for (const field of commFields90) {
+                    if (!document.querySelector(`input[name="${field}"]:checked`)) {
+                        alert('Por favor, responda todas as perguntas de Comunicação (90 dias)!');
+                        return false;
+                    }
+                }
+
+                const dev90 = document.querySelector('textarea[name="development_notes_90"]');
+                if (!dev90 || !dev90.value.trim()) {
+                    alert('Por favor, preencha as observações de desenvolvimento (90 dias)!');
+                    return false;
+                }
+
+                const plan90 = document.querySelector('textarea[name="post_experience_plan_90"]');
+                if (!plan90 || !plan90.value.trim()) {
+                    alert('Por favor, preencha o plano/Meta pós-experiência (90 dias)!');
+                    return false;
+                }
+
+                if (!document.querySelector('input[name="approval_status_90"]:checked')) {
+                    alert('Por favor, selecione a decisão final (90 dias)!');
+                    return false;
+                }
+            }
+        }
+
+        if (step === 3) {
+            const ratingJustification = document.getElementById('rating_justification');
+            if (!ratingJustification.value.trim()) {
+                alert('Por favor, justifique a nota atribuída!');
+                ratingJustification.focus();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Toggle Evaluation Type
+    function toggleEvaluationType() {
+        const type = document.getElementById('evaluation_type').value;
+        const monthlySection = document.getElementById('monthly_section');
+        const exp45Section = document.getElementById('experience_45_section');
+        const exp90Section = document.getElementById('experience_90_section');
+
+        // Hide all by default
+        monthlySection.style.display = 'none';
+        exp45Section.style.display = 'none';
+        exp90Section.style.display = 'none';
+
+        if (type === 'mensal') {
+            monthlySection.style.display = 'block';
+        } else if (type === 'experiencia_45') {
+            exp45Section.style.display = 'block';
+        } else if (type === 'experiencia_90') {
+            exp90Section.style.display = 'block';
+        }
+
+        // Note: validation handles required checks per type, so we avoid toggling `required` attributes broadly here.
+    }
+
+    document.getElementById('evaluation_type').addEventListener('change', toggleEvaluationType);
+
+    toggleEvaluationType();
+
+    const ratingSlider = document.getElementById('rating');
+    const ratingNumber = document.getElementById('ratingNumber');
+    const ratingLabel = document.getElementById('ratingLabel');
+    const ratingStars = document.getElementById('ratingStars');
+    const ratingDisplay = document.getElementById('ratingDisplay');
+
+    function updateRating(value) {
+        ratingNumber.textContent = value;
+
+        const labels = {
+            0: 'Péssimo', 1: 'Muito Ruim', 2: 'Ruim', 3: 'Insuficiente', 4: 'Regular',
+            5: 'Médio', 6: 'Aceitável', 7: 'Bom', 8: 'Muito Bom', 9: 'Ótimo', 10: 'Excelente'
+        };
+        ratingLabel.textContent = labels[value];
+
+        const fullStars = Math.floor(value / 2);
+        const halfStar = value % 2;
+        let starsHTML = '';
+
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="bi bi-star-fill"></i>';
+        }
+        if (halfStar) {
+            starsHTML += '<i class="bi bi-star-half"></i>';
+        }
+        for (let i = fullStars + halfStar; i < 5; i++) {
+            starsHTML += '<i class="bi bi-star"></i>';
+        }
+
+        ratingStars.innerHTML = starsHTML;
+
+        ratingDisplay.className = 'rating-display';
+        if (value <= 4) ratingDisplay.classList.add('poor');
+        else if (value <= 6) ratingDisplay.classList.add('medium');
+        else if (value <= 8) ratingDisplay.classList.add('good');
+        else ratingDisplay.classList.add('excellent');
+    }
+
+    ratingSlider.addEventListener('input', function () {
+        updateRating(parseInt(this.value));
+    });
+
+    updateRating(5);
+
+    document.querySelectorAll('.radio-option input').forEach(input => {
+        input.addEventListener('change', function () {
+            const card = this.closest('.question-card-eval');
+            if (card) {
+                card.classList.add('answered');
+                setTimeout(() => {
+                    card.classList.remove('answered');
+                }, 500);
+            }
+        });
+    });
+
+    // Submit helper: set hidden form_action and submit via native submit()
+    function submitAction(action) {
+        const form = document.getElementById('evaluationForm');
+        const actionInput = document.getElementById('form_action_input');
+        if (!actionInput) return;
+        actionInput.value = action;
+        // For navigation actions that move forward (to_step2, to_step3, submit),
+        // use requestSubmit() to trigger HTML5 constraint validation (required fields).
+        // For 'back' actions we intentionally bypass validation so user can go back.
+        try {
+            // For returning to previous steps or moving from Step1->Step2, bypass HTML5 constraint
+            // validation and submit directly; server-side will validate required fields for Step1.
+            const act = action ? action.toString().toLowerCase() : '';
+            if (act.startsWith('back') || act === 'to_step2') {
+                form.submit();
+            } else {
+                // Before requesting native HTML5 validation, run our explicit step validator
+                // so we show friendly alerts and avoid confusing browser-focus behavior.
+                if (act === 'to_step3') {
+                    if (!validateStep(2)) return;
+                }
+                if (act === 'submit') {
+                    if (!validateStep(3)) return;
+                }
+
+                if (typeof form.requestSubmit === 'function') {
+                    // Temporarily disable `required` on controls that are not visible
+                    const disabled = disableRequiredForHiddenControls(form);
+                    try {
+                        form.requestSubmit();
+                    } finally {
+                        // restore attributes (if page didn't navigate yet)
+                        restoreRequiredControls(disabled);
+                    }
+                } else {
+                // Fallback: create a temporary submit button to trigger validation
+                const tmp = document.createElement('button');
+                tmp.type = 'submit';
+                tmp.style.display = 'none';
+                form.appendChild(tmp);
+                    // disable hidden required controls before fallback submit
+                    const disabled = disableRequiredForHiddenControls(form);
+                    try {
+                        tmp.click();
+                    } finally {
+                        restoreRequiredControls(disabled);
+                    }
+                form.removeChild(tmp);
+                }
+            }
+        } catch (e) {
+            // Last resort
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "navbar.html" %}
+
+{% block title %}Configurar 2FA | SISPLA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header bg-primary text-white text-center p-4 border-0">
+                    <div class="bg-white bg-opacity-25 rounded-circle d-inline-flex p-3 mb-3">
+                        <i class="bi bi-qr-code-scan fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">Configurar 2FA</h4>
+                    <p class="mb-0 opacity-75">Proteja sua conta em poucos passos</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+
+                    <div class="text-center mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">Passo 1: Escaneie o QR Code</h6>
+                        <p class="text-muted small mb-3">Abra seu aplicativo autenticador (Google Authenticator, Authy,
+                            etc.) e escaneie a imagem abaixo.</p>
+
+                        <div class="bg-light p-3 d-inline-block rounded-3 border mb-3">
+                            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code 2FA" class="img-fluid"
+                                style="max-width: 200px;">
+                        </div>
+
+                        <div class="mt-2">
+                            <p class="text-muted small mb-1">Não consegue escanear?</p>
+                            <div class="input-group input-group-sm justify-content-center">
+                                <span class="input-group-text bg-light border-end-0">Chave:</span>
+                                <input type="text"
+                                    class="form-control bg-white border-start-0 text-center font-monospace"
+                                    value="{{ secret }}" readonly style="max-width: 200px; font-size: 0.85rem;"
+                                    onclick="this.select()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">Passo 2: Confirme o Código</h6>
+                        <p class="text-muted small mb-3">Digite o código de 6 dígitos gerado pelo seu aplicativo.</p>
+
+                        <form action="{{ url_for('user.verify_2fa') }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <div class="mb-4">
+                                <input type="text"
+                                    class="form-control form-control-lg text-center fw-bold"
+                                    name="code" placeholder="000 000" maxlength="6" required autocomplete="off"
+                                    style="font-size: 1.5rem; letter-spacing: 0.5rem;">
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                                    <i class="bi bi-shield-check me-2"></i>Verificar e Ativar
+                                </button>
+                                <a href="{{ url_for('user.profile') }}" class="btn btn-light text-muted">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

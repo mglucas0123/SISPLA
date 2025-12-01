@@ -145,7 +145,7 @@
                                     </div>
                                     <div class="col-md-6 nir-detail-item">
                                         <label class="form-label">Data e Hora do Aceite</label>
-                                        <p class="fw-bold">{{ record.susfacil_accept_datetime.strftime('%d/%m/%Y às %H:%M') if record.susfacil_accept_datetime else '-' }}</p>
+                                        <p class="fw-bold">{{ record.susfacil_accept_datetime | format_date_time if record.susfacil_accept_datetime else '-' }}</p>
                                     </div>
                                     <div class="col-md-12 nir-detail-item">
                                         <label class="form-label">Protocolo Gerado</label>
@@ -174,7 +174,7 @@
                                     {% if record.admission_date %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Data de Internação</label>
-                                        <p class="fw-bold">{{ record.admission_date | format_date_short }}</p>
+                                        <p class="fw-bold">{{ record.admission_date | format_date_time }}</p>
                                     </div>
                                     {% endif %}
                                     {% if record.entry_type %}
@@ -376,7 +376,7 @@
                                     {% if record.discharge_date %}
                                     <div class="col-md-4 nir-detail-item">
                                         <label class="form-label">Data da Alta</label>
-                                        <p>{{ record.discharge_date.strftime('%d/%m/%Y') }}</p>
+                                        <p>{{ record.discharge_date | format_date_time }}</p>
                                     </div>
                                     {% endif %}
                                     {% if record.total_days_admitted is not none or (record.admission_date and record.discharge_date) %}
@@ -782,7 +782,7 @@
                 
                 <div class="print-info">
                     <span><strong>Operador:</strong> {{ record.operator.name }}</span>
-                    <span><strong>Data de Criação:</strong> {{ record.creation_date.strftime('%d/%m/%Y às %H:%M') if record.creation_date else '-' }}</span>
+                                    <span><strong>Data de Criação:</strong> {{ record.creation_date | format_date_time if record.creation_date else '-' }}</span>
                     <span><strong>Impressão:</strong> ${new Date().toLocaleString('pt-BR')}</span>
                 </div>
 
@@ -840,7 +840,7 @@
                         </div>
                         <div class="field">
                             <div class="field-label">Data/Hora Aceite</div>
-                            <div class="field-value">{{ record.susfacil_accept_datetime.strftime('%d/%m/%Y %H:%M') if record.susfacil_accept_datetime else '-' }}</div>
+                            <div class="field-value">{{ record.susfacil_accept_datetime | format_date_time if record.susfacil_accept_datetime else '-' }}</div>
                         </div>
                         <div class="field">
                             <div class="field-label">Protocolo</div>
@@ -856,7 +856,7 @@
                     <div class="section-content">
                         <div class="field">
                             <div class="field-label">Data Internação</div>
-                            <div class="field-value">{{ record.admission_date.strftime('%d/%m/%Y') if record.admission_date else '-' }}</div>
+                            <div class="field-value">{{ record.admission_date | format_date_time if record.admission_date else '-' }}</div>
                         </div>
                         <div class="field">
                             <div class="field-label">Tipo de Entrada</div>
@@ -980,7 +980,7 @@
                         </div>
                         <div class="field">
                             <div class="field-label">Data Alta</div>
-                            <div class="field-value">{{ record.discharge_date.strftime('%d/%m/%Y') if record.discharge_date else '-' }}</div>
+                            <div class="field-value">{{ record.discharge_date | format_date_time if record.discharge_date else '-' }}</div>
                         </div>
                         <div class="field">
                             <div class="field-label">Dias Internado</div>

@@ -41,7 +41,7 @@ def handle_database_error(operation_name):
 @login_required
 @admin_required
 def permissions_page():
-    """Página principal de gerenciamento de roles e permissões"""
+    """Página principal de gerenciamento de roles e permissões (sem alias)"""
     from app.models import Permission
     
     roles = Role.query.order_by(Role.name.asc()).all()
@@ -65,6 +65,14 @@ def permissions_page():
                          catalog=catalog, 
                          catalog_details=catalog_details,
                          catalog_names=catalog_names)
+
+
+@roles_bp.route('/roles-permissions', methods=['GET'])
+@login_required
+@admin_required
+def roles_permissions():
+    """Alias para permissions_page para compatibilidade"""
+    return permissions_page()
 
 
 @roles_bp.route('/permissions/<int:role_id>', methods=['POST'])
@@ -102,6 +110,72 @@ def update_role_permissions(role_id: int):
 
     flash(f"Permissões da role '{role.name}' atualizadas!", 'success')
     return redirect(url_for('admin.roles.permissions_page'))
+
+
+@roles_bp.route('/permissions/<int:role_id>/manage', methods=['GET'])
+@login_required
+@admin_required
+def manage_role_permissions(role_id: int):
+    """Página dedicada para gerenciar permissões de uma role específica"""
+    from app.models import Permission
+    
+    role = Role.query.get_or_404(role_id)
+    catalog = PermissionCatalog.query.order_by(PermissionCatalog.name.asc()).all()
+    
+    permissions_by_module = {}
+    module_names = {
+        'nir': 'NIR - Núcleo Interno de Regulação',
+        'passagem_plantao': 'Passagem de Plantão',
+        'procedures': 'Procedimentos Médicos',
+        'admin': 'Administração',
+        'geral': 'Geral',
+        'suppliers': 'Fornecedores',
+        'training': 'Treinamentos',
+        'repository': 'Repositório',
+        'notices': 'Comunicados',
+        'custom': 'Outras Permissões'
+    }
+    
+    for cat_perm in catalog:
+        perm_obj = Permission.query.filter_by(name=cat_perm.name).first()
+        
+        module = 'custom'
+        if perm_obj and perm_obj.module:
+            module = perm_obj.module
+        else:
+            perm_name = cat_perm.name.lower()
+            if '-nir' in perm_name or 'registro-nir' in perm_name:
+                module = 'nir'
+            elif '-plantao' in perm_name:
+                module = 'passagem_plantao'
+            elif 'procedure' in perm_name:
+                module = 'procedures'
+            elif 'manage-' in perm_name or 'admin-' in perm_name:
+                module = 'admin'
+            elif 'fornecedor' in perm_name or 'supplier' in perm_name:
+                module = 'suppliers'
+            elif 'training' in perm_name or 'treinamento' in perm_name:
+                module = 'training'
+            elif 'repository' in perm_name or 'repositorio' in perm_name:
+                module = 'repository'
+            elif 'notice' in perm_name or 'comunicado' in perm_name:
+                module = 'notices'
+            elif 'access-' in perm_name or 'change-' in perm_name:
+                module = 'geral'
+        
+        if module not in permissions_by_module:
+            permissions_by_module[module] = []
+        permissions_by_module[module].append(cat_perm.name)
+    
+    sorted_modules = dict(sorted(permissions_by_module.items()))
+    
+    current_permissions = role.permissions_list or []
+    
+    return render_template('manage_role_permissions.html',
+                         role=role,
+                         permissions_by_module=sorted_modules,
+                         module_names=module_names,
+                         current_permissions=current_permissions)
 
 
 @roles_bp.route('/create', methods=['POST'])

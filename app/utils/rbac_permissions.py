@@ -32,6 +32,18 @@ class RBACManager:
             {'name': 'access-panel', 'description': 'Acessar o painel principal', 'module': 'geral'},
             {'name': 'change-password', 'description': 'Alterar a própria senha', 'module': 'geral'},
 
+            # Módulo de Fornecedores
+            {'name': 'visualizar-fornecedores', 'description': 'Visualizar lista de fornecedores e suas avaliações', 'module': 'suppliers'},
+            {'name': 'criar-fornecedor', 'description': 'Criar novo fornecedor no sistema', 'module': 'suppliers'},
+            {'name': 'editar-fornecedor', 'description': 'Editar dados de fornecedores', 'module': 'suppliers'},
+            {'name': 'excluir-fornecedor', 'description': 'Excluir fornecedores do sistema', 'module': 'suppliers'},
+            {'name': 'avaliar-fornecedor', 'description': 'Criar e submeter avaliações de fornecedores', 'module': 'suppliers'},
+            {'name': 'editar-avaliacao-fornecedor', 'description': 'Editar avaliações de fornecedores já criadas', 'module': 'suppliers'},
+            {'name': 'excluir-avaliacao-fornecedor', 'description': 'Excluir avaliações de fornecedores', 'module': 'suppliers'},
+            {'name': 'gerenciar-rastreamento-fornecedor', 'description': 'Criar e gerenciar rastreamento de problemas com fornecedores', 'module': 'suppliers'},
+            {'name': 'assign-supplier-evaluators', 'description': 'Atribuir gestores responsáveis por avaliar fornecedores', 'module': 'suppliers'},
+            {'name': 'verificar-problemas-fornecedor', 'description': 'Verificar e fechar problemas identificados em fornecedores', 'module': 'suppliers'},
+
             {'name': 'admin-total', 'description': 'Acesso irrestrito a todas as funcionalidades do sistema', 'module': 'admin'},
         ]
 
@@ -58,7 +70,9 @@ class RBACManager:
                 'permissions': ['admin-total']},
             
             {'name': 'Coordenação', 'description': 'Responsável pela coordenação geral', 'sector': 'COORDENACAO',
-                'permissions': ['excluir-registro-nir', 'excluir-registro-plantao', 'editar-registro-nir', 'salvar-registro-nir', 'manage_procedures', 'manage-users', 'view-users']},
+                'permissions': ['excluir-registro-nir', 'excluir-registro-plantao', 'editar-registro-nir', 'salvar-registro-nir', 'manage_procedures', 'manage-users', 'view-users', 
+                               'visualizar-fornecedores', 'criar-fornecedor', 'editar-fornecedor', 'excluir-fornecedor', 'avaliar-fornecedor', 'editar-avaliacao-fornecedor', 
+                               'excluir-avaliacao-fornecedor', 'gerenciar-rastreamento-fornecedor', 'assign-supplier-evaluators', 'verificar-problemas-fornecedor']},
             
             {'name': 'Nir', 'description': 'Núcleo Interno de Regulação', 'sector': 'NIR',
                 'permissions': ['criar-registro-nir', 'editar-registro-nir', 'salvar-registro-nir', 'access-panel', 'change-password']},
@@ -70,7 +84,10 @@ class RBACManager:
                 'permissions': ['salvar-registro-nir', 'criar-registro-plantao', 'access-panel', 'change-password']},
             
             {'name': 'Faturamento', 'description': 'Responsável pelo faturamento das contas hospitalares', 'sector': 'FATURAMENTO',
-                'permissions': ['editar-registro-nir', 'salvar-registro-nir', 'manage_procedures', 'access-panel', 'change-password']}
+                'permissions': ['editar-registro-nir', 'salvar-registro-nir', 'manage_procedures', 'access-panel', 'change-password']},
+            
+            {'name': 'Gestor de Fornecedores', 'description': 'Responsável por avaliar e gerenciar fornecedores', 'sector': 'SUPRIMENTOS',
+                'permissions': ['visualizar-fornecedores', 'avaliar-fornecedor', 'editar-avaliacao-fornecedor', 'gerenciar-rastreamento-fornecedor', 'access-panel', 'change-password']}
         ]
         
         for role_data in default_roles:

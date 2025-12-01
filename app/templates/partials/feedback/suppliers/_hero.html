@@ -1,0 +1,43 @@
+{% macro hero(title, subtitle='', stats=None, badges=None, actions=None) %}
+<div class="dashboard-hero">
+    <div class="container-fluid">
+        <div class="dashboard-hero-content">
+            <div class="dashboard-hero-title-section">
+                <h1 class="dashboard-hero-title">
+                    {{ title }}
+                </h1>
+                {% if subtitle %}
+                <p class="dashboard-hero-subtitle">{{ subtitle }}</p>
+                {% endif %}
+                {% if badges %}
+                <div class="hero-badges">
+                    {% for badge in badges %}
+                    <span class="badge {{ badge.class }}">{{ badge.label }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="dashboard-hero-extras">
+                {% if stats %}
+                <div class="dashboard-hero-stats">
+                    {% for stat in stats %}
+                    <div class="hero-stat-item">
+                        {% if stat.icon %}
+                        <i class="{{ stat.icon }}"></i>
+                        {% endif %}
+                        <span class="stat-value">{{ stat.value }}</span>
+                        <span class="stat-label">{{ stat.label }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if actions %}
+                <div class="dashboard-hero-actions">
+                    {{ actions|safe }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

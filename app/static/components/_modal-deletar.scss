@@ -1,0 +1,55 @@
+$primary-color: #ef4444;
+$secondary-color: #dc2626;
+
+.modal-deletar {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.modal-deletar .modal-header-deletar {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    border: none;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.modal-deletar .modal-header-deletar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.22) 0 70px, transparent 41px),
+        radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.22) 0 38px, transparent 31px),
+        radial-gradient(circle at 0% 35%, rgba(255, 255, 255, 0.22) 0 80px, transparent 25px);
+    background-repeat: no-repeat;
+    background-size: auto;
+    mix-blend-mode: overlay;
+}
+
+.modal-deletar .modal-header-deletar .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    position: relative;
+    z-index: 3;
+}
+
+.modal-deletar .modal-header-deletar .btn-close:hover {
+    opacity: 1;
+}
+
+.modal-deletar .modal-header-deletar .modal-title {
+    color: #fff;
+    font-weight: bold;
+    position: relative;
+    z-index: 3;
+}
+
+.modal-deletar .modal-body {
+    background: #f4efef;
+}

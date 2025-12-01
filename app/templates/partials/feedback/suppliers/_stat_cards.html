@@ -1,0 +1,32 @@
+{% macro stat_card(title, value, icon=None, badge=None, trend=None, footer=None) %}
+<div class="supplier-stat-card">
+    <div class="stat-card-header">
+        <div class="stat-card-title">
+            {% if icon %}<i class="{{ icon }} me-2"></i>{% endif %}
+            <span>{{ title }}</span>
+        </div>
+        {% if badge %}
+        <span class="badge {{ badge.class }}">{{ badge.label }}</span>
+        {% endif %}
+    </div>
+    <div class="stat-card-value">{{ value }}</div>
+    {% if trend %}
+    <div class="stat-card-trend {{ trend.class }}">
+        <i class="{{ trend.icon }} me-1"></i>{{ trend.label }}
+    </div>
+    {% endif %}
+    {% if footer %}
+    <div class="stat-card-footer text-muted">{{ footer }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro stat_card_grid(cards, columns=3) %}
+<div class="row g-3">
+    {% for card in cards %}
+    <div class="col-md-{{ 12 // columns }}">
+        {{ stat_card(card.title, card.value, card.icon, card.badge, card.trend, card.footer) }}
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}

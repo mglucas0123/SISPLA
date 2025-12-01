@@ -1,0 +1,25 @@
+{% extends "navbar.html" %}
+
+{% block title %}{% block supplier_title %}Gestão de Fornecedores - SISPLA{% endblock %}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+{% block supplier_styles %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+{% include 'partials/_flash_messages.html' %}
+
+<div class="container-fluid px-4 py-4 supplier-page">
+    {% block supplier_hero %}{% endblock %}
+
+    <div class="supplier-content">
+        {% block supplier_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% block supplier_scripts %}{% endblock %}
+{% endblock %}

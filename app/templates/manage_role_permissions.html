@@ -1,0 +1,217 @@
+{% extends "navbar.html" %}
+{% block title %} Gerenciar Permissões - {{ role.name }} {% endblock %}
+
+{% block content %}
+<div class="manage-role-permissions-page">
+    <div class="container-fluid">
+        {% include 'partials/_flash_messages.html' %}
+
+        <div class="permissions-header">
+            <div class="header-content">
+                <div class="back-section">
+                    <a href="{{ url_for('admin.roles.roles_permissions') }}" class="back-link">
+                        <i class="bi bi-arrow-left"></i> Voltar para Roles
+                    </a>
+                </div>
+                <div class="title-section">
+                    <h2>
+                        <i class="bi bi-person-badge"></i>
+                        Permissões de <span class="role-name">{{ role.name }}</span>
+                    </h2>
+                    {% if role.description %}
+                    <p class="subtitle">{{ role.description }}</p>
+                    {% endif %}
+                    {% if role.sector %}
+                    <span class="sector-badge">{{ role.sector }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Warning -->
+        {% set is_admin_role = role.name and role.name|lower in ('administrador','admin') %}
+        {% if is_admin_role %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Atenção:</strong> As permissões da role <strong>Administrador</strong> não podem ser alteradas.
+        </div>
+        {% endif %}
+
+        <div class="filters-card card">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-funnel me-1"></i>Filtrar permissões
+                        </label>
+                        <input type="text" class="form-control" id="permissionFilter"
+                            placeholder="Digite para filtrar... (ex: nir, fornecedor)">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2 justify-content-end">
+                            {% if not is_admin_role %}
+                            <button type="button" class="btn btn-outline-primary" id="selectAllPermissions">
+                                <i class="bi bi-check-all me-1"></i>Selecionar todas
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="clearAllPermissions">
+                                <i class="bi bi-x-circle me-1"></i>Limpar todas
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.roles.update_role_permissions', role_id=role.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="permissions-list-container">
+                {% if permissions_by_module %}
+                {% for module, perms in permissions_by_module.items() %}
+                <div class="permission-module-section" data-module="{{ module }}">
+                    <div class="permission-module-header">
+                        <h5 class="permission-module-title">
+                            <i class="bi bi-folder-fill me-2"></i>{{ module_names.get(module, module.capitalize()) }}
+                            <span class="badge bg-secondary ms-2">{{ perms|length }}</span>
+                        </h5>
+                        {% if not is_admin_role %}
+                        <button type="button" class="btn btn-sm btn-outline-primary select-module-btn"
+                            data-module="{{ module }}">
+                            <i class="bi bi-check-all"></i> Selecionar todos
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="permission-module-items">
+                        {% for perm in perms %}
+                        <div class="perm-item" data-perm="{{ perm|lower }}">
+                            <div class="form-check">
+                                <input class="form-check-input perm-checkbox" type="checkbox" name="permissions"
+                                    value="{{ perm }}" id="perm_{{ module }}_{{ loop.index }}" {% if perm in
+                                    current_permissions %}checked{% endif %} {% if is_admin_role %}disabled{% endif %}>
+                                <label class="form-check-label" for="perm_{{ module }}_{{ loop.index }}">
+                                    {{ perm }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state text-center py-5">
+                    <div class="empty-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <h4>Nenhuma permissão disponível</h4>
+                    <p>Adicione permissões ao catálogo para poder atribuí-las às roles.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if not is_admin_role and permissions_by_module %}
+            <div class="actions-footer">
+                <div class="actions-content">
+                    <span class="selected-count">
+                        <i class="bi bi-check2-square me-1"></i>
+                        <span id="selectedCount">{{ current_permissions|length }}</span> permissões selecionadas
+                    </span>
+                    <div class="actions-buttons">
+                        <a href="{{ url_for('admin.roles.roles_permissions') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle-fill me-1"></i>Salvar mudanças
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    (function () {
+        console.log('Script de gerenciamento de permissões carregado!');
+
+        function updatePermissionCount() {
+            const checkedCount = document.querySelectorAll('.perm-checkbox:checked:not(:disabled)').length;
+            const badge = document.getElementById('selectedCount');
+            if (badge) {
+                badge.textContent = checkedCount;
+            }
+        }
+
+        const permissionFilter = document.getElementById('permissionFilter');
+        if (permissionFilter) {
+            permissionFilter.addEventListener('input', function () {
+                const q = (this.value || '').toLowerCase().trim();
+                document.querySelectorAll('.perm-item').forEach(item => {
+                    const perm = (item.getAttribute('data-perm') || '').toLowerCase();
+                    item.style.display = (!q || perm.includes(q)) ? '' : 'none';
+                });
+
+                document.querySelectorAll('.permission-module-section').forEach(section => {
+                    const visibleItems = section.querySelectorAll('.perm-item[style*="display: none"]').length;
+                    const totalItems = section.querySelectorAll('.perm-item').length;
+                    section.style.display = (visibleItems === totalItems) ? 'none' : '';
+                });
+            });
+        }
+
+        const selectAllBtn = document.getElementById('selectAllPermissions');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', function () {
+                document.querySelectorAll('.perm-checkbox:not(:disabled)').forEach(chk => {
+                    if (chk.closest('.perm-item').style.display !== 'none') {
+                        chk.checked = true;
+                    }
+                });
+                updatePermissionCount();
+            });
+        }
+
+        const clearAllBtn = document.getElementById('clearAllPermissions');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', function () {
+                document.querySelectorAll('.perm-checkbox:not(:disabled)').forEach(chk => {
+                    chk.checked = false;
+                });
+                updatePermissionCount();
+            });
+        }
+
+        document.querySelectorAll('.select-module-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const module = this.dataset.module;
+                const section = document.querySelector(`.permission-module-section[data-module="${module}"]`);
+                if (section) {
+                    const checkboxes = section.querySelectorAll('.perm-checkbox:not(:disabled)');
+                    const visibleCheckboxes = Array.from(checkboxes).filter(cb =>
+                        cb.closest('.perm-item').style.display !== 'none'
+                    );
+                    const allChecked = visibleCheckboxes.every(cb => cb.checked);
+
+                    visibleCheckboxes.forEach(checkbox => {
+                        checkbox.checked = !allChecked;
+                    });
+
+                    updatePermissionCount();
+                }
+            });
+        });
+
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('perm-checkbox')) {
+                updatePermissionCount();
+            }
+        });
+
+        updatePermissionCount();
+    })();
+</script>
+{% endblock %}

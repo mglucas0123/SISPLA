@@ -320,13 +320,24 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('Script iniciado!');
     const contentType = '{{ content_type }}';
     const video = document.getElementById('course-video');
     const contentWrapper = document.getElementById('course-content-wrapper');
     const statusContainer = document.getElementById('quiz-container');
     const courseId = '{{ course.id }}';
-    const hasQuiz = {{ has_quiz | default(false, true) | tojson }};
+    const hasQuiz = {{ (quiz and quiz.questions|length > 0) | tojson }};
     let isCompleted = {{ is_completed | tojson }};
+
+    console.log('Variáveis:', {
+        contentType,
+        video: !!video,
+        contentWrapper: !!contentWrapper,
+        statusContainer: !!statusContainer,
+        courseId,
+        hasQuiz,
+        isCompleted
+    });
 
     const saveProgress = (timestamp, finished = false) => {
         return fetch('/course/' + courseId + '/progress', {
@@ -350,24 +361,46 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(() => ({ success: false }));
     };
 
-    if (contentType === 'video' && video && !isCompleted) {
+    // Se contentType estiver vazio ou for 'video', e o elemento video existir
+    if ((contentType === 'video' || contentType === '') && video && !isCompleted) {
+        console.log('Configurando listeners do vídeo...');
         let lastUpdateTime = 0;
 
         video.addEventListener('timeupdate', () => {
             const currentTime = Math.floor(video.currentTime);
             if (currentTime > lastUpdateTime + 9) {
+                console.log('Salvando progresso em:', currentTime);
                 saveProgress(currentTime);
                 lastUpdateTime = currentTime;
             }
         });
 
         video.addEventListener('ended', () => {
-            saveProgress(video.duration, true).then(() => {
+            console.log('Vídeo terminou! hasQuiz:', hasQuiz, 'statusContainer:', statusContainer);
+            saveProgress(video.duration, true).then((data) => {
+                console.log('saveProgress retornou:', data);
+                // Se há quiz, sempre mostrar após o vídeo terminar
+                if (hasQuiz && statusContainer) {
+                    console.log('Mostrando quiz...');
+                    statusContainer.style.display = 'block';
+                    // Scroll suave para o quiz
+                    statusContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                // Se o curso foi marcado como completo (sem quiz), esconder o vídeo
+                if (data.completed && contentWrapper) {
+                    contentWrapper.style.display = 'none';
+                }
+            }).catch(error => {
+                console.error('Erro ao salvar progresso:', error);
+                // Mesmo com erro, mostrar o quiz se existir
                 if (hasQuiz && statusContainer) {
                     statusContainer.style.display = 'block';
+                    statusContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
+
+        console.log('Listener ended adicionado ao vídeo');
 
         window.addEventListener('beforeunload', () => {
             if (!video.ended) {

@@ -37,7 +37,8 @@
                     </div>
                 </div>
                 <div class="card-content-section">
-                    <p class="module-desc">Gerenciamento e acompanhamento de notificações de internação por setor e especialidade</p>
+                    <p class="module-desc">Gerenciamento e acompanhamento de notificações de internação por setor e
+                        especialidade</p>
                 </div>
                 <div class="card-actions-section">
                     {% for role in current_user.roles %}
@@ -72,13 +73,16 @@
                     <p class="module-desc">Sistema de registro e comunicação entre equipes nas transições de turnos</p>
                 </div>
                 <div class="card-actions-section">
-                    {% if current_user.has_permission('criar-registro-plantao') or current_user.has_permission('admin-total') %}
-                    <a href="{{ url_for('shift_handover.new_shift_handover_record') }}" class="btn-enterprise btn-primary-enterprise">
+                    {% if current_user.has_permission('criar-registro-plantao') or
+                    current_user.has_permission('admin-total') %}
+                    <a href="{{ url_for('shift_handover.new_shift_handover_record') }}"
+                        class="btn-enterprise btn-primary-enterprise">
                         <i class="bi bi-plus-circle"></i>
                         <span>Novo Registro</span>
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('shift_handover.shift_handover_records') }}" class="btn-enterprise btn-secondary-enterprise">
+                    <a href="{{ url_for('shift_handover.shift_handover_records') }}"
+                        class="btn-enterprise btn-secondary-enterprise">
                         <i class="bi bi-list-check"></i>
                         <span>Ver Registros</span>
                     </a>
@@ -99,10 +103,12 @@
                     </div>
                 </div>
                 <div class="card-content-section">
-                    <p class="module-desc">Central de armazenamento e organização de documentos e arquivos institucionais</p>
+                    <p class="module-desc">Central de armazenamento e organização de documentos e arquivos
+                        institucionais</p>
                 </div>
                 <div class="card-actions-section">
-                    <a href="{{ url_for('repository.repository_list_page') }}" class="btn-enterprise btn-primary-enterprise">
+                    <a href="{{ url_for('repository.repository_list_page') }}"
+                        class="btn-enterprise btn-primary-enterprise">
                         <i class="bi bi-folder-open"></i>
                         <span>Acessar Repositório</span>
                     </a>
@@ -135,6 +141,7 @@
         </div>
 
         <!-- Avaliação de Fornecedores -->
+        {% if current_user.has_permission('visualizar-fornecedores') or current_user.has_permission('admin-total') %}
         <div class="col-xl-3 col-lg-6">
             <div class="enterprise-module-card card-accent-info" data-aos="fade-up" data-aos-delay="400">
                 <div class="card-header-section">
@@ -147,97 +154,128 @@
                     </div>
                 </div>
                 <div class="card-content-section">
-                    <p class="module-desc">Sistema de avaliação mensal de fornecedores e prestadores de serviços com ranking de desempenho</p>
+                    <p class="module-desc">Sistema de avaliação mensal de fornecedores e prestadores de serviços com
+                        ranking de desempenho</p>
                 </div>
                 <div class="card-actions-section">
                     <a href="{{ url_for('suppliers.dashboard') }}" class="btn-enterprise btn-primary-enterprise">
                         <i class="bi bi-graph-up"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="{{ url_for('suppliers.evaluate_supplier') }}" class="btn-enterprise btn-secondary-enterprise">
+                    <a href="{{ url_for('suppliers.evaluate_supplier') }}"
+                        class="btn-enterprise btn-secondary-enterprise">
                         <i class="bi bi-clipboard-check"></i>
                         <span>Avaliar</span>
                     </a>
                 </div>
             </div>
         </div>
+        {% endif %}
+
+        <!-- Avaliação de Colaboradores -->
+        <div class="col-xl-3 col-lg-6">
+            <div class="enterprise-module-card card-accent-primary" data-aos="fade-up" data-aos-delay="500">
+                <div class="card-header-section">
+                    <div class="module-icon-enterprise primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="module-meta">
+                        <h3 class="module-name">Colaboradores</h3>
+                        <span class="module-category">Avaliacao e Ranking</span>
+                    </div>
+                </div>
+                <div class="card-content-section">
+                    <p class="module-desc">Acompanhe o ranking e destaques dos colaboradores avaliados.</p>
+                </div>
+                <div class="card-actions-section">
+                    <a href="{{ url_for('employee_evaluation.dashboard') }}" class="btn-enterprise btn-primary-enterprise">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('employee_evaluation.evaluate') }}" class="btn-enterprise btn-secondary-enterprise">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Avaliar</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
-
 <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-megaphone-fill text-info me-2"></i>
-                    Mural de Avisos
-                </h3>
-                {% if notice %}
-                <span class="badge bg-info text-white px-3 py-2">{{ notice|length }} avisos</span>
-                {% endif %}
-            </div>
-
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0">
+                <i class="bi bi-megaphone-fill text-info me-2"></i>
+                Mural de Avisos
+            </h3>
             {% if notice %}
-            <div class="notices-container">
-                {% for n in notice %}
-                <div class="notice-card mb-4">
-                    {% if n.notice_type == 'IMAGE' and n.image_filename %}
-                    <div class="notice-header">
-                        <div class="notice-meta">
-                            <span class="notice-date">
-                                <i class="bi bi-calendar3 me-1"></i>
-                                {{ n.date_registry | format_date_time }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="notice-content text-center">
-                        <div class="notice-image-container">
-                            <a href="#" class="d-block position-relative" data-bs-toggle="modal"
-                                data-bs-target="#imageNoticeModal"
-                                data-img-src="{{ url_for('admin.notices.serve_notice_image', filename=n.image_filename) }}">
-                                <img src="{{ url_for('admin.notices.serve_notice_image', filename=n.image_filename) }}"
-                                    class="img-fluid rounded-3 shadow-sm notice-image" alt="Aviso em imagem">
-                                <div class="image-overlay">
-                                    <i class="bi bi-arrows-fullscreen text-white fs-2"></i>
-                                    <p class="text-white mt-2 mb-0">Clique para ampliar</p>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="notice-header">
-                        <h5 class="notice-title">{{ n.title }}</h5>
-                        <div class="notice-meta">
-                            <span class="notice-date">
-                                <i class="bi bi-calendar3 me-1"></i>
-                                {{ n.date_registry | format_date_time }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="notice-content">
-                        <div class="notice-text">{{ n.content | safe }}</div>
-                    </div>
-                    {% endif %}
-
-                    <div class="notice-footer">
-                        <div class="author-info">
-                            <i class="bi bi-person-circle me-2"></i>
-                            <span>Publicado por <strong>{{ n.author.name }}</strong></span>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state text-center py-5">
-                <div class="empty-icon mb-3">
-                    <i class="bi bi-megaphone text-muted" style="font-size: 4rem;"></i>
-                </div>
-                <h5 class="text-muted mb-2">Nenhum aviso no momento</h5>
-                <p class="text-muted">Os avisos importantes aparecerão aqui quando forem publicados.</p>
-            </div>
+            <span class="badge bg-info text-white px-3 py-2">{{ notice|length }} avisos</span>
             {% endif %}
         </div>
+
+        {% if notice %}
+        <div class="notices-container">
+            {% for n in notice %}
+            <div class="notice-card mb-4">
+                {% if n.notice_type == 'IMAGE' and n.image_filename %}
+                <div class="notice-header">
+                    <div class="notice-meta">
+                        <span class="notice-date">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{ n.date_registry | format_date_time }}
+                        </span>
+                    </div>
+                </div>
+                <div class="notice-content text-center">
+                    <div class="notice-image-container">
+                        <a href="#" class="d-block position-relative" data-bs-toggle="modal"
+                            data-bs-target="#imageNoticeModal"
+                            data-img-src="{{ url_for('admin.notices.serve_notice_image', filename=n.image_filename) }}">
+                            <img src="{{ url_for('admin.notices.serve_notice_image', filename=n.image_filename) }}"
+                                class="img-fluid rounded-3 shadow-sm notice-image" alt="Aviso em imagem">
+                            <div class="image-overlay">
+                                <i class="bi bi-arrows-fullscreen text-white fs-2"></i>
+                                <p class="text-white mt-2 mb-0">Clique para ampliar</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="notice-header">
+                    <h5 class="notice-title">{{ n.title }}</h5>
+                    <div class="notice-meta">
+                        <span class="notice-date">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{ n.date_registry | format_date_time }}
+                        </span>
+                    </div>
+                </div>
+                <div class="notice-content">
+                    <div class="notice-text">{{ n.content | safe }}</div>
+                </div>
+                {% endif %}
+
+                <div class="notice-footer">
+                    <div class="author-info">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span>Publicado por <strong>{{ n.author.name }}</strong></span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state text-center py-5">
+            <div class="empty-icon mb-3">
+                <i class="bi bi-megaphone text-muted" style="font-size: 4rem;"></i>
+            </div>
+            <h5 class="text-muted mb-2">Nenhum aviso no momento</h5>
+            <p class="text-muted">Os avisos importantes aparecerão aqui quando forem publicados.</p>
+        </div>
+        {% endif %}
     </div>
+</div>
 </div>
 <div class="modal fade" id="imageNoticeModal" tabindex="-1" aria-labelledby="imageNoticeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -313,19 +351,19 @@
         function updateDateTime() {
             const dateElement = document.getElementById('currentDate');
             const timeElement = document.getElementById('currentTime');
-            
+
             if (dateElement) {
                 const options = { day: '2-digit', month: 'short', year: 'numeric' };
                 const today = new Date().toLocaleDateString('pt-BR', options);
                 dateElement.textContent = today.replace('.', '').toUpperCase();
             }
-            
+
             if (timeElement) {
                 const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 timeElement.textContent = time;
             }
         }
-        
+
         updateDateTime();
         setInterval(updateDateTime, 60000);
 
@@ -342,7 +380,7 @@
                 card.style.transform = 'translateY(0)';
             }, index * 100);
         });
-        
+
         const heroCarousel = document.getElementById('heroCarousel');
         if (heroCarousel) {
             const bsCarousel = new bootstrap.Carousel(heroCarousel, {
@@ -350,11 +388,11 @@
                 pause: 'hover',
                 wrap: true
             });
-            
+
             heroCarousel.addEventListener('slide.bs.carousel', function (e) {
                 const activeSlide = e.relatedTarget;
                 const iconBox = activeSlide.querySelector('.hero-icon-box');
-                
+
                 if (iconBox) {
                     iconBox.style.animation = 'none';
                     setTimeout(() => {
@@ -362,8 +400,8 @@
                     }, 10);
                 }
             });
-            
-            document.addEventListener('keydown', function(e) {
+
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'ArrowLeft') {
                     bsCarousel.prev();
                 } else if (e.key === 'ArrowRight') {
@@ -372,7 +410,6 @@
             });
         }
 
-        // Modal de imagem - atualizar src quando abrir
         const imageNoticeModal = document.getElementById('imageNoticeModal');
         if (imageNoticeModal) {
             imageNoticeModal.addEventListener('show.bs.modal', function (event) {

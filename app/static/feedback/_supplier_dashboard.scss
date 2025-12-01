@@ -1,0 +1,20 @@
+// Styles for supplier dashboard components (hero, ranking, charts)
+// TODO: migrate inline styles from templates into this partial.
+
+.supplier-dashboard-container {
+    position: relative;
+}
+
+.donut-tooltip {
+    position: fixed;
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 9999;
+    max-width: 300px;
+    border-left: 4px solid #333;
+}

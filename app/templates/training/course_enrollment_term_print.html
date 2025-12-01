@@ -224,7 +224,7 @@
                 </tr>
                 <tr>
                     <th>Data do aceite</th>
-                    <td>{{ enrollment.accepted_at.strftime('%d/%m/%Y %H:%M') if enrollment.accepted_at else '---' }}</td>
+                    <td>{{ enrollment.accepted_at | format_date_time if enrollment.accepted_at else '---' }}</td>
                 </tr>
                 <tr>
                     <th>Duração estimada</th>
@@ -294,7 +294,7 @@
         </div>
 
         <div class="print-footer">
-            Documento emitido em {{ enrollment.accepted_at.strftime('%d/%m/%Y %H:%M') if enrollment.accepted_at else '____/____/________ --:--' }} |
+            Documento emitido em {{ enrollment.accepted_at | format_date_time if enrollment.accepted_at else '____/____/________ --:--' }} |
             Arquive este edital junto ao prontuário do colaborador.
         </div>
     </div>

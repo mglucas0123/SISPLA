@@ -44,7 +44,7 @@
                         <td class="text-center">
                             {% if record.admission_date %}
                             <div>
-                                <span class="fw-semibold">{{ record.admission_date.strftime('%d/%m/%Y') }}</span>
+                                <span class="fw-semibold">{{ record.admission_date | format_date_time }}</span>
                                 {% if record.total_days_admitted %}
                                 <small class="text-muted d-block">{{ record.total_days_admitted }} dias</small>
                                 {% endif %}

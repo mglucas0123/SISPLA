@@ -1,0 +1,31 @@
+{% macro status_badge(label, variant='bg-secondary', icon=None) %}
+<span class="badge {{ variant }} rounded-pill">
+    {% if icon %}<i class="bi bi-{{ icon }} me-1"></i>{% endif %}
+    {{ label }}
+</span>
+{% endmacro %}
+
+{% macro score_badge(score) %}
+{% set variant = 'good' %}
+{% if score >= 80 %}
+    {% set variant = 'excellent' %}
+{% elif score < 60 %}
+    {% set variant = 'poor' %}
+{% endif %}
+<span class="score-badge-sm {{ variant }}">{{ '%.0f'|format(score) }}%</span>
+{% endmacro %}
+
+{% macro priority_badge(priority) %}
+{% if not priority %}
+    {% return %}
+{% endif %}
+{% set map = {
+    'baixa': 'bg-secondary',
+    'média': 'bg-info',
+    'media': 'bg-info',
+    'alta': 'bg-warning',
+    'crítica': 'bg-danger',
+    'critica': 'bg-danger'
+} %}
+<span class="badge {{ map.get(priority.lower(), 'bg-secondary') }} rounded-pill">{{ priority.upper() }}</span>
+{% endmacro %}

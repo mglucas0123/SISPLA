@@ -1,11 +1,10 @@
-﻿
-import enum
+﻿import enum
 import os
 from flask import url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime
-from sqlalchemy.ext.mutable import MutableList
+from datetime import datetime, timezone
+from sqlalchemy.ext.mutable import MutableList, MutableDict
 from sqlalchemy import JSON
 
 db = SQLAlchemy()
@@ -30,13 +29,21 @@ repository_access = db.Table('repository_access',
     db.Column('repository_id', db.Integer, db.ForeignKey('repositories.id'), primary_key=True)
 )
 
+# Tabela de associação entre Usuários e Fornecedores
+supplier_evaluators = db.Table('supplier_evaluators',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('supplier_id', db.Integer, db.ForeignKey('suppliers.id'), primary_key=True),
+    db.Column('assigned_at', db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False),
+    db.Column('assigned_by_id', db.Integer, db.ForeignKey('users.id'), nullable=True)
+)
+
 class Permission(db.Model):
     __tablename__ = 'permissions'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.String(200), nullable=True)
     module = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     def __repr__(self):
         return f'<Permission {self.name}>'
@@ -48,7 +55,7 @@ class PermissionCatalog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.String(200), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     def __repr__(self):
         return f'<PermissionCatalog {self.name}>'
@@ -61,7 +68,7 @@ class Role(db.Model):
     description = db.Column(db.String(200), nullable=True)
     sector = db.Column(db.String(50), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     permissions = db.relationship('Permission', secondary=role_permissions, backref='roles')
     
@@ -88,8 +95,9 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     job_title = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    creation_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime, nullable=True)
+    totp_secret = db.Column(db.String(32), nullable=True) # Para 2FA
     
     roles = db.relationship('Role', secondary=user_roles, backref='users')
     permissions = db.relationship('Permission', secondary=user_permissions, backref='users_direct')
@@ -170,7 +178,7 @@ class NirSectionStatus(db.Model):
     status = db.Column(db.String(20), nullable=False, default='PENDENTE')
     filled_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     filled_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     nir = db.relationship('Nir', back_populates='section_statuses')
     filled_by = db.relationship('User')
@@ -190,7 +198,7 @@ class Nir(db.Model):
     sus_number = db.Column(db.String(50), nullable=False)
     is_palliative = db.Column(db.Boolean, default=False, nullable=True)
     
-    admission_date = db.Column(db.Date, nullable=True)
+    admission_date = db.Column(db.DateTime, nullable=True)
     entry_type = db.Column(db.String(50), nullable=True)
     admission_type = db.Column(db.String(50), nullable=True)
     admitted_from_origin = db.Column(db.String(100), nullable=True)
@@ -209,7 +217,7 @@ class Nir(db.Model):
     
     scheduling_date = db.Column(db.Date, nullable=True)
     discharge_type = db.Column(db.String(50), nullable=True)
-    discharge_date = db.Column(db.Date, nullable=True)
+    discharge_date = db.Column(db.DateTime, nullable=True)
     total_days_admitted = db.Column(db.Integer, nullable=True)
     
     cancelled = db.Column(db.String(10), nullable=True)
@@ -233,8 +241,8 @@ class Nir(db.Model):
     observation_start_time = db.Column(db.DateTime, nullable=True)
     fa_datetime = db.Column(db.DateTime, nullable=True)
     
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    last_modified = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    creation_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    last_modified = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     operator = db.relationship('User', back_populates='nir')
     section_statuses = db.relationship('NirSectionStatus', back_populates='nir', cascade='all, delete-orphan')
@@ -533,7 +541,7 @@ class NirProcedure(db.Model):
     description = db.Column(db.Text, nullable=False)
     sequence = db.Column(db.Integer, nullable=True)
     is_primary = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     def __repr__(self):
         return f'<NirProcedure {self.code}>'
@@ -560,7 +568,7 @@ class Notice(db.Model):
     title = db.Column(db.String(100), nullable=True)
     content = db.Column(db.Text, nullable=True)
     image_filename = db.Column(db.String(200), nullable=True)
-    date_registry = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_registry = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     author = db.relationship('User', back_populates='notices')
 
@@ -640,7 +648,7 @@ class UserCourseProgress(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     last_watched_timestamp = db.Column(db.Float, default=0.0, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     user = db.relationship('User', backref=db.backref('course_progress', lazy='dynamic'))
     
@@ -660,7 +668,7 @@ class CourseEnrollmentTerm(db.Model):
     role = db.Column(db.String(100), nullable=True)
     observations = db.Column(db.Text, nullable=True)
     accepted_terms = db.Column(db.Boolean, default=False, nullable=False)
-    accepted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    accepted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     user = db.relationship('User', back_populates='course_enrollments')
     course = db.relationship('Course', back_populates='enrollment_terms')
@@ -743,7 +751,7 @@ class UserQuizAttempt(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
     score = db.Column(db.Float, nullable=True)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     answers = db.Column(db.Text, nullable=True) 
 
@@ -761,6 +769,7 @@ class Supplier(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(200), nullable=False, unique=True)
+    trade_name = db.Column(db.String(200), nullable=True)  # Nome fantasia
     cnpj = db.Column(db.String(18), nullable=True)
     contact_name = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
@@ -768,7 +777,7 @@ class Supplier(db.Model):
     service_type = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     # Campo para marcar como verificado quando há problemas
@@ -780,6 +789,17 @@ class Supplier(db.Model):
     created_by = db.relationship('User', foreign_keys=[created_by_id])
     verified_by = db.relationship('User', foreign_keys=[verified_by_id])
     evaluations = db.relationship('SupplierEvaluation', back_populates='supplier', lazy='dynamic', cascade='all, delete-orphan')
+    
+    # Usuários responsáveis por avaliar este fornecedor
+    assigned_evaluators = db.relationship('User', 
+                                         secondary='supplier_evaluators',
+                                         primaryjoin='Supplier.id==supplier_evaluators.c.supplier_id',
+                                         secondaryjoin='User.id==supplier_evaluators.c.user_id',
+                                         backref=db.backref('assigned_suppliers', lazy='dynamic'))
+    
+    def get_display_name(self):
+        """Retorna o nome fantasia se disponível, senão a razão social"""
+        return self.trade_name if self.trade_name else self.company_name
     
     def get_average_score(self):
         """Calcula o score médio de todas as avaliações"""
@@ -808,7 +828,7 @@ class SupplierEvaluation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'), nullable=False)
     evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    evaluation_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    evaluation_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     month_reference = db.Column(db.String(7), nullable=False)  # Formato: YYYY-MM
     
     # Perguntas do formulário
@@ -843,15 +863,25 @@ class SupplierEvaluation(db.Model):
     
     # Status da avaliação
     is_compliant = db.Column(db.Boolean, nullable=False)  # True se nota >= 7
+    follow_up_status = db.Column(db.String(20), nullable=False, default='not_required')
+    follow_up_closed_at = db.Column(db.DateTime, nullable=True)
     
     # Observações gerais
     general_observations = db.Column(db.Text, nullable=True)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
     # Relacionamentos
     supplier = db.relationship('Supplier', back_populates='evaluations')
     evaluator = db.relationship('User', foreign_keys=[evaluator_id])
+    follow_up_entries = db.relationship('SupplierIssueTracking', back_populates='evaluation', lazy='dynamic')
+
+    FOLLOW_UP_STATUS_MAP = {
+        'not_required': ('Sem acompanhamento', 'secondary'),
+        'open': ('Pendente', 'danger'),
+        'in_progress': ('Em andamento', 'warning'),
+        'resolved': ('Resolvido', 'success')
+    }
     
     def calculate_score(self):
         """
@@ -908,7 +938,165 @@ class SupplierEvaluation(db.Model):
             return 'Satisfatório'
         else:
             return 'Insatisfatório'
+
+    def get_follow_up_label(self):
+        return self.FOLLOW_UP_STATUS_MAP.get(self.follow_up_status, ('Sem acompanhamento', 'secondary'))[0]
+
+    def get_follow_up_color(self):
+        return self.FOLLOW_UP_STATUS_MAP.get(self.follow_up_status, ('Sem acompanhamento', 'secondary'))[1]
     
     def __repr__(self):
         return f'<SupplierEvaluation {self.supplier.company_name} - {self.month_reference}>'
 
+
+class SupplierIssueTracking(db.Model):
+    """Modelo para rastrear histórico de ações sobre problemas de fornecedores"""
+    __tablename__ = 'supplier_issue_tracking'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id', ondelete='CASCADE'), nullable=False)
+    evaluation_id = db.Column(db.Integer, db.ForeignKey('supplier_evaluations.id', ondelete='SET NULL'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Tipo de ação: 'opened', 'contact', 'follow_up', 'resolved', 'reopened', 'escalated', 'note'
+    action_type = db.Column(db.String(50), nullable=False)
+    
+    # Descrição detalhada da ação
+    description = db.Column(db.Text, nullable=False)
+    
+    # DEPRECATED: Campos não mais utilizados (mantidos para compatibilidade com dados históricos)
+    deadline = db.Column(db.Date, nullable=True)
+    priority = db.Column(db.String(20), nullable=True)
+    
+    # Anexos/documentos relacionados (JSON array)
+    attachments = db.Column(JSON, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    
+    # Relacionamentos
+    supplier = db.relationship('Supplier', backref=db.backref('issue_history', lazy='dynamic', cascade='all, delete-orphan', order_by='SupplierIssueTracking.created_at.desc()'))
+    evaluation = db.relationship('SupplierEvaluation', back_populates='follow_up_entries')
+    user = db.relationship('User', foreign_keys=[user_id])
+    
+    def get_action_icon(self):
+        """Retorna ícone apropriado para o tipo de ação"""
+        icons = {
+            'opened': 'bi-exclamation-triangle-fill',
+            'contact': 'bi-telephone-fill',
+            'follow_up': 'bi-clock-history',
+            'resolved': 'bi-check-circle-fill',
+            'reopened': 'bi-arrow-counterclockwise',
+            'escalated': 'bi-arrow-up-circle-fill',
+            'note': 'bi-sticky-fill'
+        }
+        return icons.get(self.action_type, 'bi-circle-fill')
+    
+    def get_action_color(self):
+        """Retorna cor apropriada para o tipo de ação"""
+        colors = {
+            'opened': 'danger',
+            'contact': 'primary',
+            'follow_up': 'warning',
+            'resolved': 'success',
+            'reopened': 'danger',
+            'escalated': 'danger',
+            'note': 'info'
+        }
+        return colors.get(self.action_type, 'secondary')
+    
+    def get_action_label(self):
+        """Retorna label traduzido para o tipo de ação"""
+        labels = {
+            'opened': 'Problema Identificado',
+            'contact': 'Contato com Fornecedor',
+            'follow_up': 'Acompanhamento',
+            'resolved': 'Problema Resolvido',
+            'reopened': 'Problema Reaberto',
+            'escalated': 'Escalado',
+            'note': 'Observação'
+        }
+        return labels.get(self.action_type, 'Ação')
+    
+    def __repr__(self):
+        return f'<SupplierIssueTracking {self.supplier.company_name} - {self.action_type}>'
+
+# ============================================
+# MÓDULO DE AVALIAÇÃO DE COLABORADORES
+# ============================================
+
+class EmployeeEvaluation(db.Model):
+    __tablename__ = 'employee_evaluations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    evaluated_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    month_reference = db.Column(db.String(7), nullable=False) # YYYY-MM
+    
+    # Campos da avaliação
+    innovation_suggestions = db.Column(db.Text, nullable=True)
+    improvement_proposals = db.Column(db.Text, nullable=True)
+    participation_score = db.Column(db.String(20), nullable=True) # 'active', 'partial', 'none'
+    
+    rating = db.Column(db.Integer, nullable=False) # 0-10
+    rating_justification = db.Column(db.Text, nullable=True)
+    
+    # Novos campos para Avaliação de Experiência (45/90 dias)
+    evaluation_type = db.Column(db.String(50), default='mensal', nullable=False) # 'mensal', 'experiencia_45', 'experiencia_90'
+    
+    # Comunicação (1-4)
+    comm_verbal = db.Column(db.Integer, nullable=True)
+    comm_written = db.Column(db.Integer, nullable=True)
+    comm_listening = db.Column(db.Integer, nullable=True)
+    comm_simple_lang = db.Column(db.Integer, nullable=True)
+    comm_effective = db.Column(db.Integer, nullable=True)
+    
+    # Ambientação (Boolean)
+    onboarding_unit_presentation = db.Column(db.Boolean, nullable=True)
+    onboarding_team_welcome = db.Column(db.Boolean, nullable=True)
+    onboarding_expectations = db.Column(db.Boolean, nullable=True)
+    onboarding_manuals = db.Column(db.Boolean, nullable=True)
+    
+    # Textos Específicos
+    strong_points = db.Column(db.Text, nullable=True)
+    development_points = db.Column(db.Text, nullable=True)
+    action_plan = db.Column(db.Text, nullable=True)
+    
+    # Aprovação
+    approval_status = db.Column(db.String(50), nullable=True) # 'approved', 'dismissal', 'approved_with_plan'
+
+    # Detalhes estruturados para avaliações de experiência (45/90 dias)
+    # Usamos JSON mutável para armazenar respostas por seção sem exigir migração de várias colunas
+    experience_details = db.Column(MutableDict.as_mutable(JSON), nullable=True)
+
+    # Controle de visualização conjunta (2FA)
+    is_jointly_viewed = db.Column(db.Boolean, default=False, nullable=False)
+    viewed_at = db.Column(db.DateTime, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    # Relacionamentos
+    evaluator = db.relationship('User', foreign_keys=[evaluator_id], backref='evaluations_given')
+    evaluated = db.relationship('User', foreign_keys=[evaluated_id], backref='evaluations_received')
+    
+    def __repr__(self):
+        return f'<EmployeeEvaluation {self.evaluator.username} -> {self.evaluated.username} ({self.month_reference})>'
+
+class CareerPlan(db.Model):
+    __tablename__ = 'career_plans'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    
+    current_role = db.Column(db.String(100), nullable=False)
+    target_role = db.Column(db.String(100), nullable=False)
+    target_sector = db.Column(db.String(100), nullable=False)
+    
+    goals = db.Column(db.Text, nullable=True) # JSON ou texto estruturado
+    readiness_score = db.Column(db.Integer, default=0) # 0-100%
+    
+    last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    user = db.relationship('User', backref=db.backref('career_plan', uselist=False))
+    
+    def __repr__(self):
+        return f'<CareerPlan {self.user.username}>'

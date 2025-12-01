@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.models import db, Nir, User, NirProcedure, NirSectionStatus
 from app.procedures_models import Procedure
 from app.utils.rbac_permissions import require_permission, require_sector
+from app.routes.util import format_date_filter
 from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -15,6 +16,21 @@ from werkzeug.utils import secure_filename
 nir_bp = Blueprint('nir', __name__, template_folder='../templates')
 
 #<!--- Funções Auxiliares --->
+
+def parse_datetime_local(value):
+    """Parse datetime-local input (YYYY-MM-DDTHH:MM) or date input (YYYY-MM-DD)"""
+    if not value:
+        return None
+    try:
+        # Try datetime-local format first (YYYY-MM-DDTHH:MM)
+        return datetime.strptime(value, '%Y-%m-%dT%H:%M')
+    except ValueError:
+        try:
+            # Fallback to date format (YYYY-MM-DD) at midnight
+            return datetime.strptime(value, '%Y-%m-%d')
+        except ValueError:
+            return None
+
 def create_iter_pages_function(pages, current_page):
     def _iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2):
         last = 0
@@ -205,6 +221,8 @@ def list_records():
     search = request.args.get('search', '').strip()
     entry_type = request.args.get('entry_type', '').strip()
     admission_type = request.args.get('admission_type', '').strip()
+    discharge_type = request.args.get('discharge_type', '').strip()
+    discharge_type = request.args.get('discharge_type', '').strip()
     is_palliative = request.args.get('is_palliative', '').strip()
     origin = request.args.get('origin', '').strip()
     recurso = request.args.get('recurso', '').strip()
@@ -227,6 +245,9 @@ def list_records():
 
     if admission_type:
         query = query.filter(Nir.admission_type.ilike(admission_type))
+    
+    if discharge_type:
+        query = query.filter(Nir.discharge_type.ilike(discharge_type))
     
     if is_palliative:
         if is_palliative == '1':
@@ -352,14 +373,17 @@ def list_records():
 
     entry_types = list(set(r.entry_type for r in all_basic_records if r.entry_type))
     admission_types = list(set(r.admission_type for r in all_basic_records if r.admission_type))
+    discharge_types = list(set(r.discharge_type for r in all_basic_records if r.discharge_type))
     
     entry_types.sort()
     admission_types.sort()
+    discharge_types.sort()
 
     filters = {
         'search': search,
         'entry_type': entry_type,
         'admission_type': admission_type,
+        'discharge_type': discharge_type,
         'is_palliative': is_palliative,
         'origin': origin,
         'recurso': recurso,
@@ -376,6 +400,7 @@ def list_records():
                              records=records, 
                              entry_types=entry_types,
                              admission_types=admission_types,
+                             discharge_types=discharge_types,
                              filters=filters,
                              stats_counts=stats_counts)
 
@@ -383,6 +408,7 @@ def list_records():
                          records=records, 
                          entry_types=entry_types,
                          admission_types=admission_types,
+                         discharge_types=discharge_types,
                          filters=filters,
                          stats_counts=stats_counts)
 
@@ -404,12 +430,12 @@ def evolve_observation(record_id):
     try:
         admission_date_str = request.form.get('admission_date')
         if admission_date_str:
-            from datetime import datetime
-            record.admission_date = datetime.strptime(admission_date_str, '%Y-%m-%d').date()
-            record.day = record.admission_date.day
-            record.month = record.admission_date.strftime('%B')
+            record.admission_date = parse_datetime_local(admission_date_str)
+            if record.admission_date:
+                record.day = record.admission_date.day
+                record.month = record.admission_date.strftime('%B')
         elif not record.admission_date and record.fa_datetime:
-            record.admission_date = record.fa_datetime.date()
+            record.admission_date = record.fa_datetime
             record.day = record.admission_date.day
             record.month = record.admission_date.strftime('%B')
         
@@ -675,17 +701,17 @@ def sector_new_record():
             return redirect(url_for('nir.sector_nir_list'))
         
         admission_date_str = request.form.get('admission_date')
-        admission_date = datetime.strptime(admission_date_str, '%Y-%m-%d').date() if admission_date_str else None
+        admission_date = parse_datetime_local(admission_date_str)
 
         scheduling_date_str = request.form.get('scheduling_date')
         scheduling_date = datetime.strptime(scheduling_date_str, '%Y-%m-%d').date() if scheduling_date_str else None
 
         discharge_date_str = request.form.get('discharge_date')
-        discharge_date = datetime.strptime(discharge_date_str, '%Y-%m-%d').date() if discharge_date_str else None
+        discharge_date = parse_datetime_local(discharge_date_str)
 
         total_days = None
         if admission_date and discharge_date:
-            total_days = (discharge_date - admission_date).days
+            total_days = (discharge_date.date() - admission_date.date()).days if hasattr(admission_date, 'date') else (discharge_date - admission_date).days
 
         entry_type_form = request.form.get('entry_type')
         admission_type_form = request.form.get('admission_type')
@@ -970,17 +996,17 @@ def update_record(record_id):
         birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date() if birth_date_str else None
 
         admission_date_str = request.form.get('admission_date')
-        admission_date = datetime.strptime(admission_date_str, '%Y-%m-%d').date() if admission_date_str else None
+        admission_date = parse_datetime_local(admission_date_str)
 
         scheduling_date_str = request.form.get('scheduling_date')
         scheduling_date = datetime.strptime(scheduling_date_str, '%Y-%m-%d').date() if scheduling_date_str else None
 
         discharge_date_str = request.form.get('discharge_date')
-        discharge_date = datetime.strptime(discharge_date_str, '%Y-%m-%d').date() if discharge_date_str else None
+        discharge_date = parse_datetime_local(discharge_date_str)
 
         total_days = None
         if admission_date and discharge_date:
-            total_days = (discharge_date - admission_date).days
+            total_days = (discharge_date.date() - admission_date.date()).days if hasattr(admission_date, 'date') else (discharge_date - admission_date).days
 
         changed_dados_paciente = False
         if editable_sections.get('dados_paciente', True):
@@ -1847,6 +1873,9 @@ def export_to_excel():
 
         if admission_type:
             query = query.filter(Nir.admission_type.ilike(admission_type))
+
+        if discharge_type:
+            query = query.filter(Nir.discharge_type.ilike(discharge_type))
         
         if is_palliative:
             if is_palliative == '1':
@@ -1943,7 +1972,7 @@ def export_to_excel():
                 record.sus_number or '',
                 'Sim' if record.is_palliative else 'Não',
                 record.susfacil_protocol or '',
-                record.admission_date.strftime('%d/%m/%Y') if record.admission_date else '',
+                format_date_filter(record.admission_date, format_str='%d/%m/%Y %H:%M') if record.admission_date else '',
                 record.entry_type or '',
                 record.admission_type or '',
                 record.admitted_from_origin or '',
@@ -1953,9 +1982,9 @@ def export_to_excel():
                 record.responsible_doctor or '',
                 record.main_cid or '',
                 record.aih or '',
-                record.scheduling_date.strftime('%d/%m/%Y') if record.scheduling_date else '',
+                format_date_filter(record.scheduling_date, format_str='%d/%m/%Y') if record.scheduling_date else '',
                 record.discharge_type or '',
-                record.discharge_date.strftime('%d/%m/%Y') if record.discharge_date else '',
+                format_date_filter(record.discharge_date, format_str='%d/%m/%Y %H:%M') if record.discharge_date else '',
                 record.total_days_admitted or '',
                 record.surgical_specialty or '',
                 record.auxiliary or '',
@@ -1971,7 +2000,7 @@ def export_to_excel():
                 record.observation or '',
                 getattr(record, '_global_status', '') or '',
                 getattr(record, '_global_status_hint', '') or '',
-                record.creation_date.strftime('%d/%m/%Y %H:%M') if record.creation_date else ''
+                format_date_filter(record.creation_date, format_str='%d/%m/%Y %H:%M') if record.creation_date else ''
             ]
 
             for col_num, value in enumerate(data, 1):

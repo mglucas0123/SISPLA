@@ -1,0 +1,252 @@
+{% extends "navbar.html" %}
+{% block title %} Ranking dos Colaboradores {% endblock %}
+{% from 'partials/feedback/suppliers/_hero.html' import hero %}
+
+{% block content %}
+<div class="container-fluid ranking-dashboard">
+
+    <style>
+        .ranking-dashboard .dashboard-header h2 { font-weight:700; letter-spacing: -0.5px; }
+        .card-glass { background: rgba(255,255,255,0.92); backdrop-filter: blur(4px); border-radius: 10px; border: 1px solid rgba(0,0,0,0.04); }
+        .top-card { padding:12px; border-radius:10px; color:#fff; }
+        .top-1 { background: linear-gradient(90deg,#f59e0b,#f97316); }
+        .top-2 { background: linear-gradient(90deg,#60a5fa,#3b82f6); }
+        .top-3 { background: linear-gradient(90deg,#34d399,#10b981); }
+        .score-large { font-size:1.6rem; font-weight:700; }
+        .rank-badge { width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:#f1f3f5; font-weight:700; font-size:0.86rem; }
+        .score-badge { background:#0d6efd; color:#fff; padding:6px 10px; border-radius:999px; font-weight:600; }
+        .small-muted { color:#6c757d; }
+        .stat-label { color:#6b7280; font-size:.80rem; }
+        /* compact table row paddings */
+        .table.compact td, .table.compact th { padding: .45rem .6rem; }
+        /* Top3 card styles */
+        .top3-card { background: #fff; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.06); padding:10px; }
+        .top3-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px; border-radius:8px; background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.84)); transition: transform .14s ease, box-shadow .14s ease; }
+        .top3-item:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(15,23,42,0.1); }
+        .top3-item + .top3-item { margin-top:6px; }
+        .top3-left { display:flex; align-items:center; gap:12px; }
+        .top3-rank { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; font-weight:800; color:#fff; font-size:0.8rem; }
+        .top3-rank.rank-1 { background: linear-gradient(90deg,#f59e0b,#f97316); }
+        .top3-rank.rank-2 { background: linear-gradient(90deg,#cbd5e1,#9ca3af); color:#0b1726; }
+        .top3-rank.rank-3 { background: linear-gradient(90deg,#fde68a,#fca5a5); color:#0b1726; }
+        .top3-avatar { width:36px; height:36px; border-radius:50%; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:0.95rem }
+        .top3-avatar.bg-1 { background: #7c3aed; }
+        .top3-avatar.bg-2 { background: #3b82f6; }
+        .top3-avatar.bg-3 { background: #06b6d4; }
+        .top3-name { font-weight:500; font-size:0.88rem; color:#0f172a; }
+        .top3-role { font-size:0.7rem; color:#6b7280; }
+        .top3-score { text-align:right; min-width:74px; }
+        .top3-score .value { font-size:1.06rem; font-weight:800; color:#0f172a; }
+        .top3-score .meta { font-size:0.78rem; color:#6b7280; }
+        .ranking-item-premium { display:flex; align-items:center; gap:12px; padding:12px; border-radius:8px; background:#fff; text-decoration:none; color:inherit; border:1px solid rgba(15,23,42,0.03);} 
+        .rank-medal { display:flex; align-items:center; gap:8px; }
+        .medal-wrapper { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; color:#fff; }
+        .medal-wrapper.gold { background: linear-gradient(90deg,#f59e0b,#f97316); }
+        .medal-wrapper.silver { background: linear-gradient(90deg,#cbd5e1,#9ca3af); color:#0b1726; }
+        .medal-wrapper.bronze { background: linear-gradient(90deg,#fbcfe8,#fda4af); color:#0b1726; }
+        .medal-wrapper i { font-size:18px; }
+        .rank-badge { font-weight:700; padding:4px 8px; border-radius:6px; background:#f3f4f6; }
+        .rank-content h3 { margin:0; font-weight:700; font-size:0.94rem; }
+        .rank-score-badge { display:inline-block; padding:5px 8px; border-radius:7px; font-weight:800; font-size:0.95rem; }
+        .rank-score-badge.excellent { background:#d1fae5; color:#065f46; }
+        .rank-score-badge.good { background:#fff7ed; color:#7c2d12; }
+        .rank-score-badge.poor { background:#fee2e2; color:#7c0a0a; }
+        .rank-progress { margin-top:4px; }
+        .progress-bar-container { background:#eef2ff; height:6px; border-radius:8px; overflow:hidden; }
+        .progress-fill { height:6px; border-radius:8px; }
+        .progress-fill.excellent { background:linear-gradient(90deg,#4ade80,#10b981); }
+        .progress-fill.good { background:linear-gradient(90deg,#fcd34d,#f59e0b); }
+        .progress-fill.poor { background:linear-gradient(90deg,#fca5a5,#ef4444); }
+        .top3-card-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .top3-card-header .title { display:flex; flex-direction:column; }
+        .top3-card-header h6 { margin:0; display:flex; align-items:center; gap:8px; font-weight:800; }
+        .top3-card-header .sub { color:#6b7280; font-size:0.82rem; }
+        .top3-card-header .actions { display:flex; gap:8px; align-items:center; }
+        .top3-card-header .action-btn { padding:6px 10px; border-radius:8px; font-size:12px; }
+        .score-mini-bar { height:5px; border-radius:6px; background:#eef2ff; overflow:hidden; margin-top:4px; }
+        .score-mini-bar .fill { height:5px; border-radius:6px; background: linear-gradient(90deg,#34d399,#60a5fa); }
+        .top3-score .meta { font-size:0.78rem; color:#6b7280; }
+    </style>
+
+    {% set evaluated_count = rankings|length if rankings is defined else 0 %}
+    {% set total_evals = 0 %}
+    {% set total_weighted_score = 0 %}
+    {% for r in rankings %}
+        {% set total_evals = total_evals + (r.evaluations if r.evaluations is defined else 0) %}
+        {% set total_weighted_score = total_weighted_score + ((r.avg_rating if r.avg_rating is defined else 0) * (r.evaluations if r.evaluations is defined else 0)) %}
+    {% endfor %}
+    {% if total_evals > 0 %}
+        {% set avg_rating_overall = (total_weighted_score / total_evals) %}
+    {% else %}
+        {% set avg_rating_overall = 0 %}
+    {% endif %}
+    {% set avg_score_pct = (avg_rating_overall * 10)|round(0) %}
+
+    {% set hero_stats = [
+        { 'icon': 'bi bi-people-fill', 'value': evaluated_count, 'label': 'Colaboradores' },
+        { 'icon': 'bi bi-clipboard-check-fill', 'value': total_evals, 'label': 'Avaliações' },
+        { 'icon': 'bi bi-percent', 'value': avg_score_pct ~ '%', 'label': 'Score Médio' }
+    ] %}
+
+    <style>
+        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-value,
+        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-label,
+        .dashboard-hero .dashboard-hero-stats .hero-stat-item i {
+            color: #fff !important;
+            opacity: 1 !important;
+        }
+        .dashboard-hero .dashboard-hero-stats .hero-stat-item { background: rgba(255,255,255,0.06); border-radius:8px; padding:6px 8px; }
+        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-value { font-size:16px; font-weight:700; }
+        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-label { font-size:11px; }
+    </style>
+
+    {{ hero('<i class="bi bi-graph-up"></i> Dashboard de Colaboradores'|safe, 'Gestão de desempenho, reconhecimento e desenvolvimento de equipe', hero_stats) }}
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card-glass p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-list-stars fs-4 text-primary"></i>
+                        <h5 class="mb-0">Ranking Geral</h5>
+                    </div>
+                    <div class="stat-label">Período: {{ month if month else 'Último mês' }}</div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle compact">
+                        <thead>
+                            <tr>
+                                <th style="width:80px;" class="text-center">Posição</th>
+                                <th>Colaborador</th>
+                                <th>Departamento</th>
+                                <th class="text-center">Avaliações</th>
+                                <th class="text-center">Média</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in rankings %}
+                            <tr>
+                                <td class="text-center"><div class="rank-badge">{{ loop.index }}</div></td>
+                                <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                        <img src="https://ui-avatars.com/api/?name={{ r.name|urlencode }}&background=random" alt="{{ r.name }}" class="rounded-circle" width="36" height="36">
+                                        <div>
+                                            <div class="fw-bold">{{ r.name }}</div>
+                                            <div class="small-muted">{{ r.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ r.job_title }}</td>
+                                <td class="text-center small-muted">{{ r.evaluations }}</td>
+                                <td class="text-center"><span class="score-badge">{{ '%.2f'|format(r.avg_rating) }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Nenhuma avaliação encontrada para este período.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="d-grid gap-3">
+                <div class="top3-card">
+                    <div class="top3-card-header mb-3">
+                        <div class="title">
+                            <h6 class="mb-0"><i class="bi bi-trophy-fill" style="color:#f59e0b"></i>Top 3</h6>
+                            <small class="sub">Melhores desempenhos do mês</small>
+                        </div>
+                        <div class="actions">
+                            <a href="#" class="btn btn-outline-secondary action-btn btn-sm">Ver todos</a>
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm action-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Ações
+                                </button>
+                                <ul class="dropdown-menu shadow-sm">
+                                    <li><a class="dropdown-item" href="#">Exportar CSV</a></li>
+                                    <li><a class="dropdown-item" href="#">Exportar PDF</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% if rankings and rankings|length > 0 %}
+                    {% for person in rankings[:3] %}
+                    <a href="#" class="ranking-item-premium {{ 'rank-1' if loop.index == 1 else ('rank-2' if loop.index == 2 else 'rank-3') }}">
+                        <div class="rank-medal d-flex align-items-center gap-2">
+                            <div class="medal-wrapper {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else 'bronze') }}">
+                                <i class="bi bi-award-fill"></i>
+                            </div>
+                            <span class="rank-badge">#{{ loop.index }}</span>
+                        </div>
+                        <div class="rank-content d-flex align-items-center justify-content-between w-100">
+                            <div>
+                                <h3 class="mb-0" title="{{ person.name }}">{{ person.name }}</h3>
+                                <div class="rank-meta-info small-muted mt-1">
+                                    {% set stars = (person.avg_rating|default(0) / 10)|round|int // 2 %}
+                                    <span class="meta-item">
+                                        {% for i in range(stars) %}
+                                        <i class="bi bi-star-fill"></i>
+                                        {% endfor %}
+                                        {% for i in range(5 - stars) %}
+                                        <i class="bi bi-star"></i>
+                                        {% endfor %}
+                                    </span>
+                                    <span class="meta-item ms-2"><i class="bi bi-clipboard-check"></i> {{ person.evaluations }} avaliações</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="rank-score-badge {{ 'excellent' if person.avg_rating >= 9 else ('good' if person.avg_rating >= 7 else 'poor') }}">{{ '%.2f'|format(person.avg_rating) }}</div>
+                                {% set pct = ((person.avg_rating|default(0)) / 10) * 100 %}
+                                <div class="rank-progress mt-2">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-fill {{ 'excellent' if person.avg_rating >= 9 else ('good' if person.avg_rating >= 7 else 'poor') }}" style="width: {{ pct|round(1) }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted">Sem dados</div>
+                    {% endif %}
+                </div>
+
+                <div class="card-glass p-3">
+                    <h6 class="mb-3">Distribuição de Notas</h6>
+                    {% set dist = distribution if distribution is defined else {'1':5,'2':8,'3':40,'4':47} %}
+                    {% set total = dist.values()|sum %}
+                    {% for k,v in dist.items() %}
+                    {% set pct = (v / (total if total>0 else 1) * 100) %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small-muted mb-1"><div>Nota {{ k }}</div><div>{{ v }}</div></div>
+                        <div class="progress" style="height:10px; border-radius:6px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ pct|round(1) }}%;" aria-valuenow="{{ v }}" aria-valuemin="0" aria-valuemax="{{ total }}"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="card-glass p-3 text-center">
+                    <h6 class="mb-2">Ações</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="#" class="btn btn-outline-secondary btn-sm">Ver detalhes completos</a>
+                        <a href="#" class="btn btn-outline-secondary btn-sm">Exportar relatório (PDF)</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    });
+</script>
+{% endblock %}

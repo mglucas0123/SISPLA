@@ -465,18 +465,26 @@
 // Create Role Modal
 .modal#createRoleModal,
 .modal#catalogModal,
-.modal[id^="rolePermsModal_"] {
+.modal#rolePermissionsModal {
+    .modal-dialog {
+        max-width: 900px;
+    }
+
     .modal-content {
         border: none;
         border-radius: 24px;
         box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
 
         .modal-header {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 2.5rem;
+            padding: 2rem 2.5rem;
             border-radius: 24px 24px 0 0;
+            flex-shrink: 0;
 
             .modal-title {
                 font-size: 1.5rem;
@@ -493,6 +501,10 @@
                     background-clip: text;
                     font-size: 1.3rem;
                 }
+
+                #currentRoleName {
+                    color: #4f46e5;
+                }
             }
 
             .btn-close {
@@ -507,8 +519,12 @@
         }
 
         .modal-body {
-            padding: 2.5rem;
+            padding: 2rem;
             background: white;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0;
 
             .form-label {
                 font-weight: 600;
@@ -524,6 +540,8 @@
                 font-size: 1rem;
                 transition: all 0.3s ease;
                 background: #f8f9fa;
+                width: 100%;
+                box-sizing: border-box;
 
                 &:focus {
                     border-color: #4f46e5;
@@ -533,6 +551,8 @@
             }
 
             .input-group {
+                width: 100%;
+
                 .input-group-text {
                     border: 2px solid #e2e8f0;
                     border-right: none;
@@ -552,13 +572,36 @@
                 }
             }
 
+            // Alert Admin Warning
+            #adminWarningContainer {
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                border: 2px solid #f59e0b;
+                border-radius: 12px;
+                padding: 1.25rem;
+                margin-bottom: 1.5rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+
+                &::before {
+                    content: '\f071';
+                    font-family: 'bootstrap-icons';
+                    font-size: 1.5rem;
+                    color: #f59e0b;
+                }
+
+                strong {
+                    color: #92400e;
+                }
+            }
+
             // Enhanced Permissions Grid
             .permissions-grid-container {
                 background: #f8f9fa;
                 border: 2px solid #e2e8f0;
                 border-radius: 16px;
-                padding: 2rem;
-                margin: 2rem 0;
+                padding: 1.5rem;
+                margin: 1.5rem 0;
 
                 .permissions-grid-title {
                     font-weight: 600;
@@ -570,8 +613,8 @@
 
                 .permissions-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 1rem;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 0.875rem;
 
                     .permission-item {
                         background: white;
@@ -626,7 +669,7 @@
                     background: #f8f9fa;
                     border: 2px solid #e2e8f0;
                     border-radius: 16px;
-                    padding: 2rem;
+                    padding: 1.5rem;
                     margin-bottom: 2rem;
 
                     .form-label {
@@ -652,8 +695,8 @@
 
                 .permissions-catalog {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 1rem;
+                    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                    gap: 0.875rem;
 
                     .permission-catalog-item {
                         display: flex;
@@ -697,114 +740,235 @@
                 }
             }
 
-            // Role Permissions Management
+            // Role Permissions Management - VERSÃO REDESENHADA
             .role-permissions-management {
                 .filter-controls {
-                    display: flex;
-                    gap: 1rem;
-                    margin-bottom: 2rem;
-                    flex-wrap: wrap;
-                    align-items: end;
+                    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                    border: 2px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 1.25rem;
 
-                    .filter-input-group {
-                        flex: 1;
-                        min-width: 250px;
+                    .form-label {
+                        color: #4f46e5;
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        margin-bottom: 0.5rem;
                     }
 
-                    .filter-actions {
-                        display: flex;
-                        gap: 0.5rem;
+                    .form-control {
+                        border-radius: 10px;
+                        border: 2px solid #e2e8f0;
+                        padding: 0.625rem 0.875rem;
+                        font-size: 0.9rem;
 
-                        .btn {
-                            border-radius: 12px;
-                            font-weight: 600;
-                            padding: 0.75rem 1rem;
-                            font-size: 0.9rem;
-                            transition: all 0.3s ease;
+                        &:focus {
+                            border-color: #4f46e5;
+                            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+                        }
+                    }
 
-                            &:hover {
-                                transform: translateY(-2px);
-                            }
+                    .btn {
+                        border-radius: 10px;
+                        font-weight: 600;
+                        font-size: 0.85rem;
+                        padding: 0.5rem 0.75rem;
+                        transition: all 0.3s ease;
 
-                            &.btn-outline-primary {
-                                border: 2px solid #4f46e5;
-                                color: #4f46e5;
-
-                                &:hover {
-                                    background: #4f46e5;
-                                    color: white;
-                                    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-                                }
-                            }
-
-                            &.btn-outline-secondary {
-                                border: 2px solid #6c757d;
-                                color: #6c757d;
-
-                                &:hover {
-                                    background: #6c757d;
-                                    color: white;
-                                    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-                                }
-                            }
+                        &:hover {
+                            transform: translateY(-1px);
                         }
                     }
                 }
 
-                .role-permissions-list {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                    gap: 1rem;
+                .role-permissions-list-container {
+                    background: #f8f9fa;
+                    border: 2px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 1rem;
+                    overflow: hidden;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
 
-                    .perm-item {
+                .role-permissions-list {
+                    max-height: none;
+                    overflow-y: visible;
+                    overflow-x: hidden;
+                    padding-right: 0;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+
+                    // Custom scrollbar
+                    &::-webkit-scrollbar {
+                        width: 8px;
+                    }
+
+                    &::-webkit-scrollbar-track {
+                        background: #e9ecef;
+                        border-radius: 10px;
+                    }
+
+                    &::-webkit-scrollbar-thumb {
+                        background: #cbd5e0;
+                        border-radius: 10px;
+
+                        &:hover {
+                            background: #94a3b8;
+                        }
+                    }
+
+                    scrollbar-width: thin;
+                    scrollbar-color: #cbd5e0 #e9ecef;
+
+                    .permission-module-section {
                         background: white;
                         border: 2px solid #e2e8f0;
                         border-radius: 12px;
                         padding: 1rem;
+                        margin-bottom: 1rem;
                         transition: all 0.3s ease;
 
-                        &:hover {
-                            border-color: #4f46e5;
-                            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
-                            transform: translateY(-2px);
+                        &:last-child {
+                            margin-bottom: 0;
                         }
 
-                        .form-check {
-                            margin: 0;
+                        &:hover {
+                            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+                            border-color: #cbd5e0;
+                        }
 
-                            .form-check-input {
-                                width: 2.5rem;
-                                height: 1.25rem;
-                                border-radius: 1rem;
-                                border: 2px solid #e2e8f0;
-                                background-color: #e2e8f0;
-                                cursor: pointer;
-                                transition: all 0.3s ease;
+                        .permission-module-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 0.875rem;
+                            padding-bottom: 0.75rem;
+                            border-bottom: 2px solid #f1f5f9;
 
-                                &:checked {
-                                    background-color: #4f46e5;
-                                    border-color: #4f46e5;
-                                }
-
-                                &:focus {
-                                    border-color: #4f46e5;
-                                    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
-                                }
-
-                                &:disabled {
-                                    background-color: #f1f5f9;
-                                    border-color: #e2e8f0;
-                                    cursor: not-allowed;
-                                }
-                            }
-
-                            .form-check-label {
-                                font-weight: 500;
+                            .permission-module-title {
+                                font-size: 0.9rem;
+                                font-weight: 700;
                                 color: #2d3748;
-                                margin-left: 0.75rem;
-                                cursor: pointer;
-                                font-size: 0.95rem;
+                                margin: 0;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+
+                                i {
+                                    color: #4f46e5;
+                                    font-size: 1rem;
+                                }
+
+                                .badge {
+                                    background: #4f46e5;
+                                    font-size: 0.7rem;
+                                    padding: 0.25rem 0.5rem;
+                                    border-radius: 8px;
+                                }
                             }
+
+                            .module-actions {
+                                .select-module-btn {
+                                    padding: 0.35rem 0.7rem;
+                                    font-size: 0.7rem;
+                                    border-radius: 8px;
+                                    border: 1.5px solid #4f46e5;
+                                    color: #4f46e5;
+                                    background: white;
+                                    transition: all 0.3s ease;
+                                    font-weight: 600;
+
+                                    &:hover {
+                                        background: #4f46e5;
+                                        color: white;
+                                    }
+
+                                    i {
+                                        font-size: 0.8rem;
+                                    }
+                                }
+                            }
+                        }
+
+                        .permission-module-items {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                            gap: 0.625rem;
+                            width: 100%;
+                            max-width: 100%;
+
+                            .perm-item {
+                                background: #f8f9fa;
+                                border: 1.5px solid #e2e8f0;
+                                border-radius: 8px;
+                                padding: 0.625rem;
+                                transition: all 0.3s ease;
+                                width: 100%;
+                                max-width: 100%;
+
+                                &:hover {
+                                    background: white;
+                                    border-color: #4f46e5;
+                                    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+                                    transform: translateX(2px);
+                                }
+
+                                .form-check {
+                                    margin: 0;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+
+                                    .form-check-input {
+                                        width: 1.1rem;
+                                        height: 1.1rem;
+                                        border-radius: 4px;
+                                        border: 2px solid #cbd5e0;
+                                        background-color: white;
+                                        cursor: pointer;
+                                        transition: all 0.3s ease;
+                                        flex-shrink: 0;
+                                        margin: 0;
+
+                                        &:checked {
+                                            background-color: #4f46e5;
+                                            border-color: #4f46e5;
+                                        }
+
+                                        &:focus {
+                                            border-color: #4f46e5;
+                                            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+                                        }
+
+                                        &:disabled {
+                                            background-color: #f1f5f9;
+                                            border-color: #e2e8f0;
+                                            cursor: not-allowed;
+                                            opacity: 0.6;
+                                        }
+                                    }
+
+                                    .form-check-label {
+                                        font-weight: 500;
+                                        color: #2d3748;
+                                        cursor: pointer;
+                                        font-size: 0.775rem;
+                                        line-height: 1.3;
+                                        word-break: break-word;
+                                        flex: 1;
+                                        margin: 0;
+                                    }
+                                }
+                            }
+                        }
+
+                        // espaçador invisível para garantir que o último bloco não fique colado no limite
+                        .permissions-bottom-spacer {
+                            height: 1.5rem;
+                            width: 100%;
+                            pointer-events: none;
                         }
                     }
                 }
@@ -813,9 +977,10 @@
 
         .modal-footer {
             background: #f8f9fa;
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            border-top: 2px solid #e2e8f0;
             border-radius: 0 0 24px 24px;
-            padding: 2rem;
+            padding: 1.25rem 2rem;
+            flex-shrink: 0;
 
             .btn {
                 padding: 0.875rem 2rem;
@@ -930,34 +1095,99 @@
         }
     }
 
-    .modal .modal-content {
-        margin: 1rem;
-
+    .modal#rolePermissionsModal .modal-content {
         .modal-header,
-        .modal-body,
         .modal-footer {
-            padding: 1.5rem;
+            padding: 1rem;
         }
 
         .modal-body {
-            .permissions-grid {
-                grid-template-columns: 1fr;
-            }
+            padding: 1rem;
 
-            .filter-controls {
-                flex-direction: column;
+            .role-permissions-management {
+                .filter-controls {
+                    padding: 1rem;
 
-                .filter-actions {
-                    justify-content: center;
+                    .btn {
+                        font-size: 0.75rem;
+                        padding: 0.4rem 0.6rem;
+                    }
+                }
+
+                .role-permissions-list-container {
+                    padding: 0.75rem;
+                }
+
+                .role-permissions-list {
+                    .permission-module-section {
+                        padding: 0.875rem;
+
+                        .permission-module-header {
+                            .permission-module-title {
+                                font-size: 0.85rem;
+
+                                i {
+                                    font-size: 0.9rem;
+                                }
+
+                                .badge {
+                                    font-size: 0.65rem;
+                                    padding: 0.2rem 0.4rem;
+                                }
+                            }
+
+                            .module-actions .select-module-btn {
+                                padding: 0.3rem 0.55rem;
+                                font-size: 0.65rem;
+                            }
+                        }
+
+                        .permission-module-items {
+                            grid-template-columns: 1fr;
+                            gap: 0.5rem;
+
+                            .perm-item {
+                                padding: 0.5rem;
+
+                                .form-check {
+                                    gap: 0.4rem;
+
+                                    .form-check-input {
+                                        width: 1rem;
+                                        height: 1rem;
+                                    }
+
+                                    .form-check-label {
+                                        font-size: 0.7rem;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
 
+    .permissions-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .permissions-catalog {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+// Tablets e telas médias
+@media (min-width: 769px) and (max-width: 1024px) {
+    .modal#rolePermissionsModal .modal-content .modal-body {
+        .role-permissions-management {
             .role-permissions-list {
-                grid-template-columns: 1fr;
-            }
-
-            .permissions-catalog {
-                grid-template-columns: 1fr;
+                .permission-module-section {
+                    .permission-module-items {
+                        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                    }
+                }
             }
         }
     }

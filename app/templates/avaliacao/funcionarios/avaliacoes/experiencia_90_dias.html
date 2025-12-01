@@ -1,0 +1,248 @@
+<!-- Partial: experiencia_90_dias.html - conteúdo interno da seção 90 dias -->
+
+<!-- 13. Comunicação (90 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">13</span>
+        <h3>Comunicação (90 dias) <span style="color: red">*</span></h3>
+    </div>
+    <p class="text-muted mb-3">Avalie competências comunicativas com foco em integração e resultados (90 dias).</p>
+    
+    <div class="table-responsive comm-table-box">
+        <table class="table table-borderless">
+            <thead>
+                <tr class="text-center small text-muted">
+                    <th></th>
+                    <th style="width: 15%">1 - Não é possível avaliar</th>
+                    <th style="width: 15%">2 - Atende parcialmente</th>
+                    <th style="width: 15%">3 - Atende as Expectativas</th>
+                    <th style="width: 15%">4 - Acima da Expectativa</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field, label in [
+                    ('comm_verbal_90', 'Comunicação verbal e influência.'),
+                    ('comm_written_90', 'Comunicação escrita com qualidade e precisão.'),
+                    ('comm_collab_90', 'Comunicação para trabalho em equipe e com clientes internos.')
+                ] %}
+                <tr>
+                    <td>{{ label }}</td>
+                    {% for i in range(1, 5) %}
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="{{ field }}" value="{{ i }}" {% if form_data and form_data.get(field) == (i|string) %}checked{% endif %} {% if i == 1 %}required{% endif %}>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    <!-- 10. Orientação para Resultados (90 dias) -->
+    <div class="question-card">
+        <div class="question-header">
+            <span class="question-number">10</span>
+            <h3>Orientação para Resultados <span style="color: red">*</span></h3>
+        </div>
+        <p class="text-muted mb-3">Foco em metas, busca por melhoria e responsabilidade pelos resultados.</p>
+        <div class="table-responsive comm-table-box">
+            <table class="table table-borderless">
+                <thead>
+                    <tr class="text-center small text-muted">
+                        <th></th>
+                        <th style="width: 15%">1 - Não é possível avaliar</th>
+                        <th style="width: 15%">2 - Atende parcialmente</th>
+                        <th style="width: 15%">3 - Atende as Expectativas</th>
+                        <th style="width: 15%">4 - Acima da Expectativa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set orientation_labels = ['Foco em resultados e cumprimento de metas', 'Busca por melhoria contínua', 'Assume responsabilidade por entregas', 'Prioriza o que gera impacto'] %}
+                    {% for label in orientation_labels %}
+                    {% set row_idx = loop.index %}
+                    <tr>
+                        <td>{{ label }}</td>
+                        {% for i in range(1, 5) %}
+                        <td class="text-center">
+                            <div class="form-check d-inline-block">
+                                <input class="form-check-input" type="radio" name="orientation_results_{{ row_idx }}" value="{{ i }}" {% if form_data and form_data.get('orientation_results_' ~ (row_idx) ) == (i|string) %}checked{% endif %} {% if i == 1 %}required{% endif %}>
+                            </div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 11. Planejamento (90 dias) -->
+    <div class="question-card">
+        <div class="question-header">
+            <span class="question-number">11</span>
+            <h3>Planejamento e Organização <span style="color: red">*</span></h3>
+        </div>
+        <p class="text-muted mb-3">Capacidade de planejar tarefas, gerir prioridades e utilizar recursos adequadamente.</p>
+        <div class="table-responsive comm-table-box">
+            <table class="table table-borderless">
+                <thead>
+                    <tr class="text-center small text-muted">
+                        <th></th>
+                        <th style="width: 15%">1 - Não é possível avaliar</th>
+                        <th style="width: 15%">2 - Atende parcialmente</th>
+                        <th style="width: 15%">3 - Atende as Expectativas</th>
+                        <th style="width: 15%">4 - Acima da Expectativa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set planning_labels = ['Define objetivos claros', 'Gerencia prazos e prioridades', 'Organiza atividades de forma eficiente', 'Acompanha resultados do plano'] %}
+                {% for label in planning_labels %}
+                {% set row_idx = loop.index %}
+                <tr>
+                    <td>{{ label }}</td>
+                    {% for i in range(1, 5) %}
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="planning_{{ row_idx }}" value="{{ i }}" {% if form_data and form_data.get('planning_' ~ (row_idx) ) == (i|string) %}checked{% endif %} {% if i == 1 %}required{% endif %}>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 12. Gestão de Processos (90 dias) -->
+    <div class="question-card">
+        <div class="question-header">
+            <span class="question-number">12</span>
+            <h3>Gestão de Processos e Qualidade <span style="color: red">*</span></h3>
+        </div>
+        <p class="text-muted mb-3">Cumprimento de procedimentos, melhoria contínua e atenção à qualidade.</p>
+        <div class="table-responsive comm-table-box">
+            <table class="table table-borderless">
+                <thead>
+                    <tr class="text-center small text-muted">
+                        <th></th>
+                        <th style="width: 15%">1 - Não é possível avaliar</th>
+                        <th style="width: 15%">2 - Atende parcialmente</th>
+                        <th style="width: 15%">3 - Atende as Expectativas</th>
+                        <th style="width: 15%">4 - Acima da Expectativa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set process_labels = ['Segue procedimentos corretamente', 'Identifica oportunidades de melhoria', 'Propõe soluções práticas', 'Garante qualidade das entregas'] %}
+                {% for label in process_labels %}
+                {% set row_idx = loop.index %}
+                <tr>
+                    <td>{{ label }}</td>
+                    {% for i in range(1, 5) %}
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="process_mgmt_{{ row_idx }}" value="{{ i }}" {% if form_data and form_data.get('process_mgmt_' ~ (row_idx) ) == (i|string) %}checked{% endif %} {% if i == 1 %}required{% endif %}>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 13b. Inteligência Emocional (90 dias) -->
+    <div class="question-card">
+        <div class="question-header">
+            <span class="question-number">13</span>
+            <h3>Inteligência Emocional e Relacionamento <span style="color: red">*</span></h3>
+        </div>
+        <p class="text-muted mb-3">Autocontrole, empatia, relacionamento interpessoal e resistência ao stress.</p>
+        <div class="table-responsive comm-table-box">
+            <table class="table table-borderless">
+                <thead>
+                    <tr class="text-center small text-muted">
+                        <th></th>
+                        <th style="width: 15%">1 - Não é possível avaliar</th>
+                        <th style="width: 15%">2 - Atende parcialmente</th>
+                        <th style="width: 15%">3 - Atende as Expectativas</th>
+                        <th style="width: 15%">4 - Acima da Expectativa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set emotional_labels = ['Autocontrole e postura profissional', 'Empatia e relacionamento com a equipe', 'Gerencia bem situações de conflito', 'Mantém desempenho sob pressão'] %}
+                {% for label in emotional_labels %}
+                {% set row_idx = loop.index %}
+                <tr>
+                    <td>{{ label }}</td>
+                    {% for i in range(1, 5) %}
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" type="radio" name="emotional_intel_{{ row_idx }}" value="{{ i }}" {% if form_data and form_data.get('emotional_intel_' ~ (row_idx) ) == (i|string) %}checked{% endif %} {% if i == 1 %}required{% endif %}>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<!-- 14. Desenvolvimentos (90 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">14</span>
+        <h3>Desenvolvimento e Integração (90 dias) <span style="color: red">*</span></h3>
+    </div>
+    <p class="text-muted mb-3">Avalie adaptação, autonomia e contribuição para resultados.</p>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="development_notes_90" rows="4" placeholder="Observações sobre desenvolvimento e integração..." required>{{ form_data.get('development_notes_90') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- 15. Plano/Meta (90 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">15</span>
+        <h3>Plano/Meta Pós-Experiência (90 dias) <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="post_experience_plan_90" rows="4" placeholder="Plano de ação ou metas para próximo ciclo..." required>{{ form_data.get('post_experience_plan_90') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- 16. Aprovação (90 dias) -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">16</span>
+        <h3>Decisão Final (90 dias) <span style="color: red">*</span></h3>
+    </div>
+    <div class="radio-options-modern">
+        <label class="radio-option active">
+            <input type="radio" name="approval_status_90" value="approved" {% if form_data and form_data.get('approval_status_90') == 'approved' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span>Aprovado</span>
+            </div>
+        </label>
+        <label class="radio-option partial">
+            <input type="radio" name="approval_status_90" value="approved_with_conditions" {% if form_data and form_data.get('approval_status_90') == 'approved_with_conditions' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                <span>Aprovado com condição</span>
+            </div>
+        </label>
+        <label class="radio-option none">
+            <input type="radio" name="approval_status_90" value="dismissal" {% if form_data and form_data.get('approval_status_90') == 'dismissal' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill text-danger"></i>
+                <span>Desligamento</span>
+            </div>
+        </label>
+    </div>
+</div>

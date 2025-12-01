@@ -241,7 +241,7 @@ function evolveObservation(recordId, patientName) {
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Data de Internação <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" name="admission_date" id="admission_date_${recordId}" required>
+                            <input type="datetime-local" class="form-control" name="admission_date" id="admission_date_${recordId}" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Tipo de Entrada <span class="text-danger">*</span></label>
@@ -455,7 +455,9 @@ function evolveObservation(recordId, patientName) {
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
-        const todayFormatted = `${year}-${month}-${day}`;
+        const hours = String(today.getHours()).padStart(2, '0');
+        const minutes = String(today.getMinutes()).padStart(2, '0');
+        const todayFormatted = `${year}-${month}-${day}T${hours}:${minutes}`;
         admissionDateInput.value = todayFormatted;
     }
     

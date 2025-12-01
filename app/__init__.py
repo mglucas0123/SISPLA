@@ -15,11 +15,13 @@ from app.utils.rbac_permissions import initialize_rbac, assign_role_to_user
 from app.routes.auth import auth_bp
 from app.routes.main import main_bp
 from app.routes.util import util_bp, format_date_filter
+from app.routes.user import user_bp
 from app.routes.shift_handover import shift_handover_bp
 from app.routes.repository import repository_bp
 from app.routes.training import training_bp
 from app.routes.nir import nir_bp
 from app.routes.feedback.suppliers import suppliers_bp
+from app.routes.avaliacao_funcionario import employee_evaluation_bp
 
 load_dotenv()
 
@@ -56,11 +58,13 @@ def registry_routes(app):
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(util_bp)
+    app.register_blueprint(user_bp)
     app.register_blueprint(shift_handover_bp)
     app.register_blueprint(repository_bp)
     app.register_blueprint(training_bp)
     app.register_blueprint(nir_bp)
     app.register_blueprint(suppliers_bp)
+    app.register_blueprint(employee_evaluation_bp)
 
 def login_config(app):
     login_manager = LoginManager()

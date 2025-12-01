@@ -1,0 +1,350 @@
+{% extends "navbar.html" %}
+
+{% block title %}Acompanhamento de Problemas - {{ supplier.company_name }}{% endblock %}
+
+{% block content %}
+<div class="manage-courses-page">
+    <div class="container">
+        <!-- Header -->
+        <div class="manage-courses-header">
+            <div class="manage-courses-header-content">
+                <div class="manage-courses-title-section">
+                    <h1 class="manage-courses-main-title">
+                        <i class="bi bi-clipboard-check-fill"></i>
+                        Acompanhamento de Problemas
+                    </h1>
+                    <p class="manage-courses-subtitle">
+                        {{ supplier.company_name }}
+                        {% if supplier.cnpj %}
+                        <span class="text-muted">| CNPJ: {{ supplier.cnpj }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="manage-courses-actions d-flex gap-2">
+                    <button type="button" class="manage-courses-create-btn" data-bs-toggle="modal" data-bs-target="#addActionModal">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        Nova Ação
+                    </button>
+                    <a href="{{ url_for('suppliers.supplier_evaluations', supplier_id=supplier.id) }}" class="manage-courses-back-btn">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        Avaliações
+                    </a>
+                    <a href="{{ url_for('suppliers.dashboard') }}" class="manage-courses-back-btn">
+                        <i class="bi bi-arrow-left-circle"></i>
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% include 'partials/_flash_messages.html' %}
+
+        <!-- Resumo -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <div class="stat-card-content text-center">
+                        <i class="bi bi-list-check" style="font-size: 2.5rem; color: #2563eb;"></i>
+                        <h3 class="mt-3">{{ total_actions }}</h3>
+                        <p class="text-muted mb-0">Total de Ações</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <div class="stat-card-content text-center">
+                        <i class="bi bi-{{ 'exclamation-triangle-fill' if has_open_issue else 'check-circle-fill' }}" 
+                           style="font-size: 2.5rem; color: {{ '#ef4444' if has_open_issue else '#10b981' }};"></i>
+                        <h3 class="mt-3">{{ 'Aberto' if has_open_issue else 'Resolvido' }}</h3>
+                        <p class="text-muted mb-0">Status Atual</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <div class="stat-card-content text-center">
+                        <i class="bi bi-person-badge" style="font-size: 2.5rem; color: #f59e0b;"></i>
+                        <h3 class="mt-3">{{ supplier.assigned_evaluators|length }}</h3>
+                        <p class="text-muted mb-0">Responsáveis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline de Histórico -->
+        <div class="dashboard-card">
+            <div class="card-header-dash">
+                <h2><i class="bi bi-clock-history"></i> Histórico de Ações</h2>
+                <p class="text-muted mb-0">Acompanhamento detalhado de todas as ações e interações</p>
+            </div>
+            
+            {% if history %}
+            <div class="timeline-container">
+                {% for action in history %}
+                <div class="timeline-item" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                    <div class="timeline-marker timeline-marker-{{ action.get_action_color() }}">
+                        <i class="{{ action.get_action_icon() }}"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-{{ action.get_action_color() }} mb-2">
+                                        {{ action.get_action_label() }}
+                                    </span>
+                                    {% if action.priority %}
+                                    <span class="badge bg-{{ 'danger' if action.priority == 'urgent' else ('warning' if action.priority == 'high' else 'secondary') }} mb-2">
+                                        {% if action.priority == 'urgent' %}
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Urgente
+                                        {% elif action.priority == 'high' %}
+                                        <i class="bi bi-exclamation-circle-fill"></i> Alta
+                                        {% elif action.priority == 'medium' %}
+                                        <i class="bi bi-dash-circle-fill"></i> Média
+                                        {% else %}
+                                        <i class="bi bi-info-circle-fill"></i> Baixa
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
+                                    <h5 class="mb-1">{{ action.created_at.strftime('%d/%m/%Y às %H:%M') }}</h5>
+                                    <p class="text-muted small mb-0">
+                                        <i class="bi bi-person-circle"></i> {{ action.user.name }}
+                                        {% if action.user.job_title %}
+                                        - {{ action.user.job_title }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% if action.deadline %}
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar-event"></i> Prazo:
+                                    </small>
+                                    <br>
+                                    <span class="badge bg-{{ 'danger' if action.deadline < date.today() else 'primary' }}">
+                                        {{ action.deadline.strftime('%d/%m/%Y') }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="timeline-body">
+                            <p class="mb-0">{{ action.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 4rem; color: #cbd5e1;"></i>
+                <h4 class="mt-3">Nenhuma ação registrada</h4>
+                <p class="text-muted">Comece adicionando a primeira ação de acompanhamento</p>
+                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addActionModal">
+                    <i class="bi bi-plus-circle"></i> Adicionar Primeira Ação
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Adicionar Ação -->
+<div class="modal fade" id="addActionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle"></i> Nova Ação de Acompanhamento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('suppliers.add_issue_action', supplier_id=supplier.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <!-- Tipo de Ação -->
+                    <div class="mb-3">
+                        <label class="form-label required">
+                            <i class="bi bi-list-ul"></i> Tipo de Ação
+                        </label>
+                        <select class="form-select" name="action_type" required>
+                            <option value="">Selecione...</option>
+                            <option value="opened">🚨 Problema Identificado</option>
+                            <option value="contact">📞 Contato com Fornecedor</option>
+                            <option value="follow_up">⏰ Acompanhamento</option>
+                            <option value="note">📝 Observação</option>
+                            <option value="escalated">⬆️ Escalado</option>
+                            <option value="resolved">✅ Problema Resolvido</option>
+                            <option value="reopened">🔄 Problema Reaberto</option>
+                        </select>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="mb-3">
+                        <label class="form-label required">
+                            <i class="bi bi-text-paragraph"></i> Descrição Detalhada
+                        </label>
+                        <textarea class="form-control" name="description" rows="5" required
+                                  placeholder="Descreva a ação realizada, o que foi discutido, acordos feitos, etc."></textarea>
+                        <small class="text-muted">
+                            <i class="bi bi-lightbulb"></i> Seja específico: inclua datas, nomes, compromissos e próximos passos
+                        </small>
+                    </div>
+
+                    <div class="row">
+                        <!-- Prioridade -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-flag"></i> Prioridade
+                            </label>
+                            <select class="form-select" name="priority">
+                                <option value="">Selecione...</option>
+                                <option value="low">Baixa</option>
+                                <option value="medium">Média</option>
+                                <option value="high">Alta</option>
+                                <option value="urgent">Urgente</option>
+                            </select>
+                        </div>
+
+                        <!-- Prazo -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-event"></i> Prazo
+                            </label>
+                            <input type="date" class="form-control" name="deadline">
+                            <small class="text-muted">Data limite para ação ou resolução</small>
+                        </div>
+                    </div>
+
+                    <!-- Exemplos -->
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-lightbulb-fill"></i> Exemplos de Descrições:</h6>
+                        <ul class="mb-0 small">
+                            <li><strong>Contato:</strong> "Entrei em contato com o fornecedor em 13/11/2025. Informaram que o problema será resolvido até 20/11/2025. Responsável: João Silva."</li>
+                            <li><strong>Acompanhamento:</strong> "Verificado que o fornecedor ainda não implementou as melhorias prometidas. Novo prazo acordado: 25/11/2025."</li>
+                            <li><strong>Resolvido:</strong> "Problema solucionado. Última avaliação apresentou score de 85%. Fornecedor normalizou o serviço."</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Registrar Ação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Timeline Styles */
+.timeline-container {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 80px;
+    margin-bottom: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+.timeline-marker-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.timeline-marker-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.timeline-marker-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.timeline-marker-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.timeline-marker-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.timeline-marker-secondary {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.timeline-content {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateX(4px);
+}
+
+.timeline-header h5 {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-body {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.stat-card-content {
+    padding: 2rem;
+}
+
+.stat-card-content h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
+}
+
+.empty-state {
+    padding: 4rem 2rem;
+}
+
+.required::after {
+    content: ' *';
+    color: #ef4444;
+}
+</style>
+{% endblock %}

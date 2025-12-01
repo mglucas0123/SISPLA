@@ -29,7 +29,7 @@ def user_change_password():
     return redirect(request.referrer or url_for("main.painel"))
 
 #<!--- FILTRO DATA E HORA --->
-def format_date_filter(value, target_tz_str='Etc/GMT+3', format_str='%d/%m/%Y'):
+def format_date_filter(value, target_tz_str='America/Sao_Paulo', format_str='%d/%m/%Y'):
     if value is None:
         return "N/A" 
 
@@ -62,12 +62,23 @@ def format_date_filter(value, target_tz_str='Etc/GMT+3', format_str='%d/%m/%Y'):
     if not isinstance(dt_object, datetime):
         return value 
 
-    dt_object_utc = dt_object.replace(tzinfo=timezone.utc) if dt_object.tzinfo is None else dt_object.astimezone(timezone.utc)
-    
     try:
-        target_tz = ZoneInfo(target_tz_str) 
-        local_dt = dt_object_utc.astimezone(target_tz)
+        target_tz = ZoneInfo(target_tz_str)
+        if dt_object.tzinfo is None:
+            # Heuristic: if the naive datetime is very close to now() in UTC, it's likely stored as UTC (e.g. default datetime.utcnow())
+            now_utc_naive = datetime.utcnow()
+            if abs((dt_object - now_utc_naive).total_seconds()) < 3600:
+                # Interpret as UTC and convert to target timezone
+                local_dt = dt_object.replace(tzinfo=timezone.utc).astimezone(target_tz)
+            else:
+                # Assume the naive timestamp represents local time
+                local_dt = dt_object.replace(tzinfo=target_tz)
+        else:
+            local_dt = dt_object.astimezone(target_tz)
         return local_dt.strftime(format_str)
     except Exception as e:
-        print(f"AVISO: Erro na conversão de fuso ou formatação: {e}. Formatando como UTC.")
-        return dt_object_utc.strftime(format_str)
+        print(f"AVISO: Erro na conversão de fuso ou formatação: {e}. Retornando string formata do datetime original.")
+        try:
+            return dt_object.strftime(format_str)
+        except Exception:
+            return str(dt_object)

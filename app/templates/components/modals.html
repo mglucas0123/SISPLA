@@ -1,0 +1,25 @@
+{% macro confirm_action_modal(id, title, body, action_url, confirm_text='Confirmar', method='POST') %}
+<div class="modal fade" id="{{ id }}" tabindex="-1" aria-labelledby="{{ id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-deletar">
+            <div class="modal-header modal-header-deletar">
+                <h5 class="modal-title" id="{{ id }}Label">{{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                {{ body }}
+            </div>
+            <div class="modal-footer">
+                <form action="{{ action_url }}" method="POST" class="m-0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if method and method|upper != 'POST' %}
+                    <input type="hidden" name="_method" value="{{ method|upper }}">
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">{{ confirm_text }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

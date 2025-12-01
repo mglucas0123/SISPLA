@@ -205,7 +205,7 @@
 									{% endif %}
 								</td>
 							{% else %}
-								{% if not hide_accept_column %}<td style="text-align:center;">{{ enrollment.accepted_at.strftime('%d/%m/%Y %H:%M') if enrollment.accepted_at else '---' }}</td>{% endif %}
+								{% if not hide_accept_column %}<td style="text-align:center;">{{ enrollment.accepted_at | format_date_time if enrollment.accepted_at else '---' }}</td>{% endif %}
 								{% if not hide_score_column %}<td style="text-align:center;">{{ enrollment.score|default(enrollment.grade|default('---')) }}</td>{% endif %}
 							{% endif %}
 						</tr>

@@ -1,0 +1,124 @@
+<!-- Partial: mensal.html - conteúdo interno da seção mensal -->
+<!-- Espera variáveis: form_data -->
+
+<!-- Participação -->
+<div class="question-card-eval" data-question="1">
+    <div class="question-header-eval">
+        <span class="question-number">1</span>
+        <h3>Nível de Participação e Engajamento <span style="color: red">*</span></h3>
+    </div>
+    <div class="radio-options-modern">
+        <label class="radio-option active">
+            <input type="radio" name="participation_score" value="active" {% if form_data and form_data.get('participation_score') == 'active' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Ativo</span>
+            </div>
+        </label>
+        <label class="radio-option partial">
+            <input type="radio" name="participation_score" value="partial" {% if form_data and form_data.get('participation_score') == 'partial' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Parcial</span>
+            </div>
+        </label>
+        <label class="radio-option none">
+            <input type="radio" name="participation_score" value="none" {% if form_data and form_data.get('participation_score') == 'none' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Nenhum</span>
+            </div>
+        </label>
+    </div>
+</div>
+
+<!-- Sugestões de Inovação -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">2</span>
+        <h3>Sugestões de Inovação <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="innovation_suggestions" rows="4" required
+            placeholder="Descreva sugestões de inovação propostas para o colaborador...">{{ form_data.get('innovation_suggestions') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Propostas de Melhoria -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">3</span>
+        <h3>Propostas de Melhoria <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="improvement_proposals" rows="4" placeholder="Descreva pontos de melhoria para o colaborador..." required>{{ form_data.get('improvement_proposals') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Participa das Atividades -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">4</span>
+        <h3>Participa das Atividades? <span style="color: red">*</span></h3>
+    </div>
+    <div class="radio-options-modern">
+        <label class="radio-option active">
+            <input type="radio" name="participation_activities" value="yes" {% if form_data and form_data.get('participation_activities') == 'yes' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Participa</span>
+            </div>
+        </label>
+        <label class="radio-option none">
+            <input type="radio" name="participation_activities" value="no" {% if form_data and form_data.get('participation_activities') == 'no' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não participa</span>
+            </div>
+        </label>
+    </div>
+</div>
+
+<!-- Objetivo do Colaborador -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">5</span>
+        <h3>Objetivo do Colaborador <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="collaborator_goal" placeholder="Qual é o objetivo do colaborador neste período?" required>{{ form_data.get('collaborator_goal') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Pontos a desenvolver -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">6</span>
+        <h3>Pontos a serem Desenvolvidos <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="development_points" rows="4" placeholder="Liste pontos a desenvolver..." required>{{ form_data.get('development_points') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Estratégia adotada -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">7</span>
+        <h3>Estratégia Adotada para Desenvolvimento <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="development_strategy" rows="4" placeholder="Descreva a estratégia adotada para o desenvolvimento do profissional..." required>{{ form_data.get('development_strategy') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Outras análises -->
+<div class="question-card">
+    <div class="question-header">
+        <span class="question-number">8</span>
+        <h3>Outras Análises <span style="color: red">*</span></h3>
+    </div>
+    <div class="justification-box">
+        <textarea class="form-control-custom" name="other_analyses" rows="4" placeholder="Outras observações ou análises sobre o colaborador..." required>{{ form_data.get('other_analyses') if form_data else '' }}</textarea>
+    </div>
+</div>
