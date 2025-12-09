@@ -130,9 +130,9 @@
                                 <td class="forms-table-cell">
                                     <div class="forms-user-info">
                                         <a href="{{ url_for('shift_handover.shift_handover_record_details', form_id=f.id) }}" class="forms-user-name">
-                                            {{ f.worker.name | truncate(35, False) }}
+                                            {{ f.display_worker_name | truncate(35, False) }}
                                         </a>
-                                        <span class="forms-user-username">{{ f.worker.username | truncate(35, False) }}</span>
+                                        <span class="forms-user-username">{{ f.worker.username if f.worker else '' | truncate(35, False) }}</span>
                                     </div>
                                 </td>
                                 <td class="forms-table-cell forms-table-center">

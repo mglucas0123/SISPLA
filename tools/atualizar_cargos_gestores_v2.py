@@ -1,0 +1,366 @@
+"""
+Script para atualizar cargos e gestores dos colaboradores
+baseado na planilha Excel fornecida (versao atualizada)
+"""
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app import create_app
+from app.models import db, User, JobPosition, user_managers
+from datetime import datetime, timezone
+from sqlalchemy import text
+import unicodedata
+
+app = create_app()
+
+# Mapeamento de cargos da planilha para nomes corretos no sistema
+MAPA_CARGOS = {
+    "AUTONOMO (GERENTE ADMINISTRATIVO)": "Gerente Administrativo",
+    "GERENTE ADMINISTRATIVO": "Gerente Administrativo",
+    "GERENTE OPERACIONAL": "Gerente Operacional",
+    "GERENTE ASSISTENCIAL": "Gerente Assistencial",
+    "COORDENADOR DE ENFERMAGEM": "Coordenador de Enfermagem",
+    "COORDENADOR DE SUPRIMENTOS": "Coordenador de Suprimentos",
+    "COORDENADOR DE HUMANIZACAO": "Coordenador de Humanizacao",
+    "ENFERMEIRO": "Enfermeiro",
+    "ENFERMEIRO DA QUALIDADE": "Enfermeiro da Qualidade",
+    "TECNICO DE ENFERMAGEM": "Tecnico de Enfermagem",
+    "TEC.IMOBILIZACAO ORT": "Tecnico de Imobilizacao Ortopedica",
+    "TECNICO DE IMOBILIZACAO ORTOPEDICA": "Tecnico de Imobilizacao Ortopedica",
+    "TECNICO DE SEGURANCA NO TRABALHO JR": "Tecnico de Seguranca do Trabalho Junior",
+    "TECNICO DE REFRIGERACAO": "Tecnico de Refrigeracao",
+    "INSTRUMENTADOR CIRURGICO": "Instrumentador Cirurgico",
+    "FISIOTERAPEUTA": "Fisioterapeuta",
+    "FARMACEUTICO": "Farmaceutico",
+    "BIOQUIMICO": "Bioquimico",
+    "BIOMEDICO": "Biomedico",
+    "DENTISTA": "Dentista",
+    "PSICOLOGO": "Psicologo",
+    "ASSISTENTE SOCIAL": "Assistente Social",
+    "ASSISTENTE ADMINISTRATIVO": "Assistente Administrativo",
+    "AUXILIAR ADMINISTRATIVO": "Auxiliar Administrativo",
+    "AUXILIAR DE ALMOXARIFADO": "Auxiliar de Almoxarifado",
+    "AUXILIAR DE FARMACIA": "Auxiliar de Farmacia",
+    "AUXILIAR DE LABORATORIO": "Auxiliar de Laboratorio",
+    "AUXILIAR DE FATURAMENTO": "Auxiliar de Faturamento",
+    "AUXILIAR DE HIGIENIZACAO": "Auxiliar de Higienizacao",
+    "AUXILIAR DE LAVANDERIA": "Auxiliar de Lavanderia",
+    "ANALISTA ADMINISTRATIVO PL": "Analista Administrativo Pleno",
+    "ANALISTA DE T.I PL": "Analista de T.I. Pleno",
+    "ANALISTA DE RH JR": "Analista de RH Junior",
+    "LIDER DE LABORATORIO": "Lider de Laboratorio",
+    "ENCARREGADO DE MANUTENCAO": "Encarregado de Manutencao",
+    "MAQUEIRO": "Maqueiro",
+    "JARDINEIRO": "Jardineiro",
+    "AJUDANTE DE MANUTENCAO": "Ajudante de Manutencao",
+    "OFICIAL ELETRICA": "Oficial Eletricista",
+    "APRENDIZ": "Aprendiz",
+    "DESEMBARGADOR DA QUALIDADE": "Desembargador da Qualidade",
+}
+
+# Dados da planilha Excel: (NOME, DATA, GESTOR, CARGO)
+# REVISADO conforme imagem do Excel em 05/12/2025
+DADOS_PLANILHA = [
+    ("ADRIANA SILGUEIRO DOS REIS", "01/11/2021", "FERNANDA JURADO", "AUTONOMO (GERENTE ADMINISTRATIVO)"),
+    ("DANILO SIQUEIRA DA PAIXAO SILVA", "16/02/2024", "MARIO SAPERE NETO", "GERENTE ADMINISTRATIVO"),
+    ("ADRIANA ALVES SILVA VIANA", "16/02/2024", "DANILO SIQUEIRA DA PAIXAO SILVA", "GERENTE OPERACIONAL"),
+    ("ADRIANO FRANCISCO DE JESUS PAULA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("AMANDA FREITAS MACHADO", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("ANA LUCIA DE ARAUJO", "16/02/2024", "RENATA LUCIANO SANTOS URZEDO", "AUXILIAR DE LABORATORIO"),
+    ("APARECIDA DE SOUZA NERY", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ASSISTENTE ADMINISTRATIVO"),
+    ("CAMILA ARAUJO BORGES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("CLAUDIO SANTA ROSA FILHO", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE IMOBILIZACAO ORTOPEDICA"),
+    ("CLEIDE DOS SANTOS SILVA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("CLEIDE TOMAZ DE FREITAS LIMA", "16/02/2024", "RENATA LUCIANO SANTOS URZEDO", "BIOQUIMICO"),
+    ("CLEONICE RIBEIRO BARBOSA PAULO", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE IMOBILIZACAO ORTOPEDICA"),
+    ("CLEUMA GIRICI MATOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("CLEUZA RIBEIRO DA SILVA OLIVEIRA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("DIRLENE AMARA XAVIER", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("EULINA LUCIA DIAS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("EUSANIA APARECIDA FREITAS BALSAMAO", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("FERNANDA FREITAS COELHO", "16/02/2024", "PATRICIA FLAUZINO DA CUNHA", "FARMACEUTICO"),
+    ("FERNANDA ROCHA DE OLIVEIRA", "16/02/2024", "PATRICIA FLAUZINO DA CUNHA", "AUXILIAR DE FARMACIA"),
+    ("FLAVIA REGINA FERREIRA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("GABRIEL AUGUSTOS ALVES OLIVEIRA", "16/02/2024", "DANILO SIQUEIRA DA PAIXAO SILVA", "ENCARREGADO DE MANUTENCAO"),
+    ("GELIS FERREIRA ALVES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("GEOVANA FERREIRA MORAIS", "16/02/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("GEOVANNA FREITAS", "16/02/2024", "ADRIANA ALVES SILVA VIANA", "MAQUEIRO"),
+    ("GUILHERME RODRIGUES SANTOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "MAQUEIRO"),
+    ("HIVALDA GONCALVES FERREIRA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("ISILIDA ALICE SANCHES DOS SANTOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("JUCINEI SILVA MORAIS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "MAQUEIRO"),
+    ("JOANA DARC PEREIRA BARBOSA", "16/02/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("JOCEMARA ROCHA SEABRA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("KEILA NEVES BORGES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("LEIA FREITAS MARQUES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "FISIOTERAPEUTA"),
+    ("LORRAN HERNANDES SOUZA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "MAQUEIRO"),
+    ("LUANA DIAS DOS SANTOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("LUZIA QUIRINO DE ALMEIDA", "16/02/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE LAVANDERIA"),
+    ("MARIA CACIA DOS SANTOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("MARIELE FREITAS PEREIRA", "16/02/2024", "JOSE CRISTIANO DA SILVA", "TECNICO DE SEGURANCA NO TRABALHO JR"),
+    ("MAYLA FELICIO AMARAL", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("MICHELE PEREIRA DOS SANTOS FIEL", "16/02/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("NATALIA FABIANA FREITAS FONSECA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("NUBIA LILIAN RODRIGUES DOS REIS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("PAMMELA SUELLEN SOARES BORGES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("PATRICIA DE FREITAS OLIVEIRA", "16/02/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("PAULA FERNANDA SANTOS", "16/02/2024", "DANILO SIQUEIRA DA PAIXAO SILVA", "COORDENADOR DE HUMANIZACAO"),
+    ("RAFAEL ANDRADE FREITAS FARIA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "MAQUEIRO"),
+    ("RAFAELA MARIA SILVA RODRIGUES", "16/02/2024", "PATRICIA FLAUZINO DA CUNHA", "AUXILIAR ADMINISTRATIVO"),
+    ("RENATA LUCIANO SANTOS URZEDO", "16/02/2024", "DANILO SIQUEIRA DA PAIXAO SILVA", "LIDER DE LABORATORIO"),
+    ("RODRIGO SOARES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "INSTRUMENTADOR CIRURGICO"),
+    ("ROSANGELA APARECIDA DOS SANTOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("RYAN DE CHRISTHAN SANCHES SILVA", "16/02/2024", "RENATA LUCIANO SANTOS URZEDO", "AUXILIAR DE LABORATORIO"),
+    ("SILVANE APARECIDA DE SOUZA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("SIMONE ALVES DE LIMA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("SOLANGE FERNANDES SILVA", "16/02/2024", "PAULA FERNANDA SANTOS", "ASSISTENTE SOCIAL"),
+    ("SONIA APARECIDA OLIVEIRA QUEIROZ", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("SONIA ROSA DA SILVA MEDEIROS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("SUELY DA SILVA SANTOS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("TASSIA RAIANE NERES RODRIGUES", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("THAIS PEREIRA DA SILVA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("THAISA ROCHA", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("WALDECY DA GRACA DE FREITAS", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("WELLINGTA DO NASCIMENTO FELIX", "16/02/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("SOBREIA APARECIDA DA SILVA", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TEC.IMOBILIZACAO ORT"),
+    ("ALINE DAIANY DE PAULA", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("EDNA MARIA SILVA DOS SANTOS", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("DJAIRA MIRANDA SALVADOR", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("ANA FLAVIA SALVADOR DOS SANTOS", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("RAILDA DA TOMAZ DE ALMEIDA", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("LEANDRO SILVA", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TEC.IMOBILIZACAO ORT"),
+    ("CRISTIANE DA ROCHA SANTOS DANTAS", "18/03/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("JOAO LAZARO DA SILVA SANTOS", "01/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE LAVANDERIA"),
+    ("IONICA FERREIRA", "01/04/2024", "ADRIANA ALVES SILVA VIANA", "TECNICO DE ENFERMAGEM"),
+    ("ANA PAULA FERREIRA FRANCO", "01/04/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("LIANDRA MARTINS TIAGO", "04/04/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("GEFANIO VIEIRA BOTELHO", "04/04/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("CAMILA SANTA ROSA", "01/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("ELAINE BORGES DA SILVA OLIVEIRA", "02/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("ROSINEI FERREIRA BARBOSA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("LUANA OLIVEIRA SILVA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("APARECIDA ALINE IDENUSA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("EVELINE FERREIRA DA SILVA PEREIRA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("JESHLAINE VIEIRA LOPES DA SILVA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("MANOELINA BENEDITA DE SOUZA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("ROSANA APARECIDA ARAUJO SILVA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("SUELEN APARECIDA RIBEIRO SANTIAGO BARBOSA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("MARIA DE FATIMA FERNANDES SILVA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("MARIO HERMES APARECIDO TEIXEIRA", "04/04/2024", "ADRIANA ALVES SILVA VIANA", "JARDINEIRO"),
+    ("VANESSA LENK REZENDE DE MATOS", "24/04/2024", "DANILO SIQUEIRA DA PAIXAO SILVA", "DENTISTA"),
+    ("MARIANA TEIXEIRA ERCOLANO", "06/05/2024", "SABRINA DA SILVA BENETTI", "DESEMBARGADOR DA QUALIDADE"),
+    ("VALQUIRIA SANTOS ROCHA", "06/04/2024", "PATRICIA FLAUZINO DA CUNHA", "ANALISTA ADMINISTRATIVO PL"),
+    ("ANA CAROLINE FERNANDES PEREIRA", "08/04/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("MAIZA MANOELA VISCONDI BISPO", "13/05/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("AURELIA CARVALHO NUNES", "10/06/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("JESSICA MAIA ANDRADE", "01/07/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("IZABELLA FREITAS BERALDO", "01/07/2024", "RENATA LUCIANO SANTOS URZEDO", "BIOMEDICO"),
+    ("MAYRA APARECIDA OLIVEIRA SILVEIRA", "01/07/2024", "LUCINEIA OLIVEIRA DA SILVA", "INSTRUMENTADOR CIRURGICO"),
+    ("GABRIELA KAROLLYNY SOUZA DE FREITAS", "05/08/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("ALEXANDRA SILVA DE SOUZA", "05/08/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("SAMANDA AMERICA DE SOUZA", "05/08/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("MAYANY DIAS URZEDO", "05/08/2024", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("ADRIANA SILVA MARTINS", "13/08/2024", "PATRICIA FLAUZINO DA CUNHA", "FARMACEUTICO"),
+    ("MARCIA REGINA DA SILVA LUCAS", "19/08/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE FATURAMENTO"),
+    ("MICHELE LEITE DA SILVA", "02/09/2024", "RENATA LUCIANO SANTOS URZEDO", "AUXILIAR DE LABORATORIO"),
+    ("PAULA DA SILVA", "07/10/2024", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("FLAVIO ALBERTO MOISES", "07/10/2024", "GABRIEL AUGUSTOS ALVES OLIVEIRA", "AJUDANTE DE MANUTENCAO"),
+    ("MIRIAM CARLA DE SOUZA SANTOS", "21/10/2024", "RENATA LUCIANO SANTOS URZEDO", "BIOMEDICO"),
+    ("JULIANA FERREIRA SOLER", "22/12/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("APARECIDA DE MELO", "16/12/2024", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("LUCINEIA OLIVEIRA DA SILVA", "20/01/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "COORDENADOR DE ENFERMAGEM"),
+    ("KELLEN CRISTINA SILVA OLIVEIRA", "20/01/2025", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("ANA CAROLINA FREITAS SILVA", "20/01/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("WELDA ALVES DA SILVA", "20/01/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("MARIELY SILVA PEREIRA SANTOS", "20/01/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("MARINA CRISTINA FERREIRA", "20/01/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("LAIRYS LARA FREITAS GARCIA", "20/02/2025", "RENATA LUCIANO SANTOS URZEDO", "BIOMEDICO"),
+    ("MARCO TULIO FERREIRA SOUZA", "10/02/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("NEUSA CANDIDA DE OLIVEIRA", "10/02/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("RITA DE CASSIA FERRAZ PYANTE", "10/02/2025", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("MURILO ALVES BARBOSA MENEZES", "21/02/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("GIOVANNA QUEIROZ BORGES SEVERINO", "17/03/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "AUXILIAR ADMINISTRATIVO"),
+    ("PATRICIA FLAUZINO DA CUNHA", "24/03/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "COORDENADOR DE SUPRIMENTOS"),
+    ("MARIA AUXILIADORA AMARAL PACHECO", "22/04/2025", "ADRIANA ALVES SILVA VIANA", "TECNICO DE ENFERMAGEM"),
+    ("LUCIMEIRE LOUZADA MONTALVAO", "04/04/2025", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("NEI ALVES BARBOSA JUNIOR", "22/04/2025", "LUIZA PROCOPIO DE CARVALHO", "GERENTE ASSISTENCIAL"),
+    ("GEOVANNA CATALAO GIOVANI", "06/05/2025", "RENATA LUCIANO SANTOS URZEDO", "TECNICO DE ENFERMAGEM"),
+    ("LUCINEIA DIVINA DE FREITAS", "05/05/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("JEAN CARLOS PEREIRA DE SOUZA", "05/05/2025", "LUCINEIA OLIVEIRA DA SILVA", "MAQUEIRO"),
+    ("LUCAS MORAES ARAUJO", "19/05/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "ANALISTA DE T.I PL"),
+    ("TATILA WALDERLANDIA DOS SANTOS FERREIRA", "06/05/2025", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("ANA GABRIELLA ALMEIDA MARRAS", "20/06/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("ISADORA CRISTINA PEREIRA SOUZA", "02/06/2025", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("DILMA FERNANDA FERREIRA SANTOS", "01/07/2025", "LUCINEIA OLIVEIRA DA SILVA", "ENFERMEIRO"),
+    ("ANEZIO JUNIOR MEDEIROS DA SILVA", "01/07/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("TALITA CRISTINA FREITAS DA SILVA", "02/07/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("DORVALINA ALVES DE OLIVEIRA DE SOUZA", "07/07/2025", "LUCINEIA OLIVEIRA DA SILVA", "AUXILIAR DE HIGIENIZACAO"),
+    ("EDINALVA ROSA DOS SANTOS", "07/07/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("FLAVIO ALBERTO MOISES JUNIOR", "07/07/2025", "PATRICIA FLAUZINO DA CUNHA", "AUXILIAR DE ALMOXARIFADO"),
+    ("DESIRE ALMEIDA FREITAS DELLA TORRE", "21/07/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("REGINALDO JOSE DE FREITAS", "11/08/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("JONATAS CARLOS OLIVEIRA", "11/08/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "PSICOLOGO"),
+    ("ESTEFANE ARAUJO DE FREITAS BERNINI", "11/08/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("LESELI GALDINO ARAUJO", "11/08/2025", "GABRIEL AUGUSTOS ALVES OLIVEIRA", "OFICIAL ELETRICA"),
+    ("JOSIANE SANTOS PESCHIETTI", "18/08/2025", "ADRIANA ALVES SILVA VIANA", "MAQUEIRO"),
+    ("REGINA FREITAS DA COSTA", "18/08/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR ADMINISTRATIVO"),
+    ("MAGDA BEATRIZ RIBEIRO DA SILVA", "08/09/2025", "LILIAN VALDINEIA DA CUNHA", "ANALISTA DE RH JR"),
+    ("RENATA SILVA SAMARINO", "11/08/2025", "RENATA LUCIANO SANTOS URZEDO", "AUXILIAR DE LABORATORIO"),
+    ("MARILEIA FARIA DINIZ", "08/09/2025", "PATRICIA FLAUZINO DA CUNHA", "AUXILIAR DE FARMACIA"),
+    ("MARIA EDUARDA SOARES MARQUES", "22/09/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "APRENDIZ"),
+    ("GABRIEL MARQUES ESTEVAN", "22/09/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "APRENDIZ"),
+    ("MELISSA MELO DA SILVA", "22/09/2025", "DANILO SIQUEIRA DA PAIXAO SILVA", "TECNICO DE ENFERMAGEM"),
+    ("ADRIANE GOMES SILVA", "10/06/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("JOAO LUCAS BENICIO JUSTINO", "06/10/2025", "LUCINEIA OLIVEIRA DA SILVA", "TECNICO DE ENFERMAGEM"),
+    ("CARLOS EDUARDO FONSECA DA SILVA", "06/10/2025", "GABRIEL AUGUSTOS ALVES OLIVEIRA", "TECNICO DE REFRIGERACAO"),
+    ("PEDRO SILVA", "17/11/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+    ("MARIA DO SOCORRO SILVA DOS SANTOS", "03/11/2025", "ADRIANA ALVES SILVA VIANA", "AUXILIAR DE HIGIENIZACAO"),
+]
+
+
+def normalizar_nome(nome):
+    """Normaliza nome para comparacao"""
+    if not nome:
+        return ""
+    nome = unicodedata.normalize('NFKD', nome)
+    nome = ''.join(c for c in nome if not unicodedata.combining(c))
+    return ' '.join(nome.upper().split())
+
+
+def encontrar_usuario_por_nome(nome_planilha, usuarios):
+    """Tenta encontrar um usuario pelo nome"""
+    nome_norm = normalizar_nome(nome_planilha)
+    
+    for user in usuarios:
+        user_nome_norm = normalizar_nome(user.name)
+        
+        # Match exato
+        if user_nome_norm == nome_norm:
+            return user
+        
+        # Match parcial (primeiro e ultimo nome)
+        partes_planilha = nome_norm.split()
+        partes_user = user_nome_norm.split()
+        
+        if len(partes_planilha) >= 2 and len(partes_user) >= 2:
+            # Primeiro e ultimo nome iguais
+            if partes_planilha[0] == partes_user[0] and partes_planilha[-1] == partes_user[-1]:
+                return user
+            # Primeiro nome e segundo nome iguais (para nomes com mais partes)
+            if len(partes_planilha) >= 3 and len(partes_user) >= 3:
+                if partes_planilha[0] == partes_user[0] and partes_planilha[1] == partes_user[1]:
+                    return user
+    
+    return None
+
+
+def encontrar_cargo(nome_cargo_planilha, cargos):
+    """Encontra o cargo no sistema baseado no nome da planilha"""
+    # Primeiro tenta mapear
+    nome_cargo_sistema = MAPA_CARGOS.get(nome_cargo_planilha.upper())
+    
+    if nome_cargo_sistema:
+        for cargo in cargos:
+            cargo_norm = normalizar_nome(cargo.name)
+            mapa_norm = normalizar_nome(nome_cargo_sistema)
+            if cargo_norm == mapa_norm:
+                return cargo
+    
+    # Se nao encontrou, tenta busca normalizada
+    nome_norm = normalizar_nome(nome_cargo_planilha)
+    for cargo in cargos:
+        if normalizar_nome(cargo.name) == nome_norm:
+            return cargo
+    
+    return None
+
+
+def main():
+    with app.app_context():
+        print("=" * 70)
+        print("ATUALIZANDO CARGOS E GESTORES DOS USUARIOS")
+        print("=" * 70)
+        
+        # Carregar dados
+        usuarios = User.query.all()
+        cargos = JobPosition.query.all()
+        
+        print(f"Total de usuarios no sistema: {len(usuarios)}")
+        print(f"Total de cargos cadastrados: {len(cargos)}")
+        print(f"Total de registros na planilha: {len(DADOS_PLANILHA)}")
+        print("=" * 70)
+        
+        # Contadores
+        cargos_atualizados = 0
+        gestores_atribuidos = 0
+        nao_encontrados = []
+        cargos_nao_encontrados = set()
+        gestores_nao_encontrados = set()
+        
+        # Processar cada registro
+        for nome, data, nome_gestor, cargo_planilha in DADOS_PLANILHA:
+            usuario = encontrar_usuario_por_nome(nome, usuarios)
+            
+            if not usuario:
+                nao_encontrados.append(nome)
+                continue
+            
+            # Atualizar cargo
+            cargo = encontrar_cargo(cargo_planilha, cargos)
+            if cargo:
+                if usuario.job_position_id != cargo.id:
+                    usuario.job_position_id = cargo.id
+                    print(f"+ Cargo: {usuario.name} -> {cargo.name}")
+                    cargos_atualizados += 1
+            else:
+                cargos_nao_encontrados.add(cargo_planilha)
+            
+            # Atualizar gestor
+            gestor = encontrar_usuario_por_nome(nome_gestor, usuarios)
+            if gestor:
+                # Verificar se ja tem esse gestor
+                gestor_ids = [m.id for m in usuario.assigned_managers]
+                if gestor.id not in gestor_ids:
+                    # Limpar gestores anteriores e adicionar novo
+                    usuario.assigned_managers = [gestor]
+                    print(f"+ Gestor: {usuario.name} <- {gestor.name}")
+                    gestores_atribuidos += 1
+            else:
+                gestores_nao_encontrados.add(nome_gestor)
+        
+        db.session.commit()
+        
+        # Relatorio
+        print("\n" + "=" * 70)
+        print("RELATORIO FINAL")
+        print("=" * 70)
+        print(f"Cargos atualizados: {cargos_atualizados}")
+        print(f"Gestores atribuidos: {gestores_atribuidos}")
+        print(f"Colaboradores nao encontrados: {len(nao_encontrados)}")
+        
+        if nao_encontrados:
+            print(f"\n! Colaboradores nao encontrados no sistema:")
+            for nome in nao_encontrados[:100]:
+                print(f"   - {nome}")
+            if len(nao_encontrados) > 100:
+                print(f"   ... e mais {len(nao_encontrados) - 100}")
+        
+        if cargos_nao_encontrados:
+            print(f"\n! Cargos nao encontrados:")
+            for cargo in sorted(cargos_nao_encontrados):
+                print(f"   - {cargo}")
+        
+        if gestores_nao_encontrados:
+            print(f"\n! Gestores nao encontrados:")
+            for gestor in sorted(gestores_nao_encontrados):
+                print(f"   - {gestor}")
+        
+        print("\n" + "=" * 70)
+        print("Atualizacao concluida!")
+        print("=" * 70)
+
+
+if __name__ == "__main__":
+    main()

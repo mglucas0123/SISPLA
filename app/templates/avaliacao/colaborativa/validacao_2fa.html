@@ -1,0 +1,1204 @@
+{% extends "navbar.html" %}
+{% block title %}Validação 2FA - Sessão Colaborativa{% endblock %}
+
+{% block content %}
+<div class="validation-2fa-dashboard">
+    <!-- Hero Header -->
+    <div class="hero-header-2fa">
+        <div class="hero-bg-pattern"></div>
+        <div class="hero-content">
+            <div class="hero-left">
+                <div class="hero-icon-wrapper">
+                    <div class="hero-icon">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div class="hero-icon-ring"></div>
+                </div>
+                <div class="hero-text">
+                    <h1>Sessão de Validação Colaborativa</h1>
+                    <p>Autenticação de Dois Fatores para acesso seguro às avaliações</p>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="timer-card">
+                    <div class="timer-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="timer-info">
+                        <span class="timer-label">Expira em</span>
+                        <span class="timer-value"><strong id="countdown">{{ remaining_time }}</strong> min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+                <path d="M0,64L48,69.3C96,75,192,85,288,90.7C384,96,480,96,576,85.3C672,75,768,53,864,48C960,43,1056,53,1152,58.7C1248,64,1344,64,1392,64L1440,64L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" fill="#f8f9fa"></path>
+            </svg>
+        </div>
+    </div>
+
+
+    <!-- Flash Messages -->
+    {% include 'partials/_flash_messages.html' %}
+
+    <!-- Authentication Section -->
+    <div class="auth-section">
+        <div class="section-title">
+            <i class="bi bi-key-fill"></i>
+            <h3>Inserir Códigos de Autenticação</h3>
+        </div>
+
+        <form method="POST" action="{{ url_for('collaborative.authenticate_both', token=session.session_token) }}" id="dualAuthForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="auth-cards-container">
+                <div class="row g-4 justify-content-center">
+                    <!-- Manager Auth Card -->
+                    <div class="col-lg-5 col-md-6">
+                        <div class="auth-card {{ 'authenticated' if session.manager_authenticated else '' }}">
+                            <div class="auth-card-header manager">
+                                <div class="auth-card-icon">
+                                    <i class="bi bi-person-badge-fill"></i>
+                                </div>
+                                <div class="auth-card-title">
+                                    <h4>Gestor</h4>
+                                    <span>{{ session.manager.full_name }}</span>
+                                </div>
+                            </div>
+                            <div class="auth-card-body">
+                                {% if session.manager_authenticated %}
+                                <div class="auth-success">
+                                    <div class="success-icon">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <h5>Autenticado com Sucesso</h5>
+                                    <p>Código 2FA verificado</p>
+                                </div>
+                                {% else %}
+                                <div class="auth-input-section">
+                                    <div class="input-icon">
+                                        <i class="bi bi-phone-vibrate"></i>
+                                    </div>
+                                    <p class="input-instruction">Insira o código do seu aplicativo autenticador</p>
+                                    <div class="code-input-wrapper">
+                                        <input type="text" 
+                                               name="manager_code" 
+                                               id="managerCode"
+                                               class="code-input" 
+                                               maxlength="6" 
+                                               pattern="[0-9]{6}" 
+                                               inputmode="numeric"
+                                               autocomplete="one-time-code"
+                                               placeholder="• • • • • •"
+                                               required>
+                                    </div>
+                                    <div class="input-hint">
+                                        <i class="bi bi-info-circle"></i>
+                                        6 dígitos do aplicativo autenticador
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connector -->
+                    <div class="auth-connector d-none d-lg-flex">
+                        <div class="connector-line"></div>
+                        <div class="connector-icon">
+                            <i class="bi bi-plus-lg"></i>
+                        </div>
+                        <div class="connector-line"></div>
+                    </div>
+
+                    <!-- Employee Auth Card -->
+                    <div class="col-lg-5 col-md-6">
+                        <div class="auth-card {{ 'authenticated' if session.employee_authenticated else '' }}">
+                            <div class="auth-card-header employee">
+                                <div class="auth-card-icon">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div class="auth-card-title">
+                                    <h4>Colaborador</h4>
+                                    <span>{{ session.employee.full_name }}</span>
+                                </div>
+                            </div>
+                            <div class="auth-card-body">
+                                {% if session.employee_authenticated %}
+                                <div class="auth-success">
+                                    <div class="success-icon">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <h5>Autenticado com Sucesso</h5>
+                                    <p>Código 2FA verificado</p>
+                                </div>
+                                {% else %}
+                                <div class="auth-input-section">
+                                    <div class="input-icon">
+                                        <i class="bi bi-phone-vibrate"></i>
+                                    </div>
+                                    <p class="input-instruction">Insira o código do seu aplicativo autenticador</p>
+                                    <div class="code-input-wrapper">
+                                        <input type="text" 
+                                               name="employee_code" 
+                                               id="employeeCode"
+                                               class="code-input" 
+                                               maxlength="6" 
+                                               pattern="[0-9]{6}" 
+                                               inputmode="numeric"
+                                               autocomplete="one-time-code"
+                                               placeholder="• • • • • •"
+                                               required>
+                                    </div>
+                                    <div class="input-hint">
+                                        <i class="bi bi-info-circle"></i>
+                                        6 dígitos do aplicativo autenticador
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            {% if not session.manager_authenticated or not session.employee_authenticated %}
+            <div class="submit-section">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    <span>Validar Códigos e Acessar Avaliações</span>
+                </button>
+                <p class="submit-hint">
+                    <i class="bi bi-lock-fill"></i>
+                    Ambos os códigos serão verificados simultaneamente
+                </p>
+            </div>
+            {% endif %}
+        </form>
+
+        <!-- Already Authenticated -->
+        {% if session.manager_authenticated and session.employee_authenticated %}
+        <div class="all-authenticated-section">
+            <div class="success-card">
+                <div class="success-card-icon">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+                <h4>Ambos Autenticados!</h4>
+                <p>A sessão está ativa e ambos os participantes foram verificados com sucesso.</p>
+                <a href="{{ url_for('collaborative.view_session', token=session.session_token) }}" class="access-btn">
+                    <i class="bi bi-eye-fill"></i>
+                    Visualizar Avaliações
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="how-it-works-section">
+        <div class="section-title">
+            <i class="bi bi-question-circle-fill"></i>
+            <h3>Como funciona?</h3>
+        </div>
+        <div class="steps-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h5>Gestor insere código</h5>
+                    <p>Abra seu app autenticador e insira os 6 dígitos</p>
+                </div>
+            </div>
+            <div class="step-divider">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h5>Colaborador insere código</h5>
+                    <p>Colaborador insere seu próprio código 2FA</p>
+                </div>
+            </div>
+            <div class="step-divider">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+            <div class="step-item success">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h5>Validação simultânea</h5>
+                    <p>Ambos os códigos são verificados juntos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-section">
+        <a href="{{ url_for('collaborative.my_evaluations') }}" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+            Voltar para Minhas Avaliações
+        </a>
+    </div>
+</div>
+
+<style>
+/* ===== Dashboard Principal ===== */
+.validation-2fa-dashboard {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* ===== Hero Header ===== */
+.hero-header-2fa {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
+    padding: 2.5rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.hero-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+        radial-gradient(circle at 40% 40%, rgba(124, 58, 237, 0.2) 0%, transparent 30%);
+    pointer-events: none;
+}
+
+.hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.hero-icon-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.hero-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+    position: relative;
+    z-index: 2;
+}
+
+.hero-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.hero-icon-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 22px;
+    border: 2px solid rgba(124, 58, 237, 0.4);
+    animation: hero-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes hero-pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.3; }
+}
+
+.hero-text h1 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hero-text p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.hero-right {
+    flex-shrink: 0;
+}
+
+.timer-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    animation: timer-glow 2s ease-in-out infinite;
+}
+
+@keyframes timer-glow {
+    0%, 100% { box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); }
+    50% { box-shadow: 0 8px 35px rgba(239, 68, 68, 0.6); }
+}
+
+.timer-icon {
+    width: 45px;
+    height: 45px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.timer-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.timer-label {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.timer-value {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.hero-wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    z-index: 1;
+}
+
+.hero-wave svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ===== Highlights Section ===== */
+.highlights-section {
+    padding: 2rem;
+    margin-bottom: 0;
+}
+
+.highlight-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.highlight-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.highlight-card.manager-card {
+    border-top: 6px solid #3498db;
+}
+
+.highlight-card.manager-card .trophy-icon {
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+.highlight-card.employee-card {
+    border-top: 6px solid #7c3aed;
+}
+
+.highlight-card.employee-card .trophy-icon {
+    color: #7c3aed;
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.trophy-icon {
+    font-size: 2rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+}
+
+.avatar-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.highlight-card:hover .avatar-wrapper {
+    transform: scale(1.05);
+}
+
+.winner-info h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.winner-info .role {
+    display: block;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: #95a5a6;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.success {
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+.status-badge.pending {
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+}
+
+/* ===== Flash Messages ===== */
+.flash-messages-container {
+    max-width: 700px;
+    margin: 0 auto 2rem;
+}
+
+.flash-message {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.flash-message i:first-child {
+    font-size: 1.25rem;
+}
+
+.flash-message span {
+    flex: 1;
+    font-weight: 500;
+}
+
+.flash-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.flash-close:hover {
+    opacity: 1;
+}
+
+.flash-success {
+    background: rgba(39, 174, 96, 0.1);
+    border-left: 4px solid #27ae60;
+    color: #27ae60;
+}
+
+.flash-warning {
+    background: rgba(243, 156, 18, 0.1);
+    border-left: 4px solid #f39c12;
+    color: #f39c12;
+}
+
+.flash-danger {
+    background: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid #e74c3c;
+    color: #e74c3c;
+}
+
+.flash-info {
+    background: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid #3498db;
+    color: #3498db;
+}
+
+/* ===== Auth Section ===== */
+.auth-section {
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.section-title i {
+    font-size: 1.5rem;
+    color: #7c3aed;
+}
+
+.section-title h3 {
+    margin: 0;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.auth-cards-container {
+    position: relative;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+.auth-card.authenticated {
+    border: 2px solid #27ae60;
+}
+
+.auth-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    color: white;
+}
+
+.auth-card-header.manager {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.auth-card-header.employee {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+}
+
+.auth-card-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card-icon i {
+    font-size: 1.5rem;
+}
+
+.auth-card-title h4 {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.auth-card-title span {
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+.auth-card-body {
+    padding: 2rem;
+}
+
+/* Auth Success State */
+.auth-success {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.auth-success .success-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(39, 174, 96, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+}
+
+.auth-success .success-icon i {
+    font-size: 2.5rem;
+    color: #27ae60;
+    animation: pulse-check 2s infinite;
+}
+
+@keyframes pulse-check {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.auth-success h5 {
+    color: #27ae60;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.auth-success p {
+    color: #7f8c8d;
+    margin: 0;
+}
+
+/* Auth Input Section */
+.auth-input-section {
+    text-align: center;
+}
+
+.input-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.input-icon i {
+    font-size: 1.75rem;
+    color: #7f8c8d;
+}
+
+.input-instruction {
+    color: #7f8c8d;
+    margin-bottom: 1.5rem;
+}
+
+.code-input-wrapper {
+    margin-bottom: 1rem;
+}
+
+.code-input {
+    width: 100%;
+    max-width: 280px;
+    padding: 1rem 1.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.75em;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.code-input::placeholder {
+    color: #bdc3c7;
+    letter-spacing: 0.5em;
+}
+
+.code-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+    background: white;
+}
+
+.code-input.is-invalid {
+    border-color: #e74c3c;
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.input-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #95a5a6;
+    font-size: 0.85rem;
+}
+
+/* Auth Connector */
+.auth-connector {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+.connector-line {
+    width: 2px;
+    height: 30px;
+    background: #e0e0e0;
+}
+
+.connector-icon {
+    width: 45px;
+    height: 45px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7f8c8d;
+}
+
+/* Submit Section */
+.submit-section {
+    text-align: center;
+    margin-top: 2.5rem;
+}
+
+.submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 3rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(39, 174, 96, 0.3);
+}
+
+.submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(39, 174, 96, 0.4);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.submit-btn i {
+    font-size: 1.25rem;
+}
+
+.submit-hint {
+    margin-top: 1rem;
+    color: #95a5a6;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* All Authenticated Section */
+.all-authenticated-section {
+    margin-top: 2rem;
+}
+
+.success-card {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 15px 40px rgba(39, 174, 96, 0.3);
+}
+
+.success-card-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.success-card h4 {
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.success-card p {
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.access-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2.5rem;
+    background: white;
+    color: #27ae60;
+    font-weight: 700;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.access-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    color: #27ae60;
+}
+
+/* How It Works Section */
+.how-it-works-section {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.04);
+}
+
+.steps-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-radius: 15px;
+    flex: 1;
+    min-width: 220px;
+    max-width: 280px;
+}
+
+.step-item.success .step-number {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.step-content h5 {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.step-content p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 0.85rem;
+}
+
+.step-divider {
+    color: #bdc3c7;
+    font-size: 1.25rem;
+}
+
+/* Back Section */
+.back-section {
+    text-align: center;
+    padding: 0 2rem 2rem;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    color: #7f8c8d;
+    font-weight: 500;
+    text-decoration: none;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    color: #7c3aed;
+    border-color: #7c3aed;
+    background: rgba(124, 58, 237, 0.05);
+}
+
+/* Auth Section padding */
+.auth-section {
+    padding: 0 2rem 2rem;
+}
+
+/* How it works padding */
+.how-it-works-section {
+    margin-left: 2rem;
+    margin-right: 2rem;
+}
+
+/* ===== Responsivo ===== */
+@media (max-width: 992px) {
+    .auth-connector {
+        display: none !important;
+    }
+    
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .hero-left {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-header-2fa {
+        padding: 1.5rem 1rem 3rem;
+    }
+    
+    .hero-text h1 {
+        font-size: 1.35rem;
+    }
+    
+    .hero-text p {
+        font-size: 0.9rem;
+    }
+    
+    .timer-card {
+        padding: 0.75rem 1rem;
+    }
+    
+    .timer-icon {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .timer-value {
+        font-size: 1.1rem;
+    }
+    
+    .highlights-section {
+        padding: 1.5rem 1rem;
+    }
+
+    .highlight-card {
+        margin-bottom: 1rem;
+        padding: 2rem 1.5rem;
+    }
+    
+    .auth-section {
+        padding: 0 1rem 1.5rem;
+    }
+    
+    .how-it-works-section {
+        margin-left: 1rem;
+        margin-right: 1rem;
+        padding: 1.5rem;
+    }
+
+    .steps-container {
+        flex-direction: column;
+    }
+
+    .step-divider {
+        transform: rotate(90deg);
+    }
+
+    .step-item {
+        max-width: 100%;
+    }
+
+    .code-input {
+        font-size: 1.5rem;
+        letter-spacing: 0.5em;
+    }
+    
+    .back-section {
+        padding: 0 1rem 1.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const managerInput = document.getElementById('managerCode');
+    const employeeInput = document.getElementById('employeeCode');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Animate cards on load
+    const cards = document.querySelectorAll('.highlight-card, .auth-card, .how-it-works-section');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Auto-format and move focus
+    function setupCodeInput(input, nextInput) {
+        if (!input) return;
+        
+        input.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '');
+            
+            if (this.value.length === 6 && nextInput) {
+                nextInput.focus();
+            }
+        });
+        
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = paste.replace(/\D/g, '').substring(0, 6);
+            this.value = numbers;
+            if (numbers.length === 6 && nextInput) {
+                nextInput.focus();
+            }
+        });
+    }
+    
+    setupCodeInput(managerInput, employeeInput);
+    setupCodeInput(employeeInput, null);
+    
+    // Form validation
+    const form = document.getElementById('dualAuthForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const managerCode = managerInput ? managerInput.value : '';
+            const employeeCode = employeeInput ? employeeInput.value : '';
+            
+            let needsManager = managerInput && !managerInput.closest('.auth-card').classList.contains('authenticated');
+            let needsEmployee = employeeInput && !employeeInput.closest('.auth-card').classList.contains('authenticated');
+            
+            if (needsManager && managerCode.length !== 6) {
+                e.preventDefault();
+                managerInput.focus();
+                managerInput.classList.add('is-invalid');
+                return;
+            }
+            
+            if (needsEmployee && employeeCode.length !== 6) {
+                e.preventDefault();
+                employeeInput.focus();
+                employeeInput.classList.add('is-invalid');
+                return;
+            }
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Validando...';
+            }
+        });
+    }
+    
+    // Remove invalid class on input
+    [managerInput, employeeInput].forEach(function(input) {
+        if (input) {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+            });
+        }
+    });
+    
+    // Auto-focus first empty field
+    if (managerInput && !managerInput.closest('.auth-card').classList.contains('authenticated')) {
+        managerInput.focus();
+    } else if (employeeInput && !employeeInput.closest('.auth-card').classList.contains('authenticated')) {
+        employeeInput.focus();
+    }
+});
+</script>
+{% endblock %}

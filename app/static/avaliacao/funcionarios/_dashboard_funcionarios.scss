@@ -53,6 +53,7 @@
         }
     }
 
+
     .highlights-section {
         margin-bottom: 4rem;
 
@@ -351,4 +352,48 @@
             }
         }
     }
+}
+
+// Estilos para linhas clicáveis da tabela
+.employee-row {
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: #f0f4ff !important;
+        transform: scale(1.01);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+    }
+
+    td {
+        transition: all 0.2s ease;
+    }
+
+    &:hover td {
+        color: #4c1d95;
+    }
+
+    // Indicador visual de que é clicável
+    td:first-child::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: transparent;
+        transition: background 0.2s ease;
+    }
+
+    &:hover td:first-child::before {
+        background: linear-gradient(180deg, #7c3aed, #6366f1);
+    }
+}
+
+.ranking-table .score-badge-sm.warning {
+    background: #f59e0b;
+}
+
+.score-badge-sm.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
 }

@@ -13,12 +13,21 @@ util_bp = Blueprint('util', __name__, template_folder='../templates')
 def user_change_password():
     senha_atual = request.form.get("senha_atual")
     nova_senha = request.form.get("nova_senha")
+    confirmar_senha = request.form.get("confirmar_senha")
+    
     if not senha_atual or not nova_senha:
         flash("Todos os campos são obrigatórios.", "danger")
         return redirect(request.referrer or url_for("main.painel"))
+    
     if len(nova_senha) < 8:
         flash("A nova senha deve ter pelo menos 8 caracteres.", "warning")
         return redirect(request.referrer or url_for("main.painel"))
+    
+    # Validar confirmação de senha (se fornecida)
+    if confirmar_senha and nova_senha != confirmar_senha:
+        flash("As senhas não coincidem.", "danger")
+        return redirect(request.referrer or url_for("main.painel"))
+    
     user = current_user
     if check_password_hash(user.password, senha_atual):
         user.password = generate_password_hash(nova_senha)
@@ -65,14 +74,9 @@ def format_date_filter(value, target_tz_str='America/Sao_Paulo', format_str='%d/
     try:
         target_tz = ZoneInfo(target_tz_str)
         if dt_object.tzinfo is None:
-            # Heuristic: if the naive datetime is very close to now() in UTC, it's likely stored as UTC (e.g. default datetime.utcnow())
-            now_utc_naive = datetime.utcnow()
-            if abs((dt_object - now_utc_naive).total_seconds()) < 3600:
-                # Interpret as UTC and convert to target timezone
-                local_dt = dt_object.replace(tzinfo=timezone.utc).astimezone(target_tz)
-            else:
-                # Assume the naive timestamp represents local time
-                local_dt = dt_object.replace(tzinfo=target_tz)
+            # Datetimes sem timezone são tratados como UTC (padrão do SQLAlchemy com datetime.now(timezone.utc))
+            # Então convertemos de UTC para o timezone de destino (Brasil)
+            local_dt = dt_object.replace(tzinfo=timezone.utc).astimezone(target_tz)
         else:
             local_dt = dt_object.astimezone(target_tz)
         return local_dt.strftime(format_str)

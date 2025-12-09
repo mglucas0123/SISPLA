@@ -1852,6 +1852,7 @@ def export_to_excel():
         search = request.args.get('search', '').strip()
         entry_type = request.args.get('entry_type', '').strip()
         admission_type = request.args.get('admission_type', '').strip()
+        discharge_type = request.args.get('discharge_type', '').strip()
         is_palliative = request.args.get('is_palliative', '').strip()
         origin = request.args.get('origin', '').strip()
         recurso = request.args.get('recurso', '').strip()

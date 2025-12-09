@@ -203,7 +203,7 @@
                             <div class="evaluators-inline">
                                 {% for evaluator in info.supplier.assigned_evaluators[:3] %}
                                 <div class="evaluator-avatar-sm"
-                                    title="{{ evaluator.name }}{% if evaluator.job_title %} - {{ evaluator.job_title }}{% endif %}">
+                                    title="{{ evaluator.name }}{% if evaluator.cargo %} - {{ evaluator.cargo }}{% endif %}">
                                     {{ evaluator.name[0]|upper }}
                                 </div>
                                 {% endfor %}
@@ -293,8 +293,8 @@
                                                     </div>
                                                     <div class="evaluator-info-detail">
                                                         <strong>{{ evaluator.name }}</strong>
-                                                        {% if evaluator.job_title %}
-                                                        <span>{{ evaluator.job_title }}</span>
+                                                        {% if evaluator.cargo %}
+                                                        <span>{{ evaluator.cargo }}</span>
                                                         {% endif %}
                                                     </div>
                                                 </div>
@@ -570,7 +570,7 @@
                                     {% for user in all_users %}
                                     <div class="evaluator-item-modern" data-name="{{ user.name|lower }}"
                                         data-username="{{ user.username|lower }}"
-                                        data-jobtitle="{{ user.job_title|lower if user.job_title else '' }}">
+                                        data-jobtitle="{{ user.cargo|lower if user.cargo else '' }}">
                                         <input type="checkbox" class="evaluator-checkbox" name="evaluator_ids"
                                             value="{{ user.id }}" id="evaluator_{{ user.id }}">
                                         <label for="evaluator_{{ user.id }}">
@@ -578,7 +578,7 @@
                                             <div class="evaluator-info">
                                                 <strong>{{ user.name }}</strong>
                                                 <span class="username">@{{ user.username }}</span>
-                                                {% if user.job_title %}<span class="job-title">{{ user.job_title
+                                                {% if user.cargo %}<span class="job-title">{{ user.cargo
                                                     }}</span>{% endif %}
                                             </div>
                                             <div class="evaluator-check"><i class="bi bi-check-circle-fill"></i></div>

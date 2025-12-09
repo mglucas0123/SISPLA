@@ -1,0 +1,823 @@
+{% extends "navbar.html" %}
+
+{% block title %}Avaliar Gestor | SISPLA{% endblock %}
+
+{% block content %}
+<div class="employee-evaluation-container">
+    <div class="container">
+        <!-- Header igual ao avaliar.html -->
+        <div class="page-header-eval">
+            <div class="header-content">
+                <div class="icon-wrapper-animated">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Avaliação do Gestor</h1>
+                    <p>Feedback 360° - Avalie <strong>{{ manager.name }}</strong></p>
+                </div>
+            </div>
+            <!-- Botão de Voltar -->
+            <a href="{{ url_for('collaborative.my_evaluations') }}" class="btn-back-eval">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+
+        {% include 'partials/_flash_messages.html' %}
+
+        <!-- Info Card de Orientação -->
+        <div class="conformity-info-box mb-4">
+            <i class="bi bi-lightbulb-fill"></i>
+            <div>
+                <strong>Feedback 360° Colaborativo:</strong> Esta avaliação faz parte de um processo bidirecional. 
+                Após você avaliar seu gestor, vocês poderão se reunir presencialmente e visualizar as duas avaliações 
+                juntos para uma discussão construtiva. Seja honesto e construtivo em suas respostas.
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" id="counterEvalForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Step Card - Critérios -->
+            <div class="step-card mb-4">
+                <div class="step-header">
+                    <i class="bi bi-1-circle-fill"></i>
+                    <h2>Critérios de Avaliação do Gestor</h2>
+                </div>
+                
+                <p class="step-description">
+                    Avalie o desempenho do seu gestor em cada critério abaixo
+                </p>
+                
+                <!-- Critério 1: Comunicação e Feedback -->
+                <div class="question-card-eval">
+                    <div class="question-header-eval">
+                        <span class="question-number-eval">1</span>
+                        <div class="question-text-eval">
+                            <h3>Comunicação e Feedback</h3>
+                            <p>O gestor se comunica de forma clara e dá feedbacks construtivos regularmente?</p>
+                        </div>
+                    </div>
+                    <div class="radio-options-eval">
+                        <label class="radio-option conforme">
+                            <input type="radio" name="criteria_communication" value="conforme" required>
+                            <span class="radio-card">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-conforme">
+                            <input type="radio" name="criteria_communication" value="nao_conforme">
+                            <span class="radio-card">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span>Não Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-aplica">
+                            <input type="radio" name="criteria_communication" value="nao_aplica">
+                            <span class="radio-card">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                <span>Não se Aplica</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="justification-collapsible">
+                        <label class="justification-label"><i class="bi bi-chat-left-text"></i> Justificativa <span class="required-mark">*</span></label>
+                        <textarea name="criteria_communication_justification" required
+                            placeholder="Justifique sua resposta..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Critério 2: Clareza nas Orientações -->
+                <div class="question-card-eval">
+                    <div class="question-header-eval">
+                        <span class="question-number-eval">2</span>
+                        <div class="question-text-eval">
+                            <h3>Clareza nas Orientações</h3>
+                            <p>O gestor fornece orientações claras sobre tarefas e expectativas?</p>
+                        </div>
+                    </div>
+                    <div class="radio-options-eval">
+                        <label class="radio-option conforme">
+                            <input type="radio" name="criteria_clarity" value="conforme" required>
+                            <span class="radio-card">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-conforme">
+                            <input type="radio" name="criteria_clarity" value="nao_conforme">
+                            <span class="radio-card">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span>Não Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-aplica">
+                            <input type="radio" name="criteria_clarity" value="nao_aplica">
+                            <span class="radio-card">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                <span>Não se Aplica</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="justification-collapsible">
+                        <label class="justification-label"><i class="bi bi-chat-left-text"></i> Justificativa <span class="required-mark">*</span></label>
+                        <textarea name="criteria_clarity_justification" required
+                            placeholder="Justifique sua resposta..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Critério 3: Suporte e Disponibilidade -->
+                <div class="question-card-eval">
+                    <div class="question-header-eval">
+                        <span class="question-number-eval">3</span>
+                        <div class="question-text-eval">
+                            <h3>Suporte e Disponibilidade</h3>
+                            <p>O gestor está disponível para ajudar e oferece suporte quando necessário?</p>
+                        </div>
+                    </div>
+                    <div class="radio-options-eval">
+                        <label class="radio-option conforme">
+                            <input type="radio" name="criteria_support" value="conforme" required>
+                            <span class="radio-card">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-conforme">
+                            <input type="radio" name="criteria_support" value="nao_conforme">
+                            <span class="radio-card">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span>Não Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-aplica">
+                            <input type="radio" name="criteria_support" value="nao_aplica">
+                            <span class="radio-card">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                <span>Não se Aplica</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="justification-collapsible">
+                        <label class="justification-label"><i class="bi bi-chat-left-text"></i> Justificativa <span class="required-mark">*</span></label>
+                        <textarea name="criteria_support_justification" required
+                            placeholder="Justifique sua resposta..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Critério 4: Reconhecimento e Valorização -->
+                <div class="question-card-eval">
+                    <div class="question-header-eval">
+                        <span class="question-number-eval">4</span>
+                        <div class="question-text-eval">
+                            <h3>Reconhecimento e Valorização</h3>
+                            <p>O gestor reconhece e valoriza o trabalho bem feito?</p>
+                        </div>
+                    </div>
+                    <div class="radio-options-eval">
+                        <label class="radio-option conforme">
+                            <input type="radio" name="criteria_recognition" value="conforme" required>
+                            <span class="radio-card">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-conforme">
+                            <input type="radio" name="criteria_recognition" value="nao_conforme">
+                            <span class="radio-card">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span>Não Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-aplica">
+                            <input type="radio" name="criteria_recognition" value="nao_aplica">
+                            <span class="radio-card">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                <span>Não se Aplica</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="justification-collapsible">
+                        <label class="justification-label"><i class="bi bi-chat-left-text"></i> Justificativa <span class="required-mark">*</span></label>
+                        <textarea name="criteria_recognition_justification" required
+                            placeholder="Justifique sua resposta..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Critério 5: Justiça e Imparcialidade -->
+                <div class="question-card-eval">
+                    <div class="question-header-eval">
+                        <span class="question-number-eval">5</span>
+                        <div class="question-text-eval">
+                            <h3>Justiça e Imparcialidade</h3>
+                            <p>O gestor trata todos de forma justa e imparcial?</p>
+                        </div>
+                    </div>
+                    <div class="radio-options-eval">
+                        <label class="radio-option conforme">
+                            <input type="radio" name="criteria_fairness" value="conforme" required>
+                            <span class="radio-card">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-conforme">
+                            <input type="radio" name="criteria_fairness" value="nao_conforme">
+                            <span class="radio-card">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span>Não Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-aplica">
+                            <input type="radio" name="criteria_fairness" value="nao_aplica">
+                            <span class="radio-card">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                <span>Não se Aplica</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="justification-collapsible">
+                        <label class="justification-label"><i class="bi bi-chat-left-text"></i> Justificativa <span class="required-mark">*</span></label>
+                        <textarea name="criteria_fairness_justification" required
+                            placeholder="Justifique sua resposta..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Critério 6: Desenvolvimento da Equipe -->
+                <div class="question-card-eval">
+                    <div class="question-header-eval">
+                        <span class="question-number-eval">6</span>
+                        <div class="question-text-eval">
+                            <h3>Desenvolvimento da Equipe</h3>
+                            <p>O gestor investe no desenvolvimento profissional da equipe?</p>
+                        </div>
+                    </div>
+                    <div class="radio-options-eval">
+                        <label class="radio-option conforme">
+                            <input type="radio" name="criteria_development" value="conforme" required>
+                            <span class="radio-card">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-conforme">
+                            <input type="radio" name="criteria_development" value="nao_conforme">
+                            <span class="radio-card">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span>Não Conforme</span>
+                            </span>
+                        </label>
+                        <label class="radio-option nao-aplica">
+                            <input type="radio" name="criteria_development" value="nao_aplica">
+                            <span class="radio-card">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                <span>Não se Aplica</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="justification-collapsible">
+                        <label class="justification-label"><i class="bi bi-chat-left-text"></i> Justificativa <span class="required-mark">*</span></label>
+                        <textarea name="criteria_development_justification" required
+                            placeholder="Justifique sua resposta..." rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Card - Nota Final -->
+            <div class="step-card mb-4">
+                <div class="step-header">
+                    <i class="bi bi-2-circle-fill"></i>
+                    <h2>Nota Final e Observações</h2>
+                </div>
+
+                <!-- Rating Section igual ao avaliar.html -->
+                <div class="rating-section">
+                    <div class="rating-header">
+                        <span class="rating-question-number">7</span>
+                        <div class="rating-question-text">
+                            <h3>Nota Geral do Gestor</h3>
+                            <p>Qual nota daria ao seu gestor quanto ao desempenho geral?</p>
+                        </div>
+                    </div>
+
+                    <div class="rating-slider-container">
+                        <div class="rating-visual">
+                            <div class="rating-display" id="ratingDisplay">
+                                <span class="rating-number" id="ratingNumber">5</span>
+                                <div class="rating-stars" id="ratingStars"></div>
+                                <span class="rating-label" id="ratingLabel">MÉDIO</span>
+                            </div>
+                        </div>
+
+                        <input type="range" class="rating-slider" id="rating" name="rating" 
+                            min="0" max="10" value="5" step="1" required>
+
+                        <div class="rating-scale">
+                            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+                            <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                        </div>
+                    </div>
+
+                    <div class="justification-box">
+                        <label for="rating_justification" class="form-label-custom required">
+                            <i class="bi bi-chat-left-text"></i>
+                            Justifique a nota atribuída
+                        </label>
+                        <textarea class="form-control-custom" id="rating_justification" name="rating_justification"
+                            rows="3" required placeholder="Explique os motivos da nota, pontos positivos e negativos..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Observações Adicionais -->
+                <div class="observations-section">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-hand-thumbs-up"></i>
+                                    Pontos Fortes do Gestor
+                                </label>
+                                <textarea class="form-control-custom" name="strong_points" rows="4"
+                                    placeholder="O que seu gestor faz de melhor?"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-lightbulb"></i>
+                                    Sugestões de Melhoria
+                                </label>
+                                <textarea class="form-control-custom" name="improvement_suggestions" rows="4"
+                                    placeholder="Como seu gestor poderia melhorar?"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações do Formulário -->
+                <div class="step-actions">
+                    <a href="{{ url_for('collaborative.my_evaluations') }}" class="btn btn-outline-secondary btn-prev">
+                        <i class="bi bi-x-lg"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success btn-submit">
+                        <i class="bi bi-check-circle"></i> Enviar Avaliação
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* ========================================
+   ESTILOS ALINHADOS COM AVALIAR.HTML
+   ======================================== */
+
+/* Fundo azul gradiente da página - igual ao avaliar.html */
+.employee-evaluation-container {
+    background: linear-gradient(135deg, #0078d4 0%, #1084d8 100%);
+    min-height: calc(100vh - 60px);
+    padding: 30px 0;
+}
+
+/* Caixa de Informação */
+.conformity-info-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+}
+
+.conformity-info-box i {
+    font-size: 20px;
+    color: #2563eb;
+    flex-shrink: 0;
+}
+
+.conformity-info-box div {
+    font-size: 14px;
+    color: #1e40af;
+}
+
+/* Botão de Voltar */
+.btn-back-eval {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-back-eval:hover {
+    background: rgba(255,255,255,0.25);
+    color: white;
+    transform: translateX(-4px);
+}
+
+/* ========================================
+   QUESTION CARDS - ESTILO AVALIAR.HTML
+   ======================================== */
+.question-card-eval {
+    background: linear-gradient(135deg, #f8f9fc, #e3e6f0);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.question-card-eval:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.question-header-eval {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.question-number-eval {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, #0078d4, #0056b3);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0, 120, 212, 0.3);
+}
+
+.question-text-eval h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 5px 0;
+}
+
+.question-text-eval p {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+/* ========================================
+   RADIO OPTIONS - TOGGLE STYLE
+   ======================================== */
+.radio-options-eval {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.radio-option {
+    flex: 1;
+    min-width: 130px;
+    cursor: pointer;
+}
+
+.radio-option input {
+    display: none;
+}
+
+.radio-card {
+    background: white;
+    border: 3px solid #e3e6f0;
+    border-radius: 12px;
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.radio-card i {
+    font-size: 28px;
+}
+
+.radio-card span {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* Estados das opções */
+.radio-option.conforme .radio-card {
+    color: #059669;
+}
+
+.radio-option.conforme .radio-card i {
+    color: #10b981;
+}
+
+.radio-option.nao-conforme .radio-card {
+    color: #dc2626;
+}
+
+.radio-option.nao-conforme .radio-card i {
+    color: #ef4444;
+}
+
+.radio-option.nao-aplica .radio-card {
+    color: #6b7280;
+}
+
+.radio-option.nao-aplica .radio-card i {
+    color: #9ca3af;
+}
+
+/* Hover */
+.radio-card:hover {
+    border-color: #0078d4;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 120, 212, 0.15);
+}
+
+/* Selecionado - Conforme */
+.radio-option.conforme input:checked + .radio-card {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+    color: white;
+    transform: scale(1.03);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+}
+
+.radio-option.conforme input:checked + .radio-card i {
+    color: white;
+}
+
+/* Selecionado - Não Conforme */
+.radio-option.nao-conforme input:checked + .radio-card {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #ef4444;
+    color: white;
+    transform: scale(1.03);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
+}
+
+.radio-option.nao-conforme input:checked + .radio-card i {
+    color: white;
+}
+
+/* Selecionado - Não se Aplica */
+.radio-option.nao-aplica input:checked + .radio-card {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    border-color: #6b7280;
+    color: white;
+    transform: scale(1.03);
+    box-shadow: 0 8px 25px rgba(107, 114, 128, 0.35);
+}
+
+.radio-option.nao-aplica input:checked + .radio-card i {
+    color: white;
+}
+
+/* ========================================
+   JUSTIFICATIVA COLLAPSIBLE
+   ======================================== */
+.justification-collapsible {
+    margin-top: 16px;
+}
+
+.justification-collapsible textarea {
+    width: 100%;
+    border: 2px solid #e3e6f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #34495e;
+    background: #f8f9fc;
+    resize: vertical;
+    min-height: 60px;
+    transition: all 0.3s ease;
+}
+
+.justification-collapsible textarea::placeholder {
+    color: #95a5a6;
+}
+
+.justification-collapsible textarea:focus {
+    outline: none;
+    border-color: #0078d4;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.08);
+}
+
+/* ========================================
+   OBSERVATIONS SECTION
+   ======================================== */
+.observations-section {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 2px solid #f0f0f0;
+}
+
+/* ========================================
+   RESPONSIVO
+   ======================================== */
+@media (max-width: 768px) {
+    .radio-options-eval {
+        flex-direction: column;
+    }
+    
+    .radio-option {
+        min-width: 100%;
+    }
+    
+    .question-card-eval {
+        padding: 20px;
+    }
+    
+    .radio-card {
+        padding: 14px;
+    }
+    
+    .radio-card i {
+        font-size: 24px;
+    }
+}
+
+/* ========================================
+   ANIMAÇÕES
+   ======================================== */
+.question-card-eval {
+    animation: slideInLeft 0.4s ease-out;
+    animation-fill-mode: both;
+}
+
+.question-card-eval:nth-child(1) { animation-delay: 0.05s; }
+.question-card-eval:nth-child(2) { animation-delay: 0.1s; }
+.question-card-eval:nth-child(3) { animation-delay: 0.15s; }
+.question-card-eval:nth-child(4) { animation-delay: 0.2s; }
+.question-card-eval:nth-child(5) { animation-delay: 0.25s; }
+.question-card-eval:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.step-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Rating Slider - Igual ao avaliar.html
+    const ratingSlider = document.getElementById('rating');
+    const ratingNumber = document.getElementById('ratingNumber');
+    const ratingLabel = document.getElementById('ratingLabel');
+    const ratingStars = document.getElementById('ratingStars');
+    const ratingDisplay = document.getElementById('ratingDisplay');
+    
+    function updateRating(value) {
+        ratingNumber.textContent = value;
+        
+        // Labels descritivos
+        const labels = {
+            0: 'Péssimo', 1: 'Muito Ruim', 2: 'Ruim', 3: 'Insuficiente', 4: 'Regular',
+            5: 'Médio', 6: 'Aceitável', 7: 'Bom', 8: 'Muito Bom', 9: 'Ótimo', 10: 'Excelente'
+        };
+        ratingLabel.textContent = labels[value];
+        
+        // Estrelas
+        const fullStars = Math.floor(value / 2);
+        const halfStar = value % 2;
+        let starsHTML = '';
+        
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="bi bi-star-fill"></i>';
+        }
+        if (halfStar) {
+            starsHTML += '<i class="bi bi-star-half"></i>';
+        }
+        for (let i = fullStars + halfStar; i < 5; i++) {
+            starsHTML += '<i class="bi bi-star"></i>';
+        }
+        
+        ratingStars.innerHTML = starsHTML;
+        
+        // Classes de cor
+        ratingDisplay.className = 'rating-display';
+        if (value <= 4) ratingDisplay.classList.add('poor');
+        else if (value <= 6) ratingDisplay.classList.add('medium');
+        else if (value <= 8) ratingDisplay.classList.add('good');
+        else ratingDisplay.classList.add('excellent');
+    }
+    
+    ratingSlider.addEventListener('input', function() {
+        updateRating(parseInt(this.value));
+    });
+    
+    // Inicializar
+    updateRating(5);
+    
+    // Feedback visual ao selecionar opções
+    const radioOptions = document.querySelectorAll('.radio-option input');
+    radioOptions.forEach(input => {
+        input.addEventListener('change', function() {
+            const card = this.closest('.question-card-eval');
+            if (card) {
+                card.style.borderLeftColor = '#10b981';
+                setTimeout(() => {
+                    card.style.borderLeftColor = '#0078d4';
+                }, 500);
+            }
+        });
+    });
+    
+    // Validação do formulário
+    const form = document.getElementById('counterEvalForm');
+    form.addEventListener('submit', function(e) {
+        const requiredRadios = form.querySelectorAll('input[type="radio"][required]');
+        const radioGroups = [...new Set([...requiredRadios].map(r => r.name))];
+        
+        let isValid = true;
+        let firstError = null;
+        
+        radioGroups.forEach(groupName => {
+            const checked = form.querySelector(`input[name="${groupName}"]:checked`);
+            if (!checked) {
+                isValid = false;
+                const container = form.querySelector(`input[name="${groupName}"]`).closest('.question-card-eval');
+                if (container) {
+                    container.style.borderLeftColor = '#ef4444';
+                    container.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                    if (!firstError) firstError = container;
+                    
+                    setTimeout(() => {
+                        container.style.borderLeftColor = '#0078d4';
+                        container.style.boxShadow = '';
+                    }, 3000);
+                }
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
+        }
+    });
+
+        radioGroups.forEach(groupName => {
+            const checked = form.querySelector(`input[name="${groupName}"]:checked`);
+            if (!checked) {
+                isValid = false;
+                const container = form.querySelector(`input[name="${groupName}"]`).closest('.criteria-card');
+                container.style.borderColor = '#ef4444';
+                container.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                
+                setTimeout(() => {
+                    container.style.borderColor = '#e8ecf1';
+                    container.style.boxShadow = '';
+                }, 2000);
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            const firstError = form.querySelector('.criteria-card[style*="border-color: rgb(239"]');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+</script>
+{% endblock %}

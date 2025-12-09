@@ -102,21 +102,21 @@
         <h3>Decisão Após 45 dias <span style="color: red">*</span></h3>
     </div>
     <div class="radio-options-modern">
-        <label class="radio-option active">
+        <label class="radio-option conforme">
             <input type="radio" name="approval_status_45" value="continue" {% if form_data and form_data.get('approval_status_45') == 'continue' %}checked{% endif %} required>
             <div class="radio-card">
                 <i class="bi bi-check-circle-fill text-success"></i>
                 <span>Continuar</span>
             </div>
         </label>
-        <label class="radio-option partial">
+        <label class="radio-option nao-aplica">
             <input type="radio" name="approval_status_45" value="needs_more_time" {% if form_data and form_data.get('approval_status_45') == 'needs_more_time' %}checked{% endif %}>
             <div class="radio-card">
                 <i class="bi bi-clock-fill text-warning"></i>
                 <span>Mais tempo (estender experiência)</span>
             </div>
         </label>
-        <label class="radio-option none">
+        <label class="radio-option nao-conforme">
             <input type="radio" name="approval_status_45" value="dismissal" {% if form_data and form_data.get('approval_status_45') == 'dismissal' %}checked{% endif %}>
             <div class="radio-card">
                 <i class="bi bi-x-circle-fill text-danger"></i>

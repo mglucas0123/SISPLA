@@ -1,0 +1,879 @@
+{% extends "navbar.html" %}
+
+{% block title %}Avaliações de {{ employee.name }} - SISPLA{% endblock %}
+
+{% block content %}
+<div class="evaluations-modern-container">
+    <div class="evaluations-hero">
+        <div class="container">
+            <div class="hero-navigation">
+                <a href="{{ url_for('employee_evaluation.dashboard') }}" class="btn-back-hero">
+                    <i class="bi bi-arrow-left-circle"></i>
+                    <span>Voltar para Dashboard</span>
+                </a>
+            </div>
+            
+            <div class="hero-content-eval">
+                <div class="hero-supplier-info">
+                    <div class="supplier-avatar-large" style="background: linear-gradient(135deg, #7c3aed, #6366f1); padding: 0; overflow: hidden;">
+                        <img src="https://ui-avatars.com/api/?name={{ employee.name|urlencode }}&background=7c3aed&color=fff&size=80" 
+                             alt="{{ employee.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="supplier-details">
+                        <span class="supplier-label">Histórico de Avaliações</span>
+                        <h1 class="supplier-name-hero">{{ employee.name }}</h1>
+                        {% if employee.cargo %}
+                        <div class="supplier-legal-name-hero">
+                            <i class="bi bi-briefcase-fill"></i>
+                            {{ employee.cargo }}
+                        </div>
+                        {% endif %}
+                        {% if employee.email %}
+                        <div class="service-tag-hero">
+                            <i class="bi bi-envelope-fill"></i>
+                            {{ employee.email }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="hero-score-display">
+                    {% if avg_score > 0 %}
+                    <div class="score-circular-hero {{ 'excellent' if avg_score >= 80 else ('good' if avg_score >= 60 else ('warning' if avg_score >= 40 else 'poor')) }}">
+                        <svg width="140" height="140">
+                            <circle cx="70" cy="70" r="60" class="score-bg-hero"></circle>
+                            <circle cx="70" cy="70" r="60" class="score-fill-hero" 
+                                    style="stroke-dashoffset: {{ 377 - (377 * avg_score / 100) }}"></circle>
+                        </svg>
+                        <div class="score-text-hero">
+                            <span class="score-number-hero">{{ "%.0f"|format(avg_score) }}</span>
+                            <span class="score-percent-hero">%</span>
+                        </div>
+                    </div>
+                    <div class="score-classification">
+                        {% if avg_score >= 80 %}
+                        <i class="bi bi-emoji-smile-fill"></i> Desempenho Excelente
+                        {% elif avg_score >= 60 %}
+                        <i class="bi bi-emoji-neutral-fill"></i> Desempenho Satisfatório
+                        {% elif avg_score >= 40 %}
+                        <i class="bi bi-emoji-expressionless-fill"></i> Desempenho Regular
+                        {% else %}
+                        <i class="bi bi-emoji-frown-fill"></i> Necessita Melhorias
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="score-empty-hero">
+                        <i class="bi bi-dash-circle"></i>
+                        <span>Sem Avaliações</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="hero-actions-eval">
+                    <a href="{{ url_for('employee_evaluation.evaluate') }}?evaluated_id={{ employee.id }}" class="btn-eval-primary">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Nova Avaliação</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="eval-stats-dashboard">
+            <div class="eval-stat-card primary">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ total_evaluations }}</h3>
+                    <p>Total de Avaliações</p>
+                </div>
+                <div class="stat-chart-mini">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+            </div>
+
+            <div class="eval-stat-card success">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ conformes }}</h3>
+                    <p>Avaliações Conformes</p>
+                </div>
+                <div class="stat-percentage">
+                    {{ "%.0f"|format((conformes / (total_evaluations if total_evaluations > 0 else 1) * 100)) }}%
+                </div>
+            </div>
+
+            <div class="eval-stat-card danger">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ nao_conformes }}</h3>
+                    <p>Não Conformes</p>
+                </div>
+                {% if nao_conformes > 0 %}
+                <div class="stat-pulse-eval"></div>
+                {% endif %}
+            </div>
+
+            <div class="eval-stat-card warning">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ "%.0f"|format(avg_score) if avg_score > 0 else "-" }}%</h3>
+                    <p>Score Médio</p>
+                </div>
+                <div class="rating-stars-mini">
+                    {% if avg_score >= 80 %}
+                    <span class="badge bg-success">Excelente</span>
+                    {% elif avg_score >= 60 %}
+                    <span class="badge bg-primary">Bom</span>
+                    {% elif avg_score >= 40 %}
+                    <span class="badge bg-warning text-dark">Regular</span>
+                    {% elif avg_score > 0 %}
+                    <span class="badge bg-danger">Crítico</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Details Card -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-person-badge-fill"></i>
+                <h3>Informações do Colaborador</h3>
+            </div>
+            
+            <div class="details-grid-modern">
+                {% if employee.name %}
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">Nome Completo</span>
+                        <strong>{{ employee.name }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if employee.cargo %}
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern">
+                        <i class="bi bi-briefcase-fill"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">Cargo</span>
+                        <strong>{{ employee.cargo }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if employee.email %}
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">E-mail</span>
+                        <strong>{{ employee.email }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if employee.created_at %}
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">Cadastrado em</span>
+                        <strong>{{ employee.created_at|format_date_short }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Evaluation Types Summary -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-pie-chart-fill"></i>
+                <h3>Tipos de Avaliação</h3>
+            </div>
+            
+            <div class="details-grid-modern">
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                        <i class="bi bi-calendar-month"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">Avaliações Mensais</span>
+                        <strong>{{ mensal_count }}</strong>
+                    </div>
+                </div>
+                
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="bi bi-stopwatch"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">Experiência 45 dias</span>
+                        <strong>{{ exp_45_count }}</strong>
+                    </div>
+                </div>
+                
+                <div class="detail-item-modern">
+                    <div class="detail-icon-modern" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div class="detail-content-modern">
+                        <span class="detail-label">Experiência 90 dias</span>
+                        <strong>{{ exp_90_count }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluations Timeline -->
+        <div class="evaluations-section-modern">
+            <div class="section-header-eval">
+                <div class="section-title-group">
+                    <i class="bi bi-clock-history"></i>
+                    <h2>Histórico de Avaliações</h2>
+                </div>
+                <div class="section-filters">
+                    <select class="filter-select-eval" id="filterType">
+                        <option value="all">Todos os Tipos</option>
+                        <option value="mensal">Mensal</option>
+                        <option value="experiencia_45">Experiência 45 dias</option>
+                        <option value="experiencia_90">Experiência 90 dias</option>
+                    </select>
+                    <select class="filter-select-eval" id="filterStatus">
+                        <option value="all">Todos os Status</option>
+                        <option value="compliant">Conformes</option>
+                        <option value="non-compliant">Não Conformes</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if evaluations %}
+            <div class="evaluations-table-compact">
+                <table class="eval-table-modern">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-date">
+                                <i class="bi bi-calendar-month"></i>
+                                Mês Ref.
+                            </th>
+                            <th class="col-type">
+                                <i class="bi bi-tag"></i>
+                                Tipo
+                            </th>
+                            <th class="col-evaluated">
+                                <i class="bi bi-clock"></i>
+                                Data
+                            </th>
+                            <th class="col-score">
+                                <i class="bi bi-graph-up"></i>
+                                Score
+                            </th>
+                            <th class="col-evaluator">
+                                <i class="bi bi-person"></i>
+                                Avaliador
+                            </th>
+                            <th class="col-status">
+                                <i class="bi bi-shield-check"></i>
+                                Status
+                            </th>
+                            <th class="col-actions">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for eval in evaluations %}
+                        <tr class="eval-row" 
+                            data-compliant="{{ 'true' if eval.is_compliant else 'false' }}"
+                            data-type="{{ eval.evaluation_type }}"
+                            data-month="{{ eval.month_reference }}"
+                            data-eval-id="{{ eval.id }}">
+                            
+                            <td class="col-expand">
+                                <button class="btn-expand-eval" onclick="toggleEvalRow(this)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </td>
+                            
+                            <td class="col-date">
+                                <strong class="month-display">{{ eval.month_reference }}</strong>
+                            </td>
+                            
+                            <td class="col-type">
+                                {% if eval.evaluation_type == 'mensal' %}
+                                <span class="type-badge mensal">
+                                    <i class="bi bi-calendar-month"></i> Mensal
+                                </span>
+                                {% elif eval.evaluation_type == 'experiencia_45' %}
+                                <span class="type-badge exp-45">
+                                    <i class="bi bi-stopwatch"></i> 45 dias
+                                </span>
+                                {% elif eval.evaluation_type == 'experiencia_90' %}
+                                <span class="type-badge exp-90">
+                                    <i class="bi bi-hourglass-split"></i> 90 dias
+                                </span>
+                                {% else %}
+                                <span class="type-badge">{{ eval.evaluation_type }}</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="col-evaluated">
+                                <span class="date-display">{{ eval.created_at|format_date_short }}</span>
+                            </td>
+                            
+                            <td class="col-score">
+                                <div class="score-inline {{ 'excellent' if eval.total_score and eval.total_score >= 80 else ('good' if eval.total_score and eval.total_score >= 60 else ('warning' if eval.total_score and eval.total_score >= 40 else 'poor')) }}">
+                                    <div class="score-bar-inline">
+                                        <div class="score-fill-inline" style="width: {{ eval.total_score or 0 }}%"></div>
+                                    </div>
+                                    <span class="score-text-inline">{{ "%.0f"|format(eval.total_score or 0) }}%</span>
+                                </div>
+                            </td>
+                            
+                            <td class="col-evaluator">
+                                <div class="evaluator-inline">
+                                    <div class="evaluator-avatar-mini">
+                                        {{ eval.evaluator.name[0]|upper if eval.evaluator else '?' }}
+                                    </div>
+                                    <span class="evaluator-name">{{ eval.evaluator.name if eval.evaluator else 'N/A' }}</span>
+                                </div>
+                            </td>
+                            
+                            <td class="col-status">
+                                <span class="status-badge-inline {{ 'compliant' if eval.is_compliant else 'non-compliant' }}">
+                                    <i class="bi bi-{{ 'check-circle-fill' if eval.is_compliant else 'x-circle-fill' }}"></i>
+                                    {{ 'Conforme' if eval.is_compliant else 'Não Conforme' }}
+                                </span>
+                            </td>
+                            
+                            <td class="col-actions">
+                                <div class="action-buttons-group">
+                                    <a href="{{ url_for('employee_evaluation.evaluation_details', evaluation_id=eval.id) }}" 
+                                       class="btn-action-eval primary" title="Ver detalhes">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
+                                    <button type="button" class="btn-action-eval danger" 
+                                            title="Excluir avaliação"
+                                            onclick="confirmDelete({{ eval.id }}, '{{ eval.month_reference }}', '{{ eval.evaluation_type }}')">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Expanded Details Row -->
+                        <tr class="eval-details-row" data-eval-id="{{ eval.id }}">
+                            <td colspan="8">
+                                <div class="eval-details-content">
+                                    <div class="eval-details-grid">
+                                        <div class="eval-detail-box">
+                                            <span class="detail-label-eval">Avaliador</span>
+                                            <div class="detail-value-eval">
+                                                <div class="evaluator-avatar-detail-small">
+                                                    {{ eval.evaluator.name[0]|upper if eval.evaluator else '?' }}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ eval.evaluator.name if eval.evaluator else 'N/A' }}</strong>
+                                                    {% if eval.evaluator and eval.evaluator.cargo %}
+                                                    <span class="eval-role">{{ eval.evaluator.cargo }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="eval-detail-box">
+                                            <span class="detail-label-eval">Score Total</span>
+                                            <div class="detail-value-eval">
+                                                <div class="score-circle-detail {{ 'excellent' if eval.total_score and eval.total_score >= 80 else ('good' if eval.total_score and eval.total_score >= 60 else ('warning' if eval.total_score and eval.total_score >= 40 else 'poor')) }}">
+                                                    {{ "%.0f"|format(eval.total_score or 0) }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="eval-detail-box">
+                                            <span class="detail-label-eval">Tipo de Avaliação</span>
+                                            <div class="detail-value-eval">
+                                                <strong class="rating-large-detail">
+                                                    {% if eval.evaluation_type == 'mensal' %}
+                                                    <i class="bi bi-calendar-month text-primary"></i> Mensal
+                                                    {% elif eval.evaluation_type == 'experiencia_45' %}
+                                                    <i class="bi bi-stopwatch text-warning"></i> Experiência 45 dias
+                                                    {% elif eval.evaluation_type == 'experiencia_90' %}
+                                                    <i class="bi bi-hourglass-split text-purple"></i> Experiência 90 dias
+                                                    {% endif %}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="eval-detail-box">
+                                            <span class="detail-label-eval">Ação</span>
+                                            <div class="detail-value-eval">
+                                                <a href="{{ url_for('employee_evaluation.evaluation_details', evaluation_id=eval.id) }}" 
+                                                   class="btn-details-full">
+                                                    <i class="bi bi-file-text-fill"></i>
+                                                    Ver Relatório Completo
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if eval.evaluation_type == 'mensal' %}
+                                    <!-- Preview dos Critérios para Avaliação Mensal -->
+                                    <div class="criteria-preview-row">
+                                        <span class="detail-label-eval mb-2 d-block">Critérios:</span>
+                                        <div class="criteria-chips">
+                                            {% set criteria_list = [
+                                                ('Pontualidade', eval.criteria_punctuality),
+                                                ('Qualidade', eval.criteria_quality),
+                                                ('Produtividade', eval.criteria_productivity),
+                                                ('Trabalho em Equipe', eval.criteria_teamwork),
+                                                ('Comunicação', eval.criteria_communication),
+                                                ('Iniciativa', eval.criteria_initiative),
+                                                ('Normas', eval.criteria_compliance),
+                                                ('Desenvolvimento', eval.criteria_development)
+                                            ] %}
+                                            {% for name, value in criteria_list %}
+                                            <span class="criteria-chip {{ 'conforme' if value == 'conforme' else ('nao-conforme' if value == 'nao_conforme' else 'nao-aplica') }}" 
+                                                  title="{{ name }}: {{ 'Conforme' if value == 'conforme' else ('Não Conforme' if value == 'nao_conforme' else 'N/A') }}">
+                                                <i class="bi {{ 'bi-check-circle-fill' if value == 'conforme' else ('bi-x-circle-fill' if value == 'nao_conforme' else 'bi-dash-circle') }}"></i>
+                                                {{ name }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state-eval">
+                <div class="empty-icon-eval">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h3>Nenhuma Avaliação Registrada</h3>
+                <p>Este colaborador ainda não possui avaliações em seu histórico</p>
+                <a href="{{ url_for('employee_evaluation.evaluate') }}?evaluated_id={{ employee.id }}" class="btn-eval-primary">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Criar Primeira Avaliação</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos adicionais específicos para colaboradores */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.type-badge.mensal {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.type-badge.exp-45 {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.type-badge.exp-90 {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+}
+
+.text-purple {
+    color: #7c3aed !important;
+}
+
+/* Criteria Preview */
+.criteria-preview-row {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.criteria-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.criteria-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.criteria-chip.conforme {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.criteria-chip.nao-conforme {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.criteria-chip.nao-aplica {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Score warning color */
+.score-inline.warning .score-fill-inline {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.score-circle-detail.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.score-circular-hero.warning .score-fill-hero {
+    stroke: #f59e0b;
+}
+
+/* Action Buttons Group */
+.action-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-action-eval.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.btn-action-eval.danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: scale(1.1);
+}
+
+/* Delete Confirmation Modal */
+.delete-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.delete-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.delete-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.delete-modal-overlay.active .delete-modal {
+    transform: scale(1) translateY(0);
+}
+
+.delete-modal-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.delete-modal-icon i {
+    font-size: 28px;
+    color: #dc2626;
+}
+
+.delete-modal h3 {
+    text-align: center;
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.delete-modal p {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.delete-modal .eval-info {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 16px 0 24px;
+    text-align: center;
+}
+
+.delete-modal .eval-info strong {
+    color: #1e293b;
+    display: block;
+    font-size: 0.9rem;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-cancel-delete {
+    padding: 12px 24px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel-delete:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.btn-confirm-delete {
+    padding: 12px 24px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-confirm-delete:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+}
+</style>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="delete-modal-overlay" id="deleteModal">
+    <div class="delete-modal">
+        <div class="delete-modal-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h3>Excluir Avaliação?</h3>
+        <p>Esta ação não pode ser desfeita.</p>
+        <div class="eval-info">
+            <strong id="deleteEvalInfo">Carregando...</strong>
+        </div>
+        <div class="delete-modal-actions">
+            <button type="button" class="btn-cancel-delete" onclick="closeDeleteModal()">
+                Cancelar
+            </button>
+            <form id="deleteForm" method="POST" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-confirm-delete">
+                    <i class="bi bi-trash-fill"></i>
+                    Excluir
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================
+// FILTROS
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const typeFilter = document.getElementById('filterType');
+    const statusFilter = document.getElementById('filterStatus');
+    
+    if (typeFilter) {
+        typeFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', applyFilters);
+    }
+});
+
+function applyFilters() {
+    const type = document.getElementById('filterType').value;
+    const status = document.getElementById('filterStatus').value;
+    
+    const rows = document.querySelectorAll('.eval-row');
+    
+    rows.forEach(row => {
+        let show = true;
+        const evalId = row.dataset.evalId;
+        const detailsRow = document.querySelector(`.eval-details-row[data-eval-id="${evalId}"]`);
+        
+        // Filtro de status
+        if (status !== 'all') {
+            const isCompliant = row.dataset.compliant === 'true';
+            if (status === 'compliant' && !isCompliant) show = false;
+            if (status === 'non-compliant' && isCompliant) show = false;
+        }
+        
+        // Filtro de tipo
+        if (type !== 'all') {
+            const evalType = row.dataset.type;
+            if (evalType !== type) show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+        if (detailsRow) {
+            detailsRow.style.display = show ? '' : 'none';
+            if (!show) {
+                detailsRow.classList.remove('expanded');
+            }
+        }
+    });
+}
+
+// ============================================
+// EXPANDIR/RECOLHER LINHAS
+// ============================================
+function toggleEvalRow(button) {
+    const row = button.closest('tr');
+    const evalId = row.dataset.evalId;
+    const detailsRow = document.querySelector(`.eval-details-row[data-eval-id="${evalId}"]`);
+    const icon = button.querySelector('i');
+    
+    if (detailsRow.classList.contains('expanded')) {
+        detailsRow.classList.remove('expanded');
+        icon.classList.remove('bi-chevron-down');
+        icon.classList.add('bi-chevron-right');
+    } else {
+        detailsRow.classList.add('expanded');
+        icon.classList.remove('bi-chevron-right');
+        icon.classList.add('bi-chevron-down');
+    }
+}
+
+// ============================================
+// EXPORTAÇÃO
+// ============================================
+function exportEvaluations() {
+    const rows = document.querySelectorAll('.eval-row');
+    let csv = 'Mês Referência,Tipo,Data Avaliação,Avaliador,Score (%),Status\n';
+    
+    rows.forEach(row => {
+        if (row.style.display !== 'none') {
+            const monthRef = row.querySelector('.month-display').textContent.trim();
+            const type = row.querySelector('.type-badge') ? row.querySelector('.type-badge').textContent.trim() : '-';
+            const evalDate = row.querySelector('.date-display').textContent.trim();
+            const evaluator = row.querySelector('.evaluator-name').textContent.trim();
+            const score = row.querySelector('.score-text-inline').textContent.trim().replace('%', '');
+            const statusBadge = row.querySelector('.status-badge-inline');
+            const status = statusBadge ? statusBadge.textContent.trim() : '-';
+            
+            csv += `"${monthRef}","${type}","${evalDate}","${evaluator}","${score}","${status}"\n`;
+        }
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `avaliacoes_{{ employee.name|replace(' ', '_') }}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+}
+
+// ============================================
+// EXCLUSÃO DE AVALIAÇÃO
+// ============================================
+function confirmDelete(evalId, monthRef, evalType) {
+    const modal = document.getElementById('deleteModal');
+    const infoEl = document.getElementById('deleteEvalInfo');
+    const form = document.getElementById('deleteForm');
+    
+    // Mapear tipo de avaliação para texto legível
+    const typeLabels = {
+        'mensal': 'Avaliação Mensal',
+        'experiencia_45': 'Experiência 45 dias',
+        'experiencia_90': 'Experiência 90 dias'
+    };
+    
+    const typeLabel = typeLabels[evalType] || evalType;
+    infoEl.innerHTML = `${typeLabel} - ${monthRef}`;
+    
+    // Configurar action do form
+    form.action = `/avaliacao/funcionarios/avaliacao/${evalId}/excluir`;
+    
+    // Mostrar modal
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Fechar modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

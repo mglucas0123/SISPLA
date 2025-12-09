@@ -1,0 +1,489 @@
+<section class="profile-section" id="section-seguranca">
+    <div class="section-header">
+        <h2><i class="bi bi-shield-check"></i>Segurança da Conta</h2>
+    </div>
+    <div class="section-body">
+        {# 2FA Item #}
+        <div class="security-item {{ 'security-enabled' if current_user.totp_secret else '' }}">
+            <div class="security-icon icon-2fa">
+                <i class="bi bi-phone"></i>
+            </div>
+            <div class="security-info">
+                <h3>Autenticação de Dois Fatores (2FA)</h3>
+                <p>
+                    {% if current_user.totp_secret %}
+                    <span class="status-badge badge-success">Ativo</span>
+                    Sua conta está protegida com autenticação em duas etapas.
+                    {% else %}
+                    Adicione uma camada extra de segurança à sua conta.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="security-action">
+                {% if current_user.totp_secret %}
+                <button type="button" class="btn btn-disable" data-bs-toggle="modal"
+                    data-bs-target="#disable2FAModal">
+                    <i class="bi bi-x-circle me-1"></i>Desativar
+                </button>
+                {% else %}
+                <button type="button" class="btn btn-enable" id="btnToggle2FA">
+                    <i class="bi bi-shield-plus me-1"></i>Ativar
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Inline 2FA Setup Form #}
+        {% if not current_user.totp_secret %}
+        <div class="twofa-form-container" id="twofaFormContainer">
+            <div class="twofa-form">
+                <h4><i class="bi bi-qr-code-scan me-2"></i>Configurar Autenticação 2FA</h4>
+
+                {# Loading state #}
+                <div class="twofa-loading text-center py-4" id="twofaLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Gerando QR Code...</p>
+                </div>
+
+                {# Content (hidden until loaded) #}
+                <div class="twofa-content" id="twofaContent" style="display: none;">
+                    {# Step 1: QR Code #}
+                    <div class="twofa-step">
+                        <div class="step-header">
+                            <span class="step-number">1</span>
+                            <span class="step-title">Escaneie o QR Code</span>
+                        </div>
+                        <p class="step-description">Abra seu aplicativo autenticador (Google Authenticator,
+                            Authy, etc.) e escaneie a imagem abaixo.</p>
+
+                        <div class="qr-code-container text-center">
+                            <img src="" alt="QR Code 2FA" id="qrCodeImage" class="qr-code-img">
+                        </div>
+
+                        <div class="secret-key-container">
+                            <small class="text-muted">Não consegue escanear? Use esta chave:</small>
+                            <div class="secret-key-display">
+                                <code id="secretKeyDisplay"></code>
+                                <button type="button" class="btn-copy" id="btnCopySecret" title="Copiar chave">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Step 2: Verify Code #}
+                    <div class="twofa-step">
+                        <div class="step-header">
+                            <span class="step-number">2</span>
+                            <span class="step-title">Confirme o Código</span>
+                        </div>
+                        <p class="step-description">Digite o código de 6 dígitos gerado pelo seu aplicativo.</p>
+
+                        <form action="{{ url_for('user.verify_2fa') }}" method="POST" id="formVerify2FA">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <div class="form-group">
+                                <div class="code-input-wrapper">
+                                    <input type="text" class="form-control code-input" name="code"
+                                        id="twofaCode" placeholder="000000" maxlength="6" required
+                                        autocomplete="off" inputmode="numeric" pattern="[0-9]*">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary"
+                                    id="btnCancel2FA">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" id="btnSubmit2FA">
+                                    <i class="bi bi-shield-check me-1"></i>Verificar e Ativar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Password Item #}
+        <div class="security-item" id="password-section">
+            <div class="security-icon icon-password">
+                <i class="bi bi-key"></i>
+            </div>
+            <div class="security-info">
+                <h3>Alterar Senha</h3>
+                <p>Atualize sua senha periodicamente para manter sua conta segura.</p>
+            </div>
+            <div class="security-action">
+                <button class="btn btn-change" type="button" id="btnTogglePassword">
+                    <i class="bi bi-pencil me-1"></i>Alterar
+                </button>
+            </div>
+        </div>
+
+        {# Inline Password Form #}
+        <div class="password-form-container" id="passwordFormContainer">
+            <form class="password-form" id="formAlterarSenha" method="POST"
+                action="{{ url_for('util.user_change_password') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h4><i class="bi bi-key-fill me-2"></i>Definir Nova Senha</h4>
+
+                <div class="form-group">
+                    <label class="form-label">Senha Atual</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" class="form-control" name="senha_atual" id="senha_atual"
+                            placeholder="Digite sua senha atual" required>
+                        <button type="button" class="toggle-password" tabindex="-1">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nova Senha</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" class="form-control" name="nova_senha" id="nova_senha"
+                            placeholder="Mínimo 8 caracteres" minlength="8" required>
+                        <button type="button" class="toggle-password" tabindex="-1">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    {# Indicador de força da senha #}
+                    <div class="password-strength mt-2">
+                        <div class="strength-bars d-flex gap-1">
+                            <div class="strength-bar" id="strength-bar-1"></div>
+                            <div class="strength-bar" id="strength-bar-2"></div>
+                            <div class="strength-bar" id="strength-bar-3"></div>
+                            <div class="strength-bar" id="strength-bar-4"></div>
+                            <div class="strength-bar" id="strength-bar-5"></div>
+                        </div>
+                        <small class="strength-text text-muted" id="strengthText">Digite uma senha para ver a
+                            força</small>
+                    </div>
+                    {# Requisitos da senha #}
+                    <div class="password-requirements mt-2">
+                        <small class="req-item" id="req-length"><i class="bi bi-circle"></i> Mínimo 8
+                            caracteres</small>
+                        <small class="req-item" id="req-upper"><i class="bi bi-circle"></i> Uma letra
+                            maiúscula</small>
+                        <small class="req-item" id="req-lower"><i class="bi bi-circle"></i> Uma letra
+                            minúscula</small>
+                        <small class="req-item" id="req-number"><i class="bi bi-circle"></i> Um número</small>
+                        <small class="req-item" id="req-special"><i class="bi bi-circle"></i> Um caractere
+                            especial</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmar Nova Senha</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" class="form-control" name="confirmar_senha" id="confirmar_senha"
+                            placeholder="Repita a nova senha" required>
+                        <button type="button" class="toggle-password" tabindex="-1">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <small class="password-match-feedback" id="matchFeedback"></small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btnCancelPassword">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitPassword">
+                        <i class="bi bi-check2 me-1"></i>Alterar Senha
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+{# Modal de confirmação para desativar 2FA #}
+{% from "components/modals.html" import confirm_action_modal %}
+{{ confirm_action_modal(
+    'disable2FAModal',
+    'Desativar 2FA?',
+    'Sua conta ficará menos segura sem a autenticação de dois fatores. Tem certeza que deseja continuar?',
+    url_for('user.disable_2fa'),
+    'Sim, Desativar'
+) }}
+
+{# Scripts da seção Segurança #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ============================================
+    // 2FA INLINE SETUP
+    // ============================================
+    const btnToggle2FA = document.getElementById('btnToggle2FA');
+    const btnCancel2FA = document.getElementById('btnCancel2FA');
+    const twofaFormContainer = document.getElementById('twofaFormContainer');
+    const twofaLoading = document.getElementById('twofaLoading');
+    const twofaContent = document.getElementById('twofaContent');
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    const secretKeyDisplay = document.getElementById('secretKeyDisplay');
+    const btnCopySecret = document.getElementById('btnCopySecret');
+    const twofaCode = document.getElementById('twofaCode');
+
+    if (btnToggle2FA && twofaFormContainer) {
+        btnToggle2FA.addEventListener('click', async function () {
+            const isOpening = !twofaFormContainer.classList.contains('active');
+            twofaFormContainer.classList.toggle('active');
+
+            this.innerHTML = twofaFormContainer.classList.contains('active')
+                ? '<i class="bi bi-x-circle me-1"></i>Fechar'
+                : '<i class="bi bi-shield-plus me-1"></i>Ativar';
+
+            if (isOpening) {
+                twofaLoading.style.display = 'block';
+                twofaContent.style.display = 'none';
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf_token"]').content;
+                    const response = await fetch('{{ url_for("user.setup_2fa_inline") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        qrCodeImage.src = 'data:image/png;base64,' + data.qr_code;
+                        secretKeyDisplay.textContent = data.secret;
+                        twofaLoading.style.display = 'none';
+                        twofaContent.style.display = 'block';
+                        if (twofaCode) twofaCode.focus();
+                    } else {
+                        alert(data.message || 'Erro ao gerar QR Code.');
+                        twofaFormContainer.classList.remove('active');
+                        btnToggle2FA.innerHTML = '<i class="bi bi-shield-plus me-1"></i>Ativar';
+                    }
+                } catch (error) {
+                    console.error('Erro ao configurar 2FA:', error);
+                    alert('Erro ao gerar QR Code. Tente novamente.');
+                    twofaFormContainer.classList.remove('active');
+                    btnToggle2FA.innerHTML = '<i class="bi bi-shield-plus me-1"></i>Ativar';
+                }
+            }
+        });
+    }
+
+    if (btnCancel2FA && twofaFormContainer) {
+        btnCancel2FA.addEventListener('click', function () {
+            twofaFormContainer.classList.remove('active');
+            btnToggle2FA.innerHTML = '<i class="bi bi-shield-plus me-1"></i>Ativar';
+            if (twofaCode) twofaCode.value = '';
+        });
+    }
+
+    // Copiar chave secreta
+    if (btnCopySecret && secretKeyDisplay) {
+        btnCopySecret.addEventListener('click', function () {
+            const secret = secretKeyDisplay.textContent;
+            navigator.clipboard.writeText(secret).then(() => {
+                const originalIcon = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check2"></i>';
+                setTimeout(() => {
+                    this.innerHTML = originalIcon;
+                }, 2000);
+            });
+        });
+    }
+
+    // Formatar input do código 2FA (apenas números)
+    if (twofaCode) {
+        twofaCode.addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+    }
+
+    // ============================================
+    // PASSWORD FORM
+    // ============================================
+    const btnTogglePassword = document.getElementById('btnTogglePassword');
+    const btnCancelPassword = document.getElementById('btnCancelPassword');
+    const passwordFormContainer = document.getElementById('passwordFormContainer');
+
+    if (btnTogglePassword && passwordFormContainer) {
+        btnTogglePassword.addEventListener('click', function () {
+            passwordFormContainer.classList.toggle('active');
+            this.innerHTML = passwordFormContainer.classList.contains('active')
+                ? '<i class="bi bi-x-circle me-1"></i>Fechar'
+                : '<i class="bi bi-pencil me-1"></i>Alterar';
+        });
+    }
+
+    if (btnCancelPassword && passwordFormContainer) {
+        btnCancelPassword.addEventListener('click', function () {
+            passwordFormContainer.classList.remove('active');
+            btnTogglePassword.innerHTML = '<i class="bi bi-pencil me-1"></i>Alterar';
+            document.getElementById('formAlterarSenha').reset();
+            resetPasswordUI();
+        });
+    }
+
+    // Toggle visibilidade da senha
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const input = this.previousElementSibling;
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        });
+    });
+
+    // ============================================
+    // PASSWORD STRENGTH CHECKER
+    // ============================================
+    const novaSenha = document.getElementById('nova_senha');
+    const confirmarSenha = document.getElementById('confirmar_senha');
+    const strengthText = document.getElementById('strengthText');
+    const matchFeedback = document.getElementById('matchFeedback');
+
+    const requirements = {
+        length: { regex: /.{8,}/, element: document.getElementById('req-length') },
+        upper: { regex: /[A-Z]/, element: document.getElementById('req-upper') },
+        lower: { regex: /[a-z]/, element: document.getElementById('req-lower') },
+        number: { regex: /[0-9]/, element: document.getElementById('req-number') },
+        special: { regex: /[^A-Za-z0-9]/, element: document.getElementById('req-special') }
+    };
+
+    const strengthLabels = [
+        { text: 'Muito fraca', color: '#dc3545' },
+        { text: 'Fraca', color: '#fd7e14' },
+        { text: 'Razoável', color: '#ffc107' },
+        { text: 'Forte', color: '#20c997' },
+        { text: 'Muito forte', color: '#198754' }
+    ];
+
+    function updateRequirement(key, valid) {
+        const req = requirements[key];
+        if (!req.element) return;
+        const icon = req.element.querySelector('i');
+        if (valid) {
+            req.element.classList.add('valid');
+            req.element.classList.remove('invalid');
+            icon.className = 'bi bi-check-circle-fill';
+        } else {
+            req.element.classList.remove('valid');
+            req.element.classList.add('invalid');
+            icon.className = 'bi bi-circle';
+        }
+    }
+
+    function updateStrengthBars(strength) {
+        for (let i = 1; i <= 5; i++) {
+            const bar = document.getElementById('strength-bar-' + i);
+            if (bar) {
+                if (i <= strength) {
+                    bar.style.backgroundColor = strengthLabels[strength - 1]?.color || '#e9ecef';
+                } else {
+                    bar.style.backgroundColor = '#e9ecef';
+                }
+            }
+        }
+    }
+
+    function checkPasswordStrength(password) {
+        let strength = 0;
+
+        for (const key in requirements) {
+            const valid = requirements[key].regex.test(password);
+            updateRequirement(key, valid);
+            if (valid) strength++;
+        }
+
+        updateStrengthBars(strength);
+
+        if (password.length === 0) {
+            strengthText.textContent = 'Digite uma senha para ver a força';
+            strengthText.style.color = '#6c757d';
+        } else {
+            const label = strengthLabels[strength - 1] || strengthLabels[0];
+            strengthText.textContent = label.text;
+            strengthText.style.color = label.color;
+        }
+
+        return strength;
+    }
+
+    function checkPasswordMatch() {
+        const nova = novaSenha.value;
+        const confirmar = confirmarSenha.value;
+
+        if (confirmar.length === 0) {
+            matchFeedback.textContent = '';
+            matchFeedback.className = 'password-match-feedback';
+            return false;
+        }
+
+        if (nova === confirmar) {
+            matchFeedback.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Senhas coincidem';
+            matchFeedback.className = 'password-match-feedback match-success';
+            return true;
+        } else {
+            matchFeedback.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i>Senhas não coincidem';
+            matchFeedback.className = 'password-match-feedback match-error';
+            return false;
+        }
+    }
+
+    function resetPasswordUI() {
+        updateStrengthBars(0);
+        strengthText.textContent = 'Digite uma senha para ver a força';
+        strengthText.style.color = '#6c757d';
+        matchFeedback.textContent = '';
+        matchFeedback.className = 'password-match-feedback';
+        for (const key in requirements) {
+            const req = requirements[key];
+            if (req.element) {
+                req.element.classList.remove('valid', 'invalid');
+                req.element.querySelector('i').className = 'bi bi-circle';
+            }
+        }
+    }
+
+    if (novaSenha) {
+        novaSenha.addEventListener('input', function () {
+            checkPasswordStrength(this.value);
+            if (confirmarSenha.value.length > 0) {
+                checkPasswordMatch();
+            }
+        });
+    }
+
+    if (confirmarSenha) {
+        confirmarSenha.addEventListener('input', checkPasswordMatch);
+    }
+
+    // Validação do formulário
+    const formAlterarSenha = document.getElementById('formAlterarSenha');
+    if (formAlterarSenha) {
+        formAlterarSenha.addEventListener('submit', function (e) {
+            const strength = checkPasswordStrength(novaSenha.value);
+            const match = checkPasswordMatch();
+
+            if (strength < 3) {
+                e.preventDefault();
+                alert('Por favor, escolha uma senha mais forte (pelo menos "Razoável").');
+                novaSenha.focus();
+                return false;
+            }
+
+            if (!match) {
+                e.preventDefault();
+                alert('As senhas não coincidem. Por favor, verifique.');
+                confirmarSenha.focus();
+                return false;
+            }
+        });
+    }
+});
+</script>

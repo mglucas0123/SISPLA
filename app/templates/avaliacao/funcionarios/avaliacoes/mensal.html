@@ -1,124 +1,495 @@
-<!-- Partial: mensal.html - conteúdo interno da seção mensal -->
-<!-- Espera variáveis: form_data -->
+<!-- Partial: mensal.html - Avaliação Mensal de Colaboradores -->
+<!-- Baseado no modelo de avaliação de fornecedores com Conforme/Não Conforme/Não se Aplica -->
 
-<!-- Participação -->
-<div class="question-card-eval" data-question="1">
+<!-- Critério 1: Pontualidade e Assiduidade -->
+<div class="question-card-eval" data-question="1" data-criteria="punctuality">
     <div class="question-header-eval">
         <span class="question-number">1</span>
-        <h3>Nível de Participação e Engajamento <span style="color: red">*</span></h3>
+        <h3>Pontualidade e Assiduidade <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador cumpre os horários estabelecidos e mantém frequência regular?</p>
     </div>
     <div class="radio-options-modern">
-        <label class="radio-option active">
-            <input type="radio" name="participation_score" value="active" {% if form_data and form_data.get('participation_score') == 'active' %}checked{% endif %} required>
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_punctuality" value="conforme" {% if form_data and form_data.get('criteria_punctuality') == 'conforme' %}checked{% endif %} required>
             <div class="radio-card">
                 <i class="bi bi-check-circle-fill"></i>
-                <span>Ativo</span>
+                <span>Conforme</span>
             </div>
         </label>
-        <label class="radio-option partial">
-            <input type="radio" name="participation_score" value="partial" {% if form_data and form_data.get('participation_score') == 'partial' %}checked{% endif %}>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_punctuality" value="nao_conforme" {% if form_data and form_data.get('criteria_punctuality') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_punctuality" value="nao_aplica" {% if form_data and form_data.get('criteria_punctuality') == 'nao_aplica' %}checked{% endif %}>
             <div class="radio-card">
                 <i class="bi bi-dash-circle-fill"></i>
-                <span>Parcial</span>
-            </div>
-        </label>
-        <label class="radio-option none">
-            <input type="radio" name="participation_score" value="none" {% if form_data and form_data.get('participation_score') == 'none' %}checked{% endif %}>
-            <div class="radio-card">
-                <i class="bi bi-x-circle-fill"></i>
-                <span>Nenhum</span>
+                <span>Não se Aplica</span>
             </div>
         </label>
     </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_punctuality_justification" rows="2" required
+            placeholder="Descreva os detalhes sobre pontualidade e assiduidade...">{{ form_data.get('criteria_punctuality_justification') if form_data else '' }}</textarea>
+    </div>
 </div>
 
-<!-- Sugestões de Inovação -->
-<div class="question-card">
-    <div class="question-header">
+<!-- Critério 2: Qualidade do Trabalho -->
+<div class="question-card-eval" data-question="2" data-criteria="quality">
+    <div class="question-header-eval">
         <span class="question-number">2</span>
-        <h3>Sugestões de Inovação <span style="color: red">*</span></h3>
-    </div>
-    <div class="justification-box">
-        <textarea class="form-control-custom" name="innovation_suggestions" rows="4" required
-            placeholder="Descreva sugestões de inovação propostas para o colaborador...">{{ form_data.get('innovation_suggestions') if form_data else '' }}</textarea>
-    </div>
-</div>
-
-<!-- Propostas de Melhoria -->
-<div class="question-card">
-    <div class="question-header">
-        <span class="question-number">3</span>
-        <h3>Propostas de Melhoria <span style="color: red">*</span></h3>
-    </div>
-    <div class="justification-box">
-        <textarea class="form-control-custom" name="improvement_proposals" rows="4" placeholder="Descreva pontos de melhoria para o colaborador..." required>{{ form_data.get('improvement_proposals') if form_data else '' }}</textarea>
-    </div>
-</div>
-
-<!-- Participa das Atividades -->
-<div class="question-card">
-    <div class="question-header">
-        <span class="question-number">4</span>
-        <h3>Participa das Atividades? <span style="color: red">*</span></h3>
+        <h3>Qualidade do Trabalho <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador entrega suas tarefas com qualidade e atenção aos detalhes?</p>
     </div>
     <div class="radio-options-modern">
-        <label class="radio-option active">
-            <input type="radio" name="participation_activities" value="yes" {% if form_data and form_data.get('participation_activities') == 'yes' %}checked{% endif %} required>
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_quality" value="conforme" {% if form_data and form_data.get('criteria_quality') == 'conforme' %}checked{% endif %} required>
             <div class="radio-card">
                 <i class="bi bi-check-circle-fill"></i>
-                <span>Participa</span>
+                <span>Conforme</span>
             </div>
         </label>
-        <label class="radio-option none">
-            <input type="radio" name="participation_activities" value="no" {% if form_data and form_data.get('participation_activities') == 'no' %}checked{% endif %}>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_quality" value="nao_conforme" {% if form_data and form_data.get('criteria_quality') == 'nao_conforme' %}checked{% endif %}>
             <div class="radio-card">
                 <i class="bi bi-x-circle-fill"></i>
-                <span>Não participa</span>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_quality" value="nao_aplica" {% if form_data and form_data.get('criteria_quality') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
             </div>
         </label>
     </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_quality_justification" rows="2" required
+            placeholder="Descreva exemplos de qualidade ou pontos de melhoria...">{{ form_data.get('criteria_quality_justification') if form_data else '' }}</textarea>
+    </div>
 </div>
 
-<!-- Objetivo do Colaborador -->
-<div class="question-card">
-    <div class="question-header">
+<!-- Critério 3: Produtividade -->
+<div class="question-card-eval" data-question="3" data-criteria="productivity">
+    <div class="question-header-eval">
+        <span class="question-number">3</span>
+        <h3>Produtividade <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador atinge as metas e entrega o volume de trabalho esperado?</p>
+    </div>
+    <div class="radio-options-modern">
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_productivity" value="conforme" {% if form_data and form_data.get('criteria_productivity') == 'conforme' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_productivity" value="nao_conforme" {% if form_data and form_data.get('criteria_productivity') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_productivity" value="nao_aplica" {% if form_data and form_data.get('criteria_productivity') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
+            </div>
+        </label>
+    </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_productivity_justification" rows="2" required
+            placeholder="Descreva sobre a produtividade e cumprimento de metas...">{{ form_data.get('criteria_productivity_justification') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Critério 4: Trabalho em Equipe -->
+<div class="question-card-eval" data-question="4" data-criteria="teamwork">
+    <div class="question-header-eval">
+        <span class="question-number">4</span>
+        <h3>Trabalho em Equipe <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador colabora bem com os colegas e contribui para o ambiente de trabalho?</p>
+    </div>
+    <div class="radio-options-modern">
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_teamwork" value="conforme" {% if form_data and form_data.get('criteria_teamwork') == 'conforme' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_teamwork" value="nao_conforme" {% if form_data and form_data.get('criteria_teamwork') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_teamwork" value="nao_aplica" {% if form_data and form_data.get('criteria_teamwork') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
+            </div>
+        </label>
+    </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_teamwork_justification" rows="2" required
+            placeholder="Descreva sobre a colaboração e relacionamento com a equipe...">{{ form_data.get('criteria_teamwork_justification') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<!-- Critério 5: Comunicação -->
+<div class="question-card-eval" data-question="5" data-criteria="communication">
+    <div class="question-header-eval">
         <span class="question-number">5</span>
-        <h3>Objetivo do Colaborador <span style="color: red">*</span></h3>
+        <h3>Comunicação <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador comunica-se de forma clara e efetiva com colegas e superiores?</p>
     </div>
-    <div class="justification-box">
-        <textarea class="form-control-custom" name="collaborator_goal" placeholder="Qual é o objetivo do colaborador neste período?" required>{{ form_data.get('collaborator_goal') if form_data else '' }}</textarea>
+    <div class="radio-options-modern">
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_communication" value="conforme" {% if form_data and form_data.get('criteria_communication') == 'conforme' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_communication" value="nao_conforme" {% if form_data and form_data.get('criteria_communication') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_communication" value="nao_aplica" {% if form_data and form_data.get('criteria_communication') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
+            </div>
+        </label>
+    </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_communication_justification" rows="2" required
+            placeholder="Descreva sobre a comunicação do colaborador...">{{ form_data.get('criteria_communication_justification') if form_data else '' }}</textarea>
     </div>
 </div>
 
-<!-- Pontos a desenvolver -->
-<div class="question-card">
-    <div class="question-header">
+<!-- Critério 6: Iniciativa e Proatividade -->
+<div class="question-card-eval" data-question="6" data-criteria="initiative">
+    <div class="question-header-eval">
         <span class="question-number">6</span>
-        <h3>Pontos a serem Desenvolvidos <span style="color: red">*</span></h3>
+        <h3>Iniciativa e Proatividade <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador toma iniciativa e antecipa-se às necessidades do trabalho?</p>
     </div>
-    <div class="justification-box">
-        <textarea class="form-control-custom" name="development_points" rows="4" placeholder="Liste pontos a desenvolver..." required>{{ form_data.get('development_points') if form_data else '' }}</textarea>
+    <div class="radio-options-modern">
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_initiative" value="conforme" {% if form_data and form_data.get('criteria_initiative') == 'conforme' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_initiative" value="nao_conforme" {% if form_data and form_data.get('criteria_initiative') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_initiative" value="nao_aplica" {% if form_data and form_data.get('criteria_initiative') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
+            </div>
+        </label>
+    </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_initiative_justification" rows="2" required
+            placeholder="Descreva exemplos de iniciativa ou pontos de melhoria...">{{ form_data.get('criteria_initiative_justification') if form_data else '' }}</textarea>
     </div>
 </div>
 
-<!-- Estratégia adotada -->
-<div class="question-card">
-    <div class="question-header">
+<!-- Critério 7: Cumprimento de Normas -->
+<div class="question-card-eval" data-question="7" data-criteria="compliance">
+    <div class="question-header-eval">
         <span class="question-number">7</span>
-        <h3>Estratégia Adotada para Desenvolvimento <span style="color: red">*</span></h3>
+        <h3>Cumprimento de Normas e Procedimentos <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador segue as normas, políticas e procedimentos da empresa?</p>
     </div>
-    <div class="justification-box">
-        <textarea class="form-control-custom" name="development_strategy" rows="4" placeholder="Descreva a estratégia adotada para o desenvolvimento do profissional..." required>{{ form_data.get('development_strategy') if form_data else '' }}</textarea>
+    <div class="radio-options-modern">
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_compliance" value="conforme" {% if form_data and form_data.get('criteria_compliance') == 'conforme' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_compliance" value="nao_conforme" {% if form_data and form_data.get('criteria_compliance') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_compliance" value="nao_aplica" {% if form_data and form_data.get('criteria_compliance') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
+            </div>
+        </label>
+    </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta <span style="color: red">*</span>
+        </label>
+        <textarea class="form-control-custom" name="criteria_compliance_justification" rows="2" required
+            placeholder="Descreva sobre o cumprimento de normas e procedimentos...">{{ form_data.get('criteria_compliance_justification') if form_data else '' }}</textarea>
     </div>
 </div>
 
-<!-- Outras análises -->
-<div class="question-card">
-    <div class="question-header">
+<!-- Critério 8: Desenvolvimento Profissional -->
+<div class="question-card-eval" data-question="8" data-criteria="development">
+    <div class="question-header-eval">
         <span class="question-number">8</span>
-        <h3>Outras Análises <span style="color: red">*</span></h3>
+        <h3>Desenvolvimento Profissional <span style="color: red">*</span></h3>
+        <p class="question-description">O colaborador busca aprimorar seus conhecimentos e habilidades?</p>
     </div>
-    <div class="justification-box">
-        <textarea class="form-control-custom" name="other_analyses" rows="4" placeholder="Outras observações ou análises sobre o colaborador..." required>{{ form_data.get('other_analyses') if form_data else '' }}</textarea>
+    <div class="radio-options-modern">
+        <label class="radio-option conforme">
+            <input type="radio" name="criteria_development" value="conforme" {% if form_data and form_data.get('criteria_development') == 'conforme' %}checked{% endif %} required>
+            <div class="radio-card">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-conforme">
+            <input type="radio" name="criteria_development" value="nao_conforme" {% if form_data and form_data.get('criteria_development') == 'nao_conforme' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Não Conforme</span>
+            </div>
+        </label>
+        <label class="radio-option nao-aplica">
+            <input type="radio" name="criteria_development" value="nao_aplica" {% if form_data and form_data.get('criteria_development') == 'nao_aplica' %}checked{% endif %}>
+            <div class="radio-card">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Não se Aplica</span>
+            </div>
+        </label>
+    </div>
+    <div class="justification-collapsible">
+        <label class="form-label-custom required">
+            <i class="bi bi-chat-left-text"></i>
+            Justifique sua resposta
+        </label>
+        <textarea class="form-control-custom" name="criteria_development_justification" rows="2" required
+            placeholder="Descreva sobre o interesse em desenvolvimento e aprendizado...">{{ form_data.get('criteria_development_justification') if form_data else '' }}</textarea>
     </div>
 </div>
+
+<!-- Seção de Observações Adicionais -->
+<div class="observations-section-eval">
+    <div class="observations-header-eval">
+        <i class="bi bi-pencil-square"></i>
+        <h3>Observações Adicionais</h3>
+    </div>
+    
+    <!-- Pontos Fortes -->
+    <div class="observation-field">
+        <label class="form-label-custom required">
+            <i class="bi bi-star-fill" style="color: #f59e0b;"></i>
+            Pontos Fortes do Colaborador
+        </label>
+        <textarea class="form-control-custom" name="strong_points" rows="3" required
+            placeholder="Destaque os principais pontos fortes observados neste período...">{{ form_data.get('strong_points') if form_data else '' }}</textarea>
+    </div>
+    
+    <!-- Pontos a Desenvolver -->
+    <div class="observation-field">
+        <label class="form-label-custom required">
+            <i class="bi bi-graph-up-arrow" style="color: #3b82f6;"></i>
+            Pontos a Desenvolver 
+        </label>
+        <textarea class="form-control-custom" name="development_points" rows="3" required
+            placeholder="Liste os pontos que precisam de desenvolvimento...">{{ form_data.get('development_points') if form_data else '' }}</textarea>
+    </div>
+    
+    <!-- Plano de Ação -->
+    <div class="observation-field">
+        <label class="form-label-custom">
+            <i class="bi bi-list-check" style="color: #10b981;"></i>
+            Plano de Ação / Sugestões
+        </label>
+        <textarea class="form-control-custom" name="action_plan" rows="3"
+            placeholder="Descreva ações sugeridas para o próximo período...">{{ form_data.get('action_plan') if form_data else '' }}</textarea>
+    </div>
+</div>
+
+<style>
+/* Question Description */
+.question-description {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #64748b;
+    margin-left: 40px;
+}
+
+/* Justification Collapsible */
+.justification-collapsible {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    margin-top: 12px;
+}
+
+.justification-collapsible .form-label-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.justification-collapsible textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.justification-collapsible textarea:focus {
+    outline: none;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
+
+/* Observations Section */
+.observations-section-eval {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+    border: 1px solid #bae6fd;
+}
+
+.observations-header-eval {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.observations-header-eval i {
+    font-size: 24px;
+    color: #0284c7;
+}
+
+.observations-header-eval h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #0c4a6e;
+    margin: 0;
+}
+
+.observation-field {
+    margin-bottom: 16px;
+}
+
+.observation-field:last-child {
+    margin-bottom: 0;
+}
+
+.observation-field .form-label-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.observation-field textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    resize: vertical;
+    background: white;
+}
+
+.observation-field textarea:focus {
+    outline: none;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .radio-options-modern {
+        flex-direction: column;
+    }
+    
+    .radio-option {
+        min-width: 100%;
+    }
+}
+</style>
+
+<script>
+// Event listeners para animação ao responder
+document.addEventListener('DOMContentLoaded', function() {
+    const criteriaInputs = document.querySelectorAll('input[name^="criteria_"]');
+    criteriaInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Animação no card
+            const card = this.closest('.question-card-eval');
+            if (card) {
+                card.classList.add('answered');
+                setTimeout(() => card.classList.remove('answered'), 500);
+            }
+        });
+    });
+});
+</script>

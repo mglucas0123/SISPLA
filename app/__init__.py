@@ -22,6 +22,7 @@ from app.routes.training import training_bp
 from app.routes.nir import nir_bp
 from app.routes.feedback.suppliers import suppliers_bp
 from app.routes.avaliacao_funcionario import employee_evaluation_bp
+from app.routes.collaborative_validation import collaborative_bp
 
 load_dotenv()
 
@@ -45,7 +46,7 @@ def create_app():
     db.init_app(app)
     Migrate(app, db)
     csrf = CSRFProtect(app)
-
+ 
     login_config(app)
     registry_routes(app)
     registry_filters(app)
@@ -65,6 +66,7 @@ def registry_routes(app):
     app.register_blueprint(nir_bp)
     app.register_blueprint(suppliers_bp)
     app.register_blueprint(employee_evaluation_bp)
+    app.register_blueprint(collaborative_bp)
 
 def login_config(app):
     login_manager = LoginManager()

@@ -1,0 +1,805 @@
+{% extends "navbar.html" %}
+
+{% block title %}Detalhes da Avaliação - SISPLA{% endblock %}
+
+{% block content %}
+<div class="evaluations-modern-container">
+    <div class="evaluations-hero">
+        <div class="container">
+            <div class="hero-navigation">
+                <a href="{{ url_for('employee_evaluation.employee_history', employee_id=evaluation.evaluated_id) }}"
+                    class="btn-back-hero">
+                    <i class="bi bi-arrow-left-circle"></i>
+                    <span>Voltar para Histórico</span>
+                </a>
+            </div>
+
+            <div class="hero-content-eval">
+                <div class="hero-supplier-info">
+                    <div class="supplier-avatar-large employee-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="supplier-details">
+                        <span class="supplier-label">Detalhes da Avaliação</span>
+                        <h1 class="supplier-name-hero">{{ evaluation.evaluated.name }}</h1>
+                        {% if evaluation.evaluated.cargo %}
+                        <div class="supplier-legal-name-hero">
+                            <i class="bi bi-briefcase"></i>
+                            {{ evaluation.evaluated.cargo }}
+                        </div>
+                        {% endif %}
+                        <div class="service-tag-hero">
+                            <i class="bi bi-tag"></i>
+                            {% if evaluation.evaluation_type == 'experiencia_45' %}
+                                Avaliação de Experiência - 45 dias
+                            {% elif evaluation.evaluation_type == 'experiencia_90' %}
+                                Avaliação de Experiência - 90 dias
+                            {% else %}
+                                Avaliação Mensal
+                            {% endif %}
+                        </div>
+                        <div class="eval-meta-hero">
+                            <span><i class="bi bi-calendar-month"></i> {{ evaluation.month_reference }}</span>
+                            <span><i class="bi bi-calendar-event"></i> {{ evaluation.created_at|format_date_short }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-score-display">
+                    {% set score = evaluation.total_score|default(0) %}
+                    <div class="score-circular-hero {{ 'excellent' if score >= 80 else ('good' if score >= 60 else 'poor') }}">
+                        <svg width="140" height="140">
+                            <circle cx="70" cy="70" r="60" class="score-bg-hero"></circle>
+                            <circle cx="70" cy="70" r="60" class="score-fill-hero"
+                                style="stroke-dashoffset: {{ 377 - (377 * score / 100) }}"></circle>
+                        </svg>
+                        <div class="score-text-hero">
+                            <span class="score-number-hero">{{ "%.0f"|format(score) }}</span>
+                            <span class="score-percent-hero">%</span>
+                        </div>
+                    </div>
+                    <div class="score-classification">
+                        {% if evaluation.is_compliant %}
+                        <i class="bi bi-check-circle-fill text-success"></i> Colaborador Conforme
+                        {% else %}
+                        <i class="bi bi-x-circle-fill text-danger"></i> Colaborador Não Conforme
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats Cards -->
+        {% set criteria = [
+            evaluation.criteria_punctuality,
+            evaluation.criteria_quality,
+            evaluation.criteria_productivity,
+            evaluation.criteria_teamwork,
+            evaluation.criteria_communication,
+            evaluation.criteria_initiative,
+            evaluation.criteria_compliance,
+            evaluation.criteria_development
+        ] %}
+        {% set conforme_count = criteria|select('equalto', 'conforme')|list|length %}
+        {% set nao_conforme_count = criteria|select('equalto', 'nao_conforme')|list|length %}
+        {% set nao_aplica_count = criteria|select('equalto', 'nao_aplica')|list|length %}
+        
+        <div class="eval-stats-dashboard">
+            <div class="eval-stat-card primary">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-clipboard-check-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ conforme_count }}</h3>
+                    <p>Critérios Conformes</p>
+                </div>
+                <div class="stat-chart-mini">
+                    <span class="stat-fraction">/ 8</span>
+                </div>
+            </div>
+
+            <div class="eval-stat-card danger">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ nao_conforme_count }}</h3>
+                    <p>Não Conformes</p>
+                </div>
+                {% if nao_conforme_count > 0 %}
+                <div class="stat-pulse-eval"></div>
+                {% endif %}
+            </div>
+
+            <div class="eval-stat-card warning">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ evaluation.rating }}</h3>
+                    <p>Nota Atribuída</p>
+                </div>
+                <div class="rating-stars-mini">
+                    {% for i in range(1, 6) %}
+                    {% if i <= (evaluation.rating / 2) %}
+                    <i class="bi bi-star-fill"></i>
+                    {% else %}
+                    <i class="bi bi-star"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="eval-stat-card success">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ evaluation.evaluator.name.split()[0] if evaluation.evaluator else 'N/A' }}</h3>
+                    <p>Avaliador</p>
+                </div>
+                <div class="stat-chart-mini">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Details Card -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-person-badge-fill"></i>
+                <h3>Informações do Colaborador</h3>
+            </div>
+
+            <div class="details-grid-modern">
+                <div class="detail-item-modern">
+                    <i class="bi bi-person"></i>
+                    <div>
+                        <span class="detail-label-modern">Nome Completo</span>
+                        <strong>{{ evaluation.evaluated.name }}</strong>
+                    </div>
+                </div>
+
+                {% if evaluation.evaluated.cargo %}
+                <div class="detail-item-modern">
+                    <i class="bi bi-briefcase"></i>
+                    <div>
+                        <span class="detail-label-modern">Cargo</span>
+                        <strong>{{ evaluation.evaluated.cargo }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if evaluation.evaluated.email %}
+                <div class="detail-item-modern">
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                        <span class="detail-label-modern">E-mail</span>
+                        <strong>{{ evaluation.evaluated.email }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="detail-item-modern">
+                    <i class="bi bi-calendar-check"></i>
+                    <div>
+                        <span class="detail-label-modern">Data da Avaliação</span>
+                        <strong>{{ evaluation.created_at|format_date_time }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Criteria Evaluation -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-clipboard-check-fill"></i>
+                <h3>Critérios de Avaliação</h3>
+            </div>
+
+            <div class="criteria-list-details">
+                <!-- Critério 1: Pontualidade e Assiduidade -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_punctuality == 'conforme' else ('nao-conforme' if evaluation.criteria_punctuality == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">01</span>
+                        <h4>Pontualidade e Assiduidade</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador cumpre os horários e comparece regularmente ao trabalho?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_punctuality == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_punctuality == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_punctuality == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_punctuality == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_punctuality_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_punctuality_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 2: Qualidade do Trabalho -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_quality == 'conforme' else ('nao-conforme' if evaluation.criteria_quality == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">02</span>
+                        <h4>Qualidade do Trabalho</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador entrega trabalhos com qualidade e precisão?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_quality == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_quality == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_quality == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_quality == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_quality_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_quality_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 3: Produtividade -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_productivity == 'conforme' else ('nao-conforme' if evaluation.criteria_productivity == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">03</span>
+                        <h4>Produtividade</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador apresenta bom rendimento e cumpre suas tarefas no tempo esperado?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_productivity == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_productivity == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_productivity == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_productivity == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_productivity_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_productivity_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 4: Trabalho em Equipe -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_teamwork == 'conforme' else ('nao-conforme' if evaluation.criteria_teamwork == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">04</span>
+                        <h4>Trabalho em Equipe</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador colabora bem com os colegas e contribui para o ambiente de trabalho?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_teamwork == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_teamwork == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_teamwork == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_teamwork == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_teamwork_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_teamwork_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 5: Comunicação -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_communication == 'conforme' else ('nao-conforme' if evaluation.criteria_communication == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">05</span>
+                        <h4>Comunicação</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador comunica-se de forma clara e eficaz?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_communication == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_communication == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_communication == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_communication == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_communication_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_communication_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 6: Iniciativa e Proatividade -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_initiative == 'conforme' else ('nao-conforme' if evaluation.criteria_initiative == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">06</span>
+                        <h4>Iniciativa e Proatividade</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador toma iniciativas e busca resolver problemas de forma proativa?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_initiative == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_initiative == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_initiative == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_initiative == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_initiative_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_initiative_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 7: Cumprimento de Normas -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_compliance == 'conforme' else ('nao-conforme' if evaluation.criteria_compliance == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">07</span>
+                        <h4>Cumprimento de Normas</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador segue as normas e procedimentos da organização?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_compliance == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_compliance == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_compliance == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_compliance == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_compliance_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_compliance_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critério 8: Desenvolvimento Profissional -->
+                <div class="criterion-item-details {{ 'conforme' if evaluation.criteria_development == 'conforme' else ('nao-conforme' if evaluation.criteria_development == 'nao_conforme' else 'nao-aplica') }}">
+                    <div class="criterion-header-details">
+                        <span class="criterion-badge">08</span>
+                        <h4>Desenvolvimento Profissional</h4>
+                    </div>
+                    <p class="criterion-question">O colaborador demonstra interesse em aprender e se desenvolver profissionalmente?</p>
+                    <div class="criterion-answer">
+                        <i class="bi {{ 'bi-check-circle-fill' if evaluation.criteria_development == 'conforme' else ('bi-x-circle-fill' if evaluation.criteria_development == 'nao_conforme' else 'bi-dash-circle-fill') }}"></i>
+                        <span>
+                            {% if evaluation.criteria_development == 'conforme' %}Conforme
+                            {% elif evaluation.criteria_development == 'nao_conforme' %}Não Conforme
+                            {% else %}Não se Aplica
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if evaluation.criteria_development_justification %}
+                    <div class="criterion-justification">
+                        <i class="bi bi-chat-dots"></i>
+                        <p>{{ evaluation.criteria_development_justification }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ausências e Atestados -->
+        {% if evaluation.absence_count or evaluation.medical_certificate_count %}
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-calendar2-check text-primary"></i>
+                <h3>Registro de Frequência</h3>
+            </div>
+            
+            <div class="absence-summary-grid">
+                <div class="absence-summary-item">
+                    <div class="absence-icon danger">
+                        <i class="bi bi-person-x-fill"></i>
+                    </div>
+                    <div class="absence-info">
+                        <span class="absence-label">Faltas não justificadas</span>
+                        <span class="absence-value">{{ evaluation.absence_count or 0 }}</span>
+                    </div>
+                </div>
+                
+                <div class="absence-summary-item">
+                    <div class="absence-icon warning">
+                        <i class="bi bi-file-earmark-medical-fill"></i>
+                    </div>
+                    <div class="absence-info">
+                        <span class="absence-label">Atestados Médicos</span>
+                        <span class="absence-value">{{ evaluation.medical_certificate_count or 0 }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="total-deduction-box">
+                <i class="bi bi-info-circle"></i>
+                <span>As ausências registradas são consideradas no cálculo final do score</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Rating and Justification -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-star-fill"></i>
+                <h3>Avaliação Final e Justificativa</h3>
+            </div>
+
+            <div class="rating-display-details">
+                <div class="rating-number-large">{{ evaluation.rating }}<span>/10</span></div>
+                <div class="rating-stars-large">
+                    {% for i in range(1, 11) %}
+                    {% if i <= evaluation.rating %}
+                    <i class="bi bi-star-fill"></i>
+                    {% else %}
+                    <i class="bi bi-star"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <p class="rating-question-text">Qual nota você atribui ao desempenho deste colaborador no período avaliado?</p>
+            </div>
+
+            {% if evaluation.rating_justification %}
+            <div class="justification-box">
+                <i class="bi bi-chat-square-text"></i>
+                <p><strong>Justificativa:</strong> {{ evaluation.rating_justification }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Strong Points and Development Points -->
+        {% if evaluation.strong_points or evaluation.development_points %}
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-journal-text"></i>
+                <h3>Pontos Fortes e de Desenvolvimento</h3>
+            </div>
+
+            <div class="points-grid">
+                {% if evaluation.strong_points %}
+                <div class="points-card strong">
+                    <div class="points-header">
+                        <i class="bi bi-hand-thumbs-up-fill"></i>
+                        <h4>Pontos Fortes</h4>
+                    </div>
+                    <p>{{ evaluation.strong_points }}</p>
+                </div>
+                {% endif %}
+
+                {% if evaluation.development_points %}
+                <div class="points-card development">
+                    <div class="points-header">
+                        <i class="bi bi-arrow-up-circle-fill"></i>
+                        <h4>Pontos a Desenvolver</h4>
+                    </div>
+                    <p>{{ evaluation.development_points }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Plan -->
+        {% if evaluation.action_plan %}
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-list-task"></i>
+                <h3>Plano de Ação</h3>
+            </div>
+
+            <div class="observations-box-details">
+                <p>{{ evaluation.action_plan }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Approval Status -->
+        {% if evaluation.approval_status %}
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-check2-square"></i>
+                <h3>Decisão / Status de Aprovação</h3>
+            </div>
+
+            <div class="approval-status-card {{ evaluation.approval_status }}">
+                {% if evaluation.approval_status == 'approved' %}
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Aprovado</span>
+                {% elif evaluation.approval_status == 'dismissal' %}
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Desligamento</span>
+                {% elif evaluation.approval_status == 'approved_with_plan' %}
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Aprovado com Plano de Ação</span>
+                {% else %}
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>{{ evaluation.approval_status }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Score Calculation -->
+        <div class="supplier-details-modern">
+            <div class="details-header-modern">
+                <i class="bi bi-calculator-fill"></i>
+                <h3>Cálculo do Score</h3>
+            </div>
+
+            <div class="calculation-card-details">
+                <div class="formula-header">
+                    <h4>Fórmula Aplicada</h4>
+                </div>
+                <div class="formula-display-details">
+                    <div class="formula-part">
+                        <span class="formula-weight">60%</span>
+                        <span class="formula-x">×</span>
+                        <span class="formula-text">(Conformes ÷ Aplicáveis)</span>
+                    </div>
+                    <span class="formula-plus">+</span>
+                    <div class="formula-part">
+                        <span class="formula-weight">40%</span>
+                        <span class="formula-x">×</span>
+                        <span class="formula-text">(Nota ÷ 10)</span>
+                    </div>
+                    <span class="formula-equals">=</span>
+                    <div class="formula-result {{ 'excellent' if score >= 80 else ('good' if score >= 60 else 'poor') }}">
+                        {{ "%.1f"|format(score) }}%
+                    </div>
+                </div>
+
+                <div class="calculation-breakdown">
+                    <div class="breakdown-item">
+                        <i class="bi bi-check2-square"></i>
+                        <div>
+                            <span>Critérios Conformes</span>
+                            <strong>{{ conforme_count }} / {{ 8 - nao_aplica_count }}</strong>
+                        </div>
+                    </div>
+                    <div class="breakdown-item">
+                        <i class="bi bi-star-half"></i>
+                        <div>
+                            <span>Nota Atribuída</span>
+                            <strong>{{ evaluation.rating }} / 10</strong>
+                        </div>
+                    </div>
+                    <div class="breakdown-item">
+                        <i class="bi bi-award-fill"></i>
+                        <div>
+                            <span>Classificação</span>
+                            <strong class="{{ 'text-success' if score >= 80 else ('text-warning' if score >= 60 else 'text-danger') }}">
+                                {% if score >= 80 %}Excelente
+                                {% elif score >= 60 %}Satisfatório
+                                {% else %}Insatisfatório
+                                {% endif %}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .employee-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .points-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .points-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-left: 4px solid;
+    }
+
+    .points-card.strong {
+        border-color: #10b981;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.1));
+    }
+
+    .points-card.development {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.1));
+    }
+
+    .points-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .points-header i {
+        font-size: 1.25rem;
+    }
+
+    .points-card.strong .points-header i {
+        color: #10b981;
+    }
+
+    .points-card.development .points-header i {
+        color: #f59e0b;
+    }
+
+    .points-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .points-card p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.6;
+    }
+
+    .approval-status-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-radius: 12px;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .approval-status-card i {
+        font-size: 2rem;
+    }
+
+    .approval-status-card.approved {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
+        color: #059669;
+    }
+
+    .approval-status-card.dismissal {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.2));
+        color: #dc2626;
+    }
+
+    .approval-status-card.approved_with_plan {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2));
+        color: #d97706;
+    }
+
+    @media print {
+        .hero-navigation,
+        .hero-actions-eval,
+        .no-print {
+            display: none !important;
+        }
+
+        .evaluations-hero {
+            padding: 20px 0 !important;
+        }
+
+        .evaluations-modern-container {
+            background: white !important;
+        }
+    }
+
+    /* ========================================
+       SEÇÃO DE AUSÊNCIAS - DETALHES
+       ======================================== */
+    .absence-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    @media (max-width: 576px) {
+        .absence-summary-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .absence-summary-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .absence-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .absence-icon.danger {
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+    }
+
+    .absence-icon.danger i {
+        color: #dc2626;
+        font-size: 22px;
+    }
+
+    .absence-icon.warning {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+    }
+
+    .absence-icon.warning i {
+        color: #d97706;
+        font-size: 22px;
+    }
+
+    .absence-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .absence-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .absence-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .absence-deduction {
+        font-size: 12px;
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    .total-deduction-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #92400e;
+    }
+
+    .total-deduction-box i {
+        font-size: 18px;
+    }
+
+    .total-deduction-box strong {
+        color: #dc2626;
+    }
+</style>
+
+<script>
+    function exportToPDF() {
+        window.print();
+    }
+</script>
+{% endblock %}

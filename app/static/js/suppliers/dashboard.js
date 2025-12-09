@@ -4,6 +4,9 @@
         tooltip: null,
         selectors: {
             sortSelect: '#sortOrder',
+            statusFilter: '#statusFilter',
+            searchInput: '#searchSupplier',
+            supplierCount: '#supplierCount',
             tableBody: '#rankingTable tbody',
             detailButton: '.toggle-detail-supplier',
             detailRow: '.detail-row',
@@ -20,6 +23,7 @@
         initTooltip();
         loadDistributionData();
         bindSort();
+        bindFilters();
         bindDetailToggles();
         bindTrackingButtons();
         bindDonutSegments();
@@ -46,6 +50,74 @@
         }
     }
 
+    function bindFilters() {
+        const searchInput = document.querySelector(state.selectors.searchInput);
+        const statusFilter = document.querySelector(state.selectors.statusFilter);
+
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+        }
+
+        if (statusFilter) {
+            statusFilter.addEventListener('change', applyFilters);
+        }
+    }
+
+    function applyFilters() {
+        const tbody = document.querySelector(state.selectors.tableBody);
+        if (!tbody) return;
+
+        const searchInput = document.querySelector(state.selectors.searchInput);
+        const statusFilter = document.querySelector(state.selectors.statusFilter);
+        const searchTerm = (searchInput?.value || '').toLowerCase().trim();
+        const statusValue = statusFilter?.value || '';
+
+        const rows = tbody.querySelectorAll('tr.supplier-row');
+        let visibleCount = 0;
+        let rowNum = 0;
+
+        rows.forEach((row) => {
+            const name = row.dataset.name || '';
+            const company = row.dataset.company || '';
+            const cnpj = row.dataset.cnpj || '';
+            const status = row.dataset.status || '';
+
+            // Busca por nome, razão social ou CNPJ
+            const matchesSearch = !searchTerm || 
+                name.includes(searchTerm) || 
+                company.includes(searchTerm) || 
+                cnpj.includes(searchTerm);
+
+            // Filtro por status
+            const matchesStatus = !statusValue || status === statusValue;
+
+            const supplierId = row.dataset.supplierId;
+            const detailRow = document.getElementById(`detail-supplier-${supplierId}`);
+
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+                rowNum++;
+                // Atualizar número da linha
+                const badge = row.querySelector('.row-number');
+                if (badge) {
+                    badge.textContent = `#${rowNum}`;
+                }
+            } else {
+                row.style.display = 'none';
+                if (detailRow) {
+                    detailRow.style.display = 'none';
+                }
+            }
+        });
+
+        // Atualizar contador
+        const countElement = document.querySelector(state.selectors.supplierCount);
+        if (countElement) {
+            countElement.textContent = visibleCount;
+        }
+    }
+
     function bindSort() {
         const select = document.querySelector(state.selectors.sortSelect);
         if (!select) return;
@@ -58,7 +130,7 @@
             const sortType = select.value;
 
             rows.sort((a, b) => {
-                if (sortType === 'desc') {
+                if (sortType === 'priority') {
                     const priorityA = parseInt(a.dataset.priority) || 999;
                     const priorityB = parseInt(b.dataset.priority) || 999;
                     if (priorityA === priorityB) {
@@ -66,14 +138,20 @@
                     }
                     return priorityA - priorityB;
                 }
+                if (sortType === 'desc') {
+                    return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+                }
                 if (sortType === 'asc') {
                     return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
                 }
-                return a.dataset.name.localeCompare(b.dataset.name);
+                return (a.dataset.name || '').localeCompare(b.dataset.name || '');
             });
 
             rows.forEach((row, index) => {
-                row.querySelector('.cell-id .badge').textContent = `#${index + 1}`;
+                const badge = row.querySelector('.row-number');
+                if (badge) {
+                    badge.textContent = `#${index + 1}`;
+                }
                 const supplierId = row.dataset.supplierId;
                 const detailRow = document.getElementById(`detail-supplier-${supplierId}`);
                 tbody.appendChild(row);
@@ -81,6 +159,9 @@
                     tbody.appendChild(detailRow);
                 }
             });
+
+            // Reaplicar filtros após ordenação
+            applyFilters();
         });
     }
 

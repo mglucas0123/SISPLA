@@ -3,518 +3,728 @@
 {% block title %}Gerenciar Usuários{% endblock %}
 
 {% block content %}
-<div class="manage-users-page">
-    <div class="container">
-        {% include 'partials/_flash_messages.html' %}
+<div class="users-dashboard">
+    {% include 'partials/_flash_messages.html' %}
+    
+    <!-- Stats Bar -->
+    <div class="users-stats-bar">
+        <div class="stat-item stat-total">
+            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{ stats.total if stats else 0 }}</span>
+                <span class="stat-label">Total de Usuários</span>
+            </div>
+        </div>
+        <div class="stat-item stat-active">
+            <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{ stats.active if stats else 0 }}</span>
+                <span class="stat-label">Ativos</span>
+            </div>
+        </div>
+        <div class="stat-item stat-blocked">
+            <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="stat-info">
+                <span class="stat-value">{{ stats.blocked if stats else 0 }}</span>
+                <span class="stat-label">Bloqueados</span>
+            </div>
+        </div>
+        <div class="stat-actions">
+            <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#criarUsuarioModal">
+                <i class="bi bi-plus-lg"></i>
+                <span>Novo Usuário</span>
+            </button>
+            <a href="{{ url_for('main.gestao_hub') }}" class="btn-back">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+        </div>
+    </div>
 
-        <div class="manage-users-header">
-            <div class="manage-users-header-content">
-                <div class="manage-users-title-section">
-                    <h1 class="manage-users-main-title">
-                        <i class="bi bi-people-fill"></i>
-                        Gerenciar Usuários
-                    </h1>
-                    <p class="manage-users-subtitle">
-                        Administre usuários e suas permissões no sistema
-                    </p>
+    <!-- Search & Filters -->
+    <div class="users-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar por nome, login ou email..." 
+                   value="{{ current_filters.search if current_filters else '' }}" autocomplete="off">
+            <button class="search-clear" id="searchClear" title="Limpar busca">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <div class="filters-toggle-btn" id="filtersToggle">
+            <i class="bi bi-funnel"></i>
+            <span>Filtros</span>
+            {% set active_filters_count = 0 %}
+            {% if current_filters %}
+                {% if current_filters.status %}{% set active_filters_count = active_filters_count + 1 %}{% endif %}
+                {% if current_filters.role %}{% set active_filters_count = active_filters_count + 1 %}{% endif %}
+                {% if current_filters.job_position %}{% set active_filters_count = active_filters_count + 1 %}{% endif %}
+                {% if current_filters.has_manager %}{% set active_filters_count = active_filters_count + 1 %}{% endif %}
+            {% endif %}
+            {% if active_filters_count > 0 %}
+            <span class="filters-badge">{{ active_filters_count }}</span>
+            {% endif %}
+            <i class="bi bi-chevron-down toggle-icon"></i>
+        </div>
+        
+        <div class="view-controls">
+            <button class="btn-view-toggle active" data-view="list" title="Visualização em lista">
+                <i class="bi bi-list"></i>
+            </button>
+            <button class="btn-view-toggle" data-view="grid" title="Visualização em grade">
+                <i class="bi bi-grid-3x3-gap"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="users-filters-panel" id="filtersPanel" {% if not (current_filters and (current_filters.status or current_filters.role or current_filters.job_position or current_filters.has_manager)) %}style="display: none;"{% endif %}>
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">
+                    <i class="bi bi-toggle-on"></i> Status
+                </label>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Todos</option>
+                    <option value="active" {% if current_filters and current_filters.status == 'active' %}selected{% endif %}>Ativos</option>
+                    <option value="inactive" {% if current_filters and current_filters.status == 'inactive' %}selected{% endif %}>Bloqueados</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    <i class="bi bi-person-badge"></i> Role
+                </label>
+                <select id="roleFilter" class="filter-select">
+                    <option value="">Todas</option>
+                    <option value="no_role" {% if current_filters and current_filters.role == 'no_role' %}selected{% endif %}>Sem role</option>
+                    {% for role in available_roles %}
+                    <option value="{{ role.name }}" {% if current_filters and current_filters.role == role.name %}selected{% endif %}>{{ role.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    <i class="bi bi-briefcase"></i> Cargo
+                </label>
+                <select id="jobPositionFilter" class="filter-select">
+                    <option value="">Todos</option>
+                    <option value="no_position" {% if current_filters and current_filters.job_position == 'no_position' %}selected{% endif %}>Sem cargo</option>
+                    {% for job in job_positions %}
+                    <option value="{{ job.id }}" {% if current_filters and current_filters.job_position == job.id|string %}selected{% endif %}>{{ job.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    <i class="bi bi-people"></i> Gestor
+                </label>
+                <select id="hasManagerFilter" class="filter-select">
+                    <option value="">Todos</option>
+                    <option value="has_manager" {% if current_filters and current_filters.has_manager == 'has_manager' %}selected{% endif %}>Com gestor</option>
+                    <option value="no_manager" {% if current_filters and current_filters.has_manager == 'no_manager' %}selected{% endif %}>Sem gestor</option>
+                    {% if managers_list %}
+                    <option disabled>──────────</option>
+                    {% for manager in managers_list %}
+                    <option value="manager_{{ manager.id }}" {% if current_filters and current_filters.has_manager == 'manager_' + manager.id|string %}selected{% endif %}>{{ manager.name }}</option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    <i class="bi bi-sort-down"></i> Ordenar por
+                </label>
+                <select id="sortFilter" class="filter-select">
+                    <option value="date_desc" {% if not current_filters or current_filters.sort == 'date_desc' %}selected{% endif %}>Mais Recentes</option>
+                    <option value="date_asc" {% if current_filters and current_filters.sort == 'date_asc' %}selected{% endif %}>Mais Antigos</option>
+                    <option value="name_asc" {% if current_filters and current_filters.sort == 'name_asc' %}selected{% endif %}>Nome A → Z</option>
+                    <option value="name_desc" {% if current_filters and current_filters.sort == 'name_desc' %}selected{% endif %}>Nome Z → A</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">
+                    <i class="bi bi-list-ol"></i> Por página
+                </label>
+                <select id="perPageFilter" class="filter-select">
+                    <option value="15" {% if not current_filters or current_filters.per_page == 15 %}selected{% endif %}>15</option>
+                    <option value="30" {% if current_filters and current_filters.per_page == 30 %}selected{% endif %}>30</option>
+                    <option value="50" {% if current_filters and current_filters.per_page == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if current_filters and current_filters.per_page == 100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="filters-actions">
+            <button type="button" class="btn-clear-filters" id="clearFiltersBtn">
+                <i class="bi bi-x-circle"></i> Limpar Filtros
+            </button>
+            <div class="filters-result-count">
+                <i class="bi bi-funnel-fill"></i>
+                <span id="filteredCount">{{ filtered_count if filtered_count else pagination.total if pagination else 0 }}</span> resultado(s)
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Container -->
+    <div class="users-container" data-view="list">
+        <!-- List View -->
+        <div class="users-list-view" {% if not users %}style="display: none;"{% endif %}>
+            <div class="users-list-header">
+                <div class="col-user">Usuário</div>
+                <div class="col-email">E-mail</div>
+                <div class="col-role">Cargo</div>
+                <div class="col-status">Status</div>
+            </div>
+            
+            <div class="users-list-body">
+            {% if users %}
+            {% for user in users %}
+            <div class="user-card-list" 
+                 data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
+                 data-user-id="{{ user.id }}" 
+                 data-user-nome="{{ user.name }}"
+                 data-user-usuario="{{ user.username }}" 
+                 data-user-email="{{ user.email | default('') }}"
+                 data-user-job-title="{{ user.job_position.name if user.job_position else (user.job_title | default('')) }}"
+                 data-user-job-position-id="{{ user.job_position_id | default('') }}"
+                 data-user-roles="{{ user.roles | map(attribute='name') | list | join(',') }}"
+                 data-user-permissions="{{ user.get_permissions() | join(',') }}"
+                 data-user-managers="{{ user.get_managers_list() | join(',') }}"
+                 data-user-managers-names="{{ user.get_managers_names() | join('|||') }}"
+                 data-user-is-active="{{ user.is_active | tojson }}">
+                
+                <div class="col-user">
+                    <div class="user-avatar {% if user.is_active %}avatar-active{% else %}avatar-inactive{% endif %}">
+                        {{ user.name[0]|upper }}
+                    </div>
+                    <div class="user-identity">
+                        <span class="user-name">{{ user.name }}</span>
+                        <span class="user-login">@{{ user.username }}</span>
+                    </div>
                 </div>
-                <div class="manage-users-actions">
-                    <button class="manage-users-create-btn" data-bs-toggle="modal" data-bs-target="#criarUsuarioModal">
-                        <i class="bi bi-plus-circle"></i>
-                        Novo Usuário
+                
+                <div class="col-email">
+                    <span class="email-text">{{ user.email if user.email else '—' }}</span>
+                </div>
+                
+                <div class="col-role">
+                    {% if user.job_position %}
+                    <span class="role-badge">{{ user.job_position.name }}</span>
+                    {% elif user.job_title %}
+                    <span class="role-badge">{{ user.job_title }}</span>
+                    {% else %}
+                    <span class="role-empty">Não definido</span>
+                    {% endif %}
+                </div>
+                
+                <div class="col-status">
+                    {% if user.is_active %}
+                    <span class="status-pill status-active">
+                        <i class="bi bi-check-circle-fill"></i> Ativo
+                    </span>
+                    {% else %}
+                    <span class="status-pill status-blocked">
+                        <i class="bi bi-x-circle-fill"></i> Bloqueado
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="col-action">
+                    <button class="btn-edit" title="Editar usuário">
+                        <i class="bi bi-chevron-right"></i>
                     </button>
-                    <a href="{{ url_for('main.gestao_hub') }}" class="manage-users-back-btn">
-                        <i class="bi bi-arrow-left-circle"></i>
-                        Voltar
-                    </a>
                 </div>
+            </div>
+            {% endfor %}
+            {% endif %}
             </div>
         </div>
 
-        <div class="manage-users-filters">
-            <div class="manage-users-filters-content">
-                <div class="manage-users-filters-left">
-                    <div class="manage-users-search-box">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="searchInput" placeholder="Pesquisar por nome ou usuário..."
-                            value="{{ request.args.get('search', '') }}">
-                    </div>
-                </div>
-                <div class="manage-users-filters-right">
-                    <div class="manage-users-filter-group">
-                        <label class="manage-users-filter-label">Status:</label>
-                        <select id="statusFilter" class="form-select">
-                            <option value="" {% if not request.args.get('status') %}selected{% endif %}>Todos</option>
-                            <option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>
-                                Liberados</option>
-                            <option value="inactive" {% if request.args.get('status')=='inactive' %}selected{% endif %}>
-                                Bloqueados</option>
-                        </select>
-                    </div>
-
-
-                    <div class="manage-users-filter-group">
-                        <label class="manage-users-filter-label">Ordenar por:</label>
-                        <select id="sortFilter" class="form-select">
-                            <option value="date_desc" {% if request.args.get('sort', 'date_desc' )=='date_desc'
-                                %}selected{% endif %}>Data (Mais recente)</option>
-                            <option value="date_asc" {% if request.args.get('sort')=='date_asc' %}selected{% endif %}>
-                                Data (Mais antigo)</option>
-                            <option value="name_asc" {% if request.args.get('sort')=='name_asc' %}selected{% endif %}>
-                                Nome (A-Z)</option>
-                            <option value="name_desc" {% if request.args.get('sort')=='name_desc' %}selected{% endif %}>
-                                Nome (Z-A)</option>
-                        </select>
-                    </div>
-
-                    <button id="applyFilters" class="manage-users-apply-btn" title="Aplicar filtros">
-                        <i class="bi bi-search"></i>
-                        Filtrar
-                    </button>
-
-                    <button id="clearFilters" class="manage-users-clear-btn" title="Limpar filtros">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            </div>
-
+        <!-- Grid View -->
+        <div class="users-grid-view" {% if not users %}style="display: none;"{% endif %}>
+            <div class="users-grid-body">
             {% if users %}
-            <div class="manage-users-results-info">
-                <div class="manage-users-results-text">
-                    <i class="bi bi-info-circle"></i>
-                    Exibindo {{ users|length }} usuário(s)
-                    {% if request.args.get('search') or request.args.get('status') %}
-                    com os filtros aplicados
+            {% for user in users %}
+            <div class="user-card-grid"
+                 data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
+                 data-user-id="{{ user.id }}" 
+                 data-user-nome="{{ user.name }}"
+                 data-user-usuario="{{ user.username }}" 
+                 data-user-email="{{ user.email | default('') }}"
+                 data-user-job-title="{{ user.job_position.name if user.job_position else (user.job_title | default('')) }}"
+                 data-user-job-position-id="{{ user.job_position_id | default('') }}"
+                 data-user-roles="{{ user.roles | map(attribute='name') | list | join(',') }}"
+                 data-user-permissions="{{ user.get_permissions() | join(',') }}"
+                 data-user-managers="{{ user.get_managers_list() | join(',') }}"
+                 data-user-managers-names="{{ user.get_managers_names() | join('|||') }}"
+                 data-user-is-active="{{ user.is_active | tojson }}">
+                
+                <div class="card-status-indicator {% if user.is_active %}indicator-active{% else %}indicator-blocked{% endif %}"></div>
+                
+                <div class="card-avatar {% if user.is_active %}avatar-active{% else %}avatar-inactive{% endif %}">
+                    {{ user.name[0]|upper }}
+                </div>
+                
+                <h4 class="card-name">{{ user.name }}</h4>
+                <p class="card-login">@{{ user.username }}</p>
+                
+                {% if user.job_position %}
+                <span class="card-role">{{ user.job_position.name }}</span>
+                {% elif user.job_title %}
+                <span class="card-role">{{ user.job_title }}</span>
+                {% endif %}
+                
+                <div class="card-footer">
+                    {% if user.roles %}
+                    <div class="card-roles">
+                        {% for role in user.roles[:2] %}
+                        <span class="mini-badge">{{ role.name }}</span>
+                        {% endfor %}
+                        {% if user.roles|length > 2 %}
+                        <span class="mini-badge mini-more">+{{ user.roles|length - 2 }}</span>
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </div>
             </div>
+            {% endfor %}
             {% endif %}
-        </div>
-
-        <div class="manage-users-section">
-            <div class="manage-users-table-container">
-                {% if users %}
-                <table class="manage-users-table table table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>
-                                <i class="bi bi-person-badge me-2"></i>
-                                Usuário
-                            </th>
-                            <th style="text-align: center;">
-                                <i class="bi bi-at me-2"></i>
-                                Login
-                            </th>
-                            <th style="width: 20%; text-align: center;">
-                                <i class="bi bi-shield-check me-2"></i>
-                                Status
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr class="user-row" data-bs-toggle="modal" data-bs-target="#infoUsuarioModal"
-                            data-user-id="{{ user.id }}" data-user-nome="{{ user.name }}"
-                            data-user-usuario="{{ user.username }}" data-user-email="{{ user.email | default('') }}"
-                            data-user-job-title="{{ user.job_title | default('') }}"
-                            data-user-roles="{{ user.roles | map(attribute='name') | list | join(',') }}"
-                            data-user-permissions="{{ user.get_permissions() | join(',') }}"
-                            data-user-is-active="{{ user.is_active | tojson }}">
-
-                            <td class="user-name-cell">
-                                <div class="user-info-container">
-                                    <div class="user-avatar">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <div class="user-details">
-                                        <p class="user-name">{{ user.name }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="user-username-cell">
-                                <span class="user-username">{{ user.username }}</span>
-                            </td>
-                            <td class="user-status-cell">
-                                {% if user.is_active %}
-                                <span class="user-status-badge status-active">
-                                    <i class="bi bi-check-circle-fill"></i>
-                                    Liberado
-                                </span>
-                                {% else %}
-                                <span class="user-status-badge status-inactive">
-                                    <i class="bi bi-x-circle-fill"></i>
-                                    Bloqueado
-                                </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="manage-users-empty">
-                    <div class="manage-users-empty-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <h3 class="manage-users-empty-title">Nenhum usuário encontrado</h3>
-                    <p class="manage-users-empty-text">Comece adicionando o primeiro usuário ao sistema.</p>
-                </div>
-                {% endif %}
             </div>
         </div>
-
-        {% set pagination_params = {'pagination': pagination, 'endpoint': 'admin.users.list_users', 'extra_params': {'search': request.args.get('search', ''), 'status': request.args.get('status', ''), 'sort': request.args.get('sort', 'date_desc')}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de usuários'} %}
-        {% include 'partials/_pagination.html' %}
+        
+        <!-- Empty State -->
+        <div class="users-empty-state" {% if users %}style="display: none;"{% endif %}>
+            <div class="empty-illustration">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3>Nenhum usuário encontrado</h3>
+            <p>Tente ajustar os filtros ou termos de busca</p>
+        </div>
     </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    {% set pagination_params = {'pagination': pagination, 'endpoint': 'admin.users.list_users', 'extra_params': {'search': request.args.get('search', ''), 'status': request.args.get('status', ''), 'sort': request.args.get('sort', 'date_desc')}, 'css_class': 'pagination-container', 'aria_label': 'Navegação de usuários'} %}
+    {% include 'partials/_pagination.html' %}
+    {% endif %}
 </div>
 
-<div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form method="POST" action="{{ url_for('admin.users.list_users') }}" class="modal-content">
+<!-- Modal Criar Usuário -->
+<div class="modal fade" id="criarUsuarioModal" tabindex="-1" aria-labelledby="criarUsuarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <form method="POST" action="{{ url_for('admin.users.list_users') }}" class="modal-content modal-modern">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="modal-header">
-                <h5 class="modal-title" id="criarUsuarioModalLabel">
+            
+            <div class="modal-header-modern">
+                <div class="modal-icon">
                     <i class="bi bi-person-plus-fill"></i>
-                    Criar Novo Usuário 
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div>
+                    <h5 class="modal-title" id="criarUsuarioModalLabel">Novo Usuário</h5>
+                    <p class="modal-subtitle">Preencha os dados para criar uma nova conta</p>
+                </div>
+                <button type="button" class="btn-modal-close" data-bs-dismiss="modal" aria-label="Fechar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label">
-                            <i class="bi bi-person-fill"></i>
-                            Nome completo
-                            <span class="text-danger">*</span>
+            
+            <div class="modal-body-modern">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name" class="form-label-modern">
+                            Nome Completo <span class="required">*</span>
                         </label>
-                        <input type="text" class="form-control" id="name" name="name" required
-                            placeholder="Digite o nome completo">
+                        <input type="text" class="form-input-modern" id="name" name="name" required
+                               placeholder="Digite o nome completo">
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="username" class="form-label">
-                            <i class="bi bi-at"></i>
-                            Nome de usuário
-                            <span class="text-danger">*</span>
+                    
+                    <div class="form-group">
+                        <label for="username" class="form-label-modern">
+                            Nome de Usuário <span class="required">*</span>
                         </label>
-                        <input type="text" class="form-control" id="username" name="username" required
-                            placeholder="Digite o username">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label">
-                            <i class="bi bi-envelope-fill"></i>
-                            E-mail
-                            <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-envelope-fill"></i>
-                            </span>
-                            <input type="email" class="form-control" id="email" name="email" placeholder="email@dominio.com"
-                                required>
+                        <div class="input-with-prefix">
+                            <span class="input-prefix">@</span>
+                            <input type="text" class="form-input-modern" id="username" name="username" required
+                                   placeholder="usuario">
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="job_title" class="form-label">
-                            <i class="bi bi-briefcase-fill"></i>
-                            Cargo
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label-modern">
+                            E-mail <span class="required">*</span>
                         </label>
-                        <input type="text" class="form-control" id="job_title" name="job_title" 
-                            placeholder="Ex: Enfermeiro, Técnico de Enfermagem...">
+                        <input type="email" class="form-input-modern" id="email" name="email" required
+                               placeholder="email@dominio.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label-modern">
+                            Senha <span class="required">*</span>
+                        </label>
+                        <div class="input-with-suffix">
+                            <input type="password" class="form-input-modern" id="password" name="password" required
+                                   placeholder="Digite uma senha segura">
+                            <button type="button" class="btn-toggle-password" data-target="password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">
-                        <i class="bi bi-key-fill"></i>
-                        Senha
-                        <span class="text-danger">*</span>
+                
+                <div class="form-group form-group-full">
+                    <label for="job_position_id" class="form-label-modern">
+                        Cargo
                     </label>
-                    <input type="password" class="form-control" id="password" name="password" required
-                        placeholder="Digite uma senha segura">
+                    <div class="searchable-select">
+                        <input type="text" class="form-input-modern" id="filterJobPositionCreate" 
+                               placeholder="Buscar cargo...">
+                        <select class="form-select-modern" id="job_position_id" name="job_position_id" size="4">
+                            <option value="">Selecione um cargo...</option>
+                            {% for position in job_positions %}
+                            <option value="{{ position.id }}" data-sector="{{ position.sector }}">
+                                {{ position.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-
+                
                 {% if available_roles %}
-                <fieldset class="mb-4">
-                    <legend>
+                <div class="form-section-modern">
+                    <div class="section-header">
                         <i class="bi bi-shield-check"></i>
-                        Setor do Usuário
-                    </legend>
-                    <div class="row">
+                        <span>Roles / Setores</span>
+                    </div>
+                    <div class="checkbox-group">
                         {% for role in available_roles %}
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="roles" value="{{ role.name }}" id="role_criar_{{ role.id }}">
-                                <label class="form-check-label" for="role_criar_{{ role.id }}">
-                                    <i class="bi bi-person-badge text-primary"></i>
-                                    {{ role.name }}
-                                </label>
-                            </div>
-                        </div>
+                        <label class="checkbox-modern">
+                            <input type="checkbox" name="roles" value="{{ role.name }}">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">{{ role.name }}</span>
+                        </label>
                         {% endfor %}
                     </div>
-                </fieldset>
+                </div>
                 {% endif %}
-
+                
+                {% if all_users %}
+                <div class="form-section-modern">
+                    <div class="section-header">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Gestores Responsáveis</span>
+                        <small>Opcional - Gestores que poderão avaliar este colaborador</small>
+                    </div>
+                    <input type="text" class="form-input-modern mb-2" id="filterManagersCreate" 
+                           placeholder="Filtrar gestores...">
+                    <div class="checkbox-scroll-area" id="managersListCreate">
+                        {% for user in all_users %}
+                        <label class="checkbox-modern manager-item-create" data-name="{{ user.name|lower }}">
+                            <input type="checkbox" name="managers" value="{{ user.id }}">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">
+                                {{ user.name }}
+                                {% if user.job_position %}
+                                <small>({{ user.job_position.name }})</small>
+                                {% endif %}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg"></i>
+            
+            <div class="modal-footer-modern">
+                <button type="button" class="btn-modern btn-cancel" data-bs-dismiss="modal">
                     Cancelar
                 </button>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle-fill"></i>
-                    Criar Usuário
+                <button type="submit" class="btn-modern btn-primary">
+                    <i class="bi bi-check-lg"></i> Criar Usuário
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Modal Editar/Info Usuário -->
 <div class="modal fade" id="infoUsuarioModal" tabindex="-1" aria-labelledby="infoUsuarioModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="infoUsuarioModalLabel">
-                    <i class="bi bi-person-badge"></i>
-                    Detalhes do Usuário
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    <div class="modal-dialog modal-fullscreen-custom">
+        <div class="modal-content modal-editor">
+            <!-- Editor Header -->
+            <div class="editor-header">
+                <div class="editor-user-info">
+                    <div class="editor-avatar" id="modalUserAvatar">?</div>
+                    <div class="editor-user-details">
+                        <h5 id="infoUsuarioModalLabel">Carregando...</h5>
+                        <p><span id="modalHeaderUsername">@usuario</span> • <span id="modalHeaderEmail">email</span></p>
+                    </div>
+                </div>
+                <div class="editor-actions">
+                    <span class="editor-status" id="modalStatusBadge">
+                        <i class="bi bi-check-circle-fill"></i> Ativo
+                    </span>
+                    <button type="button" class="btn-modal-close" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
             </div>
-            <div class="modal-body">
-                <div class="user-info-section">
-                    <h6 class="section-title">
-                        <i class="bi bi-info-circle"></i>
-                        Informações Atuais
-                    </h6>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Nome Completo:</div>
-                            <p class="info-value" id="modalUserName">-</p>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Login:</div>
-                            <p class="info-value" id="modalUserLogin">-</p>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">E-mail:</div>
-                            <p class="info-value" id="modalUserEmail">-</p>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Cargo:</div>
-                            <p class="info-value" id="modalUserJobTitle">-</p>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Status da Usuário:</div>
-                            <div id="modalUserStatusDisplay">
-                                <span class="permission-badge badge-none">Carregando...</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="roles-display">
-                        <div class="roles-label">Roles Atuais:</div>
-                        <div class="roles-list" id="modalUserRoles">
-                            <span class="role-badge role-none">Carregando...</span>
-                        </div>
-                    </div>
-                    <div class="permissions-display">
-                        <div class="permissions-label">Permissões Atuais:</div>
-                        <div class="permissions-list" id="modalUserPermissions">
-                            <span class="permission-badge badge-none">Carregando...</span>
-                        </div>
-                    </div>
+            
+            <!-- Editor Body -->
+            <div class="editor-body">
+                <!-- Tab Navigation -->
+                <div class="editor-tabs">
+                    <button class="tab-btn active" data-tab="overview">
+                        <i class="bi bi-person-vcard"></i>
+                        <span>Visão Geral</span>
+                    </button>
+                    <button class="tab-btn" data-tab="edit">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Editar Dados</span>
+                    </button>
+                    <button class="tab-btn" data-tab="access">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Acessos</span>
+                    </button>
+                    <button class="tab-btn" data-tab="managers">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Gestores</span>
+                    </button>
+                    <button class="tab-btn" data-tab="security">
+                        <i class="bi bi-gear"></i>
+                        <span>Segurança</span>
+                    </button>
                 </div>
-
-                <!-- Editar Dados Básicos -->
-                <div class="mb-4">
-                    <h6 class="section-title">
-                        <i class="bi bi-person-gear"></i>
-                        Editar Dados Básicos
-                    </h6>
-                    <form id="formEditarDadosBasicos" method="POST" action="">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_name" class="form-label">
-                                    <i class="bi bi-person-fill"></i>
-                                    Nome completo
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="edit_name" name="name" required>
+                
+                <!-- Tab Content -->
+                <div class="editor-content">
+                    <!-- Tab: Overview -->
+                    <div class="tab-panel active" id="panel-overview">
+                        <div class="info-grid-modern">
+                            <div class="info-block">
+                                <label>Nome Completo</label>
+                                <p id="modalUserName">—</p>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_username" class="form-label">
-                                    <i class="bi bi-at"></i>
-                                    Nome de usuário
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="edit_username" name="username" required>
+                            <div class="info-block">
+                                <label>Login</label>
+                                <p id="modalUserLogin">—</p>
+                            </div>
+                            <div class="info-block">
+                                <label>E-mail</label>
+                                <p id="modalUserEmail">—</p>
+                            </div>
+                            <div class="info-block">
+                                <label>Cargo</label>
+                                <p id="modalUserJobTitle">—</p>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit_email" class="form-label">
-                                <i class="bi bi-envelope-fill"></i>
-                                E-mail
-                                <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-envelope-fill"></i>
-                                </span>
-                                <input type="email" class="form-control" id="edit_email" name="email" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit_job_title" class="form-label">
-                                <i class="bi bi-briefcase-fill"></i>
-                                Cargo
-                            </label>
-                            <input type="text" class="form-control" id="edit_job_title" name="job_title" 
-                                placeholder="Ex: Enfermeiro, Técnico de Enfermagem...">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Salvar Dados Básicos
-                        </button>
-                    </form>
-                </div>
-
-                <div class="mb-4">
-                    <h6 class="section-title">
-                        <i class="bi bi-shield-check"></i>
-                        Gerenciar Permissões RBAC
-                    </h6>
-                    <form id="formEditarPermissoesRBAC" method="POST" action="">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <fieldset>
-                            <legend>
-                                <i class="bi bi-gear-wide-connected"></i>
-                                Atribuir Permissões Específicas
-                            </legend>
-                            {% if grouped_permissions %}
-                            <div class="row">
-                                {% for module, perms in grouped_permissions.items() %}
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary text-uppercase">{{ module }}</h6>
-                                    {% for perm in perms %}
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="permissions_edit" value="{{ perm.name }}" id="perm_{{ perm.id }}">
-                                        <label class="form-check-label" for="perm_{{ perm.id }}">
-                                            {{ perm.description or perm.name }}
-                                        </label>
-                                    </div>
-                                    {% endfor %}
+                        
+                        <div class="tags-section">
+                            <div class="tags-block">
+                                <h6><i class="bi bi-person-badge"></i> Roles</h6>
+                                <div class="tags-list" id="modalUserRoles">
+                                    <span class="tag-loading">Carregando...</span>
                                 </div>
-                                {% endfor %}
                             </div>
-                            {% else %}
-                            <p class="text-muted">Nenhuma permissão cadastrada.</p>
-                            {% endif %}
-                        </fieldset>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Salvar Permissões
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Editar Roles RBAC -->
-                <div class="mb-4">
-                    <h6 class="section-title">
-                        <i class="bi bi-person-badge"></i>
-                        Gerenciar Roles
-                    </h6>
-                    <form id="formEditarRoles" method="POST" action="">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <fieldset>
-                            <legend>
-                                <i class="bi bi-gear-wide-connected"></i>
-                                Atribuir Roles ao Usuário
-                            </legend>
-                            {% if available_roles %}
-                            <div class="row">
-                                {% for role in available_roles %}
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="roles_edit" value="{{ role.name }}" id="role_edit_{{ role.id }}">
-                                        <label class="form-check-label" for="role_edit_{{ role.id }}">
-                                            <i class="bi bi-person-badge text-primary"></i>
-                                            {{ role.name }}
-                                            {% if role.description %}
-                                            <small class="text-muted d-block">{{ role.description }}</small>
-                                            {% endif %}
-                                        </label>
-                                    </div>
+                            
+                            <div class="tags-block">
+                                <h6><i class="bi bi-key"></i> Permissões</h6>
+                                <div class="tags-list" id="modalUserPermissions">
+                                    <span class="tag-loading">Carregando...</span>
                                 </div>
-                                {% endfor %}
                             </div>
-                            {% else %}
-                            <p class="text-muted">Nenhuma role cadastrada.</p>
-                            {% endif %}
-                        </fieldset>
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Salvar Roles
-                        </button>
-                    </form>
-                </div>
-
-
-                <div class="actions-section">
-                    <h6 class="section-title">
-                        <i class="bi bi-gear-wide-connected"></i>
-                        Outras Ações
-                    </h6>
-
-                    <div class="action-item">
-                        <div class="action-label">Redefinir Senha do Usuário:</div>
-                        <form id="formAlterarSenhaAdmin" method="POST" action="">
+                            
+                            <div class="tags-block">
+                                <h6><i class="bi bi-people"></i> Gestores</h6>
+                                <div class="tags-list" id="modalUserManagers">
+                                    <span class="tag-loading">Carregando...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab: Edit -->
+                    <div class="tab-panel" id="panel-edit">
+                        <form id="formEditarDadosBasicos" method="POST" action="">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-key-fill"></i>
-                                </span>
-                                <input type="password" class="form-control" name="nova_senha" id="novaSenhaAdminInput"
-                                    placeholder="Digite a nova senha" required>
-                                <button class="btn btn-primary" type="submit">
-                                    <i class="bi bi-key-fill"></i>
-                                    Redefinir
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label-modern">Nome Completo <span class="required">*</span></label>
+                                    <input type="text" class="form-input-modern" id="edit_name" name="name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label-modern">Nome de Usuário <span class="required">*</span></label>
+                                    <input type="text" class="form-input-modern" id="edit_username" name="username" required>
+                                </div>
+                                
+                                <div class="form-group form-group-full">
+                                    <label class="form-label-modern">E-mail <span class="required">*</span></label>
+                                    <input type="email" class="form-input-modern" id="edit_email" name="email" required>
+                                </div>
+                                
+                                <div class="form-group form-group-full">
+                                    <label class="form-label-modern">Cargo</label>
+                                    <div class="searchable-select">
+                                        <input type="text" class="form-input-modern" id="filterJobPositionEdit" 
+                                               placeholder="Buscar cargo...">
+                                        <select class="form-select-modern" id="edit_job_position_id" name="job_position_id" size="4">
+                                            <option value="">Selecione um cargo...</option>
+                                            {% for position in job_positions %}
+                                            <option value="{{ position.id }}">{{ position.name }} ({{ position.sector }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-modern btn-primary">
+                                    <i class="bi bi-check-lg"></i> Salvar Alterações
                                 </button>
                             </div>
                         </form>
                     </div>
-
-                    <div class="action-item">
-                        <div class="action-label">Status da Conta:</div>
-                        <form id="formToggleUserStatus" method="POST" action="">
+                    
+                    <!-- Tab: Access -->
+                    <div class="tab-panel" id="panel-access">
+                        <div class="access-sections">
+                            <div class="access-block">
+                                <h6><i class="bi bi-person-badge"></i> Roles</h6>
+                                <form id="formEditarRoles" method="POST" action="">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    {% if available_roles %}
+                                    <div class="checkbox-group">
+                                        {% for role in available_roles %}
+                                        <label class="checkbox-modern">
+                                            <input type="checkbox" name="roles_edit" value="{{ role.name }}" id="role_edit_{{ role.id }}">
+                                            <span class="checkmark"></span>
+                                            <span class="checkbox-label">{{ role.name }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">Nenhuma role cadastrada.</p>
+                                    {% endif %}
+                                    <button type="submit" class="btn-modern btn-primary mt-3">
+                                        <i class="bi bi-check-lg"></i> Salvar Roles
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div class="access-block">
+                                <h6><i class="bi bi-shield-check"></i> Permissões</h6>
+                                <form id="formEditarPermissoesRBAC" method="POST" action="">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    {% if grouped_permissions %}
+                                    {% for module, perms in grouped_permissions.items() %}
+                                    <div class="permission-module">
+                                        <span class="module-name">{{ module }}</span>
+                                        <div class="checkbox-group">
+                                            {% for perm in perms %}
+                                            <label class="checkbox-modern checkbox-small">
+                                                <input type="checkbox" name="permissions_edit" value="{{ perm.name }}" id="perm_{{ perm.id }}">
+                                                <span class="checkmark"></span>
+                                                <span class="checkbox-label">{{ perm.description or perm.name }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    <p class="text-muted">Nenhuma permissão cadastrada.</p>
+                                    {% endif %}
+                                    <button type="submit" class="btn-modern btn-primary mt-3">
+                                        <i class="bi bi-check-lg"></i> Salvar Permissões
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab: Managers -->
+                    <div class="tab-panel" id="panel-managers">
+                        <div class="managers-intro">
+                            <p>Selecione os gestores responsáveis por este colaborador. Eles poderão realizar avaliações e acompanhar o desenvolvimento.</p>
+                        </div>
+                        
+                        <form id="formEditarGestores" method="POST" action="">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button id="btnToggleUserStatus" type="submit" class="btn w-100">
-                                <i class="bi bi-hourglass-split"></i>
-                                Carregando Status...
+                            
+                            <input type="text" class="form-input-modern mb-3" id="filterManagersEdit" 
+                                   placeholder="Buscar gestor por nome...">
+                            
+                            {% if all_users %}
+                            <div class="checkbox-scroll-area managers-list" id="managersListEdit">
+                                {% for user in all_users %}
+                                <label class="checkbox-modern manager-item-edit" data-name="{{ user.name|lower }}">
+                                    <input type="checkbox" name="managers_edit" value="{{ user.id }}" id="manager_edit_{{ user.id }}">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-label">
+                                        {{ user.name }}
+                                        {% if user.job_position %}
+                                        <small>({{ user.job_position.name }})</small>
+                                        {% endif %}
+                                    </span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">Nenhum usuário disponível.</p>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn-modern btn-primary mt-3">
+                                <i class="bi bi-check-lg"></i> Salvar Gestores
                             </button>
                         </form>
                     </div>
-
-                    <div class="action-item">
-                        <div class="action-label">Remover Usuário:</div>
-                        <form id="formDeletarUsuario" method="POST" action=""
-                            onsubmit="return confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                            <button class="btn btn-danger w-100" type="submit">
-                                <i class="bi bi-trash3-fill"></i>
-                                Deletar Usuário
-                            </button>
-                        </form>
+                    
+                    <!-- Tab: Security -->
+                    <div class="tab-panel" id="panel-security">
+                        <div class="security-sections">
+                            <div class="security-block">
+                                <h6><i class="bi bi-key"></i> Redefinir Senha</h6>
+                                <form id="formAlterarSenhaAdmin" method="POST" action="">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="password-reset-group">
+                                        <input type="password" class="form-input-modern" name="nova_senha" 
+                                               id="novaSenhaAdminInput" placeholder="Digite a nova senha" required>
+                                        <button type="submit" class="btn-modern btn-primary">
+                                            <i class="bi bi-key"></i> Redefinir
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="security-block">
+                                <h6><i class="bi bi-toggle-on"></i> Status da Conta</h6>
+                                <form id="formToggleUserStatus" method="POST" action="">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button id="btnToggleUserStatus" type="submit" class="btn-modern btn-warning w-100">
+                                        <i class="bi bi-hourglass-split"></i> Carregando...
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div class="security-block danger-block">
+                                <h6><i class="bi bi-exclamation-triangle"></i> Zona de Perigo</h6>
+                                <p>Esta ação é irreversível. Tenha certeza antes de prosseguir.</p>
+                                <form id="formDeletarUsuario" method="POST" action=""
+                                      onsubmit="return confirm('ATENÇÃO: Esta ação não pode ser desfeita!\n\nTem certeza que deseja deletar este usuário permanentemente?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn-modern btn-danger w-100">
+                                        <i class="bi bi-trash3"></i> Deletar Usuário Permanentemente
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg"></i>
-                    Fechar
-                </button>
             </div>
         </div>
     </div>
@@ -524,397 +734,455 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var infoUsuarioModalElement = document.getElementById('infoUsuarioModal');
-        var searchInput = document.getElementById('searchInput');
-        var statusFilter = document.getElementById('statusFilter');
-        var sortFilter = document.getElementById('sortFilter');
-        var applyFiltersButton = document.getElementById('applyFilters');
-        var clearFiltersButton = document.getElementById('clearFilters');
-
-        var modalTitle = infoUsuarioModalElement.querySelector('#infoUsuarioModalLabel');
-        var modalUserNameSpan = infoUsuarioModalElement.querySelector('#modalUserName');
-        var modalUserLoginSpan = infoUsuarioModalElement.querySelector('#modalUserLogin');
-        var modalUserPermissionsDiv = infoUsuarioModalElement.querySelector('#modalUserPermissions');
-        var formAlterarSenhaAdmin = infoUsuarioModalElement.querySelector('#formAlterarSenhaAdmin');
-        var formDeletarUsuario = infoUsuarioModalElement.querySelector('#formDeletarUsuario');
-        var modalUserEmail = infoUsuarioModalElement.querySelector('#modalUserEmail');
-        var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
-        var formEditarRoles = infoUsuarioModalElement.querySelector('#formEditarRoles');
-        var permCheckboxesEdit = {
-        };
-        var modalUserStatusDisplay = infoUsuarioModalElement.querySelector('#modalUserStatusDisplay');
-        var formToggleUserStatus = infoUsuarioModalElement.querySelector('#formToggleUserStatus');
-        var btnToggleUserStatus = infoUsuarioModalElement.querySelector('#btnToggleUserStatus');
-
-
-
-        function applyUrlFilters() {
-            var url = "{{ url_for('admin.users.list_users') }}?";
-            var queryParams = [];
-
-            var searchTerm = searchInput.value.trim();
-            if (searchTerm) {
-                queryParams.push("search=" + encodeURIComponent(searchTerm));
-            }
-
-            var statusValue = statusFilter.value;
-            if (statusValue) {
-                queryParams.push("status=" + statusValue);
-            }
-
-            var sortValue = sortFilter.value;
-            if (sortValue) {
-                queryParams.push("sort=" + sortValue);
-            }
-
-            url += queryParams.join('&');
-            window.location.href = url;
+document.addEventListener('DOMContentLoaded', function() {
+    // ==========================================
+    // ELEMENTOS
+    // ==========================================
+    const searchInput = document.getElementById('searchInput');
+    const searchClear = document.getElementById('searchClear');
+    const statusFilter = document.getElementById('statusFilter');
+    const roleFilter = document.getElementById('roleFilter');
+    const jobPositionFilter = document.getElementById('jobPositionFilter');
+    const hasManagerFilter = document.getElementById('hasManagerFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const perPageFilter = document.getElementById('perPageFilter');
+    const filtersToggle = document.getElementById('filtersToggle');
+    const filtersPanel = document.getElementById('filtersPanel');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const filteredCountEl = document.getElementById('filteredCount');
+    const viewToggles = document.querySelectorAll('.btn-view-toggle');
+    const usersContainer = document.querySelector('.users-container');
+    const infoModal = document.getElementById('infoUsuarioModal');
+    
+    // ==========================================
+    // TOGGLE FILTERS PANEL
+    // ==========================================
+    filtersToggle.addEventListener('click', function() {
+        const isHidden = filtersPanel.style.display === 'none';
+        filtersPanel.style.display = isHidden ? 'block' : 'none';
+        this.classList.toggle('active', isHidden);
+    });
+    
+    // ==========================================
+    // TOGGLE VIEW (LIST/GRID)
+    // ==========================================
+    viewToggles.forEach(btn => {
+        btn.addEventListener('click', function() {
+            viewToggles.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            usersContainer.dataset.view = this.dataset.view;
+            localStorage.setItem('usersViewMode', this.dataset.view);
+        });
+    });
+    
+    // Restaurar preferência de visualização
+    const savedView = localStorage.getItem('usersViewMode');
+    if (savedView) {
+        viewToggles.forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`[data-view="${savedView}"]`);
+        if (btn) {
+            btn.classList.add('active');
+            usersContainer.dataset.view = savedView;
         }
-
-        if (applyFiltersButton) {
-            applyFiltersButton.addEventListener('click', applyUrlFilters);
-        }
-
-        if (clearFiltersButton) {
-            clearFiltersButton.addEventListener('click', function () {
-                searchInput.value = '';
-                statusFilter.value = '';
-                sortFilter.value = 'date_desc';
-                applyUrlFilters();
-            });
-        }
-
-        let searchTimeout;
-        searchInput.addEventListener('input', function () {
+    }
+    
+    // ==========================================
+    // SEARCH
+    // ==========================================
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        searchClear.style.display = this.value ? 'flex' : 'none';
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => filterUsers(), 400);
+    });
+    
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function () {
-                filterUsersWithAjax();
-            }, 500);
-        });
-
-        searchInput.addEventListener('keypress', function (event) {
-            if (event.key === 'Enter') {
-                clearTimeout(searchTimeout);
-                filterUsersWithAjax();
-            }
-        });
-
-        statusFilter.addEventListener('change', function () {
-            filterUsersWithAjax();
-        });
-
-        function filterUsersWithAjax() {
-            const searchTerm = searchInput.value.trim();
-            const statusValue = statusFilter.value;
-            const sortValue = sortFilter.value;
-
-            showLoadingState();
-
-            const params = new URLSearchParams();
-            if (searchTerm) params.set('search', searchTerm);
-            if (statusValue) params.set('status', statusValue);
-            if (sortValue) params.set('sort', sortValue);
-            params.set('ajax', '1');
-
-            const url = "{{ url_for('admin.users.list_users') }}?" + params.toString();
-
-            fetch(url, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    const newTableContainer = doc.querySelector('.manage-users-table-container');
-                    const newResultsInfo = doc.querySelector('.manage-users-results-info');
-                    const newPagination = doc.querySelector('.pagination-container');
-
-                    if (newTableContainer) {
-                        document.querySelector('.manage-users-table-container').innerHTML = newTableContainer.innerHTML;
-                    }
-
-                    if (newResultsInfo) {
-                        const currentResultsInfo = document.querySelector('.manage-users-results-info');
-                        if (currentResultsInfo) {
-                            currentResultsInfo.innerHTML = newResultsInfo.innerHTML;
-                            currentResultsInfo.style.display = 'block';
-                        }
-                    }
-
-                    const currentPagination = document.querySelector('.pagination-container');
-                    if (newPagination && currentPagination) {
-                        currentPagination.innerHTML = newPagination.innerHTML;
-                        currentPagination.style.display = 'block';
-                    } else if (currentPagination) {
-                        currentPagination.style.display = 'none';
-                    }
-
-                    reattachModalListeners();
-
-                    hideLoadingState();
-                })
-                .catch(error => {
-                    console.error('Erro ao filtrar usuários:', error);
-                    hideLoadingState();
-                    showErrorMessage('Erro ao carregar os usuários. Tente novamente.');
-                });
-        }
-
-        function showLoadingState() {
-            const tableContainer = document.querySelector('.manage-users-table-container');
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'manage-users-loading';
-            loadingDiv.innerHTML = `
-                <div class="d-flex justify-content-center align-items-center" style="padding: 3rem;">
-                    <div class="spinner-border text-primary me-3" role="status">
-                        <span class="visually-hidden">Carregando...</span>
-                    </div>
-                    <span class="text-muted">Buscando usuários...</span>
-                </div>
-            `;
-            tableContainer.appendChild(loadingDiv);
-        }
-
-        function hideLoadingState() {
-            const loadingDiv = document.querySelector('.manage-users-loading');
-            if (loadingDiv) {
-                loadingDiv.remove();
-            }
-        }
-
-        function showErrorMessage(message) {
-            const tableContainer = document.querySelector('.manage-users-table-container');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'manage-users-error alert alert-warning';
-            errorDiv.innerHTML = `
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                ${message}
-            `;
-            tableContainer.appendChild(errorDiv);
-
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 5000);
-        }
-
-        function reattachModalListeners() {
-            document.querySelectorAll('.user-row').forEach(row => {
-                row.addEventListener('click', function () {
-                    const modal = new bootstrap.Modal(document.getElementById('infoUsuarioModal'));
-
-                    const modalElement = document.getElementById('infoUsuarioModal');
-                    const event = new Event('show.bs.modal');
-                    Object.defineProperty(event, 'relatedTarget', {
-                        value: this,
-                        enumerable: true
-                    });
-                    modalElement.dispatchEvent(event);
-
-                    modal.show();
-                });
-            });
-        }
-
-        sortFilter.addEventListener('change', function () {
-            applyUrlFilters();
-        });
-
-
-        infoUsuarioModalElement.addEventListener('show.bs.modal', function (event) {
-            var triggeringRow = event.relatedTarget;
-            if (!triggeringRow || !triggeringRow.classList.contains('user-row')) {
-                return;
-            }
-
-            var userId = triggeringRow.dataset.userId;
-            var userNameData = triggeringRow.dataset.userNome;
-            var userLoginData = triggeringRow.dataset.userUsuario;
-            var userEmailData = triggeringRow.dataset.userEmail;
-            var userJobTitleData = triggeringRow.dataset.userJobTitle;
-            var userProfileStrData = triggeringRow.dataset.userProfile;
-            var userIsActiveStr = triggeringRow.dataset.userIsActive;
-            var userIsActive = (userIsActiveStr === 'true');
-
-            var editNameInput = infoUsuarioModalElement.querySelector('#edit_name');
-            var editUsernameInput = infoUsuarioModalElement.querySelector('#edit_username');
-            var editEmailInput = infoUsuarioModalElement.querySelector('#edit_email');
-            var editJobTitleInput = infoUsuarioModalElement.querySelector('#edit_job_title');
-            var formEditarDadosBasicos = infoUsuarioModalElement.querySelector('#formEditarDadosBasicos');
-
-            if (editNameInput) editNameInput.value = userNameData || '';
-            if (editUsernameInput) editUsernameInput.value = userLoginData || '';
-            if (editEmailInput) editEmailInput.value = userEmailData || '';
-            if (editJobTitleInput) editJobTitleInput.value = userJobTitleData || '';
-            if (formEditarDadosBasicos) {
-                formEditarDadosBasicos.action = "{{ url_for('admin.users.edit_basic_data', user_id=0) }}".replace('0', userId);
-            }
-
-            if (modalTitle) modalTitle.innerHTML = '<i class="bi bi-person-badge"></i>Detalhes de ' + (userNameData || 'Usuário');
-            if (modalUserNameSpan) modalUserNameSpan.textContent = userNameData || 'Não informado';
-            if (modalUserLoginSpan) modalUserLoginSpan.textContent = userLoginData || 'Não informado';
-            if (modalUserEmail) modalUserEmail.textContent = userEmailData || 'Não cadastrado';
-            
-            var modalUserJobTitle = infoUsuarioModalElement.querySelector('#modalUserJobTitle');
-            if (modalUserJobTitle) modalUserJobTitle.textContent = userJobTitleData || 'Não informado';
-
-            if (modalUserStatusDisplay && btnToggleUserStatus) {
-                if (userIsActive) {
-                    modalUserStatusDisplay.innerHTML = '<span class="permission-badge badge-create"><i class="bi bi-check-circle-fill"></i>Liberado</span>';
-                    btnToggleUserStatus.innerHTML = '<i class="bi bi-x-circle-fill"></i>Bloquear Conta';
-                    btnToggleUserStatus.className = 'btn btn-warning w-100';
-                } else {
-                    modalUserStatusDisplay.innerHTML = '<span class="permission-badge badge-admin"><i class="bi bi-x-circle-fill"></i>Bloqueado</span>';
-                    btnToggleUserStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i>Liberar Conta';
-                    btnToggleUserStatus.className = 'btn btn-info w-100';
-                }
-            }
-
-            var modalUserRolesDiv = infoUsuarioModalElement.querySelector('#modalUserRoles');
-            if (modalUserRolesDiv) {
-                modalUserRolesDiv.innerHTML = '';
-                var userRolesData = triggeringRow.dataset.userRoles || '';
-                var tempRolesArray = userRolesData ? userRolesData.split(',') : [];
-                if (tempRolesArray.length > 0 && tempRolesArray.some(r => r.trim() !== '')) {
-                    tempRolesArray.forEach(function (role) {
-                        role = role.trim();
-                        if (!role) return;
-                        var roleInfo = getRoleInfo(role);
-                        var badge = '<span class="role-badge role-' + roleInfo.class + '">';
-                        badge += '<i class="' + roleInfo.icon + '"></i>' + roleInfo.text + '</span>';
-                        modalUserRolesDiv.innerHTML += badge;
-                    });
-                } else {
-                    modalUserRolesDiv.innerHTML = '<span class="role-badge role-none">Nenhuma role definida</span>';
-                }
-            }
-
-            if (modalUserPermissionsDiv) {
-                modalUserPermissionsDiv.innerHTML = '';
-                var userPermissionsData = triggeringRow.dataset.userPermissions || '';
-                var tempPermissionsArray = userPermissionsData ? userPermissionsData.split(',') : [];
-                if (tempPermissionsArray.length > 0 && tempPermissionsArray.some(p => p.trim() !== '')) {
-                    tempPermissionsArray.forEach(function (permission) {
-                        permission = permission.trim();
-                        if (!permission) return;
-                        var permissionInfo = getPermissionInfo(permission);
-                        var badge = '<span class="permission-badge ' + permissionInfo.class + '">';
-                        badge += '<i class="' + permissionInfo.icon + '"></i>' + permissionInfo.text + '</span>';
-                        modalUserPermissionsDiv.innerHTML += badge;
-                    });
-                } else {
-                    modalUserPermissionsDiv.innerHTML = '<span class="permission-badge badge-none">Nenhuma permissão definida</span>';
-                }
-            }
-
-
-            var permissionsCheckboxesEdit = infoUsuarioModalElement.querySelectorAll('input[name="permissions_edit"]');
-            var userPermissionsArray = userPermissionsData ? userPermissionsData.split(',') : [];
-            if (permissionsCheckboxesEdit) {
-                permissionsCheckboxesEdit.forEach(checkbox => {
-                    checkbox.checked = userPermissionsArray.includes(checkbox.value);
-                });
-            }
-
-
-            var rolesCheckboxesEdit = infoUsuarioModalElement.querySelectorAll('input[name="roles_edit"]');
-            if (rolesCheckboxesEdit) {
-                var rolesDataStr = triggeringRow.dataset.userRoles || '';
-                var rolesArray = rolesDataStr ? rolesDataStr.split(',').map(r => r.trim()) : [];
-                rolesCheckboxesEdit.forEach(checkbox => {
-                    checkbox.checked = rolesArray.includes(checkbox.value);
-                });
-            }
-
-
-            if (userId && String(userId).trim() !== "") {
-                if (formAlterarSenhaAdmin) {
-                    var urlAlterarSenha = "{{ url_for('admin.users.change_password', user_id=0) }}".replace('0', userId);
-                    formAlterarSenhaAdmin.action = urlAlterarSenha;
-                }
-                if (formDeletarUsuario) {
-                    var urlDeletarUsuario = "{{ url_for('admin.users.delete_user', user_id=0) }}".replace('0', userId);
-                    formDeletarUsuario.action = urlDeletarUsuario;
-                }
-                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
-                if (formEditarPermissoesRBAC) {
-                    var urlEditarPermissoesRBAC = "{{ url_for('admin.users.change_rbac_permissions', user_id=0) }}".replace('0', userId);
-                    formEditarPermissoesRBAC.action = urlEditarPermissoesRBAC;
-                }
-                if (formEditarRoles) {
-                    var urlEditarRoles = "{{ url_for('admin.users.change_roles', user_id=0) }}".replace('0', userId);
-                    formEditarRoles.action = urlEditarRoles;
-                }
-                if (formToggleUserStatus) {
-                    formToggleUserStatus.action = "{{ url_for('admin.users.toggle_status', user_id=0) }}".replace('0', userId);
-                }
-            } else {
-                if (formAlterarSenhaAdmin) formAlterarSenhaAdmin.action = '#';
-                if (formDeletarUsuario) formDeletarUsuario.action = '#';
-                if (formEditarPermissoes) formEditarPermissoes.action = '#';
-                if (formEditarRoles) formEditarRoles.action = '#';
-                if (formToggleUserStatus) formToggleUserStatus.action = '#';
-                var formEditarPermissoesRBAC = infoUsuarioModalElement.querySelector('#formEditarPermissoesRBAC');
-                if (formEditarPermissoesRBAC) formEditarPermissoesRBAC.action = '#';
-            }
-        });
-
-        function getSectorInfo(sector) {
-            switch (sector) {
-                case 'ENFERMAGEM': return { class: 'success', icon: 'bi bi-heart-pulse', text: 'Enfermagem' };
-                case 'MEDICINA': return { class: 'primary', icon: 'bi bi-stethoscope', text: 'Medicina' };
-                case 'FISIOTERAPIA': return { class: 'info', icon: 'bi bi-person-arms-up', text: 'Fisioterapia' };
-                case 'LABORATORIO': return { class: 'purple', icon: 'bi bi-clipboard2-pulse', text: 'Laboratório' };
-                case 'RADIOLOGIA': return { class: 'warning', icon: 'bi bi-camera-reels', text: 'Radiologia' };
-                case 'FARMACIA': return { class: 'teal', icon: 'bi bi-capsule', text: 'Farmácia' };
-                case 'FATURAMENTO': return { class: 'warning', icon: 'bi bi-receipt', text: 'Faturamento' };
-                case 'RH': return { class: 'secondary', icon: 'bi bi-people', text: 'Recursos Humanos' };
-                case 'TI': return { class: 'dark', icon: 'bi bi-laptop', text: 'T.I.' };
-                case 'DIRETORIA': return { class: 'danger', icon: 'bi bi-building', text: 'Diretoria' };
-                case 'INTERNACAO': return { class: 'pink', icon: 'bi bi-house-heart', text: 'Internação' };
-                case 'CENTRO_CIRURGICO': return { class: 'warning', icon: 'bi bi-scissors', text: 'Centro Cirúrgico' };
-                case 'EMERGENCIA': return { class: 'danger', icon: 'bi bi-truck-front', text: 'Emergência' };
-                default: return { class: 'none', icon: 'bi bi-question-circle', text: 'Desconhecido' };
-            }
-        }
-
-        function getRoleInfo(role) {
-            switch (role) {
-                case 'Enfermeiro': return { class: 'success', icon: 'bi bi-heart-pulse', text: 'Enfermeiro' };
-                case 'Médico': return { class: 'primary', icon: 'bi bi-stethoscope', text: 'Médico' };
-                case 'Faturista': return { class: 'warning', icon: 'bi bi-receipt', text: 'Faturista' };
-                case 'Farmacêutico': return { class: 'teal', icon: 'bi bi-capsule', text: 'Farmacêutico' };
-                case 'Técnico Laboratório': return { class: 'purple', icon: 'bi bi-clipboard2-pulse', text: 'Técnico Laboratório' };
-                case 'Recepcionista': return { class: 'info', icon: 'bi bi-person-check', text: 'Recepcionista' };
-                case 'Gestor RH': return { class: 'secondary', icon: 'bi bi-people', text: 'Gestor RH' };
-                case 'Administrador TI': return { class: 'dark', icon: 'bi bi-laptop', text: 'Administrador TI' };
-                case 'Diretor': return { class: 'danger', icon: 'bi bi-building', text: 'Diretor' };
-                default: return { class: 'none', icon: 'bi bi-person-badge', text: role };
-            }
-        }
-
-        function getPermissionInfo(permission) {
-            switch (permission) {
-                case 'criar_nir': return { class: 'badge-create', icon: 'bi bi-plus-circle', text: 'Criar NIR' };
-                case 'editar_nir': return { class: 'badge-edit', icon: 'bi bi-pencil', text: 'Editar NIR' };
-                case 'excluir_nir': return { class: 'badge-delete', icon: 'bi bi-trash', text: 'Excluir NIR' };
-                case 'visualizar_nir': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver NIR' };
-                case 'criar_formulario': return { class: 'badge-create', icon: 'bi bi-plus-circle', text: 'Criar Formulário' };
-                case 'editar_formulario': return { class: 'badge-edit', icon: 'bi bi-pencil', text: 'Editar Formulário' };
-                case 'visualizar_formulario': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver Formulário' };
-                case 'acessar_treinamentos': return { class: 'badge-training', icon: 'bi bi-book', text: 'Acessar Treinamentos' };
-                case 'gerenciar_cursos': return { class: 'badge-admin', icon: 'bi bi-gear', text: 'Gerenciar Cursos' };
-                case 'visualizar_relatorios': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver Relatórios' };
-                case 'gerar_relatorios': return { class: 'badge-create', icon: 'bi bi-plus-circle', text: 'Gerar Relatórios' };
-                case 'gerenciar_usuarios': return { class: 'badge-admin', icon: 'bi bi-people', text: 'Gerenciar Usuários' };
-                case 'visualizar_usuarios': return { class: 'badge-view', icon: 'bi bi-eye', text: 'Ver Usuários' };
-                default: return { class: 'badge-none', icon: 'bi bi-shield', text: permission };
-            }
+            filterUsers();
         }
     });
+    
+    searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        this.style.display = 'none';
+        filterUsers();
+    });
+    
+    // ==========================================
+    // FILTERS - All filters trigger AJAX
+    // ==========================================
+    const filterElements = [statusFilter, roleFilter, jobPositionFilter, hasManagerFilter, sortFilter, perPageFilter];
+    filterElements.forEach(el => {
+        if (el) el.addEventListener('change', filterUsers);
+    });
+    
+    // Clear all filters
+    clearFiltersBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        statusFilter.value = '';
+        roleFilter.value = '';
+        jobPositionFilter.value = '';
+        hasManagerFilter.value = '';
+        sortFilter.value = 'date_desc';
+        perPageFilter.value = '15';
+        filterUsers();
+        updateFiltersBadge();
+    });
+    
+    function getFilters() {
+        return {
+            search: searchInput.value.trim(),
+            status: statusFilter.value,
+            role: roleFilter.value,
+            job_position: jobPositionFilter.value,
+            has_manager: hasManagerFilter.value,
+            sort: sortFilter.value,
+            per_page: perPageFilter.value
+        };
+    }
+    
+    function filterUsers(page = 1) {
+        const filters = getFilters();
+        
+        showLoading();
+        
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value) params.set(key, value);
+        });
+        params.set('page', page);
+        params.set('ajax', '1');
+        
+        // Atualiza URL sem recarregar (para permitir compartilhar link)
+        const newUrl = `{{ url_for('admin.users.list_users') }}?${params.toString().replace('&ajax=1', '')}`;
+        history.replaceState(null, '', newUrl);
+        
+        fetch(`{{ url_for('admin.users.list_users') }}?${params.toString()}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.text())
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            
+            const newListBody = doc.querySelector('.users-list-body');
+            const newGridBody = doc.querySelector('.users-grid-body');
+            const newPagination = doc.querySelector('.pagination-container');
+            const newFilteredCount = doc.querySelector('#filteredCount');
+            
+            const listView = document.querySelector('.users-list-view');
+            const gridView = document.querySelector('.users-grid-view');
+            const emptyState = document.querySelector('.users-empty-state');
+            const listBody = document.querySelector('.users-list-body');
+            const gridBody = document.querySelector('.users-grid-body');
+            const paginationContainer = document.querySelector('.pagination-container');
+            
+            // Atualiza conteúdo
+            if (newListBody) listBody.innerHTML = newListBody.innerHTML;
+            if (newGridBody) gridBody.innerHTML = newGridBody.innerHTML;
+            if (newFilteredCount && filteredCountEl) {
+                filteredCountEl.textContent = newFilteredCount.textContent;
+            }
+            
+            // Atualiza paginação
+            if (paginationContainer && newPagination) {
+                paginationContainer.innerHTML = newPagination.innerHTML;
+            } else if (paginationContainer && !newPagination) {
+                paginationContainer.innerHTML = '';
+            }
+            
+            // Verifica se há resultados
+            const hasResults = newListBody && newListBody.children.length > 0;
+            
+            if (hasResults) {
+                listView.style.display = '';
+                gridView.style.display = '';
+                emptyState.style.display = 'none';
+            } else {
+                listView.style.display = 'none';
+                gridView.style.display = 'none';
+                emptyState.style.display = '';
+            }
+            
+            hideLoading();
+            reattachCardListeners();
+            reattachPaginationListeners();
+            updateFiltersBadge();
+        })
+        .catch(err => {
+            console.error('Erro:', err);
+            hideLoading();
+        });
+    }
+    
+    // Expor função para paginação
+    window.loadPage = function(pageNum) {
+        filterUsers(pageNum);
+    };
+    
+    function updateFiltersBadge() {
+        const filters = getFilters();
+        let count = 0;
+        if (filters.status) count++;
+        if (filters.role) count++;
+        if (filters.job_position) count++;
+        if (filters.has_manager) count++;
+        
+        const badge = filtersToggle.querySelector('.filters-badge');
+        if (count > 0) {
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = '';
+            } else {
+                const newBadge = document.createElement('span');
+                newBadge.className = 'filters-badge';
+                newBadge.textContent = count;
+                filtersToggle.insertBefore(newBadge, filtersToggle.querySelector('.toggle-icon'));
+            }
+        } else if (badge) {
+            badge.style.display = 'none';
+        }
+    }
+    
+    function showLoading() {
+        usersContainer.classList.add('loading');
+    }
+    
+    function hideLoading() {
+        usersContainer.classList.remove('loading');
+    }
+    
+    function reattachCardListeners() {
+        document.querySelectorAll('.user-card-list, .user-card-grid').forEach(card => {
+            card.addEventListener('click', function() {
+                const modal = new bootstrap.Modal(infoModal);
+                const event = new Event('show.bs.modal');
+                Object.defineProperty(event, 'relatedTarget', { value: this, enumerable: true });
+                infoModal.dispatchEvent(event);
+                modal.show();
+            });
+        });
+    }
+    
+    function reattachPaginationListeners() {
+        document.querySelectorAll('.pagination-container a[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                if (page) filterUsers(parseInt(page));
+            });
+        });
+    }
+    
+    // ==========================================
+    // MODAL TABS
+    // ==========================================
+    const tabBtns = infoModal.querySelectorAll('.tab-btn');
+    const tabPanels = infoModal.querySelectorAll('.tab-panel');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanels.forEach(p => p.classList.remove('active'));
+            
+            this.classList.add('active');
+            document.getElementById(`panel-${this.dataset.tab}`).classList.add('active');
+        });
+    });
+    
+    // ==========================================
+    // MODAL DATA POPULATION
+    // ==========================================
+    infoModal.addEventListener('show.bs.modal', function(event) {
+        const row = event.relatedTarget;
+        if (!row) return;
+        
+        const data = {
+            id: row.dataset.userId,
+            name: row.dataset.userNome,
+            login: row.dataset.userUsuario,
+            email: row.dataset.userEmail,
+            jobTitle: row.dataset.userJobTitle,
+            jobPositionId: row.dataset.userJobPositionId,
+            roles: row.dataset.userRoles || '',
+            permissions: row.dataset.userPermissions || '',
+            managers: row.dataset.userManagers || '',
+            managersNames: row.dataset.userManagersNames || '',
+            isActive: row.dataset.userIsActive === 'true'
+        };
+        
+        document.getElementById('modalUserAvatar').textContent = data.name ? data.name[0].toUpperCase() : '?';
+        document.getElementById('infoUsuarioModalLabel').textContent = data.name || 'Usuário';
+        document.getElementById('modalHeaderUsername').textContent = `@${data.login || 'usuario'}`;
+        document.getElementById('modalHeaderEmail').textContent = data.email || 'sem email';
+        
+        const statusBadge = document.getElementById('modalStatusBadge');
+        if (data.isActive) {
+            statusBadge.className = 'editor-status status-active';
+            statusBadge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Ativo';
+        } else {
+            statusBadge.className = 'editor-status status-blocked';
+            statusBadge.innerHTML = '<i class="bi bi-x-circle-fill"></i> Bloqueado';
+        }
+        
+        document.getElementById('modalUserName').textContent = data.name || '—';
+        document.getElementById('modalUserLogin').textContent = data.login || '—';
+        document.getElementById('modalUserEmail').textContent = data.email || '—';
+        document.getElementById('modalUserJobTitle').textContent = data.jobTitle || '—';
+        
+        const rolesContainer = document.getElementById('modalUserRoles');
+        const rolesArr = data.roles ? data.roles.split(',').filter(r => r.trim()) : [];
+        if (rolesArr.length) {
+            rolesContainer.innerHTML = rolesArr.map(r => `<span class="tag-modern tag-role">${r.trim()}</span>`).join('');
+        } else {
+            rolesContainer.innerHTML = '<span class="tag-modern tag-empty">Nenhuma role</span>';
+        }
+        
+        const permsContainer = document.getElementById('modalUserPermissions');
+        const permsArr = data.permissions ? data.permissions.split(',').filter(p => p.trim()) : [];
+        if (permsArr.length) {
+            permsContainer.innerHTML = permsArr.map(p => `<span class="tag-modern tag-perm">${formatPermission(p.trim())}</span>`).join('');
+        } else {
+            permsContainer.innerHTML = '<span class="tag-modern tag-empty">Nenhuma permissão</span>';
+        }
+        
+        const managersContainer = document.getElementById('modalUserManagers');
+        const managersArr = data.managers ? data.managers.split(',').filter(m => m.trim()) : [];
+        const managerNamesArr = data.managersNames ? data.managersNames.split('|||').filter(n => n.trim()) : [];
+        if (managerNamesArr.length) {
+            managersContainer.innerHTML = managerNamesArr.map(n => `<span class="tag-modern tag-manager">${n}</span>`).join('');
+        } else if (managersArr.length) {
+            const fallbackNames = managersArr.map(id => {
+                const label = document.querySelector(`label[for="manager_edit_${id.trim()}"]`);
+                return label ? label.textContent.split('(')[0].trim() : `Gestor #${id}`;
+            });
+            managersContainer.innerHTML = fallbackNames.map(n => `<span class="tag-modern tag-manager">${n}</span>`).join('');
+        } else {
+            managersContainer.innerHTML = '<span class="tag-modern tag-empty">Nenhum gestor</span>';
+        }
+        
+        document.getElementById('edit_name').value = data.name || '';
+        document.getElementById('edit_username').value = data.login || '';
+        document.getElementById('edit_email').value = data.email || '';
+        document.getElementById('edit_job_position_id').value = data.jobPositionId || '';
+        
+        const baseForms = {
+            formEditarDadosBasicos: "{{ url_for('admin.users.edit_basic_data', user_id=0) }}",
+            formAlterarSenhaAdmin: "{{ url_for('admin.users.change_password', user_id=0) }}",
+            formDeletarUsuario: "{{ url_for('admin.users.delete_user', user_id=0) }}",
+            formEditarPermissoesRBAC: "{{ url_for('admin.users.change_rbac_permissions', user_id=0) }}",
+            formEditarRoles: "{{ url_for('admin.users.change_roles', user_id=0) }}",
+            formToggleUserStatus: "{{ url_for('admin.users.toggle_status', user_id=0) }}",
+            formEditarGestores: "{{ url_for('admin.users.change_managers', user_id=0) }}"
+        };
+        
+        Object.entries(baseForms).forEach(([formId, url]) => {
+            const form = document.getElementById(formId);
+            if (form) form.action = url.replace('0', data.id);
+        });
+        
+        const roleCheckboxes = infoModal.querySelectorAll('input[name="roles_edit"]');
+        roleCheckboxes.forEach(cb => cb.checked = rolesArr.includes(cb.value));
+        
+        const permCheckboxes = infoModal.querySelectorAll('input[name="permissions_edit"]');
+        permCheckboxes.forEach(cb => cb.checked = permsArr.includes(cb.value));
+        
+        const managerCheckboxes = infoModal.querySelectorAll('input[name="managers_edit"]');
+        managerCheckboxes.forEach(cb => {
+            if (cb.value === data.id) {
+                cb.disabled = true;
+                cb.checked = false;
+                cb.closest('.checkbox-modern').classList.add('disabled');
+            } else {
+                cb.disabled = false;
+                cb.closest('.checkbox-modern').classList.remove('disabled');
+                cb.checked = managersArr.includes(cb.value);
+            }
+        });
+        
+        const btnToggle = document.getElementById('btnToggleUserStatus');
+        if (data.isActive) {
+            btnToggle.className = 'btn-modern btn-warning w-100';
+            btnToggle.innerHTML = '<i class="bi bi-x-circle-fill"></i> Bloquear Conta';
+        } else {
+            btnToggle.className = 'btn-modern btn-success w-100';
+            btnToggle.innerHTML = '<i class="bi bi-check-circle-fill"></i> Liberar Conta';
+        }
+        
+        tabBtns[0].click();
+        
+        ['filterJobPositionEdit', 'filterManagersEdit'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    });
+    
+    function formatPermission(perm) {
+        return perm.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
+    // ==========================================
+    // SEARCHABLE SELECTS
+    // ==========================================
+    function setupSearchableSelect(inputId, selectId) {
+        const input = document.getElementById(inputId);
+        const select = document.getElementById(selectId);
+        if (!input || !select) return;
+        
+        input.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            Array.from(select.options).forEach(opt => {
+                if (opt.value === '') {
+                    opt.style.display = '';
+                } else {
+                    opt.style.display = opt.textContent.toLowerCase().includes(term) ? '' : 'none';
+                }
+            });
+        });
+    }
+    
+    setupSearchableSelect('filterJobPositionCreate', 'job_position_id');
+    setupSearchableSelect('filterJobPositionEdit', 'edit_job_position_id');
+    
+    // ==========================================
+    // MANAGER FILTERS
+    // ==========================================
+    function setupManagerFilter(inputId, itemClass) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        input.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll(`.${itemClass}`).forEach(item => {
+                const name = item.dataset.name || '';
+                item.style.display = name.includes(term) ? '' : 'none';
+            });
+        });
+    }
+    
+    setupManagerFilter('filterManagersCreate', 'manager-item-create');
+    setupManagerFilter('filterManagersEdit', 'manager-item-edit');
+    
+    // ==========================================
+    // PASSWORD TOGGLE
+    // ==========================================
+    document.querySelectorAll('.btn-toggle-password').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = document.getElementById(this.dataset.target);
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        });
+    });
+    
+    searchClear.style.display = searchInput.value ? 'flex' : 'none';
+});
 </script>
 {% endblock %}

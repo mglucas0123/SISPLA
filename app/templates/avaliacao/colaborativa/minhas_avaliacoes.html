@@ -1,0 +1,857 @@
+{% extends "avaliacao/funcionarios/base.html" %}
+{% from 'partials/feedback/suppliers/_hero.html' import hero %}
+
+{% block employee_title %}Minhas Avaliações | SISPLA{% endblock %}
+
+{% block employee_hero %}
+{% set pending_count = pending_counter|length if pending_counter else 0 %}
+{% set awaiting_count = awaiting_validation|length if awaiting_validation else 0 %}
+{% set validated_count = validated|length if validated else 0 %}
+{% set total_count = pending_count + awaiting_count + validated_count %}
+
+{% set hero_stats = [
+    { 'icon': 'bi bi-hourglass-split', 'value': pending_count, 'label': 'Pendentes' },
+    { 'icon': 'bi bi-shield-lock', 'value': awaiting_count, 'label': 'Aguardando' },
+    { 'icon': 'bi bi-check-circle-fill', 'value': validated_count, 'label': 'Validadas' }
+] %}
+{{ hero('<i class="bi bi-people-fill"></i> Minhas Avaliações'|safe, 'Visualize suas avaliações e realize a validação colaborativa com seu gestor', hero_stats) }}
+{% endblock %}
+
+{% block employee_content %}
+<div class="employee-dashboard-container">
+    <!-- 2FA Warning -->
+    {% if not current_user.totp_secret %}
+    <div class="alert-card warning mb-4">
+        <div class="alert-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="alert-content">
+            <h4>Autenticação 2FA Necessária</h4>
+            <p>Você precisa ativar a autenticação de dois fatores (2FA) no seu perfil para poder visualizar avaliações e participar de sessões de validação.</p>
+        </div>
+        <a href="{{ url_for('user.profile') }}" class="btn btn-warning">
+            <i class="bi bi-shield-check me-1"></i>Ativar 2FA
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Card de Pendentes de Contra-avaliação -->
+            {% if pending_counter %}
+            <div class="dashboard-card top-suppliers-card mb-4">
+                <div class="card-header-dash">
+                    <div class="header-title">
+                        <h2><i class="bi bi-pencil-square"></i> Pendentes de Contra-avaliação</h2>
+                        <span class="badge badge-warning">{{ pending_counter|length }}</span>
+                    </div>
+                    <p class="header-subtitle">Você foi avaliado pelo seu gestor. Avalie-o para desbloquear os detalhes.</p>
+                </div>
+                <div class="evaluation-list-premium">
+                    {% for eval in pending_counter %}
+                    <div class="evaluation-item-premium pending">
+                        <div class="eval-rank">
+                            <div class="rank-medal warning">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                        </div>
+                        <div class="eval-avatar">
+                            <img src="https://ui-avatars.com/api/?name={{ eval.evaluator.name|urlencode }}&background=f59e0b&color=fff&size=48"
+                                alt="{{ eval.evaluator.name }}">
+                        </div>
+                        <div class="eval-content">
+                            <div class="eval-header">
+                                <h3>Avaliação de {{ eval.evaluator.name }}</h3>
+                                <span class="eval-type-badge {{ 'monthly' if eval.evaluation_type == 'mensal' else 'experience' }}">
+                                    {{ 'Mensal' if eval.evaluation_type == 'mensal' else 'Experiência' }}
+                                </span>
+                            </div>
+                            <div class="eval-meta-info">
+                                <span class="meta-item">
+                                    <i class="bi bi-calendar3"></i> {{ eval.month_reference }}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="bi bi-clock"></i> {{ eval.created_at.strftime('%d/%m/%Y') }}
+                                </span>
+                                <span class="meta-item status-pending">
+                                    <i class="bi bi-exclamation-circle"></i> Aguardando sua avaliação
+                                </span>
+                            </div>
+                        </div>
+                        <div class="eval-action">
+                            {% if current_user.totp_secret %}
+                            <a href="{{ url_for('collaborative.counter_evaluate', evaluation_id=eval.id) }}" class="btn btn-action primary">
+                                <i class="bi bi-pencil-fill"></i>
+                                <span>Avaliar Gestor</span>
+                            </a>
+                            {% else %}
+                            <button class="btn btn-action disabled" disabled title="Ative o 2FA primeiro">
+                                <i class="bi bi-lock-fill"></i>
+                                <span>2FA Necessário</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Card de Aguardando Validação -->
+            {% if awaiting_validation %}
+            <div class="dashboard-card mb-4">
+                <div class="card-header-dash">
+                    <div class="header-title">
+                        <h2><i class="bi bi-shield-lock"></i> Aguardando Validação Conjunta</h2>
+                        <span class="badge badge-info">{{ awaiting_validation|length }}</span>
+                    </div>
+                    <p class="header-subtitle">Reúna-se presencialmente com seu gestor e usem seus códigos 2FA para visualizar as avaliações.</p>
+                </div>
+                <div class="evaluation-list-premium">
+                    {% for eval in awaiting_validation %}
+                    <div class="evaluation-item-premium awaiting">
+                        <div class="eval-rank">
+                            <div class="rank-medal info">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                        </div>
+                        <div class="eval-avatar">
+                            <img src="https://ui-avatars.com/api/?name={{ eval.evaluator.name|urlencode }}&background=0ea5e9&color=fff&size=48"
+                                alt="{{ eval.evaluator.name }}">
+                        </div>
+                        <div class="eval-content">
+                            <div class="eval-header">
+                                <h3>Sessão com {{ eval.evaluator.name }}</h3>
+                                <span class="eval-type-badge ready">
+                                    <i class="bi bi-check me-1"></i>Pronto para validar
+                                </span>
+                            </div>
+                            <div class="eval-meta-info">
+                                <span class="meta-item">
+                                    <i class="bi bi-calendar3"></i> {{ eval.month_reference }}
+                                </span>
+                                <span class="meta-item status-done">
+                                    <i class="bi bi-check-circle"></i> Contra-avaliação realizada
+                                </span>
+                            </div>
+                        </div>
+                        <div class="eval-action">
+                            <form action="{{ url_for('collaborative.start_validation_session', evaluation_id=eval.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-action info">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                    <span>Iniciar Validação</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Card de Avaliações Validadas -->
+            {% if validated %}
+            <div class="dashboard-card">
+                <div class="card-header-dash">
+                    <div class="header-title">
+                        <h2><i class="bi bi-check-circle-fill"></i> Avaliações Validadas</h2>
+                        <span class="badge badge-success">{{ validated|length }}</span>
+                    </div>
+                    <p class="header-subtitle">Avaliações concluídas e validadas em sessão conjunta.</p>
+                </div>
+                <div class="nir-table-modern-wrapper">
+                    <div class="table-responsive">
+                        <table class="nir-table-modern">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">#</th>
+                                    <th><i class="bi bi-person me-1"></i>Avaliador</th>
+                                    <th><i class="bi bi-calendar3 me-1"></i>Referência</th>
+                                    <th><i class="bi bi-check-all me-1"></i>Validação</th>
+                                    <th><i class="bi bi-graph-up me-1"></i>Score</th>
+                                    <th><i class="bi bi-eye me-1"></i>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for eval in validated %}
+                                {% set score_class = 'excellent' if eval.total_score >= 80 else ('good' if eval.total_score >= 60 else ('warning' if eval.total_score >= 40 else 'poor')) %}
+                                <tr class="employee-row row-{{ score_class }}">
+                                    <td class="cell-id">
+                                        <span class="badge badge-rank">
+                                            <i class="bi bi-trophy-fill {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else 'bronze') }} me-1"></i>#{{ loop.index }}
+                                        </span>
+                                    </td>
+                                    <td class="cell-employee">
+                                        <div class="employee-info">
+                                            <img src="https://ui-avatars.com/api/?name={{ eval.evaluator.name|urlencode }}&background=22c55e&color=fff&size=36"
+                                                alt="{{ eval.evaluator.name }}" class="employee-avatar">
+                                            <span class="employee-name">{{ eval.evaluator.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ eval.month_reference }}</td>
+                                    <td>{{ eval.validated_at.strftime('%d/%m/%Y') if eval.validated_at else 'N/A' }}</td>
+                                    <td class="text-center">
+                                        {% if eval.total_score is not none %}
+                                        <span class="score-pill {{ score_class }}">{{ '%.0f'|format(eval.total_score) }}%</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('employee_evaluation.evaluation_details', evaluation_id=eval.id) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Empty State -->
+            {% if not pending_counter and not awaiting_validation and not validated %}
+            <div class="dashboard-card">
+                <div class="empty-ranking">
+                    <div class="empty-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <p>Nenhuma avaliação encontrada</p>
+                    <small>Você ainda não recebeu nenhuma avaliação do seu gestor.</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Coluna Lateral -->
+        <div class="col-lg-4">
+            <!-- Card de Status -->
+            <div class="dashboard-card performance-card mb-4">
+                <div class="card-header-dash">
+                    <h2><i class="bi bi-pie-chart"></i> Resumo do Status</h2>
+                </div>
+                <div class="chart-container">
+                    {% set total = (pending_counter|length) + (awaiting_validation|length) + (validated|length) %}
+                    {% set pending_pct = ((pending_counter|length) / total * 100) if total > 0 else 0 %}
+                    {% set awaiting_pct = ((awaiting_validation|length) / total * 100) if total > 0 else 0 %}
+                    {% set validated_pct = ((validated|length) / total * 100) if total > 0 else 0 %}
+
+                    <div class="performance-content">
+                        <div class="performance-donut">
+                            <svg viewBox="0 0 140 140" class="donut-chart" preserveAspectRatio="xMidYMid meet">
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#e3e6f0" stroke-width="25"></circle>
+                                {% if pending_counter|length > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#f59e0b" stroke-width="25"
+                                    stroke-dasharray="{{ (pending_pct / 100) * 339.3 }} 339.3" stroke-dashoffset="0"
+                                    stroke-linecap="round" class="donut-segment"></circle>
+                                {% endif %}
+                                {% if awaiting_validation|length > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#0ea5e9" stroke-width="25"
+                                    stroke-dasharray="{{ (awaiting_pct / 100) * 339.3 }} 339.3"
+                                    stroke-dashoffset="-{{ (pending_pct / 100) * 339.3 }}" stroke-linecap="round"
+                                    class="donut-segment"></circle>
+                                {% endif %}
+                                {% if validated|length > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#22c55e" stroke-width="25"
+                                    stroke-dasharray="{{ (validated_pct / 100) * 339.3 }} 339.3"
+                                    stroke-dashoffset="-{{ ((pending_pct + awaiting_pct) / 100) * 339.3 }}" stroke-linecap="round"
+                                    class="donut-segment"></circle>
+                                {% endif %}
+                                <text x="70" y="75" text-anchor="middle" font-size="24" font-weight="bold" fill="#2c3e50">{{ total }}</text>
+                                <text x="70" y="88" text-anchor="middle" font-size="10" fill="#7f8c8d">avaliações</text>
+                            </svg>
+                        </div>
+
+                        <div class="performance-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #f59e0b;"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Pendentes</span>
+                                    <span class="legend-value">{{ pending_counter|length }}</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #0ea5e9;"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Aguardando</span>
+                                    <span class="legend-value">{{ awaiting_validation|length }}</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #22c55e;"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Validadas</span>
+                                    <span class="legend-value">{{ validated|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insights -->
+                <div class="insights-section">
+                    <div class="insights-header">
+                        <h3><i class="bi bi-lightbulb"></i> Como Funciona</h3>
+                    </div>
+                    <div class="insights-list">
+                        <div class="insight-item info">
+                            <i class="bi bi-1-circle-fill"></i>
+                            <p>Seu gestor te avalia → você recebe uma pendência</p>
+                        </div>
+                        <div class="insight-item info">
+                            <i class="bi bi-2-circle-fill"></i>
+                            <p>Você avalia seu gestor → libera a validação conjunta</p>
+                        </div>
+                        <div class="insight-item success">
+                            <i class="bi bi-3-circle-fill"></i>
+                            <p>Validação com 2FA presencial → avaliações reveladas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Segurança 2FA -->
+            <div class="dashboard-card actions-card">
+                <div class="card-header-dash">
+                    <h2><i class="bi bi-shield-lock-fill"></i> Segurança</h2>
+                </div>
+                <div class="security-status">
+                    {% if current_user.totp_secret %}
+                    <div class="security-badge active">
+                        <i class="bi bi-shield-fill-check"></i>
+                        <div class="security-info">
+                            <span class="security-title">2FA Ativo</span>
+                            <span class="security-desc">Sua conta está protegida</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="security-badge inactive">
+                        <i class="bi bi-shield-fill-exclamation"></i>
+                        <div class="security-info">
+                            <span class="security-title">2FA Inativo</span>
+                            <span class="security-desc">Ative para participar das validações</span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('user.profile') }}" class="btn btn-action warning mt-3 w-100">
+                        <i class="bi bi-shield-plus"></i>
+                        <span>Ativar Autenticação 2FA</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block employee_styles %}
+<style>
+/* Alert Card */
+.alert-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.alert-card.warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.alert-card .alert-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: #fef3c7;
+    color: #d97706;
+    flex-shrink: 0;
+}
+
+.alert-card .alert-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+}
+
+.alert-card .alert-content p {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Evaluation List Premium */
+.evaluation-list-premium {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+}
+
+.evaluation-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.evaluation-item-premium:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.evaluation-item-premium.pending:hover {
+    border-color: #f59e0b;
+}
+
+.evaluation-item-premium.awaiting:hover {
+    border-color: #0ea5e9;
+}
+
+.eval-rank .rank-medal {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.rank-medal.warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.rank-medal.info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+.rank-medal.success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.eval-avatar img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.eval-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.eval-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.eval-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eval-type-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.eval-type-badge.monthly {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.eval-type-badge.experience {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.eval-type-badge.ready {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.eval-meta-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.eval-meta-info .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.eval-meta-info .status-pending {
+    color: #d97706;
+}
+
+.eval-meta-info .status-done {
+    color: #059669;
+}
+
+.eval-action {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+.btn-action.primary {
+    background: linear-gradient(135deg, #0078d4 0%, #1084d8 100%);
+    color: white;
+}
+
+.btn-action.primary:hover {
+    background: linear-gradient(135deg, #006cbd 0%, #0074c4 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,120,212,0.3);
+    color: white;
+}
+
+.btn-action.info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: white;
+}
+
+.btn-action.info:hover {
+    background: linear-gradient(135deg, #0891d4 0%, #0273b0 100%);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-action.warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.btn-action.warning:hover {
+    background: linear-gradient(135deg, #e08f00 0%, #c56a00 100%);
+    color: white;
+}
+
+.btn-action.disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Security Status */
+.security-status {
+    padding: 20px;
+}
+
+.security-badge {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 12px;
+}
+
+.security-badge.active {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.security-badge.active i {
+    font-size: 32px;
+    color: #059669;
+}
+
+.security-badge.inactive {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.security-badge.inactive i {
+    font-size: 32px;
+    color: #d97706;
+}
+
+.security-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.security-title {
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.security-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+/* Score Pill */
+.score-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.score-pill.excellent {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.score-pill.good {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.score-pill.warning {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.score-pill.poor {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Badge Rank */
+.badge-rank {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.badge-rank .gold { color: #f59e0b; }
+.badge-rank .silver { color: #94a3b8; }
+.badge-rank .bronze { color: #b45309; }
+
+/* Cell Employee */
+.cell-employee .employee-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cell-employee .employee-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+}
+
+.cell-employee .employee-name {
+    font-weight: 500;
+    color: #1a1a2e;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .evaluation-item-premium {
+        gap: 12px;
+    }
+    
+    .eval-content {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 992px) {
+    .evaluation-item-premium {
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
+    
+    .eval-rank,
+    .eval-avatar {
+        flex-shrink: 0;
+    }
+    
+    .eval-content {
+        flex: 1 1 100%;
+        order: 3;
+        min-width: 100%;
+        margin-top: 12px;
+    }
+    
+    .eval-action {
+        width: 100%;
+        margin-top: 12px;
+        justify-content: stretch;
+        order: 4;
+    }
+    
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .alert-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .evaluation-item-premium {
+        padding: 12px 16px;
+        gap: 12px;
+    }
+    
+    .eval-rank .rank-medal {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .eval-avatar img {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .eval-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .eval-header h3 {
+        font-size: 0.95rem;
+    }
+    
+    .eval-type-badge {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .eval-meta-info {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-action {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .evaluation-item-premium {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+    
+    .eval-rank .rank-medal {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .eval-avatar img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .eval-header h3 {
+        font-size: 0.9rem;
+    }
+    
+    .eval-meta-info .meta-item {
+        gap: 4px;
+        font-size: 0.75rem;
+    }
+    
+    .btn-action {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+    
+    .btn-action span {
+        display: none;
+    }
+    
+    .btn-action i {
+        margin: 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block employee_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animação de entrada dos cards
+    const cards = document.querySelectorAll('.dashboard-card, .alert-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Animação dos itens de avaliação
+    const evalItems = document.querySelectorAll('.evaluation-item-premium');
+    evalItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            item.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, 200 + (index * 100));
+    });
+});
+</script>
+{% endblock %}

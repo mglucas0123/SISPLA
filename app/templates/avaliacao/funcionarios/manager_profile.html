@@ -1,0 +1,777 @@
+{% extends "navbar.html" %}
+
+{% block title %}Perfil do Gestor: {{ manager.name }} - SISPLA{% endblock %}
+
+{% block content %}
+<div class="evaluations-modern-container manager-profile-container">
+    <div class="evaluations-hero manager-hero">
+        <div class="container">
+            <div class="hero-navigation">
+                <a href="{{ url_for('employee_evaluation.dashboard') }}" class="btn-back-hero">
+                    <i class="bi bi-arrow-left-circle"></i>
+                    <span>Voltar para Dashboard</span>
+                </a>
+            </div>
+            
+            <div class="hero-content-eval">
+                <div class="hero-supplier-info">
+                    <div class="supplier-avatar-large" style="background: linear-gradient(135deg, #059669, #10b981); padding: 0; overflow: hidden;">
+                        <img src="https://ui-avatars.com/api/?name={{ manager.name|urlencode }}&background=059669&color=fff&size=80" 
+                             alt="{{ manager.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="supplier-details">
+                        <span class="supplier-label">
+                            <i class="bi bi-person-badge-fill me-1"></i>Perfil do Gestor
+                        </span>
+                        <h1 class="supplier-name-hero">{{ manager.name }}</h1>
+                        {% if manager.cargo %}
+                        <div class="supplier-legal-name-hero">
+                            <i class="bi bi-briefcase-fill"></i>
+                            {{ manager.cargo }}
+                        </div>
+                        {% endif %}
+                        {% if manager.email %}
+                        <div class="service-tag-hero">
+                            <i class="bi bi-envelope-fill"></i>
+                            {{ manager.email }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="hero-score-display">
+                    {% if total_counter_evals > 0 %}
+                    <div class="score-circular-hero {{ 'excellent' if avg_score >= 80 else ('good' if avg_score >= 60 else ('warning' if avg_score >= 40 else 'poor')) }}">
+                        <svg width="140" height="140">
+                            <circle cx="70" cy="70" r="60" class="score-bg-hero"></circle>
+                            <circle cx="70" cy="70" r="60" class="score-fill-hero" 
+                                    style="stroke-dashoffset: {{ 377 - (377 * avg_score / 100) }}"></circle>
+                        </svg>
+                        <div class="score-text-hero">
+                            <span class="score-number-hero">{{ "%.0f"|format(avg_score) }}</span>
+                            <span class="score-percent-hero">%</span>
+                        </div>
+                    </div>
+                    <div class="score-classification">
+                        {% if avg_score >= 80 %}
+                        <i class="bi bi-emoji-smile-fill"></i> Gestor Excelente
+                        {% elif avg_score >= 60 %}
+                        <i class="bi bi-emoji-neutral-fill"></i> Bom Gestor
+                        {% elif avg_score >= 40 %}
+                        <i class="bi bi-emoji-expressionless-fill"></i> Gestor Regular
+                        {% else %}
+                        <i class="bi bi-emoji-frown-fill"></i> Necessita Melhorias
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="score-empty-hero">
+                        <i class="bi bi-dash-circle"></i>
+                        <span>Sem Avaliações</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <!-- Stats Cards -->
+        <div class="eval-stats-dashboard">
+            <div class="eval-stat-card primary">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-chat-square-text-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ total_counter_evals }}</h3>
+                    <p>Feedbacks Recebidos</p>
+                </div>
+            </div>
+
+            <div class="eval-stat-card success">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ "%.1f"|format(avg_rating) }}/10</h3>
+                    <p>Nota Média</p>
+                </div>
+            </div>
+
+            <div class="eval-stat-card info">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ "%.0f"|format(avg_score) }}%</h3>
+                    <p>Score Geral</p>
+                </div>
+            </div>
+
+            <div class="eval-stat-card warning">
+                <div class="stat-icon-eval">
+                    <i class="bi bi-calendar-check-fill"></i>
+                </div>
+                <div class="stat-content-eval">
+                    <h3>{{ validation_sessions|length }}</h3>
+                    <p>Sessões Concluídas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <!-- Coluna Principal -->
+            <div class="col-lg-8">
+                <!-- Análise de Critérios -->
+                {% if criteria_stats %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-bar-chart-fill"></i> Análise de Critérios de Liderança</h2>
+                        <p class="header-subtitle">Como os colaboradores avaliaram este gestor em cada critério</p>
+                    </div>
+                    <div class="card-body">
+                        {% set criteria_names = {
+                            'communication': 'Comunicação e Feedback',
+                            'clarity': 'Clareza nas Orientações',
+                            'support': 'Suporte e Disponibilidade',
+                            'recognition': 'Reconhecimento e Valorização',
+                            'fairness': 'Justiça e Imparcialidade',
+                            'development': 'Desenvolvimento da Equipe'
+                        } %}
+                        
+                        {% for key, stats in criteria_stats.items() %}
+                        {% if stats.total > 0 %}
+                        {% set conforme_pct = (stats.conforme / stats.total * 100) %}
+                        <div class="criteria-analysis-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="criteria-label fw-medium">{{ criteria_names.get(key, key) }}</span>
+                                <div class="criteria-counts">
+                                    <span class="badge bg-success me-1">{{ stats.conforme }} <i class="bi bi-check"></i></span>
+                                    <span class="badge bg-danger">{{ stats.nao_conforme }} <i class="bi bi-x"></i></span>
+                                </div>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: {{ conforme_pct }}%"></div>
+                                <div class="progress-bar bg-danger" style="width: {{ 100 - conforme_pct }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ "%.0f"|format(conforme_pct) }}% de aprovação</small>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Pontos Fortes Mencionados -->
+                {% if all_strong_points %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <div class="header-title">
+                            <h2><i class="bi bi-hand-thumbs-up-fill text-success"></i> Pontos Fortes</h2>
+                            <span class="badge badge-success">{{ all_strong_points|length }}</span>
+                        </div>
+                        <p class="header-subtitle">O que os colaboradores destacam de positivo neste gestor</p>
+                    </div>
+                    <div class="card-body">
+                        {% for point in all_strong_points %}
+                        <div class="feedback-item positive mb-3">
+                            <div class="feedback-icon">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                            <div class="feedback-content">
+                                <p class="mb-0">{{ point }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Sugestões de Melhoria -->
+                {% if all_improvement_suggestions %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <div class="header-title">
+                            <h2><i class="bi bi-lightbulb-fill text-warning"></i> Sugestões de Melhoria</h2>
+                            <span class="badge badge-warning">{{ all_improvement_suggestions|length }}</span>
+                        </div>
+                        <p class="header-subtitle">Oportunidades de desenvolvimento identificadas pelos colaboradores</p>
+                    </div>
+                    <div class="card-body">
+                        {% for suggestion in all_improvement_suggestions %}
+                        <div class="feedback-item improvement mb-3">
+                            <div class="feedback-icon">
+                                <i class="bi bi-lightbulb text-warning"></i>
+                            </div>
+                            <div class="feedback-content">
+                                <p class="mb-0">{{ suggestion }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Notas das Sessões de Validação -->
+                {% if all_session_notes %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <div class="header-title">
+                            <h2><i class="bi bi-journal-text"></i> Notas das Sessões</h2>
+                            <span class="badge badge-info">{{ all_session_notes|length }}</span>
+                        </div>
+                        <p class="header-subtitle">Pontos discutidos nas sessões de feedback colaborativo</p>
+                    </div>
+                    <div class="card-body">
+                        {% for note in all_session_notes %}
+                        <div class="session-note-item mb-3 p-3 bg-light rounded">
+                            <i class="bi bi-chat-dots me-2 text-primary"></i>
+                            {{ note }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Itens de Ação Acordados -->
+                {% if all_action_items %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <div class="header-title">
+                            <h2><i class="bi bi-check2-square"></i> Itens de Ação</h2>
+                            <span class="badge badge-primary">{{ all_action_items|length }}</span>
+                        </div>
+                        <p class="header-subtitle">Ações acordadas durante as sessões de feedback</p>
+                    </div>
+                    <div class="card-body">
+                        {% for item in all_action_items %}
+                        <div class="action-item-card mb-3 p-3 border-start border-primary border-3 bg-light rounded">
+                            <i class="bi bi-arrow-right-circle me-2 text-primary"></i>
+                            {{ item }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Lista de Contra-Avaliações -->
+                <div class="dashboard-card">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-list-ul"></i> Histórico de Feedbacks</h2>
+                        <p class="header-subtitle">Todas as contra-avaliações recebidas</p>
+                    </div>
+                    <div class="nir-table-modern-wrapper">
+                        <div class="table-responsive">
+                            <table class="nir-table-modern">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">#</th>
+                                        <th><i class="bi bi-person me-1"></i>Avaliador</th>
+                                        <th><i class="bi bi-calendar3 me-1"></i>Data</th>
+                                        <th><i class="bi bi-star me-1"></i>Nota</th>
+                                        <th><i class="bi bi-graph-up me-1"></i>Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ce in counter_evaluations %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <img src="https://ui-avatars.com/api/?name={{ ce.evaluator.name|urlencode }}&background=random&size=32" 
+                                                     alt="{{ ce.evaluator.name }}" class="rounded-circle" style="width: 32px; height: 32px;">
+                                                <span>{{ ce.evaluator.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ ce.created_at.strftime('%d/%m/%Y') }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ ce.rating }}/10</span>
+                                        </td>
+                                        <td>
+                                            {% set score_class = 'success' if ce.total_score >= 80 else ('primary' if ce.total_score >= 60 else ('warning' if ce.total_score >= 40 else 'danger')) %}
+                                            <span class="badge bg-{{ score_class }}">{{ "%.0f"|format(ce.total_score or 0) }}%</span>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-5">
+                                            <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+                                            Nenhuma contra-avaliação registrada ainda.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Lateral -->
+            <div class="col-lg-4">
+                <!-- Resumo Executivo -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-clipboard-data"></i> Resumo Executivo</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if total_counter_evals > 0 %}
+                        <div class="executive-summary">
+                            <div class="summary-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Score Médio</span>
+                                    <span class="fw-bold {{ 'text-success' if avg_score >= 80 else ('text-primary' if avg_score >= 60 else ('text-warning' if avg_score >= 40 else 'text-danger')) }}">
+                                        {{ "%.0f"|format(avg_score) }}%
+                                    </span>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar {{ 'bg-success' if avg_score >= 80 else ('bg-primary' if avg_score >= 60 else ('bg-warning' if avg_score >= 40 else 'bg-danger')) }}" 
+                                         style="width: {{ avg_score }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Nota Média</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(avg_rating) }}/10</span>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Total de Feedbacks</span>
+                                    <span class="fw-bold">{{ total_counter_evals }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Sessões Concluídas</span>
+                                    <span class="fw-bold">{{ validation_sessions|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            <p>Nenhum feedback recebido ainda</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Classificação de Liderança -->
+                {% if total_counter_evals > 0 %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-award"></i> Classificação</h2>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="classification-badge {{ 'excellent' if avg_score >= 80 else ('good' if avg_score >= 60 else ('warning' if avg_score >= 40 else 'poor')) }} mb-3">
+                            {% if avg_score >= 80 %}
+                            <i class="bi bi-trophy-fill"></i>
+                            <span>Líder Exemplar</span>
+                            {% elif avg_score >= 60 %}
+                            <i class="bi bi-star-fill"></i>
+                            <span>Bom Líder</span>
+                            {% elif avg_score >= 40 %}
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Em Desenvolvimento</span>
+                            {% else %}
+                            <i class="bi bi-x-circle-fill"></i>
+                            <span>Requer Atenção</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted small">
+                            {% if avg_score >= 80 %}
+                            Este gestor demonstra excelência em liderança e recebe feedback altamente positivo dos colaboradores.
+                            {% elif avg_score >= 60 %}
+                            Este gestor apresenta bom desempenho com algumas oportunidades de melhoria identificadas.
+                            {% elif avg_score >= 40 %}
+                            Este gestor tem áreas significativas para desenvolvimento que devem ser trabalhadas.
+                            {% else %}
+                            Este gestor necessita de intervenção e acompanhamento para melhorar suas práticas de gestão.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Ações Rápidas -->
+                <div class="dashboard-card">
+                    <div class="card-header-dash">
+                        <h2><i class="bi bi-lightning-fill"></i> Ações</h2>
+                    </div>
+                    <div class="quick-actions p-3">
+                        <a href="{{ url_for('employee_evaluation.employee_history', employee_id=manager.id) }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="bi bi-clipboard-data me-1"></i>
+                            Ver Avaliações como Colaborador
+                        </a>
+                        <a href="{{ url_for('employee_evaluation.dashboard') }}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Voltar ao Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.manager-profile-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.manager-hero {
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
+}
+
+.feedback-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border-left: 4px solid;
+}
+
+.feedback-item.positive {
+    border-left-color: #22c55e;
+    background: #f0fdf4;
+}
+
+.feedback-item.improvement {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.feedback-icon {
+    font-size: 1.25rem;
+}
+
+.feedback-content p {
+    color: #374151;
+    line-height: 1.6;
+}
+
+.classification-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 32px;
+    border-radius: 16px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.classification-badge i {
+    font-size: 2.5rem;
+}
+
+.classification-badge.excellent {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.classification-badge.good {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.classification-badge.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.classification-badge.poor {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.criteria-analysis-item {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.session-note-item, .action-item-card {
+    transition: transform 0.2s ease;
+}
+
+.session-note-item:hover, .action-item-card:hover {
+    transform: translateX(5px);
+}
+
+/* Reutilizar estilos do employee_history.html */
+.evaluations-hero {
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+    padding: 30px 0;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-navigation {
+    margin-bottom: 20px;
+}
+
+.btn-back-hero {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-back-hero:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.hero-content-eval {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+.hero-supplier-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.supplier-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.supplier-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.supplier-name-hero {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 4px 0;
+}
+
+.supplier-legal-name-hero,
+.service-tag-hero {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.hero-score-display {
+    text-align: center;
+}
+
+.score-circular-hero {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.score-circular-hero svg {
+    transform: rotate(-90deg);
+}
+
+.score-bg-hero {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 12;
+}
+
+.score-fill-hero {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 377;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.score-circular-hero.excellent .score-fill-hero { stroke: #22c55e; }
+.score-circular-hero.good .score-fill-hero { stroke: #3b82f6; }
+.score-circular-hero.warning .score-fill-hero { stroke: #f59e0b; }
+.score-circular-hero.poor .score-fill-hero { stroke: #ef4444; }
+
+.score-text-hero {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.score-number-hero {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.score-percent-hero {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.score-classification {
+    margin-top: 8px;
+    font-weight: 500;
+    opacity: 0.95;
+}
+
+.score-empty-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.score-empty-hero i {
+    font-size: 48px;
+    opacity: 0.7;
+}
+
+/* Stats Dashboard */
+.eval-stats-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: -50px;
+    position: relative;
+    z-index: 10;
+}
+
+.eval-stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.eval-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon-eval {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.eval-stat-card.primary .stat-icon-eval {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: white;
+}
+
+.eval-stat-card.success .stat-icon-eval {
+    background: linear-gradient(135deg, #22c55e, #10b981);
+    color: white;
+}
+
+.eval-stat-card.info .stat-icon-eval {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    color: white;
+}
+
+.eval-stat-card.warning .stat-icon-eval {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: white;
+}
+
+.stat-content-eval h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a2e;
+}
+
+.stat-content-eval p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.card-header-dash {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.card-header-dash h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #1a1a2e;
+}
+
+.header-subtitle {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 4px 0 0;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .hero-content-eval {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .hero-supplier-info {
+        flex-direction: column;
+    }
+    
+    .eval-stats-dashboard {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+</style>
+{% endblock %}

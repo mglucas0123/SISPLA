@@ -1,252 +1,554 @@
-{% extends "navbar.html" %}
-{% block title %} Ranking dos Colaboradores {% endblock %}
+{% extends "avaliacao/funcionarios/base.html" %}
 {% from 'partials/feedback/suppliers/_hero.html' import hero %}
 
-{% block content %}
-<div class="container-fluid ranking-dashboard">
+{% block employee_title %}Dashboard de Colaboradores - SISPLA{% endblock %}
 
-    <style>
-        .ranking-dashboard .dashboard-header h2 { font-weight:700; letter-spacing: -0.5px; }
-        .card-glass { background: rgba(255,255,255,0.92); backdrop-filter: blur(4px); border-radius: 10px; border: 1px solid rgba(0,0,0,0.04); }
-        .top-card { padding:12px; border-radius:10px; color:#fff; }
-        .top-1 { background: linear-gradient(90deg,#f59e0b,#f97316); }
-        .top-2 { background: linear-gradient(90deg,#60a5fa,#3b82f6); }
-        .top-3 { background: linear-gradient(90deg,#34d399,#10b981); }
-        .score-large { font-size:1.6rem; font-weight:700; }
-        .rank-badge { width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:#f1f3f5; font-weight:700; font-size:0.86rem; }
-        .score-badge { background:#0d6efd; color:#fff; padding:6px 10px; border-radius:999px; font-weight:600; }
-        .small-muted { color:#6c757d; }
-        .stat-label { color:#6b7280; font-size:.80rem; }
-        /* compact table row paddings */
-        .table.compact td, .table.compact th { padding: .45rem .6rem; }
-        /* Top3 card styles */
-        .top3-card { background: #fff; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.06); padding:10px; }
-        .top3-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px; border-radius:8px; background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.84)); transition: transform .14s ease, box-shadow .14s ease; }
-        .top3-item:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(15,23,42,0.1); }
-        .top3-item + .top3-item { margin-top:6px; }
-        .top3-left { display:flex; align-items:center; gap:12px; }
-        .top3-rank { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; font-weight:800; color:#fff; font-size:0.8rem; }
-        .top3-rank.rank-1 { background: linear-gradient(90deg,#f59e0b,#f97316); }
-        .top3-rank.rank-2 { background: linear-gradient(90deg,#cbd5e1,#9ca3af); color:#0b1726; }
-        .top3-rank.rank-3 { background: linear-gradient(90deg,#fde68a,#fca5a5); color:#0b1726; }
-        .top3-avatar { width:36px; height:36px; border-radius:50%; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:0.95rem }
-        .top3-avatar.bg-1 { background: #7c3aed; }
-        .top3-avatar.bg-2 { background: #3b82f6; }
-        .top3-avatar.bg-3 { background: #06b6d4; }
-        .top3-name { font-weight:500; font-size:0.88rem; color:#0f172a; }
-        .top3-role { font-size:0.7rem; color:#6b7280; }
-        .top3-score { text-align:right; min-width:74px; }
-        .top3-score .value { font-size:1.06rem; font-weight:800; color:#0f172a; }
-        .top3-score .meta { font-size:0.78rem; color:#6b7280; }
-        .ranking-item-premium { display:flex; align-items:center; gap:12px; padding:12px; border-radius:8px; background:#fff; text-decoration:none; color:inherit; border:1px solid rgba(15,23,42,0.03);} 
-        .rank-medal { display:flex; align-items:center; gap:8px; }
-        .medal-wrapper { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; color:#fff; }
-        .medal-wrapper.gold { background: linear-gradient(90deg,#f59e0b,#f97316); }
-        .medal-wrapper.silver { background: linear-gradient(90deg,#cbd5e1,#9ca3af); color:#0b1726; }
-        .medal-wrapper.bronze { background: linear-gradient(90deg,#fbcfe8,#fda4af); color:#0b1726; }
-        .medal-wrapper i { font-size:18px; }
-        .rank-badge { font-weight:700; padding:4px 8px; border-radius:6px; background:#f3f4f6; }
-        .rank-content h3 { margin:0; font-weight:700; font-size:0.94rem; }
-        .rank-score-badge { display:inline-block; padding:5px 8px; border-radius:7px; font-weight:800; font-size:0.95rem; }
-        .rank-score-badge.excellent { background:#d1fae5; color:#065f46; }
-        .rank-score-badge.good { background:#fff7ed; color:#7c2d12; }
-        .rank-score-badge.poor { background:#fee2e2; color:#7c0a0a; }
-        .rank-progress { margin-top:4px; }
-        .progress-bar-container { background:#eef2ff; height:6px; border-radius:8px; overflow:hidden; }
-        .progress-fill { height:6px; border-radius:8px; }
-        .progress-fill.excellent { background:linear-gradient(90deg,#4ade80,#10b981); }
-        .progress-fill.good { background:linear-gradient(90deg,#fcd34d,#f59e0b); }
-        .progress-fill.poor { background:linear-gradient(90deg,#fca5a5,#ef4444); }
-        .top3-card-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-        .top3-card-header .title { display:flex; flex-direction:column; }
-        .top3-card-header h6 { margin:0; display:flex; align-items:center; gap:8px; font-weight:800; }
-        .top3-card-header .sub { color:#6b7280; font-size:0.82rem; }
-        .top3-card-header .actions { display:flex; gap:8px; align-items:center; }
-        .top3-card-header .action-btn { padding:6px 10px; border-radius:8px; font-size:12px; }
-        .score-mini-bar { height:5px; border-radius:6px; background:#eef2ff; overflow:hidden; margin-top:4px; }
-        .score-mini-bar .fill { height:5px; border-radius:6px; background: linear-gradient(90deg,#34d399,#60a5fa); }
-        .top3-score .meta { font-size:0.78rem; color:#6b7280; }
-    </style>
+{% block employee_hero %}
+{% set evaluated_count = rankings|length if rankings is defined else 0 %}
+{% set total_evals = namespace(value=0) %}
+{% set total_weighted = namespace(value=0) %}
+{% for r in rankings %}
+{% set total_evals.value = total_evals.value + (r.evaluations if r.evaluations is defined else 0) %}
+{% set total_weighted.value = total_weighted.value + ((r.avg_score if r.avg_score is defined else 0) * (r.evaluations if
+r.evaluations is defined else 0)) %}
+{% endfor %}
+{% if total_evals.value > 0 %}
+{% set avg_score_overall = (total_weighted.value / total_evals.value) %}
+{% else %}
+{% set avg_score_overall = 0 %}
+{% endif %}
+{% set avg_score_pct = avg_score_overall|round(0) %}
 
-    {% set evaluated_count = rankings|length if rankings is defined else 0 %}
-    {% set total_evals = 0 %}
-    {% set total_weighted_score = 0 %}
-    {% for r in rankings %}
-        {% set total_evals = total_evals + (r.evaluations if r.evaluations is defined else 0) %}
-        {% set total_weighted_score = total_weighted_score + ((r.avg_rating if r.avg_rating is defined else 0) * (r.evaluations if r.evaluations is defined else 0)) %}
-    {% endfor %}
-    {% if total_evals > 0 %}
-        {% set avg_rating_overall = (total_weighted_score / total_evals) %}
-    {% else %}
-        {% set avg_rating_overall = 0 %}
-    {% endif %}
-    {% set avg_score_pct = (avg_rating_overall * 10)|round(0) %}
+{% set hero_stats = [
+{ 'icon': 'bi bi-people-fill', 'value': evaluated_count, 'label': 'Colaboradores' },
+{ 'icon': 'bi bi-clipboard-check-fill', 'value': total_evals.value, 'label': 'Avaliações' },
+{ 'icon': 'bi bi-percent', 'value': avg_score_pct|int ~ '%', 'label': 'Score Médio' }
+] %}
+{{ hero('<i class="bi bi-graph-up-arrow"></i> Dashboard de Colaboradores'|safe, 'Gestão de desempenho, reconhecimento e
+desenvolvimento de equipe', hero_stats) }}
+{% endblock %}
 
-    {% set hero_stats = [
-        { 'icon': 'bi bi-people-fill', 'value': evaluated_count, 'label': 'Colaboradores' },
-        { 'icon': 'bi bi-clipboard-check-fill', 'value': total_evals, 'label': 'Avaliações' },
-        { 'icon': 'bi bi-percent', 'value': avg_score_pct ~ '%', 'label': 'Score Médio' }
-    ] %}
-
-    <style>
-        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-value,
-        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-label,
-        .dashboard-hero .dashboard-hero-stats .hero-stat-item i {
-            color: #fff !important;
-            opacity: 1 !important;
-        }
-        .dashboard-hero .dashboard-hero-stats .hero-stat-item { background: rgba(255,255,255,0.06); border-radius:8px; padding:6px 8px; }
-        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-value { font-size:16px; font-weight:700; }
-        .dashboard-hero .dashboard-hero-stats .hero-stat-item .stat-label { font-size:11px; }
-    </style>
-
-    {{ hero('<i class="bi bi-graph-up"></i> Dashboard de Colaboradores'|safe, 'Gestão de desempenho, reconhecimento e desenvolvimento de equipe', hero_stats) }}
-
+{% block employee_content %}
+<div class="employee-dashboard-container">
     <div class="row g-4">
+        <!-- Coluna Principal -->
         <div class="col-lg-8">
-            <div class="card-glass p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-list-stars fs-4 text-primary"></i>
-                        <h5 class="mb-0">Ranking Geral</h5>
+            <!-- Card Top 3 Premium -->
+            <div class="dashboard-card top-suppliers-card">
+                <div class="card-header-dash">
+                    <div class="header-title">
+                        <h2><i class="bi bi-trophy"></i> Top 3 Melhores Colaboradores</h2>
+                        <span class="badge badge-success">Excelência</span>
                     </div>
-                    <div class="stat-label">Período: {{ month if month else 'Último mês' }}</div>
+                    <p class="header-subtitle">Colaboradores com melhor desempenho no período</p>
                 </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle compact">
-                        <thead>
-                            <tr>
-                                <th style="width:80px;" class="text-center">Posição</th>
-                                <th>Colaborador</th>
-                                <th>Departamento</th>
-                                <th class="text-center">Avaliações</th>
-                                <th class="text-center">Média</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in rankings %}
-                            <tr>
-                                <td class="text-center"><div class="rank-badge">{{ loop.index }}</div></td>
-                                <td>
-                                        <div class="d-flex align-items-center gap-3">
-                                        <img src="https://ui-avatars.com/api/?name={{ r.name|urlencode }}&background=random" alt="{{ r.name }}" class="rounded-circle" width="36" height="36">
-                                        <div>
-                                            <div class="fw-bold">{{ r.name }}</div>
-                                            <div class="small-muted">{{ r.email }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ r.job_title }}</td>
-                                <td class="text-center small-muted">{{ r.evaluations }}</td>
-                                <td class="text-center"><span class="score-badge">{{ '%.2f'|format(r.avg_rating) }}</span></td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">Nenhuma avaliação encontrada para este período.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="d-grid gap-3">
-                <div class="top3-card">
-                    <div class="top3-card-header mb-3">
-                        <div class="title">
-                            <h6 class="mb-0"><i class="bi bi-trophy-fill" style="color:#f59e0b"></i>Top 3</h6>
-                            <small class="sub">Melhores desempenhos do mês</small>
-                        </div>
-                        <div class="actions">
-                            <a href="#" class="btn btn-outline-secondary action-btn btn-sm">Ver todos</a>
-                            <div class="dropdown">
-                                <button class="btn btn-primary btn-sm action-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Ações
-                                </button>
-                                <ul class="dropdown-menu shadow-sm">
-                                    <li><a class="dropdown-item" href="#">Exportar CSV</a></li>
-                                    <li><a class="dropdown-item" href="#">Exportar PDF</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <div class="ranking-list premium">
                     {% if rankings and rankings|length > 0 %}
                     {% for person in rankings[:3] %}
-                    <a href="#" class="ranking-item-premium {{ 'rank-1' if loop.index == 1 else ('rank-2' if loop.index == 2 else 'rank-3') }}">
-                        <div class="rank-medal d-flex align-items-center gap-2">
-                            <div class="medal-wrapper {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else 'bronze') }}">
+                    <a href="{{ url_for('employee_evaluation.employee_history', employee_id=person.user_id) }}"
+                        class="ranking-item-premium {{ 'rank-1' if loop.index == 1 else ('rank-2' if loop.index == 2 else 'rank-3') }}">
+                        <div class="rank-medal">
+                            <div
+                                class="medal-wrapper {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else 'bronze') }}">
                                 <i class="bi bi-award-fill"></i>
                             </div>
                             <span class="rank-badge">#{{ loop.index }}</span>
                         </div>
-                        <div class="rank-content d-flex align-items-center justify-content-between w-100">
-                            <div>
-                                <h3 class="mb-0" title="{{ person.name }}">{{ person.name }}</h3>
-                                <div class="rank-meta-info small-muted mt-1">
-                                    {% set stars = (person.avg_rating|default(0) / 10)|round|int // 2 %}
-                                    <span class="meta-item">
-                                        {% for i in range(stars) %}
-                                        <i class="bi bi-star-fill"></i>
-                                        {% endfor %}
-                                        {% for i in range(5 - stars) %}
-                                        <i class="bi bi-star"></i>
-                                        {% endfor %}
-                                    </span>
-                                    <span class="meta-item ms-2"><i class="bi bi-clipboard-check"></i> {{ person.evaluations }} avaliações</span>
+                        <div class="rank-avatar">
+                            <img src="https://ui-avatars.com/api/?name={{ person.name|urlencode }}&background={{ ['7c3aed', '3b82f6', '06b6d4'][loop.index0 % 3] }}&color=fff&size=48"
+                                alt="{{ person.name }}">
+                        </div>
+                        <div class="rank-content">
+                            <div class="rank-header">
+                                <h3 title="{{ person.name }}">{{ person.name }}</h3>
+                                {% set score_pct = person.avg_score|round(0)|int %}
+                                <div
+                                    class="rank-score-badge {{ 'excellent' if person.avg_score >= 80 else ('good' if person.avg_score >= 60 else 'poor') }}">
+                                    {{ score_pct }}%
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <div class="rank-score-badge {{ 'excellent' if person.avg_rating >= 9 else ('good' if person.avg_rating >= 7 else 'poor') }}">{{ '%.2f'|format(person.avg_rating) }}</div>
-                                {% set pct = ((person.avg_rating|default(0)) / 10) * 100 %}
-                                <div class="rank-progress mt-2">
-                                    <div class="progress-bar-container">
-                                        <div class="progress-fill {{ 'excellent' if person.avg_rating >= 9 else ('good' if person.avg_rating >= 7 else 'poor') }}" style="width: {{ pct|round(1) }}%"></div>
-                                    </div>
+                            <div class="rank-meta-info">
+                                <span class="meta-item">
+                                    <i class="bi bi-briefcase-fill"></i> {{ person.job_title or 'Colaborador' }}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="bi bi-clipboard-check"></i> {{ person.evaluations }} avaliações
+                                </span>
+                                <span class="meta-item status-text">
+                                    {% if person.avg_score >= 80 %}
+                                    <i class="bi bi-check-circle-fill text-success"></i> Excelente
+                                    {% elif person.avg_score >= 60 %}
+                                    <i class="bi bi-check-circle text-primary"></i> Satisfatório
+                                    {% elif person.avg_score >= 40 %}
+                                    <i class="bi bi-exclamation-circle text-warning"></i> Regular
+                                    {% else %}
+                                    <i class="bi bi-x-circle text-danger"></i> Crítico
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="rank-progress">
+                                <div class="progress-bar-container">
+                                    <div class="progress-fill {{ 'excellent' if person.avg_score >= 80 else ('good' if person.avg_score >= 60 else 'poor') }}"
+                                        style="width: {{ score_pct }}%"></div>
                                 </div>
                             </div>
                         </div>
                     </a>
                     {% endfor %}
                     {% else %}
-                    <div class="text-center text-muted">Sem dados</div>
+                    <div class="empty-ranking">
+                        <div class="empty-icon">
+                            <i class="bi bi-inbox"></i>
+                        </div>
+                        <p>Nenhum colaborador avaliado ainda</p>
+                        <small>Realize avaliações para ver os melhores colaboradores</small>
+                    </div>
                     {% endif %}
                 </div>
+            </div>
 
-                <div class="card-glass p-3">
-                    <h6 class="mb-3">Distribuição de Notas</h6>
-                    {% set dist = distribution if distribution is defined else {'1':5,'2':8,'3':40,'4':47} %}
-                    {% set total = dist.values()|sum %}
-                    {% for k,v in dist.items() %}
-                    {% set pct = (v / (total if total>0 else 1) * 100) %}
-                    <div class="mb-2">
-                        <div class="d-flex justify-content-between small-muted mb-1"><div>Nota {{ k }}</div><div>{{ v }}</div></div>
-                        <div class="progress" style="height:10px; border-radius:6px;">
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ pct|round(1) }}%;" aria-valuenow="{{ v }}" aria-valuemin="0" aria-valuemax="{{ total }}"></div>
+            <!-- Tabela de Ranking Completo -->
+            <div class="dashboard-card">
+                <div class="card-header-dash">
+                    <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
+                        <h2 class="mb-0"><i class="bi bi-list-stars"></i> Avaliações do Mês</h2>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <form method="GET" class="d-flex align-items-center gap-2 m-0" id="filterForm">
+                                <input type="month" id="monthFilter" name="month" class="form-control form-control-sm"
+                                    style="width: auto; min-width: 140px;" value="{{ month or '' }}"
+                                    onchange="this.form.submit()" title="Filtrar por mês">
+                            </form>
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="searchEmployee" class="form-control form-control-sm"
+                                    placeholder="Buscar colaborador..." style="min-width: 180px;">
+                            </div>
+                            <select class="form-select form-select-sm" id="statusFilter"
+                                style="width: auto; min-width: 130px;">
+                                <option value="">Todos Status</option>
+                                <option value="excellent">Excelente</option>
+                                <option value="good">Bom</option>
+                                <option value="warning">Regular</option>
+                                <option value="poor">Crítico</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="sortOrder"
+                                style="width: auto; min-width: 140px;">
+                                <option value="desc">Maior Nota</option>
+                                <option value="asc">Menor Nota</option>
+                                <option value="name">Nome A-Z</option>
+                                <option value="evals">Mais Avaliações</option>
+                            </select>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-
-                <div class="card-glass p-3 text-center">
-                    <h6 class="mb-2">Ações</h6>
-                    <div class="d-flex flex-column gap-2">
-                        <a href="#" class="btn btn-outline-secondary btn-sm">Ver detalhes completos</a>
-                        <a href="#" class="btn btn-outline-secondary btn-sm">Exportar relatório (PDF)</a>
+                <div class="nir-table-modern-wrapper">
+                    <div class="table-responsive">
+                        <table class="nir-table-modern" id="rankingTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">#</th>
+                                    <th><i class="bi bi-person me-1"></i>Colaborador</th>
+                                    <th><i class="bi bi-briefcase me-1"></i>Cargo</th>
+                                    <th><i class="bi bi-clipboard-check me-1"></i>Avaliações</th>
+                                    <th><i class="bi bi-graph-up me-1"></i>Score</th>
+                                    <th><i class="bi bi-flag me-1"></i>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in rankings %}
+                                {% set score_class = 'excellent' if r.avg_score >= 80 else ('good' if r.avg_score >= 60
+                                else ('warning' if r.avg_score >= 40 else 'poor')) %}
+                                <tr class="employee-row {{ 'row-' ~ score_class }}" data-score="{{ r.avg_score }}"
+                                    data-name="{{ r.name|lower }}" data-status="{{ score_class }}"
+                                    data-evals="{{ r.evaluations }}"
+                                    data-href="{{ url_for('employee_evaluation.employee_history', employee_id=r.user_id) }}"
+                                    style="cursor: pointer;" onclick="window.location.href=this.dataset.href">
+                                    <td class="cell-id">
+                                        <span class="badge fw-bold {{ 'badge-top' if loop.index <= 3 else '' }}">
+                                            {% if loop.index <= 3 %} <i
+                                                class="bi bi-trophy-fill {{ ['gold', 'silver', 'bronze'][loop.index - 1] }} me-1">
+                                                </i>
+                                                {% endif %}
+                                                #{{ loop.index }}
+                                        </span>
+                                    </td>
+                                    <td class="cell-employee">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <img src="https://ui-avatars.com/api/?name={{ r.name|urlencode }}&background=random&size=40"
+                                                alt="{{ r.name }}" class="employee-avatar">
+                                            <div class="d-flex flex-column">
+                                                <strong class="mb-0">{{ r.name }}</strong>
+                                                <small class="text-muted">{{ r.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="job-title-badge">{{ r.job_title or '—' }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-custom-blue rounded-pill">{{ r.evaluations }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="score-badge-sm {{ score_class }}">
+                                            {{ r.avg_score|round(0)|int }}%
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if r.avg_score >= 80 %}
+                                        <span class="badge bg-custom-green rounded-pill">
+                                            <i class="bi bi-star-fill me-1"></i>Excelente
+                                        </span>
+                                        {% elif r.avg_score >= 60 %}
+                                        <span class="badge bg-custom-blue rounded-pill">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Satisfatório
+                                        </span>
+                                        {% elif r.avg_score >= 40 %}
+                                        <span class="badge bg-custom-yellow rounded-pill">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Regular
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-custom-red rounded-pill">
+                                            <i class="bi bi-x-circle-fill me-1"></i>Crítico
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+                                        Nenhuma avaliação encontrada para este período.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Lateral -->
+        <div class="col-lg-4">
+            <!-- Card de Performance -->
+            <div class="dashboard-card performance-card">
+                <div class="card-header-dash">
+                    <h2><i class="bi bi-pie-chart"></i> Distribuição de Performance</h2>
+                </div>
+                <div class="chart-container">
+                    {% set excellent_count = rankings|selectattr('avg_score', 'ge', 80)|list|length %}
+                    {% set good_count = rankings|selectattr('avg_score', 'ge', 60)|selectattr('avg_score', 'lt',
+                    80)|list|length %}
+                    {% set regular_count = rankings|selectattr('avg_score', 'ge', 40)|selectattr('avg_score', 'lt',
+                    60)|list|length %}
+                    {% set poor_count = rankings|selectattr('avg_score', 'lt', 40)|list|length %}
+                    {% set total = rankings|length if rankings else 1 %}
+
+                    {% set excellent_pct = (excellent_count / total * 100) if total > 0 else 0 %}
+                    {% set good_pct = (good_count / total * 100) if total > 0 else 0 %}
+                    {% set regular_pct = (regular_count / total * 100) if total > 0 else 0 %}
+                    {% set poor_pct = (poor_count / total * 100) if total > 0 else 0 %}
+
+                    <div class="performance-content">
+                        <div class="performance-donut">
+                            <svg viewBox="0 0 140 140" class="donut-chart" preserveAspectRatio="xMidYMid meet">
+                                <circle cx="70" cy="70" r="60" fill="none" stroke="#e2e5ee" stroke-width="25"></circle>
+                                <circle cx="70" cy="70" r="40" fill="none" stroke="#e2e5ee" stroke-width="25"></circle>
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#e3e6f0" stroke-width="25"></circle>
+                                {% if excellent_count > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#10b981" stroke-width="25"
+                                    stroke-dasharray="{{ (excellent_pct / 100) * 339.3 }} 339.3" stroke-dashoffset="0"
+                                    stroke-linecap="round" class="donut-segment" data-category="excellent"
+                                    data-label="Excelentes (≥80%)" data-color="#10b981"></circle>
+                                {% endif %}
+                                {% if good_count > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#3b82f6" stroke-width="25"
+                                    stroke-dasharray="{{ (good_pct / 100) * 339.3 }} 339.3"
+                                    stroke-dashoffset="-{{ (excellent_pct / 100) * 339.3 }}" stroke-linecap="round"
+                                    class="donut-segment" data-category="good" data-label="Bom (60-80%)"
+                                    data-color="#3b82f6"></circle>
+                                {% endif %}
+                                {% if regular_count > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#f59e0b" stroke-width="25"
+                                    stroke-dasharray="{{ (regular_pct / 100) * 339.3 }} 339.3"
+                                    stroke-dashoffset="-{{ ((excellent_pct + good_pct) / 100) * 339.3 }}"
+                                    stroke-linecap="round" class="donut-segment" data-category="regular"
+                                    data-label="Regular (40-60%)" data-color="#f59e0b"></circle>
+                                {% endif %}
+                                {% if poor_count > 0 %}
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#ef4444" stroke-width="25"
+                                    stroke-dasharray="{{ (poor_pct / 100) * 339.3 }} 339.3"
+                                    stroke-dashoffset="-{{ ((excellent_pct + good_pct + regular_pct) / 100) * 339.3 }}"
+                                    stroke-linecap="round" class="donut-segment" data-category="poor"
+                                    data-label="Crítico (<40%)" data-color="#ef4444"></circle>
+                                {% endif %}
+                                <text x="70" y="75" text-anchor="middle" font-size="24" font-weight="bold"
+                                    fill="#2c3e50">{{ total }}</text>
+                                <text x="70" y="88" text-anchor="middle" font-size="10"
+                                    fill="#7f8c8d">colaboradores</text>
+                            </svg>
+                        </div>
+
+                        <div class="performance-legend">
+                            <div class="legend-item">
+                                <div class="legend-color excellent"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Excelente</span>
+                                    <span class="legend-value">{{ excellent_count }} ({{ '%.0f'|format(excellent_pct)
+                                        }}%)</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color good"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Bom</span>
+                                    <span class="legend-value">{{ good_count }} ({{ '%.0f'|format(good_pct) }}%)</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color regular"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Regular</span>
+                                    <span class="legend-value">{{ regular_count }} ({{ '%.0f'|format(regular_pct)
+                                        }}%)</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color poor"></div>
+                                <div class="legend-content">
+                                    <span class="legend-label">Crítico</span>
+                                    <span class="legend-value">{{ poor_count }} ({{ '%.0f'|format(poor_pct) }}%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Insights dentro do card de Performance -->
+                <div class="insights-section">
+                    <div class="insights-header">
+                        <h3><i class="bi bi-lightbulb"></i> Insights</h3>
+                    </div>
+                    <div class="insights-list">
+                        {% if rankings and rankings|length > 0 %}
+                        <div class="insight-item success">
+                            <i class="bi bi-trophy-fill"></i>
+                            <p>Destaque do mês: <strong>{{ rankings[0].name }}</strong> com nota {{
+                                '%.0f'|format(rankings[0].avg_score) }}%</p>
+                        </div>
+                        {% endif %}
+
+                        {% set poor_employees = rankings|selectattr('avg_score', 'lt', 40)|list|length %}
+                        {% if poor_employees > 0 %}
+                        <div class="insight-item warning">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <p><strong>{{ poor_employees }}</strong> colaborador(es) precisam de atenção (nota <
+                                    40%)</p>
+                        </div>
+                        {% endif %}
+
+                        {% set high_performers = rankings|selectattr('avg_score', 'ge', 80)|list|length %}
+                        {% if high_performers > 0 %}
+                        <div class="insight-item info">
+                            <i class="bi bi-star-fill"></i>
+                            <p><strong>{{ high_performers }}</strong> colaborador(es) com desempenho excelente</p>
+                        </div>
+                        {% endif %}
+
+                        {% if not rankings or rankings|length == 0 %}
+                        <div class="insight-item info">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <p>Nenhuma avaliação registrada ainda neste período.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Ações Rápidas -->
+            <div class="dashboard-card actions-card">
+                <div class="card-header-dash">
+                    <h2><i class="bi bi-lightning-fill"></i> Ações Rápidas</h2>
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ url_for('employee_evaluation.evaluate') }}" class="action-btn primary">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Nova Avaliação</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Dados JSON para o tooltip do donut -->
+<script type="application/json" id="employees-dashboard-data">
+{
+    "excellent": [
+        {% set comma = joiner(',') %}
+        {% for r in rankings if r.avg_score >= 80 %}
+            {{ comma() }}{ "name": "{{ r.name|e }}", "score": {{ '%.0f'|format(r.avg_score) }} }
+        {% endfor %}
+    ],
+    "good": [
+        {% set comma = joiner(',') %}
+        {% for r in rankings if r.avg_score >= 60 and r.avg_score < 80 %}
+            {{ comma() }}{ "name": "{{ r.name|e }}", "score": {{ '%.0f'|format(r.avg_score) }} }
+        {% endfor %}
+    ],
+    "regular": [
+        {% set comma = joiner(',') %}
+        {% for r in rankings if r.avg_score >= 40 and r.avg_score < 60 %}
+            {{ comma() }}{ "name": "{{ r.name|e }}", "score": {{ '%.0f'|format(r.avg_score) }} }
+        {% endfor %}
+    ],
+    "poor": [
+        {% set comma = joiner(',') %}
+        {% for r in rankings if r.avg_score < 40 %}
+            {{ comma() }}{ "name": "{{ r.name|e }}", "score": {{ '%.0f'|format(r.avg_score) }} }
+        {% endfor %}
+    ]
+}
+</script>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
+{% block employee_scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
+        let dashboardData = {};
+        const dataElement = document.getElementById('employees-dashboard-data');
+        if (dataElement) {
+            try {
+                dashboardData = JSON.parse(dataElement.textContent.trim());
+            } catch (e) {
+                console.error('Erro ao parsear dados do dashboard', e);
+            }
+        }
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'donut-tooltip';
+        document.body.appendChild(tooltip);
+
+        const segments = document.querySelectorAll('.donut-segment');
+        segments.forEach(segment => {
+            segment.style.cursor = 'pointer';
+
+            segment.addEventListener('mouseenter', function () {
+                const category = this.dataset.category;
+                const color = this.dataset.color || '#333';
+                const employees = dashboardData[category] || [];
+
+                if (!employees.length) {
+                    tooltip.style.opacity = '0';
+                    return;
+                }
+
+                const title = this.dataset.label || '';
+                let html = `<div style="font-weight:600;margin-bottom:8px;color:${color};">${title}</div>`;
+                html += '<div style="max-height:200px;overflow-y:auto;">';
+
+                employees.forEach((emp, index) => {
+                    if (index < 10) {
+                        html += `
+                        <div style="padding:4px 0;font-size:13px;border-bottom:1px solid #f0f0f0;">
+                            <strong>${emp.name}</strong>
+                            <span style="color:#7f8c8d;float:right;">${emp.score}</span>
+                        </div>
+                    `;
+                    }
+                });
+
+                if (employees.length > 10) {
+                    html += `<div style="padding:8px 0;color:#7f8c8d;font-size:12px;text-align:center;">+${employees.length - 10} colaborador(es)...</div>`;
+                }
+
+                html += '</div>';
+
+                tooltip.innerHTML = html;
+                tooltip.style.borderLeftColor = color;
+                tooltip.style.opacity = '1';
+            });
+
+            segment.addEventListener('mousemove', function (e) {
+                tooltip.style.left = `${e.clientX + 15}px`;
+                tooltip.style.top = `${e.clientY + 15}px`;
+            });
+
+            segment.addEventListener('mouseleave', function () {
+                tooltip.style.opacity = '0';
+            });
+        });
+
+        const sortSelect = document.getElementById('sortOrder');
+        const searchInput = document.getElementById('searchEmployee');
+        const statusFilter = document.getElementById('statusFilter');
+        const tableBody = document.querySelector('#rankingTable tbody');
+
+        function filterAndSortTable() {
+            if (!tableBody) return;
+
+            const rows = Array.from(tableBody.querySelectorAll('tr.employee-row'));
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const statusValue = statusFilter ? statusFilter.value : '';
+            const sortType = sortSelect ? sortSelect.value : 'desc';
+
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const status = row.dataset.status || '';
+
+                const matchesSearch = !searchTerm || name.includes(searchTerm);
+                const matchesStatus = !statusValue || status === statusValue;
+
+                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+            });
+
+            const visibleRows = rows.filter(row => row.style.display !== 'none');
+
+            visibleRows.sort((a, b) => {
+                if (sortType === 'desc') {
+                    return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+                } else if (sortType === 'asc') {
+                    return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
+                } else if (sortType === 'name') {
+                    return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+                } else if (sortType === 'evals') {
+                    return parseInt(b.dataset.evals) - parseInt(a.dataset.evals);
+                }
+                return 0;
+            });
+
+            let visibleIndex = 0;
+            visibleRows.forEach((row) => {
+                tableBody.appendChild(row);
+                visibleIndex++;
+                const badge = row.querySelector('.cell-id .badge');
+                if (badge) {
+                    const isTop3 = visibleIndex <= 3;
+                    badge.innerHTML = (isTop3 ?
+                        `<i class="bi bi-trophy-fill ${['gold', 'silver', 'bronze'][visibleIndex - 1]} me-1"></i>` : '') +
+                        `#${visibleIndex}`;
+                    badge.classList.toggle('badge-top', isTop3);
+                }
+            });
+
+            rows.filter(row => row.style.display === 'none').forEach(row => {
+                tableBody.appendChild(row);
+            });
+        }
+
+        if (sortSelect) sortSelect.addEventListener('change', filterAndSortTable);
+        if (searchInput) searchInput.addEventListener('input', filterAndSortTable);
+        if (statusFilter) statusFilter.addEventListener('change', filterAndSortTable);
+
+        const cards = document.querySelectorAll('.dashboard-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
     });
 </script>
 {% endblock %}

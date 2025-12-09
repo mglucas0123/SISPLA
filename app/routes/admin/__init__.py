@@ -9,6 +9,7 @@ from .courses import courses_bp
 from .quiz import quiz_bp
 from .procedures import procedures_bp
 from .roles import roles_bp
+from .collaborative_reports import collaborative_reports_bp
 
 def create_admin_blueprint():    
     admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -20,6 +21,7 @@ def create_admin_blueprint():
     admin_bp.register_blueprint(quiz_bp)
     admin_bp.register_blueprint(procedures_bp)
     admin_bp.register_blueprint(roles_bp)
+    admin_bp.register_blueprint(collaborative_reports_bp)
     
     @admin_bp.route("/")
     @login_required

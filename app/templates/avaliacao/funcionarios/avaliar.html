@@ -2,6 +2,11 @@
 
 {% block title %}Avaliar Colaborador - SISPLA{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='avaliacao/funcionarios/avaliacao_funcionarios.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="employee-evaluation-container">
     <div class="container">
@@ -40,10 +45,18 @@
 
         <!-- Formulário Multi-Step -->
         {% include 'partials/_flash_messages.html' %}
+        
+        {# Definir o mês de referência a ser usado em todo o formulário #}
+        {% set effective_month = month_reference or reference_month or (form_data.get('month_reference') if form_data else '') %}
+        
         <form method="POST" action="{{ url_for('employee_evaluation.evaluate') }}" id="evaluationForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" id="form_action_input" name="form_action" value="">
-            <!-- STEP 1: Seleção de Colaborador e Mês -->
+            <!-- Hidden fields para preservar valores entre steps -->
+            <input type="hidden" id="hidden_evaluated_id" name="evaluated_id" value="{{ evaluated_id or (form_data.get('evaluated_id') if form_data else '') }}">
+            <input type="hidden" id="hidden_month_reference" name="month_reference" value="{{ effective_month }}">
+            <input type="hidden" id="hidden_evaluation_type" name="evaluation_type" value="{{ evaluation_type or (form_data.get('evaluation_type') if form_data else 'mensal') }}">
+            
             <div class="evaluation-step {{ 'active' if current_step == 'step1' else '' }}" id="step1">
                 <div class="step-card">
                     <div class="step-header">
@@ -59,27 +72,48 @@
                                 Selecione o Colaborador
                             </label>
                             <div class="employee-search-container">
-                                <select class="form-select-custom" id="evaluated_id" name="evaluated_id" required>
+                                <select class="form-select-custom" id="evaluated_id" required>
                                     <option value="">Selecione...</option>
                                     {% for user in users %}
-                                    <option value="{{ user.id }}" {% if form_data and
-                                        form_data.get('evaluated_id')==(user.id|string) or (evaluated_id and
-                                        evaluated_id==(user.id|string)) %}selected{% endif %}>{{ user.name }}</option>
+                                    <option value="{{ user.id }}" 
+                                        {% if evaluated_this_month and (user.id|string) in evaluated_this_month %}
+                                            data-evaluated="true" 
+                                            data-eval-type="{{ evaluated_this_month[user.id|string] }}"
+                                            class="already-evaluated"
+                                        {% endif %}
+                                        {% if form_data and form_data.get('evaluated_id')==(user.id|string) or (evaluated_id and evaluated_id==(user.id|string)) %}selected{% endif %}>
+                                        {{ user.name }}{% if evaluated_this_month and (user.id|string) in evaluated_this_month %} ✓{% endif %}
+                                    </option>
                                     {% endfor %}
                                 </select>
                             </div>
+                            <!-- Alerta de já avaliado -->
+                            <div class="already-evaluated-alert" id="alreadyEvaluatedAlert">
+                                <div class="alert-icon">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4><i class="bi bi-check-circle-fill me-1"></i> Colaborador já avaliado neste mês!</h4>
+                                    <p id="alertEvalType">Este colaborador já possui uma avaliação registrada para o mês atual.</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Mês de Referência -->
+                        <!-- Mês de Referência (automático - mês anterior) -->
                         <div class="form-group-custom">
                             <label for="month_reference" class="form-label-custom required">
                                 <i class="bi bi-calendar-month"></i>
                                 Mês de Referência
                             </label>
-                            <input type="month" class="form-control-custom" id="month_reference" name="month_reference"
-                                value="{{ form_data.get('month_reference') if form_data else (month_reference if month_reference else '') }}"
+                            <input type="month" class="form-control-custom" id="month_reference"
+                                value="{{ effective_month }}"
+                                readonly
+                                style="background-color: #f8f9fc; cursor: not-allowed;"
                                 required>
-                            <small class="form-hint">Selecione o mês referente à avaliação</small>
+                            <small class="form-hint">
+                                <i class="bi bi-info-circle"></i>
+                                Avaliação referente ao mês anterior
+                            </small>
                         </div>
 
                         <!-- Tipo de Avaliação -->
@@ -88,7 +122,7 @@
                                 <i class="bi bi-list-check"></i>
                                 Tipo de Avaliação
                             </label>
-                            <select class="form-select-custom" id="evaluation_type" name="evaluation_type" required
+                            <select class="form-select-custom" id="evaluation_type" required
                                 onchange="toggleEvaluationType()">
                                 <option value="mensal" {% if (form_data and form_data.get('evaluation_type')=='mensal' )
                                     or (evaluation_type=='mensal' ) %}selected{% endif %}>Avaliação Mensal</option>
@@ -105,7 +139,7 @@
                     </div>
 
                     <div class="step-actions">
-                        <button type="button" onclick="submitAction('to_step2')" class="btn btn-primary btn-next">
+                        <button type="button" onclick="submitAction('to_step2')" class="btn btn-primary btn-next" id="btnNextStep1">
                             Próximo <i class="bi bi-arrow-right"></i>
                         </button>
                     </div>
@@ -152,21 +186,82 @@
                 </div>
             </div>
 
-            <!-- STEP 3: Nota Final -->
+            <!-- SESSÃO 3: Nota Final e Observações -->
             <div class="evaluation-step {{ 'active' if current_step == 'step3' else '' }}" id="step3">
                 <div class="step-card">
                     <div class="step-header">
                         <i class="bi bi-3-circle-fill"></i>
-                        <h2>Nota Final</h2>
+                        <h2>Nota Final e Observações</h2>
                     </div>
 
-                    <!-- Nota de 0 a 10 -->
+                    <!-- Seção de Faltas e Atestados -->
+                    <div class="absence-section">
+                        <div class="absence-header">
+                            <div class="absence-icon-wrapper">
+                                <i class="bi bi-calendar2-check"></i>
+                            </div>
+                            <div class="absence-title-content">
+                                <h3>Registro de Frequência</h3>
+                                <p>Informe as ocorrências de ausência do colaborador no período avaliado</p>
+                            </div>
+                        </div>
+                        
+                        <div class="absence-cards-grid">
+                            <!-- Card de Faltas -->
+                            <div class="absence-card absence-card-danger">
+                                <div class="absence-card-icon">
+                                    <i class="bi bi-person-x-fill"></i>
+                                </div>
+                                <div class="absence-card-content">
+                                    <label for="absence_count" class="absence-card-label">
+                                        Faltas
+                                    </label>
+                                    <p class="absence-card-description">Dias em que o colaborador não compareceu</p>
+                                    <div class="absence-counter-modern">
+                                        <button type="button" class="counter-btn counter-btn-minus" onclick="decrementCounter('absence_count')">
+                                            <i class="bi bi-dash-lg"></i>
+                                        </button>
+                                        <input type="number" class="counter-input" id="absence_count" name="absence_count"
+                                            value="{{ form_data.get('absence_count', 0) if form_data else 0 }}" min="0" max="31" readonly>
+                                        <button type="button" class="counter-btn counter-btn-plus" onclick="incrementCounter('absence_count')">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Card de Atestados -->
+                            <div class="absence-card absence-card-warning">
+                                <div class="absence-card-icon">
+                                    <i class="bi bi-file-earmark-medical-fill"></i>
+                                </div>
+                                <div class="absence-card-content">
+                                    <label for="medical_certificate_count" class="absence-card-label">
+                                        Atestados médicos
+                                    </label>
+                                    <p class="absence-card-description">Quantidade de atestados apresentados no período</p>
+                                    <div class="absence-counter-modern">
+                                        <button type="button" class="counter-btn counter-btn-minus" onclick="decrementCounter('medical_certificate_count')">
+                                            <i class="bi bi-dash-lg"></i>
+                                        </button>
+                                        <input type="number" class="counter-input" id="medical_certificate_count" name="medical_certificate_count"
+                                            value="{{ form_data.get('medical_certificate_count', 0) if form_data else 0 }}" min="0" max="31" readonly>
+                                        <button type="button" class="counter-btn counter-btn-plus" onclick="incrementCounter('medical_certificate_count')">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nota Final do Colaborador -->
                     <div class="rating-section">
                         <div class="rating-header">
-                            <span class="rating-question-number">4</span>
+                            <span class="rating-question-number">8</span>
                             <div class="rating-question-text">
-                                <h3>Nota de Desempenho</h3>
-                                <p>Atribua uma nota geral para o desempenho do colaborador neste mês</p>
+                                <h3>Nota Final do Colaborador</h3>
+                                <p>Qual nota daria a este colaborador quanto ao desempenho geral?</p>
                             </div>
                         </div>
 
@@ -175,7 +270,7 @@
                                 <div class="rating-display" id="ratingDisplay">
                                     <span class="rating-number" id="ratingNumber">5</span>
                                     <div class="rating-stars" id="ratingStars"></div>
-                                    <span class="rating-label" id="ratingLabel">Médio</span>
+                                    <span class="rating-label" id="ratingLabel">MÉDIO</span>
                                 </div>
                             </div>
 
@@ -200,10 +295,10 @@
                         <div class="justification-box">
                             <label for="rating_justification" class="form-label-custom required">
                                 <i class="bi bi-chat-left-text"></i>
-                                Justificativa da Nota <span style="color: red">*</span>
+                                Justifique a nota atribuída
                             </label>
                             <textarea class="form-control-custom" id="rating_justification" name="rating_justification"
-                                rows="3" required placeholder="Justifique a nota atribuída..."></textarea>
+                                rows="3" required placeholder="Explique os motivos da nota, pontos positivos e negativos...">{{ form_data.get('rating_justification', '') if form_data else '' }}</textarea>
                         </div>
                     </div>
 
@@ -222,40 +317,42 @@
 </div>
 
 <style>
+    /* Caixa de Informação de Conformidade */
+    .conformity-info-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #93c5fd;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+    }
+
+    .conformity-info-box i {
+        font-size: 20px;
+        color: #2563eb;
+        flex-shrink: 0;
+    }
+
+    .conformity-info-box div {
+        font-size: 14px;
+        color: #1e40af;
+    }
+
+    /* Fundo azul gradiente da página */
+    .employee-evaluation-container {
+        background: linear-gradient(135deg, #0078d4 0%, #1084d8 100%);
+        min-height: calc(100vh - 60px);
+        padding: 30px 0;
+    }
+
     .comm-table-box {
         background: white;
         border-radius: 12px;
         padding: 18px;
         border: 1px solid #e6edf6;
         box-shadow: 0 6px 20px rgba(2, 35, 85, 0.04);
-    }
-
-    // Remove `required` from controls that are not visible so browser HTML5
-    // validation doesn't try to focus them and throw "not focusable" errors.
-    function disableRequiredForHiddenControls(form) {
-        const disabled = [];
-        const requiredControls = form.querySelectorAll('[required]');
-        requiredControls.forEach(ctrl => {
-            // If element is not visible (display: none or not in layout), disable required
-            const style = window.getComputedStyle(ctrl);
-            const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && ctrl.offsetParent !== null;
-            if (!isVisible) {
-                ctrl.dataset._savedRequired = '1';
-                ctrl.removeAttribute('required');
-                disabled.push(ctrl);
-            }
-        });
-        return disabled;
-    }
-
-    function restoreRequiredControls(list) {
-        if (!list || !list.length) return;
-        list.forEach(ctrl => {
-            if (ctrl && ctrl.dataset && ctrl.dataset._savedRequired) {
-                ctrl.setAttribute('required', '');
-                delete ctrl.dataset._savedRequired;
-            }
-        });
     }
 
     #experience_45_section .comm-table-box table,
@@ -318,22 +415,512 @@
         color: #6b7280;
         font-size: 13px
     }
+
+    /* Alerta de já avaliado */
+    .already-evaluated-alert {
+        display: none;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border: 2px solid #f59e0b;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 16px;
+        animation: shake 0.5s ease-in-out;
+    }
+
+    .already-evaluated-alert.show {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .already-evaluated-alert .alert-icon {
+        width: 48px;
+        height: 48px;
+        background: #f59e0b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .already-evaluated-alert .alert-icon i {
+        font-size: 24px;
+        color: white;
+    }
+
+    .already-evaluated-alert .alert-content h4 {
+        margin: 0 0 4px 0;
+        color: #92400e;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .already-evaluated-alert .alert-content p {
+        margin: 0;
+        color: #a16207;
+        font-size: 13px;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    /* Select com colaborador já avaliado */
+    .form-select-custom option.already-evaluated {
+        color: #92400e;
+        background: #fef3c7;
+    }
+
+    /* Botão desabilitado */
+    .btn-next.disabled-evaluated {
+        background: #9ca3af !important;
+        cursor: not-allowed !important;
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    /* ========================================
+       SEÇÃO DE AUSÊNCIAS E ATESTADOS
+       ======================================== */
+    .absence-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    }
+
+    .absence-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .absence-icon-wrapper {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 120, 212, 0.25);
+    }
+
+    .absence-icon-wrapper i {
+        font-size: 24px;
+        color: white;
+    }
+
+    .absence-title-content h3 {
+        margin: 0 0 4px 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .absence-title-content p {
+        margin: 0;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .absence-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    @media (max-width: 640px) {
+        .absence-cards-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .absence-card {
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        display: flex;
+        gap: 16px;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .absence-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .absence-card-danger {
+        border-left: 4px solid #ef4444;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
+    }
+
+    .absence-card-danger:hover {
+        border-color: #ef4444;
+    }
+
+    .absence-card-warning {
+        border-left: 4px solid #f59e0b;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+    }
+
+    .absence-card-warning:hover {
+        border-color: #f59e0b;
+    }
+
+    .absence-card-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .absence-card-danger .absence-card-icon {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+
+    .absence-card-danger .absence-card-icon i {
+        font-size: 22px;
+        color: #dc2626;
+    }
+
+    .absence-card-warning .absence-card-icon {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+
+    .absence-card-warning .absence-card-icon i {
+        font-size: 22px;
+        color: #d97706;
+    }
+
+    .absence-card-content {
+        flex: 1;
+    }
+
+    .absence-card-label {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+
+    .absence-card-description {
+        font-size: 12px;
+        color: #94a3b8;
+        margin: 0 0 14px 0;
+        line-height: 1.4;
+    }
+
+    .absence-counter-modern {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        width: fit-content;
+    }
+
+    .counter-btn {
+        width: 42px;
+        height: 42px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .counter-btn:hover {
+        background: #e2e8f0;
+        color: #334155;
+    }
+
+    .counter-btn:active {
+        background: #cbd5e1;
+    }
+
+    .counter-btn-minus:hover {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .counter-btn-plus:hover {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .counter-input {
+        width: 56px;
+        height: 42px;
+        border: none;
+        border-left: 1px solid #e2e8f0;
+        border-right: 1px solid #e2e8f0;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e293b;
+        background: white;
+        -moz-appearance: textfield;
+    }
+
+    .counter-input::-webkit-outer-spin-button,
+    .counter-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .counter-input:focus {
+        outline: none;
+    }
 </style>
 
 <script>
     let currentStep = {{ 1 if current_step == 'step1' else (2 if current_step == 'step2' else 3) }};
+    let isCurrentEmployeeEvaluated = false;
+    let isCheckingEvaluation = false;  // Flag para verificação em andamento
+
+    // Funções para controle de faltas/atestados
+    function incrementCounter(inputId) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            const max = parseInt(input.getAttribute('max')) || 31;
+            const current = parseInt(input.value) || 0;
+            if (current < max) {
+                input.value = current + 1;
+            }
+        }
+    }
+
+    function decrementCounter(inputId) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            const min = parseInt(input.getAttribute('min')) || 0;
+            const current = parseInt(input.value) || 0;
+            if (current > min) {
+                input.value = current - 1;
+            }
+        }
+    }
+
+    // Remove `required` from controls that are not visible so browser HTML5
+    // validation doesn't try to focus them and throw "not focusable" errors.
+    function disableRequiredForHiddenControls(form) {
+        const disabled = [];
+        const requiredControls = form.querySelectorAll('[required]');
+        requiredControls.forEach(ctrl => {
+            const style = window.getComputedStyle(ctrl);
+            const isVisible = style && style.display !== 'none' && style.visibility !== 'hidden' && ctrl.offsetParent !== null;
+            if (!isVisible) {
+                ctrl.dataset._savedRequired = '1';
+                ctrl.removeAttribute('required');
+                disabled.push(ctrl);
+            }
+        });
+        return disabled;
+    }
+
+    function restoreRequiredControls(list) {
+        if (!list || !list.length) return;
+        list.forEach(ctrl => {
+            if (ctrl && ctrl.dataset && ctrl.dataset._savedRequired) {
+                ctrl.setAttribute('required', '');
+                delete ctrl.dataset._savedRequired;
+            }
+        });
+    }
+
+    // Verificar se colaborador já foi avaliado para o tipo de avaliação selecionado
+    // Agora usa API para verificar em qualquer mês, não apenas o atual
+    async function checkAlreadyEvaluated() {
+        const select = document.getElementById('evaluated_id');
+        const evalTypeSelect = document.getElementById('evaluation_type');
+        const monthInput = document.getElementById('month_reference');
+        const alertEl = document.getElementById('alreadyEvaluatedAlert');
+        const btnNext = document.getElementById('btnNextStep1');
+        const alertText = document.getElementById('alertEvalType');
+        
+        console.log('checkAlreadyEvaluated chamada');
+        console.log('Elementos encontrados:', { select: !!select, alertEl: !!alertEl, btnNext: !!btnNext, evalTypeSelect: !!evalTypeSelect, monthInput: !!monthInput });
+        
+        if (!select || !alertEl || !btnNext || !evalTypeSelect || !monthInput) {
+            console.log('Elementos não encontrados, abortando');
+            return;
+        }
+        
+        const evaluatedId = select.value;
+        const currentEvalType = evalTypeSelect.value;
+        const selectedMonth = monthInput.value;
+        
+        console.log('Valores:', { evaluatedId, currentEvalType, selectedMonth });
+        
+        // Se não há colaborador ou mês selecionado, não verifica
+        if (!evaluatedId || !selectedMonth) {
+            alertEl.classList.remove('show');
+            btnNext.classList.remove('disabled-evaluated');
+            btnNext.removeAttribute('disabled');
+            isCurrentEmployeeEvaluated = false;
+            isCheckingEvaluation = false;
+            console.log('Sem colaborador ou mês, liberando botão');
+            return;
+        }
+        
+        // Bloquear botão durante a verificação
+        isCheckingEvaluation = true;
+        btnNext.classList.add('disabled-evaluated');
+        btnNext.setAttribute('disabled', 'disabled');
+        console.log('Iniciando verificação na API...');
+        
+        try {
+            // Chamar API para verificar se já existe avaliação
+            const url = `{{ url_for('employee_evaluation.check_evaluation') }}?evaluated_id=${evaluatedId}&month_reference=${selectedMonth}`;
+            console.log('URL da API:', url);
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('Resposta da API:', data);
+            
+            if (data.is_evaluated && data.evaluation_types.includes(currentEvalType)) {
+                console.log('BLOQUEANDO - Colaborador já avaliado para este tipo');
+                const typeNames = {
+                    'mensal': 'Avaliação Mensal',
+                    'experiencia_45': 'Avaliação de Experiência (45 dias)',
+                    'experiencia_90': 'Avaliação de Experiência (90 dias)'
+                };
+                
+                // Formatar o mês para exibição
+                const [year, month] = selectedMonth.split('-');
+                const monthNames = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
+                                   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+                const monthName = monthNames[parseInt(month) - 1];
+                
+                alertText.innerHTML = `Este colaborador já possui uma <strong>${typeNames[currentEvalType] || currentEvalType}</strong> registrada para <strong>${monthName} de ${year}</strong>.`;
+                alertEl.classList.add('show');
+                btnNext.classList.add('disabled-evaluated');
+                btnNext.setAttribute('disabled', 'disabled');
+                isCurrentEmployeeEvaluated = true;
+                isCheckingEvaluation = false;
+                console.log('Alerta exibido, botão bloqueado');
+                return;
+            }
+            
+            // Se chegou aqui, não há bloqueio
+            console.log('LIBERANDO - Colaborador pode ser avaliado');
+            alertEl.classList.remove('show');
+            btnNext.classList.remove('disabled-evaluated');
+            btnNext.removeAttribute('disabled');
+            isCurrentEmployeeEvaluated = false;
+            isCheckingEvaluation = false;
+            
+        } catch (error) {
+            console.error('Erro ao verificar avaliação:', error);
+            // Em caso de erro, permite continuar (backend fará validação)
+            alertEl.classList.remove('show');
+            btnNext.classList.remove('disabled-evaluated');
+            btnNext.removeAttribute('disabled');
+            isCurrentEmployeeEvaluated = false;
+            isCheckingEvaluation = false;
+        }
+    }
+
+    // Inicialização quando DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOMContentLoaded - Inicializando verificação de avaliação');
+        
+        // Event listeners para mudança de colaborador, tipo de avaliação e mês
+        const evaluatedSelect = document.getElementById('evaluated_id');
+        const evalTypeSelect = document.getElementById('evaluation_type');
+        const monthInput = document.getElementById('month_reference');
+        
+        // Hidden fields para preservar valores
+        const hiddenEvaluatedId = document.getElementById('hidden_evaluated_id');
+        const hiddenMonthReference = document.getElementById('hidden_month_reference');
+        const hiddenEvaluationType = document.getElementById('hidden_evaluation_type');
+        
+        console.log('Elementos no DOMContentLoaded:', { 
+            evaluatedSelect: !!evaluatedSelect, 
+            evalTypeSelect: !!evalTypeSelect, 
+            monthInput: !!monthInput,
+            evaluatedValue: evaluatedSelect?.value
+        });
+        
+        // Sincronizar campos visíveis com hidden fields
+        function syncHiddenFields() {
+            if (evaluatedSelect && hiddenEvaluatedId) {
+                hiddenEvaluatedId.value = evaluatedSelect.value;
+            }
+            if (monthInput && hiddenMonthReference) {
+                hiddenMonthReference.value = monthInput.value;
+            }
+            if (evalTypeSelect && hiddenEvaluationType) {
+                hiddenEvaluationType.value = evalTypeSelect.value;
+            }
+            console.log('Hidden fields sincronizados:', {
+                evaluated_id: hiddenEvaluatedId?.value,
+                month_reference: hiddenMonthReference?.value,
+                evaluation_type: hiddenEvaluationType?.value
+            });
+        }
+        
+        // Sincronizar ao carregar (para garantir valores iniciais)
+        syncHiddenFields();
+        
+        if (evaluatedSelect) {
+            evaluatedSelect.addEventListener('change', function() {
+                console.log('Colaborador mudou para:', this.value);
+                syncHiddenFields();
+                checkAlreadyEvaluated();
+            });
+        }
+        if (evalTypeSelect) {
+            evalTypeSelect.addEventListener('change', function() {
+                console.log('Tipo de avaliação mudou para:', this.value);
+                syncHiddenFields();
+                checkAlreadyEvaluated();
+            });
+        }
+        if (monthInput) {
+            monthInput.addEventListener('change', function() {
+                console.log('Mês mudou para:', this.value);
+                syncHiddenFields();
+                checkAlreadyEvaluated();
+            });
+        }
+        
+        // Verificar ao carregar a página se já há um colaborador selecionado
+        if (evaluatedSelect && evaluatedSelect.value) {
+            console.log('Colaborador já selecionado ao carregar, verificando...');
+            checkAlreadyEvaluated();
+        }
+    });
 
     function nextStep(step) {
         if (!validateStep(currentStep)) {
             return;
         }
-        // Hide current and show target
         const currentStepEl = document.getElementById(`step${currentStep}`);
         const targetStepEl = document.getElementById(`step${step}`);
         if (currentStepEl) currentStepEl.classList.remove('active');
         if (targetStepEl) targetStepEl.classList.add('active');
 
-        // Update progress indicator classes
         const currentIndicator = document.querySelector(`[data-step="${currentStep}"]`);
         const targetIndicator = document.querySelector(`[data-step="${step}"]`);
         if (currentIndicator) {
@@ -355,7 +942,6 @@
         if (currentStepEl) currentStepEl.classList.remove('active');
         if (targetStepEl) targetStepEl.classList.add('active');
 
-        // Update progress indicator classes: remove 'completed' from the step we left
         const currentIndicator = document.querySelector(`[data-step="${currentStep}"]`);
         const targetIndicator = document.querySelector(`[data-step="${step}"]`);
         if (currentIndicator) {
@@ -375,6 +961,12 @@
         const evalType = document.getElementById('evaluation_type').value;
 
         if (step === 1) {
+            // Verificar se colaborador já foi avaliado
+            if (isCurrentEmployeeEvaluated) {
+                alert('Este colaborador já foi avaliado neste mês! Selecione outro colaborador.');
+                return false;
+            }
+
             const evaluatedId = document.getElementById('evaluated_id').value;
             const monthRef = document.getElementById('month_reference').value;
 
@@ -391,13 +983,25 @@
 
         if (step === 2) {
             if (evalType === 'mensal') {
-                const participation = document.querySelector('input[name="participation_score"]:checked');
-                if (!participation) {
-                    alert('Por favor, selecione o nível de participação!');
-                    return false;
+                // Validar critérios com Conforme/Não Conforme/Não se Aplica
+                const criteriaNames = ['punctuality', 'quality', 'productivity', 'teamwork', 
+                                       'communication', 'initiative', 'compliance', 'development'];
+                
+                for (const criteria of criteriaNames) {
+                    const selection = document.querySelector(`input[name="criteria_${criteria}"]:checked`);
+                    const justification = document.querySelector(`textarea[name="criteria_${criteria}_justification"]`);
+                    
+                    if (!selection) {
+                        alert(`Por favor, selecione Conforme/Não Conforme/Não se Aplica para todos os critérios!`);
+                        return false;
+                    }
+                    if (!justification || !justification.value.trim()) {
+                        alert(`Por favor, preencha a justificativa para todos os critérios!`);
+                        justification && justification.focus();
+                        return false;
+                    }
                 }
             } else if (evalType === 'experiencia_45') {
-                // Validação específica para 45 dias
                 const commFields45 = ['comm_verbal_45', 'comm_written_45', 'comm_listening_45'];
                 for (const field of commFields45) {
                     if (!document.querySelector(`input[name="${field}"]:checked`)) {
@@ -425,7 +1029,6 @@
                     return false;
                 }
             } else if (evalType === 'experiencia_90') {
-                // Validação específica para 90 dias
                 const commFields90 = ['comm_verbal_90', 'comm_written_90', 'comm_collab_90'];
                 for (const field of commFields90) {
                     if (!document.querySelector(`input[name="${field}"]:checked`)) {
@@ -454,10 +1057,11 @@
         }
 
         if (step === 3) {
+            // Justificativa é obrigatória para todos os tipos de avaliação
             const ratingJustification = document.getElementById('rating_justification');
-            if (!ratingJustification.value.trim()) {
+            if (!ratingJustification || !ratingJustification.value.trim()) {
                 alert('Por favor, justifique a nota atribuída!');
-                ratingJustification.focus();
+                if (ratingJustification) ratingJustification.focus();
                 return false;
             }
         }
@@ -472,7 +1076,6 @@
         const exp45Section = document.getElementById('experience_45_section');
         const exp90Section = document.getElementById('experience_90_section');
 
-        // Hide all by default
         monthlySection.style.display = 'none';
         exp45Section.style.display = 'none';
         exp90Section.style.display = 'none';
@@ -484,12 +1087,9 @@
         } else if (type === 'experiencia_90') {
             exp90Section.style.display = 'block';
         }
-
-        // Note: validation handles required checks per type, so we avoid toggling `required` attributes broadly here.
     }
 
     document.getElementById('evaluation_type').addEventListener('change', toggleEvaluationType);
-
     toggleEvaluationType();
 
     const ratingSlider = document.getElementById('rating');
@@ -548,24 +1148,52 @@
         });
     });
 
-    // Submit helper: set hidden form_action and submit via native submit()
     function submitAction(action) {
+        // Bloquear se verificação ainda está em andamento
+        if (action === 'to_step2' && isCheckingEvaluation) {
+            alert('Aguarde a verificação do colaborador...');
+            return;
+        }
+        
+        // Bloquear se colaborador já avaliado
+        if (action === 'to_step2' && isCurrentEmployeeEvaluated) {
+            alert('Este colaborador já foi avaliado neste mês! Selecione outro colaborador.');
+            return;
+        }
+
         const form = document.getElementById('evaluationForm');
         const actionInput = document.getElementById('form_action_input');
         if (!actionInput) return;
         actionInput.value = action;
-        // For navigation actions that move forward (to_step2, to_step3, submit),
-        // use requestSubmit() to trigger HTML5 constraint validation (required fields).
-        // For 'back' actions we intentionally bypass validation so user can go back.
+        
+        // Garantir sincronização dos hidden fields antes do submit
+        const evaluatedSelect = document.getElementById('evaluated_id');
+        const monthInput = document.getElementById('month_reference');
+        const evalTypeSelect = document.getElementById('evaluation_type');
+        const hiddenEvaluatedId = document.getElementById('hidden_evaluated_id');
+        const hiddenMonthReference = document.getElementById('hidden_month_reference');
+        const hiddenEvaluationType = document.getElementById('hidden_evaluation_type');
+        
+        if (evaluatedSelect && hiddenEvaluatedId && evaluatedSelect.value) {
+            hiddenEvaluatedId.value = evaluatedSelect.value;
+        }
+        if (monthInput && hiddenMonthReference && monthInput.value) {
+            hiddenMonthReference.value = monthInput.value;
+        }
+        if (evalTypeSelect && hiddenEvaluationType && evalTypeSelect.value) {
+            hiddenEvaluationType.value = evalTypeSelect.value;
+        }
+        
+        console.log('[submitAction] action:', action);
+        console.log('[submitAction] hidden_evaluated_id:', hiddenEvaluatedId?.value);
+        console.log('[submitAction] hidden_month_reference:', hiddenMonthReference?.value);
+        console.log('[submitAction] hidden_evaluation_type:', hiddenEvaluationType?.value);
+        
         try {
-            // For returning to previous steps or moving from Step1->Step2, bypass HTML5 constraint
-            // validation and submit directly; server-side will validate required fields for Step1.
             const act = action ? action.toString().toLowerCase() : '';
             if (act.startsWith('back') || act === 'to_step2') {
                 form.submit();
             } else {
-                // Before requesting native HTML5 validation, run our explicit step validator
-                // so we show friendly alerts and avoid confusing browser-focus behavior.
                 if (act === 'to_step3') {
                     if (!validateStep(2)) return;
                 }
@@ -574,32 +1202,27 @@
                 }
 
                 if (typeof form.requestSubmit === 'function') {
-                    // Temporarily disable `required` on controls that are not visible
                     const disabled = disableRequiredForHiddenControls(form);
                     try {
                         form.requestSubmit();
                     } finally {
-                        // restore attributes (if page didn't navigate yet)
                         restoreRequiredControls(disabled);
                     }
                 } else {
-                // Fallback: create a temporary submit button to trigger validation
-                const tmp = document.createElement('button');
-                tmp.type = 'submit';
-                tmp.style.display = 'none';
-                form.appendChild(tmp);
-                    // disable hidden required controls before fallback submit
+                    const tmp = document.createElement('button');
+                    tmp.type = 'submit';
+                    tmp.style.display = 'none';
+                    form.appendChild(tmp);
                     const disabled = disableRequiredForHiddenControls(form);
                     try {
                         tmp.click();
                     } finally {
                         restoreRequiredControls(disabled);
                     }
-                form.removeChild(tmp);
+                    form.removeChild(tmp);
                 }
             }
         } catch (e) {
-            // Last resort
             form.submit();
         }
     }

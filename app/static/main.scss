@@ -16,6 +16,7 @@
 @import 'course/course_progress'; 
 @import 'course/manage_quiz';
 @import 'users/manage_users';
+@import 'users/profile';
 @import 'nir/nir';
 @import 'nir/procedure_management';
 @import 'roles/roles_permissions';
@@ -31,9 +32,7 @@
 @import 'feedback/supplier_tracking';
 @import 'avaliacao/funcionarios/dashboard_funcionarios';
 @import 'avaliacao/funcionarios/avaliacao_funcionarios';
-
-
-
+@import 'avaliacao/funcionarios/validacao_colaborativa';
 
 
 //Components

@@ -2,140 +2,89 @@
 
 {% block title %}Meu Perfil | SISPLA{% endblock %}
 
-{% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-radius: 16px;">
-                <div class="card-header border-0 bg-white p-0 position-relative"
-                    style="height: 120px; background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);">
-                </div>
-                <div class="card-body p-4 pt-0 position-relative">
-                    <div class="d-flex justify-content-between align-items-end mb-4" style="margin-top: -60px;">
-                        <div class="d-flex align-items-end">
-                            <div class="bg-white p-1 rounded-circle shadow-sm">
-                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
-                                    style="width: 120px; height: 120px; border: 4px solid #fff;">
-                                    <i class="fas fa-user-circle text-secondary" style="font-size: 80px;"></i>
-                                </div>
-                            </div>
-                            <div class="ms-3 mb-2">
-                                <h2 class="fw-bold mb-0 text-dark">{{ current_user.name }}</h2>
-                                <p class="text-muted mb-0">{{ current_user.job_title or 'Colaborador' }}</p>
-                            </div>
-                        </div>
-                        <div class="mb-2 d-none d-md-block">
-                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
-                                <i class="fas fa-id-badge me-2"></i>{{ current_user.username }}
-                            </span>
-                        </div>
-                    </div>
+{% block styles %}
+{% endblock %}
 
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded-3 h-100">
-                                <small class="text-muted d-block mb-1 text-uppercase fw-bold"
-                                    style="font-size: 0.75rem;">Email Corporativo</small>
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-envelope text-primary me-2"></i>
-                                    <span class="fw-medium text-dark">{{ current_user.email }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded-3 h-100">
-                                <small class="text-muted d-block mb-1 text-uppercase fw-bold"
-                                    style="font-size: 0.75rem;">Setor / Departamento</small>
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-building text-primary me-2"></i>
-                                    <span class="fw-medium text-dark">
-                                        {% for role in current_user.roles %}
-                                        {{ role.name }}{% if not loop.last %}, {% endif %}
-                                        {% else %}
-                                        Não definido
-                                        {% endfor %}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+{% block content %}
+{% include 'partials/_flash_messages.html' %}
+<div class="profile-page">
+    <aside class="profile-sidebar">
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Menu Principal</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link active" data-section="perfil">
+                        <span class="nav-icon"><i class="bi bi-person"></i></span>
+                        <span class="nav-text">Meu Perfil</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-section="seguranca">
+                        <span class="nav-icon"><i class="bi bi-shield-lock"></i></span>
+                        <span class="nav-text">Segurança</span>
+                    </a>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-                <div class="card-header bg-white border-0 p-4 pb-0">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2 text-primary"></i>Segurança da Conta</h5>
+            <div class="nav-section">
+                <div class="nav-section-title">Navegação</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('main.panel') }}" class="nav-link">
+                        <span class="nav-icon"><i class="bi bi-house"></i></span>
+                        <span class="nav-text">Voltar ao Início</span>
+                    </a>
                 </div>
-                <div class="card-body p-4">
+            </div>
+        </nav>
 
-                    <div
-                        class="d-flex align-items-center justify-content-between p-3 rounded-3 {{ 'bg-success-subtle' if current_user.totp_secret else 'bg-light' }}">
-                        <div class="d-flex align-items-center">
-                            <div
-                                class="rounded-circle p-3 {{ 'bg-success text-white' if current_user.totp_secret else 'bg-white text-secondary shadow-sm' }} me-3">
-                                <i class="bi bi-phone-vibrate fs-4"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-bold mb-1">Autenticação de Dois Fatores (2FA)</h6>
-                                <p
-                                    class="mb-0 small {{ 'text-success-emphasis' if current_user.totp_secret else 'text-muted' }}">
-                                    {% if current_user.totp_secret %}
-                                    Sua conta está protegida com uma camada extra de segurança.
-                                    {% else %}
-                                    Adicione uma camada extra de segurança à sua conta.
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            {% if current_user.totp_secret %}
-                            <button type="button" class="btn btn-outline-danger btn-sm fw-bold" data-bs-toggle="modal"
-                                data-bs-target="#disable2FAModal">
-                                Desativar
-                            </button>
-                            {% else %}
-                            <form action="{{ url_for('user.setup_2fa') }}" method="POST">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">
-                                    Ativar Agora
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <hr class="my-4 text-muted opacity-25">
-
-                    <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle p-3 bg-white text-secondary shadow-sm me-3">
-                                <i class="bi bi-key fs-4"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-bold mb-1">Alterar Senha</h6>
-                                <p class="mb-0 small text-muted">Atualize sua senha periodicamente para manter-se
-                                    seguro.</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-primary btn-sm fw-bold" type="button" data-bs-toggle="modal"
-                            data-bs-target="#modalTrocarSenhaBase">
-                            Alterar
-                        </button>
-                    </div>
-
+        <div class="sidebar-user">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name text-center">{{ current_user.name }}</div>
+                    <div class="user-email text-center">{{ current_user.email }}</div>
                 </div>
             </div>
         </div>
-    </div>
+    </aside>
+
+    <main class="profile-content">
+        {% include 'user/profile/modules/_section_perfil.html' %}
+
+        {% include 'user/profile/modules/_section_seguranca.html' %}
+    </main>
 </div>
 
-{% from "components/modals.html" import confirm_action_modal %}
+{# Script de navegação entre seções #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const navLinks = document.querySelectorAll('.sidebar-nav .nav-link[data-section]');
+    const sections = document.querySelectorAll('.profile-section');
 
-{{ confirm_action_modal(
-    'disable2FAModal',
-    'Desativar 2FA?',
-    'Sua conta ficará menos segura sem a autenticação de dois fatores. Tem certeza que deseja continuar?',
-    url_for('user.disable_2fa'),
-    'Sim, Desativar'
-) }}
+    function showSection(sectionId) {
+        sections.forEach(s => s.classList.remove('active'));
+
+        const targetSection = document.getElementById('section-' + sectionId);
+        if (targetSection) {
+            targetSection.classList.add('active');
+        }
+
+        navLinks.forEach(l => l.classList.remove('active'));
+        const activeLink = document.querySelector(`[data-section="${sectionId}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const sectionId = this.getAttribute('data-section');
+            showSection(sectionId);
+        });
+    });
+});
+</script>
 {% endblock %}

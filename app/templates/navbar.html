@@ -87,10 +87,6 @@
                                 href="{{ url_for('user.profile') }}">
                                 <i class="fas fa-user me-2"></i>Perfil
                             </a>
-                            <button class="dropdown-item dropdown-item-custom" type="button" data-bs-toggle="modal"
-                                data-bs-target="#modalTrocarSenhaBase">
-                                <i class="fas fa-key me-2"></i>Trocar Senha
-                            </button>
                         </li>
                         {% if current_user.has_permission('admin-total') %}
                         <li>
@@ -106,7 +102,21 @@
                                 <i class="fas fa-gear me-2"></i>Central de Gestão
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('admin.collaborative_reports.list_reports') }}">
+                                <i class="fas fa-file-chart-line me-2"></i>Relatórios de Sessões
+                            </a>
+                        </li>
                         {% endif %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item dropdown-item-custom" href="{{ url_for('collaborative.my_evaluations') }}">
+                                <i class="fas fa-clipboard-check me-2"></i>Minhas Avaliações
+                                <span class="badge bg-primary ms-1" id="badge-pending-evaluations" style="display: none;"></span>
+                            </a>
+                        </li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -122,144 +132,11 @@
         </div>
     </nav>
     {% endif %}
-    {% if current_user.is_authenticated %}
-    <div class="modal fade" id="modalTrocarSenhaBase" tabindex="-1" aria-labelledby="modalTrocarSenhaBaseLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <form class="modal-content password-change-modal" method="POST"
-                action="{{ url_for('util.user_change_password') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-header password-modal-header">
-                    <div class="modal-title-container">
-                        <div class="modal-icon-wrapper">
-                            <i class="bi bi-shield-lock-fill modal-icon"></i>
-                        </div>
-                        <div class="modal-title-text">
-                            <h5 class="modal-title" id="modalTrocarSenhaBaseLabel">Alterar Senha</h5>
-                            <p class="modal-subtitle text-dark">Mantenha sua conta segura</p>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close password-modal-close" data-bs-dismiss="modal"
-                        aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body password-modal-body">
-                    <div class="security-notice">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <span>Sua nova senha deve ter pelo menos 8 caracteres</span>
-                    </div>
 
-                    <div class="password-field-group">
-                        <label for="senha_atual_base" class="form-label password-label">
-                            <i class="bi bi-lock-fill me-2"></i>Senha Atual
-                        </label>
-                        <div class="password-input-wrapper">
-                            <input type="password" class="form-control password-input" name="senha_atual"
-                                id="senha_atual_base" required autocomplete="current-password"
-                                placeholder="Digite sua senha atual">
-                            <button type="button" class="password-toggle"
-                                onclick="togglePasswordVisibility('senha_atual_base', this)">
-                                <i class="bi bi-eye-fill"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="password-field-group">
-                        <label for="nova_senha_base" class="form-label password-label">
-                            <i class="bi bi-shield-check-fill me-2"></i>Nova Senha
-                        </label>
-                        <div class="password-input-wrapper">
-                            <input type="password" class="form-control password-input" name="nova_senha"
-                                id="nova_senha_base" required autocomplete="new-password"
-                                placeholder="Digite sua nova senha" minlength="8">
-                            <button type="button" class="password-toggle"
-                                onclick="togglePasswordVisibility('nova_senha_base', this)">
-                                <i class="bi bi-eye-fill"></i>
-                            </button>
-                        </div>
-                        <div class="password-strength-indicator">
-                            <div class="strength-bar">
-                                <div class="strength-fill" id="strengthFill"></div>
-                            </div>
-                            <small class="strength-text" id="strengthText">Digite uma senha para ver a força</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer password-modal-footer">
-                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-2"></i>Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-save">
-                        <i class="bi bi-check-circle-fill me-2"></i>Alterar Senha
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function togglePasswordVisibility(inputId, button) {
-            const input = document.getElementById(inputId);
-            const icon = button.querySelector('i');
-
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'bi bi-eye-slash-fill';
-            } else {
-                input.type = 'password';
-                icon.className = 'bi bi-eye-fill';
-            }
-        }
-
-        document.getElementById('nova_senha_base').addEventListener('input', function (e) {
-            const password = e.target.value;
-            const strengthFill = document.getElementById('strengthFill');
-            const strengthText = document.getElementById('strengthText');
-
-            let strength = 0;
-            let text = '';
-            let color = '';
-
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[a-z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-            switch (strength) {
-                case 0:
-                case 1:
-                    text = 'Muito fraca';
-                    color = '#ff4757';
-                    break;
-                case 2:
-                    text = 'Fraca';
-                    color = '#ff7675';
-                    break;
-                case 3:
-                    text = 'Razoável';
-                    color = '#fdcb6e';
-                    break;
-                case 4:
-                    text = 'Forte';
-                    color = '#6c5ce7';
-                    break;
-                case 5:
-                    text = 'Muito forte';
-                    color = '#00b894';
-                    break;
-            }
-
-            strengthFill.style.width = `${(strength / 5) * 100}%`;
-            strengthFill.style.backgroundColor = color;
-            strengthText.textContent = text;
-            strengthText.style.color = color;
-        });
-    </script>
-    {% endif %}
-
-    <main class="flex-shrink-0">
+    <main class="flex-grow-1 d-flex flex-column">
         {% block content %}{% endblock %}
     </main>
+
     <footer class="footer-premium no-print mt-auto">
         <div class="container">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
@@ -443,6 +320,20 @@
         document.addEventListener('DOMContentLoaded', function () {
             {% if current_user.is_authenticated and current_user.has_permission('show-notifications-nir') and not current_user.has_permission('admin-total') %}
             startNotificationSystem();
+            {% endif %}
+            
+            // Carregar contagem de avaliações pendentes
+            {% if current_user.is_authenticated %}
+            fetch('{{ url_for("collaborative.api_pending_evaluations") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('badge-pending-evaluations');
+                    if (badge && data.total_pending > 0) {
+                        badge.textContent = data.total_pending;
+                        badge.style.display = 'inline-block';
+                    }
+                })
+                .catch(error => console.log('Avaliações pendentes não disponíveis'));
             {% endif %}
         });
 

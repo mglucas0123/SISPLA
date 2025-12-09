@@ -1,0 +1,26 @@
+{% extends "navbar.html" %}
+
+{% block title %}{% block employee_title %}Avaliação de Colaboradores - SISPLA{% endblock %}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='avaliacao/funcionarios/avaliacao_funcionarios.css') }}">
+{% block employee_styles %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+{% include 'partials/_flash_messages.html' %}
+
+<div class="container-fluid px-4 py-4 employee-evaluation-page">
+    {% block employee_hero %}{% endblock %}
+
+    <div class="employee-content">
+        {% block employee_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% block employee_scripts %}{% endblock %}
+{% endblock %}

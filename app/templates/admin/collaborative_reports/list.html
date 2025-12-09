@@ -1,0 +1,769 @@
+{% extends "navbar.html" %}
+
+{% block title %}Relatórios de Sessões Colaborativas | SISPLA{% endblock %}
+
+{% block content %}
+<div class="collab-reports-wrapper">
+    <!-- Hero Header -->
+    <div class="hero-header-2fa">
+        <div class="hero-bg-pattern"></div>
+        <div class="hero-content">
+            <div class="hero-left">
+                <div class="hero-icon-wrapper">
+                    <div class="hero-icon">
+                        <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                    </div>
+                    <div class="hero-icon-ring"></div>
+                </div>
+                <div class="hero-text">
+                    <h1>Relatórios de Sessões Colaborativas</h1>
+                    <p>Acompanhamento e análise das sessões de feedback entre gestores e colaboradores</p>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ total_sessions }}</span>
+                            <span class="stat-label">Total de Sessões</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon notes">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ sessions_with_notes }}</span>
+                            <span class="stat-label">Com Notas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon actions">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value">{{ sessions_with_actions }}</span>
+                            <span class="stat-label">Com Ações</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+                <path d="M0,64L48,69.3C96,75,192,85,288,90.7C384,96,480,96,576,85.3C672,75,768,53,864,48C960,43,1056,53,1152,58.7C1248,64,1344,64,1392,64L1440,64L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" fill="#f8f9fa"></path>
+            </svg>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4 py-4">
+        {% include 'partials/_flash_messages.html' %}
+
+        <!-- Filters Section -->
+        <div class="filters-card mb-4">
+            <div class="filters-header">
+                <div class="filters-title">
+                    <i class="bi bi-funnel-fill"></i>
+                    <h5>Filtros de Pesquisa</h5>
+                </div>
+            </div>
+            <form method="GET" action="{{ url_for('admin.collaborative_reports.list_reports') }}" class="filters-form">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="form-floating-group">
+                            <label class="floating-label"><i class="bi bi-person-badge"></i> Gestor</label>
+                            <select name="manager_id" class="form-select modern-select">
+                                <option value="">Todos os gestores</option>
+                                {% for manager in managers %}
+                                <option value="{{ manager.id }}" {% if current_filters.manager_id == manager.id %}selected{% endif %}>
+                                    {{ manager.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="form-floating-group">
+                            <label class="floating-label"><i class="bi bi-person"></i> Colaborador</label>
+                            <select name="employee_id" class="form-select modern-select">
+                                <option value="">Todos os colaboradores</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if current_filters.employee_id == employee.id %}selected{% endif %}>
+                                    {{ employee.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <div class="form-floating-group">
+                            <label class="floating-label"><i class="bi bi-calendar3"></i> Mês/Ano</label>
+                            <input type="month" name="month" class="form-control modern-input" value="{{ current_filters.month }}">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3">
+                        <button type="submit" class="btn-filter">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-md-3">
+                        <a href="{{ url_for('admin.collaborative_reports.list_reports') }}" class="btn-clear-filters">
+                            <i class="bi bi-x-circle"></i> Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sessions List -->
+        <div class="sessions-list-card">
+            <div class="list-header">
+                <div class="list-title">
+                    <i class="bi bi-list-ul"></i>
+                    <h5>Sessões Registradas</h5>
+                    <span class="count-badge">{{ sessions|length }}</span>
+                </div>
+            </div>
+            
+            {% if sessions %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle custom-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Data</th>
+                            <th scope="col">Mês/Ano</th>
+                            <th scope="col">Gestor</th>
+                            <th scope="col">Colaborador</th>
+                            <th scope="col">Duração</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">{{ session.completed_at.strftime('%d/%m/%Y') if session.completed_at else 'N/A' }}</span>
+                                    <small class="text-muted">{{ session.completed_at.strftime('%H:%M') if session.completed_at else '' }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ session.evaluation.month_reference }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="https://ui-avatars.com/api/?name={{ session.manager.name|urlencode }}&background=0078d4&color=fff&size=32" class="rounded-circle" width="32" height="32" alt="{{ session.manager.name }}">
+                                    <span class="text-truncate" style="max-width: 150px;" title="{{ session.manager.name }}">{{ session.manager.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="https://ui-avatars.com/api/?name={{ session.employee.name|urlencode }}&background=8b5cf6&color=fff&size=32" class="rounded-circle" width="32" height="32" alt="{{ session.employee.name }}">
+                                    <span class="text-truncate" style="max-width: 150px;" title="{{ session.employee.name }}">{{ session.employee.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if session.created_at and session.completed_at %}
+                                {% set duration = (session.completed_at - session.created_at).total_seconds() / 60 %}
+                                <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ '%.0f'|format(duration) }} min</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    {% if session.session_notes %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle" title="Notas registradas">
+                                        <i class="bi bi-journal-check"></i> Notas
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-light text-muted border" title="Sem notas">
+                                        <i class="bi bi-journal"></i>
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if session.action_items %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Ações registradas">
+                                        <i class="bi bi-clipboard-check"></i> Ações
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-light text-muted border" title="Sem ações">
+                                        <i class="bi bi-clipboard"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('admin.collaborative_reports.view_report', session_id=session.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h4>Nenhuma sessão encontrada</h4>
+                <p>Não há sessões colaborativas finalizadas com os filtros selecionados.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== Dashboard Principal ===== */
+.collab-reports-wrapper {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 60px);
+}
+
+/* ===== Hero Header ===== */
+.hero-header-2fa {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
+    padding: 2.5rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.hero-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+        radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.2) 0%, transparent 30%);
+    pointer-events: none;
+}
+
+.hero-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.hero-icon-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.hero-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+    position: relative;
+    z-index: 2;
+}
+
+.hero-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.hero-icon-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 22px;
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    animation: hero-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes hero-pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.3; }
+}
+
+.hero-text h1 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hero-text p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.hero-right {
+    flex-shrink: 0;
+}
+
+.hero-wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    z-index: 1;
+}
+
+.hero-wave svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Stats Cards */
+.stats-cards {
+    display: flex;
+    gap: 12px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.2);
+    min-width: 130px;
+}
+
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    background: rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.stat-icon.notes {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.actions {
+    background: rgba(139, 92, 246, 0.3);
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* Filters Card */
+.filters-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #e5e7eb;
+    margin-top: -30px;
+    position: relative;
+    z-index: 3;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.filters-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filters-title i {
+    font-size: 1.25rem;
+    color: #3b82f6;
+}
+
+.filters-title h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.btn-clear-filters {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: 2px solid #e5e7eb;
+    background: white;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.btn-clear-filters:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.form-floating-group {
+    position: relative;
+}
+
+.floating-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.85rem;
+}
+
+.floating-label i {
+    color: #3b82f6;
+}
+
+.modern-select, .modern-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    background: #fafafa;
+}
+
+.modern-select:focus, .modern-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.btn-filter {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+/* Sessions List Card */
+.sessions-list-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #e5e7eb;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.list-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.list-title i {
+    font-size: 1.25rem;
+    color: #3b82f6;
+}
+
+.list-title h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0 8px;
+}
+
+.list-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-action.outline {
+    background: white;
+    color: #3b82f6;
+    border: 2px solid #3b82f6;
+}
+
+.btn-action.outline:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-action.success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border: none;
+}
+
+.btn-action.success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
+}
+
+/* Table Styles */
+.custom-table {
+    margin-bottom: 0;
+}
+
+.custom-table thead th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 16px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.custom-table tbody td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #374151;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+
+.custom-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.custom-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.empty-icon i {
+    font-size: 2.5rem;
+    color: #9ca3af;
+}
+
+.empty-state h4 {
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .stats-cards {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 992px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .hero-left {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        justify-content: center;
+    }
+    
+    .sessions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-header-2fa {
+        padding: 2rem 1rem 3rem;
+    }
+    
+    .hero-text h1 {
+        font-size: 1.4rem;
+    }
+    
+    .hero-icon {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .hero-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .hero-icon-ring {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .list-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .list-actions {
+        width: 100%;
+    }
+    
+    .btn-action {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .participants-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .participant, .participant.employee {
+        flex-direction: row;
+        text-align: left;
+        width: 100%;
+    }
+    
+    .arrow-connection {
+        transform: rotate(90deg);
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-cards {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .stat-card {
+        width: 100%;
+    }
+    
+    .filters-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+}
+</style>
+{% endblock %}

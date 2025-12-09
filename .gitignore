@@ -12,5 +12,5 @@ uploads/
 .vscode/
 
 .github/
-
+.tools/
 adminBKP.py

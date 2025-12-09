@@ -102,64 +102,87 @@ def _update_follow_up_status(evaluation: SupplierEvaluation, action_type: str):
 @login_required
 def dashboard():
     """Dashboard principal com rankings e estatísticas"""
+    # Filtro por mês (opcional)
+    month = request.args.get('month')
+    
+    # Se não foi especificado um mês, usar o último mês com avaliações
+    if not month:
+        latest = db.session.query(func.max(SupplierEvaluation.month_reference)).scalar()
+        month = latest
+    
     # Buscar todos os fornecedores ativos
     suppliers = Supplier.query.filter_by(is_active=True).all()
     
     # Calcular scores médios e ordenar
     suppliers_data = []
     for supplier in suppliers:
-        avg_score = supplier.get_average_score()
-        eval_count = supplier.get_evaluations_count()
-        last_eval_date = supplier.get_last_evaluation_date()
+        # Se há filtro de mês, calcular score apenas para esse mês
+        if month:
+            month_evals = [e for e in supplier.evaluations.all() 
+                         if e.month_reference == month and e.had_service_last_month]
+            if month_evals:
+                avg_score = round(sum(e.total_score for e in month_evals) / len(month_evals), 2)
+                eval_count = len(month_evals)
+                last_eval = max(month_evals, key=lambda e: e.evaluation_date)
+                last_eval_date = last_eval.evaluation_date
+            else:
+                # Verificar se há avaliação sem serviço nesse mês
+                no_service_evals = [e for e in supplier.evaluations.all() 
+                                   if e.month_reference == month and not e.had_service_last_month]
+                if no_service_evals:
+                    avg_score = 0
+                    eval_count = 0  # Não conta como avaliação com score
+                    last_eval = no_service_evals[0]
+                    last_eval_date = last_eval.evaluation_date
+                else:
+                    avg_score = 0
+                    eval_count = 0
+                    last_eval = None
+                    last_eval_date = None
+        else:
+            avg_score = supplier.get_average_score()
+            eval_count = supplier.get_evaluations_count()
+            last_eval_date = supplier.get_last_evaluation_date()
+            last_eval = supplier.evaluations.order_by(
+                desc(SupplierEvaluation.evaluation_date)
+            ).first() if eval_count > 0 else None
         
-        # Verificar se tem última avaliação
-        last_eval = supplier.evaluations.order_by(
-            desc(SupplierEvaluation.evaluation_date)
-        ).first() if eval_count > 0 else None
-        
-        # Determinar se precisa de atenção
+        # Determinar se precisa de atenção (apenas para score baixo, não para "sem serviço")
         needs_attention = False
-        if eval_count > 0:
-            if avg_score < 60 or (last_eval and not last_eval.had_service_last_month):
-                needs_attention = True
+        has_low_score = avg_score < 60 and eval_count > 0
+        no_service_last_month = last_eval and not last_eval.had_service_last_month
+        
+        if has_low_score:
+            needs_attention = True
 
         failing_eval = None
         if needs_attention and eval_count > 0:
-            failing_eval = supplier.evaluations.filter(
-                SupplierEvaluation.total_score < 60
-            ).order_by(desc(SupplierEvaluation.evaluation_date)).first()
-            if not failing_eval:
-                failing_eval = last_eval
+            if month:
+                failing_evals = [e for e in supplier.evaluations.all() 
+                                if e.month_reference == month and e.total_score < 60]
+                failing_eval = failing_evals[0] if failing_evals else last_eval
+            else:
+                failing_eval = supplier.evaluations.filter(
+                    SupplierEvaluation.total_score < 60
+                ).order_by(desc(SupplierEvaluation.evaluation_date)).first()
+                if not failing_eval:
+                    failing_eval = last_eval
         
         # Calcular prioridade para ordenação
-        # Prioridade 1 (mais urgente): Insatisfatório não verificado (< 60%)
-        # Prioridade 2: Sem serviço não verificado
-        # Prioridade 3: Excelente (>= 80%) - Destaque positivo
-        # Prioridade 4: Satisfatório (60-79%)
-        # Prioridade 5: Problemas já verificados (score < 60 ou sem serviço)
-        # Prioridade 6: Não avaliado
-        
-        if needs_attention and not supplier.issue_verified:
-            # Problemas NÃO verificados (mais urgentes)
-            if avg_score < 60:
-                priority = 1  # Insatisfatório não verificado
-            elif last_eval and not last_eval.had_service_last_month:
-                priority = 2  # Sem serviço não verificado
+        if has_low_score and not supplier.issue_verified:
+            priority = 1  # Insatisfatório não verificado
         elif eval_count > 0 and avg_score >= 80:
-            # Excelente - sempre em destaque após problemas urgentes
-            priority = 3
+            priority = 2  # Excelente
         elif eval_count > 0 and avg_score >= 60:
-            # Satisfatório (60-79%)
-            priority = 4
-        elif needs_attention and supplier.issue_verified:
-            # Problemas JÁ verificados
-            priority = 5
+            priority = 3  # Satisfatório (60-79%)
+        elif no_service_last_month:
+            priority = 4  # Sem serviço no último mês
+        elif has_low_score and supplier.issue_verified:
+            priority = 5  # Problemas JÁ verificados
         elif eval_count == 0:
-            # Não avaliado
-            priority = 6
+            priority = 6  # Não avaliado
         else:
-            # Casos não cobertos (fallback)
-            priority = 7
+            priority = 7  # Casos não cobertos (fallback)
         
         suppliers_data.append({
             'supplier': supplier,
@@ -168,6 +191,8 @@ def dashboard():
             'last_eval_date': last_eval_date,
             'last_eval': last_eval,
             'needs_attention': needs_attention,
+            'has_low_score': has_low_score,
+            'no_service_last_month': no_service_last_month,
             'priority': priority,
             'failing_eval': failing_eval
         })
@@ -177,28 +202,19 @@ def dashboard():
     
     # Estatísticas gerais
     total_suppliers = len(suppliers)
-    total_evaluations = SupplierEvaluation.query.count()
+    if month:
+        total_evaluations = SupplierEvaluation.query.filter_by(month_reference=month).count()
+    else:
+        total_evaluations = SupplierEvaluation.query.count()
     
-    # Fornecedores com problemas (score < 60% OU não teve serviço no último mês)
-    problematic_suppliers = []
-    for s in suppliers_data:
-        if s['eval_count'] > 0:
-            # Verificar se teve score baixo OU se não houve serviço
-            last_eval = SupplierEvaluation.query.filter_by(
-                supplier_id=s['supplier'].id
-            ).order_by(desc(SupplierEvaluation.evaluation_date)).first()
-            
-            if last_eval and (s['avg_score'] < 60 or not last_eval.had_service_last_month):
-                problematic_suppliers.append(s)
+    # Fornecedores com problemas (apenas score < 60%)
+    problematic_suppliers = [s for s in suppliers_data if s['has_low_score']]
     
-    # Melhores fornecedores (top 5) - inclui Excelentes (>=80) e Satisfatórios (>=60)
-    # MAS exclui fornecedores com problemas não verificados
-    # Ordenar por score DECRESCENTE (maior score primeiro)
+    # Melhores fornecedores (top 5)
     top_suppliers_filtered = [
         s for s in suppliers_data 
         if s['eval_count'] > 0 
-        and s['avg_score'] >= 60 
-        and not (s['needs_attention'] and not s['supplier'].issue_verified)
+        and s['avg_score'] >= 60
     ]
     top_suppliers = sorted(top_suppliers_filtered, key=lambda x: x['avg_score'], reverse=True)[:5]
     
@@ -211,7 +227,8 @@ def dashboard():
                          total_evaluations=total_evaluations,
                          problematic_count=len(problematic_suppliers),
                          top_suppliers=top_suppliers,
-                         worst_suppliers=worst_suppliers)
+                         worst_suppliers=worst_suppliers,
+                         month=month)
 
 
 # ============================================
