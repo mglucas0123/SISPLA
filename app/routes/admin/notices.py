@@ -141,8 +141,7 @@ def delete_notice(notice_id):
 @login_required
 def serve_notice_image(filename):
     try:
-        notice_upload_path = os.path.join(current_app.root_path, 'uploads', 'notices')
-        
+        notice_upload_path = '/app/uploads/notices'
         file_path = os.path.join(notice_upload_path, filename)
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
             flash("Arquivo não encontrado.", "warning")
