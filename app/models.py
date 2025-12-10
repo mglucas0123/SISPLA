@@ -29,7 +29,6 @@ repository_access = db.Table('repository_access',
     db.Column('repository_id', db.Integer, db.ForeignKey('repositories.id'), primary_key=True)
 )
 
-# Tabela de associação entre Usuários e Fornecedores
 supplier_evaluators = db.Table('supplier_evaluators',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('supplier_id', db.Integer, db.ForeignKey('suppliers.id'), primary_key=True),
@@ -37,14 +36,11 @@ supplier_evaluators = db.Table('supplier_evaluators',
     db.Column('assigned_by_id', db.Integer, db.ForeignKey('users.id'), nullable=True)
 )
 
-# Tabela de associação entre Colaboradores e seus Gestores Responsáveis
-# Um colaborador pode ter múltiplos gestores responsáveis
-# Somente os gestores responsáveis podem avaliar e ver detalhes das avaliações do colaborador
 user_managers = db.Table('user_managers',
-    db.Column('employee_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),  # Colaborador
-    db.Column('manager_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),   # Gestor responsável
+    db.Column('employee_id', db.Integer, db.ForeignKey('users.id'), primary_key=True), 
+    db.Column('manager_id', db.Integer, db.ForeignKey('users.id'), primary_key=True), 
     db.Column('assigned_at', db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False),
-    db.Column('assigned_by_id', db.Integer, db.ForeignKey('users.id'), nullable=True)   # Quem fez a atribuição
+    db.Column('assigned_by_id', db.Integer, db.ForeignKey('users.id'), nullable=True) 
 )
 
 class Permission(db.Model):
@@ -102,11 +98,10 @@ class JobPosition(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    sector = db.Column(db.String(100), nullable=True)  # Setor/departamento do cargo
+    sector = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
-    # Relacionamento com usuários
     users = db.relationship('User', back_populates='job_position', lazy='dynamic')
     
     def __repr__(self):
@@ -121,14 +116,13 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)
     profile = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    job_title = db.Column(db.String(100), nullable=True)  # Mantido para compatibilidade - será migrado para job_position_id
-    job_position_id = db.Column(db.Integer, db.ForeignKey('job_positions.id'), nullable=True)  # Novo campo - cargo predefinido
+    job_title = db.Column(db.String(100), nullable=True)
+    job_position_id = db.Column(db.Integer, db.ForeignKey('job_positions.id'), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime, nullable=True)
-    totp_secret = db.Column(db.String(32), nullable=True) # Para 2FA
+    totp_secret = db.Column(db.String(32), nullable=True)
     
-    # Relacionamento com cargo predefinido
     job_position = db.relationship('JobPosition', back_populates='users')
     
     roles = db.relationship('Role', secondary=user_roles, backref='users')
@@ -138,9 +132,7 @@ class User(db.Model, UserMixin):
     nir = db.relationship('Nir', back_populates='operator', lazy='dynamic')
     shared_repositories = db.relationship('Repository', secondary=repository_access, back_populates='shared_with_users')
     course_enrollments = db.relationship('CourseEnrollmentTerm', back_populates='user', lazy='dynamic')
-    
-    # Gestores responsáveis por este colaborador (para avaliação de funcionários)
-    # Um colaborador pode ter múltiplos gestores que podem avaliá-lo
+
     assigned_managers = db.relationship('User',
                                         secondary='user_managers',
                                         primaryjoin='User.id==user_managers.c.employee_id',
@@ -216,91 +208,46 @@ class User(db.Model, UserMixin):
         return self.managed_employees.filter_by(id=employee_id).first() is not None
     
     def can_evaluate_employee(self, employee_id):
-        """
-        Verifica se este usuário pode avaliar um colaborador específico.
-        
-        Regras:
-        - Admins (permissão 'admin-total') podem avaliar qualquer um
-        - Diretoria (permissão 'visualizar_todas_avaliacoes_funcionarios') pode avaliar qualquer um
-        - Gestores responsáveis pelo colaborador podem avaliar
-        
-        Args:
-            employee_id: ID do colaborador a verificar
-            
-        Returns:
-            bool: True se pode avaliar, False caso contrário
-        """
-        # Admin total pode avaliar qualquer um
+
         if self.has_permission('admin-total'):
             return True
         
-        # Permissão especial da diretoria
         if self.has_permission('visualizar_todas_avaliacoes_funcionarios'):
             return True
             
-        # Gestor responsável pode avaliar
         return self.is_manager_of(employee_id)
     
     def can_view_employee_evaluation_details(self, employee_id):
-        """
-        Verifica se este usuário pode ver os detalhes das avaliações de um colaborador.
-        
-        Regras:
-        - Usuário pode ver suas próprias avaliações
-        - Admins podem ver tudo
-        - Diretoria (permissão especial) pode ver tudo
-        - Gestores responsáveis podem ver de seus colaboradores
-        
-        Args:
-            employee_id: ID do colaborador a verificar
-            
-        Returns:
-            bool: True se pode ver detalhes, False caso contrário
-        """
-        # Pode ver sua própria avaliação
         if self.id == employee_id:
             return True
             
-        # Admin total pode ver tudo
         if self.has_permission('admin-total'):
             return True
         
-        # Permissão especial da diretoria
         if self.has_permission('visualizar_todas_avaliacoes_funcionarios'):
             return True
             
-        # Gestor responsável pode ver detalhes do colaborador
         return self.is_manager_of(employee_id)
     
     @property
     def cargo(self):
-        """
-        Retorna o nome do cargo do usuário.
-        Prioriza o cargo predefinido (job_position), com fallback para job_title (legado).
-        """
         if self.job_position:
             return self.job_position.name
         return self.job_title or ''
     
     @property
     def cargo_com_setor(self):
-        """
-        Retorna o nome do cargo com o setor, se disponível.
-        """
         if self.job_position:
             return f"{self.job_position.name} ({self.job_position.sector})"
         return self.job_title or ''
     
     def get_managers_list(self):
-        """Retorna lista de IDs dos gestores responsáveis por este colaborador"""
         return [m.id for m in self.assigned_managers.all()]
     
     def get_managers_names(self):
-        """Retorna lista de nomes dos gestores responsáveis por este colaborador"""
         return [m.name for m in self.assigned_managers.all()]
     
     def get_managed_employees_list(self):
-        """Retorna lista de IDs dos colaboradores que este usuário gerencia"""
         return [e.id for e in self.managed_employees.all()]
 
     def __repr__(self):
@@ -308,7 +255,6 @@ class User(db.Model, UserMixin):
 
 
 class NirSectionStatus(db.Model):
-    """Controla o status de preenchimento de cada seÃ§Ã£o do NIR"""
     __tablename__ = 'nir_section_status'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -388,20 +334,6 @@ class Nir(db.Model):
     section_statuses = db.relationship('NirSectionStatus', back_populates='nir', cascade='all, delete-orphan')
     
     def get_section_control_config(self):
-        """
-        Retorna a configuraÃ§Ã£o de controle baseada no tipo de internaÃ§Ã£o.
-        
-        Para CIRURGICO (admission_type='CIRURGICO'):
-        - NIR: dados_paciente, dados_internacao_iniciais, agendamento_inicial, dados_alta_finais
-        - CENTRO_CIRURGICO: procedimentos, informacoes_medicas
-        - FATURAMENTO: status_controle
-        
-        Para CLINICO (admission_type='CLINICO'):
-        - NIR: TODAS as seÃ§Ãµes (dados_paciente, dados_internacao_iniciais, agendamento_inicial, 
-                procedimentos, informacoes_medicas, dados_alta_finais)
-        - FATURAMENTO: status_controle
-        - (NÃƒO passa pelo Centro CirÃºrgico)
-        """
         if self.admission_type == 'CLINICO':
             return {
                 'dados_paciente': 'NIR',
@@ -456,13 +388,6 @@ class Nir(db.Model):
         return section_status
     
     def get_effective_entry_type(self):
-        """
-        Retorna o tipo de entrada considerando valores legados e observaÃ§Ãµes evoluÃ­das.
-        
-        - CIRURGICO (legado) â†’ URGENCIA
-        - None/vazio (observaÃ§Ãµes evoluÃ­das) â†’ URGENCIA (para seguir fluxo completo)
-        - URGENCIA/ELETIVO â†’ mantÃ©m o valor
-        """
         if self.entry_type == 'CIRURGICO':
             return 'URGENCIA'
         elif not self.entry_type:
@@ -471,7 +396,6 @@ class Nir(db.Model):
             return self.entry_type
 
     def get_sector_sections(self):
-        """Mapeia setores para as seÃ§Ãµes que sÃ£o de responsabilidade deles."""
         config = self.get_section_control_config()
         sector_map = {}
         for section, sector in config.items():
@@ -479,7 +403,6 @@ class Nir(db.Model):
         return sector_map
 
     def get_sector_progress(self):
-        """Resumo de progresso por setor: total, preenchidos, pendentes e status."""
         sector_sections = self.get_sector_sections()
         statuses = { (s.section_name, s.responsible_sector): s.status for s in self.section_statuses }
         progress = {}
@@ -511,19 +434,6 @@ class Nir(db.Model):
         return progress
 
     def compute_overall_status(self):
-        """
-        Calcula o status geral do registro baseado no fluxo entre setores.
-        
-        Para entry_type URGENCIA/ELETIVO:
-        1. NIR preenche seÃ§Ãµes iniciais â†’ EM_ANDAMENTO
-        2. CENTRO_CIRURGICO preenche suas seÃ§Ãµes â†’ EM_ANDAMENTO
-        3. NIR preenche seÃ§Ãµes de alta â†’ EM_ANDAMENTO
-        4. FATURAMENTO conclui â†’ CONCLUIDO
-        
-        Para outros tipos:
-        1. NIR preenche todas as seÃ§Ãµes â†’ EM_ANDAMENTO
-        2. FATURAMENTO conclui â†’ CONCLUIDO
-        """
         if not self.section_statuses:
             return 'PENDENTE'
         
@@ -580,12 +490,6 @@ class Nir(db.Model):
         return False
         
     def get_next_available_sector(self):
-        """
-        Retorna o prÃ³ximo setor que pode trabalhar no registro.
-        
-        Para CLÃNICO: NIR â†’ FATURAMENTO (pula Centro CirÃºrgico)
-        Para CIRURGICO: NIR (inicial) â†’ CENTRO_CIRURGICO â†’ NIR (alta) â†’ FATURAMENTO
-        """
         progress = self.get_sector_progress()
         effective_entry = self.get_effective_entry_type()
         config = self.get_section_control_config()
@@ -636,7 +540,6 @@ class Nir(db.Model):
             return None
     
     def is_in_observation(self):
-        """Verifica se o registro estÃ¡ em perÃ­odo de observaÃ§Ã£o"""
         return self.status == 'EM_OBSERVACAO' and self.fa_datetime is not None
     
     def observation_hours_elapsed(self):
@@ -647,11 +550,9 @@ class Nir(db.Model):
         return delta.total_seconds() / 3600
     
     def should_transition_to_decision(self):
-        """Verifica se o registro deve transitar para AGUARDANDO_DECISAO (>24h)"""
         return self.is_in_observation() and self.observation_hours_elapsed() > 24
     
     def evolve_to_admission(self):
-        """Evolui um registro de observaÃ§Ã£o para internaÃ§Ã£o normal"""
         if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
             self.status = 'PENDENTE'
             if not self.admission_date and self.fa_datetime:
@@ -662,7 +563,6 @@ class Nir(db.Model):
         return False
     
     def cancel_observation(self, reason):
-        """Cancela uma observaÃ§Ã£o"""
         if self.status in ('EM_OBSERVACAO', 'AGUARDANDO_DECISAO'):
             self.cancelled = 'SIM'
             self.cancellation_reason = reason
@@ -694,7 +594,7 @@ class Form(db.Model):
     __tablename__ = 'forms'
     id = db.Column(db.Integer, primary_key=True)
     worker_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
-    worker_name = db.Column(db.String(100), nullable=True)  # Preserva o nome do trabalhador mesmo após exclusão do usuário
+    worker_name = db.Column(db.String(100), nullable=True)
     sector = db.Column(db.String(100), nullable=False)
     date_registry = db.Column(db.DateTime, nullable=False)
     observation = db.Column(db.Text, nullable=False)
@@ -702,7 +602,6 @@ class Form(db.Model):
     
     @property
     def display_worker_name(self):
-        """Retorna o nome do trabalhador, seja do usuário ativo ou do nome salvo"""
         if self.worker:
             return self.worker.name
         return self.worker_name or 'Usuário excluído'
@@ -913,12 +812,11 @@ class UserQuizAttempt(db.Model):
 # ============================================
 
 class Supplier(db.Model):
-    """Modelo para armazenar fornecedores/prestadores de serviço"""
     __tablename__ = 'suppliers'
     
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(200), nullable=False, unique=True)
-    trade_name = db.Column(db.String(200), nullable=True)  # Nome fantasia
+    trade_name = db.Column(db.String(200), nullable=True)
     cnpj = db.Column(db.String(18), nullable=True)
     contact_name = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
@@ -929,17 +827,14 @@ class Supplier(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
-    # Campo para marcar como verificado quando há problemas
     issue_verified = db.Column(db.Boolean, default=False, nullable=False)
     verified_at = db.Column(db.DateTime, nullable=True)
     verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
-    # Relacionamentos
     created_by = db.relationship('User', foreign_keys=[created_by_id])
     verified_by = db.relationship('User', foreign_keys=[verified_by_id])
     evaluations = db.relationship('SupplierEvaluation', back_populates='supplier', lazy='dynamic', cascade='all, delete-orphan')
     
-    # Usuários responsáveis por avaliar este fornecedor
     assigned_evaluators = db.relationship('User', 
                                          secondary='supplier_evaluators',
                                          primaryjoin='Supplier.id==supplier_evaluators.c.supplier_id',
@@ -951,20 +846,16 @@ class Supplier(db.Model):
         return self.trade_name if self.trade_name else self.company_name
     
     def get_average_score(self):
-        """Calcula o score médio das avaliações onde houve serviço"""
-        # Considera apenas avaliações onde houve serviço prestado
         evals = [e for e in self.evaluations.all() if e.had_service_last_month]
         if not evals:
             return 0
         return round(sum(e.total_score for e in evals) / len(evals), 2)
     
     def get_last_evaluation_date(self):
-        """Retorna a data da última avaliação"""
         last_eval = self.evaluations.order_by(SupplierEvaluation.evaluation_date.desc()).first()
         return last_eval.evaluation_date if last_eval else None
     
     def get_evaluations_count(self):
-        """Retorna o total de avaliações"""
         return self.evaluations.count()
     
     def __repr__(self):
@@ -979,14 +870,12 @@ class SupplierEvaluation(db.Model):
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'), nullable=False)
     evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evaluation_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    month_reference = db.Column(db.String(7), nullable=False)  # Formato: YYYY-MM
+    month_reference = db.Column(db.String(7), nullable=False)
     
-    # Perguntas do formulário
     had_service_last_month = db.Column(db.Boolean, nullable=False)
     service_justification = db.Column(db.Text, nullable=True)
     
-    # Perguntas com opções: Conforme, Não Conforme, Não se Aplica
-    contract_compliance = db.Column(db.String(20), nullable=True)  # conforme, nao_conforme, nao_aplica
+    contract_compliance = db.Column(db.String(20), nullable=True) 
     contract_compliance_justification = db.Column(db.Text, nullable=True)
     
     equipment_adequacy = db.Column(db.String(20), nullable=True)
@@ -1004,24 +893,19 @@ class SupplierEvaluation(db.Model):
     support_quality = db.Column(db.String(20), nullable=True)
     support_quality_justification = db.Column(db.Text, nullable=True)
     
-    # Nota de 0 a 10
     overall_rating = db.Column(db.Integer, nullable=False)
     rating_justification = db.Column(db.Text, nullable=True)
     
-    # Score calculado automaticamente (%)
     total_score = db.Column(db.Float, nullable=False)
     
-    # Status da avaliação
-    is_compliant = db.Column(db.Boolean, nullable=False)  # True se nota >= 7
+    is_compliant = db.Column(db.Boolean, nullable=False)
     follow_up_status = db.Column(db.String(20), nullable=False, default='not_required')
     follow_up_closed_at = db.Column(db.DateTime, nullable=True)
     
-    # Observações gerais
     general_observations = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
-    # Relacionamentos
     supplier = db.relationship('Supplier', back_populates='evaluations')
     evaluator = db.relationship('User', foreign_keys=[evaluator_id])
     follow_up_entries = db.relationship('SupplierIssueTracking', back_populates='evaluation', lazy='dynamic')
@@ -1034,12 +918,6 @@ class SupplierEvaluation(db.Model):
     }
     
     def calculate_score(self):
-        """
-        Calcula o score total baseado nas respostas
-        - Cada pergunta "conforme" vale pontos
-        - Nota final (0-10) tem peso maior
-        - Retorna percentual de 0 a 100
-        """
         if not self.had_service_last_month:
             self.is_compliant = False
             return 0
@@ -1047,7 +925,6 @@ class SupplierEvaluation(db.Model):
         score = 0
         total_questions = 6
         
-        # Cada resposta "conforme" vale pontos
         compliance_fields = [
             self.contract_compliance,
             self.equipment_adequacy,
@@ -1057,16 +934,13 @@ class SupplierEvaluation(db.Model):
             self.support_quality
         ]
         
-        # Pontos para respostas conformes (60% do score)
         conformes = sum(1 for field in compliance_fields if field == 'conforme')
         compliance_score = (conformes / total_questions) * 60
         
-        # Nota final tem peso de 40%
         rating_score = (self.overall_rating / 10) * 40
         
         total_score = compliance_score + rating_score
         
-        # Define se é conforme (nota >= 7 e score >= 70%)
         self.is_compliant = self.overall_rating >= 7 and total_score >= 70
         
         return round(total_score, 2)
@@ -1108,22 +982,17 @@ class SupplierIssueTracking(db.Model):
     evaluation_id = db.Column(db.Integer, db.ForeignKey('supplier_evaluations.id', ondelete='SET NULL'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Tipo de ação: 'opened', 'contact', 'follow_up', 'resolved', 'reopened', 'escalated', 'note'
     action_type = db.Column(db.String(50), nullable=False)
     
-    # Descrição detalhada da ação
     description = db.Column(db.Text, nullable=False)
     
-    # DEPRECATED: Campos não mais utilizados (mantidos para compatibilidade com dados históricos)
     deadline = db.Column(db.Date, nullable=True)
     priority = db.Column(db.String(20), nullable=True)
     
-    # Anexos/documentos relacionados (JSON array)
     attachments = db.Column(JSON, nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     
-    # Relacionamentos
     supplier = db.relationship('Supplier', backref=db.backref('issue_history', lazy='dynamic', cascade='all, delete-orphan', order_by='SupplierIssueTracking.created_at.desc()'))
     evaluation = db.relationship('SupplierEvaluation', back_populates='follow_up_entries')
     user = db.relationship('User', foreign_keys=[user_id])
@@ -1180,32 +1049,24 @@ class EmployeeEvaluation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evaluated_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    month_reference = db.Column(db.String(7), nullable=False) # YYYY-MM
+    month_reference = db.Column(db.String(7), nullable=False)
     
-    # Campos da avaliação (legado - mantidos para compatibilidade)
     innovation_suggestions = db.Column(db.Text, nullable=True)
     improvement_proposals = db.Column(db.Text, nullable=True)
-    participation_score = db.Column(db.String(20), nullable=True) # 'active', 'partial', 'none'
+    participation_score = db.Column(db.String(20), nullable=True)
     
-    rating = db.Column(db.Integer, nullable=False) # 0-10
+    rating = db.Column(db.Integer, nullable=False)
     rating_justification = db.Column(db.Text, nullable=True)
     
-    # Novos campos para Avaliação de Experiência (45/90 dias)
-    evaluation_type = db.Column(db.String(50), default='mensal', nullable=False) # 'mensal', 'experiencia_45', 'experiencia_90'
+    evaluation_type = db.Column(db.String(50), default='mensal', nullable=False)
+
     
-    # ========================================
-    # NOVOS CAMPOS: Critérios com Conforme/Não Conforme/Não se Aplica
-    # ========================================
-    
-    # Critério 1: Pontualidade e Assiduidade
-    criteria_punctuality = db.Column(db.String(20), nullable=True)  # 'conforme', 'nao_conforme', 'nao_aplica'
+    criteria_punctuality = db.Column(db.String(20), nullable=True) 
     criteria_punctuality_justification = db.Column(db.Text, nullable=True)
     
-    # Critério 2: Qualidade do Trabalho
     criteria_quality = db.Column(db.String(20), nullable=True)
     criteria_quality_justification = db.Column(db.Text, nullable=True)
     
-    # Critério 3: Produtividade
     criteria_productivity = db.Column(db.String(20), nullable=True)
     criteria_productivity_justification = db.Column(db.Text, nullable=True)
     
@@ -1213,11 +1074,9 @@ class EmployeeEvaluation(db.Model):
     criteria_teamwork = db.Column(db.String(20), nullable=True)
     criteria_teamwork_justification = db.Column(db.Text, nullable=True)
     
-    # Critério 5: Comunicação
     criteria_communication = db.Column(db.String(20), nullable=True)
     criteria_communication_justification = db.Column(db.Text, nullable=True)
     
-    # Critério 6: Iniciativa e Proatividade
     criteria_initiative = db.Column(db.String(20), nullable=True)
     criteria_initiative_justification = db.Column(db.Text, nullable=True)
     
@@ -1225,78 +1084,49 @@ class EmployeeEvaluation(db.Model):
     criteria_compliance = db.Column(db.String(20), nullable=True)
     criteria_compliance_justification = db.Column(db.Text, nullable=True)
     
-    # Critério 8: Desenvolvimento Profissional
     criteria_development = db.Column(db.String(20), nullable=True)
     criteria_development_justification = db.Column(db.Text, nullable=True)
     
-    # Score calculado automaticamente (%)
     total_score = db.Column(db.Float, nullable=True)
     
-    # Status da avaliação
-    is_compliant = db.Column(db.Boolean, nullable=True)  # True se score >= 60%
+    is_compliant = db.Column(db.Boolean, nullable=True)
     
-    # Controle de faltas e atestados médicos
-    absence_count = db.Column(db.Integer, default=0, nullable=False)  # Faltas no mês
-    medical_certificate_count = db.Column(db.Integer, default=0, nullable=False)  # Atestados no mês
+    absence_count = db.Column(db.Integer, default=0, nullable=False)
+    medical_certificate_count = db.Column(db.Integer, default=0, nullable=False)
     
-    # ========================================
-    
-    # Comunicação (1-4)
     comm_verbal = db.Column(db.Integer, nullable=True)
     comm_written = db.Column(db.Integer, nullable=True)
     comm_listening = db.Column(db.Integer, nullable=True)
     comm_simple_lang = db.Column(db.Integer, nullable=True)
     comm_effective = db.Column(db.Integer, nullable=True)
     
-    # Ambientação (Boolean)
     onboarding_unit_presentation = db.Column(db.Boolean, nullable=True)
     onboarding_team_welcome = db.Column(db.Boolean, nullable=True)
     onboarding_expectations = db.Column(db.Boolean, nullable=True)
     onboarding_manuals = db.Column(db.Boolean, nullable=True)
     
-    # Textos Específicos
     strong_points = db.Column(db.Text, nullable=True)
     development_points = db.Column(db.Text, nullable=True)
     action_plan = db.Column(db.Text, nullable=True)
     
-    # Aprovação
-    approval_status = db.Column(db.String(50), nullable=True) # 'approved', 'dismissal', 'approved_with_plan'
+    approval_status = db.Column(db.String(50), nullable=True)
 
-    # Detalhes estruturados para avaliações de experiência (45/90 dias)
-    # Usamos JSON mutável para armazenar respostas por seção sem exigir migração de várias colunas
     experience_details = db.Column(MutableDict.as_mutable(JSON), nullable=True)
 
-    # Controle de visualização conjunta (2FA)
     is_jointly_viewed = db.Column(db.Boolean, default=False, nullable=False)
     viewed_at = db.Column(db.DateTime, nullable=True)
     
-    # Status de validação colaborativa
-    validation_status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'counter_evaluated', 'validated'
+    validation_status = db.Column(db.String(20), default='pending', nullable=False)
     validated_at = db.Column(db.DateTime, nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
-    # Relacionamentos - cascade='all, delete-orphan' garante que avaliações sejam deletadas
-    # quando o usuário avaliado ou avaliador for deletado
     evaluator = db.relationship('User', foreign_keys=[evaluator_id], 
                                 backref=db.backref('evaluations_given', cascade='all, delete-orphan'))
     evaluated = db.relationship('User', foreign_keys=[evaluated_id], 
                                 backref=db.backref('evaluations_received', cascade='all, delete-orphan'))
     
     def calculate_score(self):
-        """
-        Calcula o score total baseado na fórmula:
-        60% × (Conformes ÷ Aplicáveis) + 40% × (Nota ÷ 10) - Descontos
-        
-        Descontos:
-        - Cada falta: -5 pontos
-        - Cada atestado médico: -2 pontos
-        
-        - Critérios "conforme" e "não conforme" contam como aplicáveis
-        - "Não se aplica" não conta no total de aplicáveis
-        - Nota de 0 a 10 contribui com 40% do score
-        - Retorna percentual de 0 a 100 (mínimo 0)
-        """
         criteria_fields = [
             self.criteria_punctuality,
             self.criteria_quality,
@@ -1317,30 +1147,23 @@ class EmployeeEvaluation(db.Model):
                 applicable_count += 1
             elif field == 'nao_conforme':
                 applicable_count += 1
-            # 'nao_aplica' não conta
         
-        # Calcula componente dos critérios (60% do score)
         if applicable_count > 0:
             criteria_score = (conforme_count / applicable_count) * 60
         else:
             criteria_score = 0
         
-        # Calcula componente da nota (40% do score)
         rating = self.rating if self.rating is not None else 0
         rating_score = (rating / 10) * 40
         
-        # Score base = 60% critérios + 40% nota
         base_score = criteria_score + rating_score
         
-        # Calcula descontos por faltas e atestados
-        absence_deduction = (self.absence_count or 0) * 5  # -5 pontos por falta
-        medical_deduction = (self.medical_certificate_count or 0) * 3  # -3 pontos por atestado
+        absence_deduction = (self.absence_count or 0) * 5 
+        medical_deduction = (self.medical_certificate_count or 0) * 3 
         total_deduction = absence_deduction + medical_deduction
         
-        # Score final (mínimo 0)
         score = max(0, round(base_score - total_deduction, 2))
         
-        # Define se é conforme (score >= 60%)
         self.is_compliant = score >= 60
         self.total_score = score
         
@@ -1377,64 +1200,45 @@ class EmployeeEvaluation(db.Model):
 
 
 class CounterEvaluation(db.Model):
-    """
-    Contra-avaliação: Colaborador avalia o gestor após receber sua avaliação.
-    Isso permite feedback bidirecional e sessão de validação conjunta.
-    """
     __tablename__ = 'counter_evaluations'
     
     id = db.Column(db.Integer, primary_key=True)
     
-    # Referência à avaliação original do gestor
     original_evaluation_id = db.Column(db.Integer, db.ForeignKey('employee_evaluations.id'), nullable=False)
     
-    # Quem está avaliando (colaborador que foi avaliado)
     evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Quem está sendo avaliado (gestor que fez a avaliação original)
     evaluated_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Critérios de avaliação do gestor pelo colaborador
-    # Comunicação e Feedback
     criteria_communication = db.Column(db.String(20), nullable=True)  # 'conforme', 'nao_conforme', 'nao_aplica'
     criteria_communication_justification = db.Column(db.Text, nullable=True)
     
-    # Clareza nas Orientações
     criteria_clarity = db.Column(db.String(20), nullable=True)
     criteria_clarity_justification = db.Column(db.Text, nullable=True)
     
-    # Suporte e Disponibilidade
     criteria_support = db.Column(db.String(20), nullable=True)
     criteria_support_justification = db.Column(db.Text, nullable=True)
     
-    # Reconhecimento e Valorização
     criteria_recognition = db.Column(db.String(20), nullable=True)
     criteria_recognition_justification = db.Column(db.Text, nullable=True)
     
-    # Justiça e Imparcialidade
     criteria_fairness = db.Column(db.String(20), nullable=True)
     criteria_fairness_justification = db.Column(db.Text, nullable=True)
     
-    # Desenvolvimento da Equipe
     criteria_development = db.Column(db.String(20), nullable=True)
     criteria_development_justification = db.Column(db.Text, nullable=True)
     
-    # Nota geral do gestor (0-10)
     rating = db.Column(db.Integer, nullable=False)
     rating_justification = db.Column(db.Text, nullable=True)
     
-    # Pontos fortes do gestor
     strong_points = db.Column(db.Text, nullable=True)
     
-    # Sugestões de melhoria
     improvement_suggestions = db.Column(db.Text, nullable=True)
     
-    # Score calculado
     total_score = db.Column(db.Float, nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
-    # Relacionamentos - cascade garante deleção quando usuário for deletado
     original_evaluation = db.relationship('EmployeeEvaluation', backref=db.backref('counter_evaluation', uselist=False, cascade='all, delete-orphan'))
     evaluator = db.relationship('User', foreign_keys=[evaluator_id], 
                                 backref=db.backref('counter_evaluations_given', cascade='all, delete-orphan'))
@@ -1480,43 +1284,32 @@ class CounterEvaluation(db.Model):
 
 
 class ValidationSession(db.Model):
-    """
-    Sessão de validação conjunta com dupla autenticação 2FA.
-    Registra quando gestor e colaborador visualizam as avaliações juntos.
-    """
     __tablename__ = 'validation_sessions'
     
     id = db.Column(db.Integer, primary_key=True)
     
-    # Avaliação sendo validada
     evaluation_id = db.Column(db.Integer, db.ForeignKey('employee_evaluations.id'), nullable=False)
     
-    # Participantes
     manager_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Controle de autenticação 2FA
     manager_authenticated = db.Column(db.Boolean, default=False, nullable=False)
     manager_auth_at = db.Column(db.DateTime, nullable=True)
     
     employee_authenticated = db.Column(db.Boolean, default=False, nullable=False)
     employee_auth_at = db.Column(db.DateTime, nullable=True)
     
-    # Status da sessão
-    session_status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'active', 'completed'
-    session_token = db.Column(db.String(64), unique=True, nullable=False)  # Token único para a sessão
+    session_status = db.Column(db.String(20), default='pending', nullable=False) 
+    session_token = db.Column(db.String(64), unique=True, nullable=False) 
     
-    # Expiração da sessão (válida por 30 minutos após criação)
     expires_at = db.Column(db.DateTime, nullable=False)
     
-    # Notas da sessão de feedback (opcional)
     session_notes = db.Column(db.Text, nullable=True)
-    action_items = db.Column(db.Text, nullable=True)  # Itens de ação acordados
+    action_items = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     
-    # Relacionamentos - cascade garante deleção quando usuário ou avaliação for deletada
     evaluation = db.relationship('EmployeeEvaluation', backref=db.backref('validation_sessions', cascade='all, delete-orphan'))
     manager = db.relationship('User', foreign_keys=[manager_id], 
                               backref=db.backref('validation_sessions_as_manager', cascade='all, delete-orphan'))
@@ -1527,7 +1320,6 @@ class ValidationSession(db.Model):
         """Verifica se a sessão expirou"""
         now = datetime.now(timezone.utc)
         expires = self.expires_at
-        # Se expires_at é naive, adicionar UTC timezone
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=timezone.utc)
         return now > expires
@@ -1550,12 +1342,11 @@ class CareerPlan(db.Model):
     target_role = db.Column(db.String(100), nullable=False)
     target_sector = db.Column(db.String(100), nullable=False)
     
-    goals = db.Column(db.Text, nullable=True) # JSON ou texto estruturado
-    readiness_score = db.Column(db.Integer, default=0) # 0-100%
+    goals = db.Column(db.Text, nullable=True) 
+    readiness_score = db.Column(db.Integer, default=0)
     
     last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    # Relacionamento com cascade para deleção
     user = db.relationship('User', backref=db.backref('career_plan', uselist=False, cascade='all, delete-orphan'))
     
     def __repr__(self):

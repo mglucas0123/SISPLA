@@ -9,6 +9,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 
+from config import config as app_config
 from app.models import db, User, Role
 from app.routes.admin import create_admin_blueprint
 from app.utils.rbac_permissions import initialize_rbac, assign_role_to_user
@@ -28,21 +29,29 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
-    app.secret_key = os.getenv('SECRET_KEY', '')
+
+    config_name = os.getenv('FLASK_CONFIG', 'default')
+    app.config.from_object(app_config.get(config_name, app_config['default']))
+
     basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     instance_path = os.path.join(basedir, 'instance')
     os.makedirs(instance_path, exist_ok=True)
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_path, 'database.db')
-    app.config['SQLALCHEMY_BINDS'] = {
+
+    default_sqlite = 'sqlite:///' + os.path.join(instance_path, 'database.db')
+    postgres_url = os.getenv('POSTGRES_URL') or os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_DATABASE_URI'] = postgres_url or default_sqlite
+
+    app.config.setdefault('SQLALCHEMY_BINDS', {
         'procedures': 'sqlite:///' + os.path.join(instance_path, 'procedures.db')
-    }
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'app', 'uploads')
-    app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
-    app.config['WTF_CSRF_ENABLED'] = True
-    app.config['WTF_CSRF_TIME_LIMIT'] = 3600
-    
+    })
+
+    app.config.setdefault('UPLOAD_FOLDER', os.path.join(basedir, 'app', 'uploads'))
+    app.config.setdefault('MAX_CONTENT_LENGTH', 500 * 1024 * 1024)
+    app.config.setdefault('WTF_CSRF_ENABLED', True)
+    app.config.setdefault('WTF_CSRF_TIME_LIMIT', 3600)
+
+    app.secret_key = app.config.get('SECRET_KEY', os.getenv('SECRET_KEY', ''))
+
     db.init_app(app)
     Migrate(app, db)
     csrf = CSRFProtect(app)
