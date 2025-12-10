@@ -16,17 +16,14 @@ from werkzeug.utils import secure_filename
 nir_bp = Blueprint('nir', __name__, template_folder='../templates')
 
 #<!--- Funções Auxiliares --->
-
 def parse_datetime_local(value):
     """Parse datetime-local input (YYYY-MM-DDTHH:MM) or date input (YYYY-MM-DD)"""
     if not value:
         return None
     try:
-        # Try datetime-local format first (YYYY-MM-DDTHH:MM)
         return datetime.strptime(value, '%Y-%m-%dT%H:%M')
     except ValueError:
         try:
-            # Fallback to date format (YYYY-MM-DD) at midnight
             return datetime.strptime(value, '%Y-%m-%d')
         except ValueError:
             return None

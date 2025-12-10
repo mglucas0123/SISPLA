@@ -4,13 +4,10 @@ from datetime import timedelta
 class Config:
     """Configuração base para todas as configurações."""
     
-    # Configurações básicas
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-sispla-2024-rbac-system'
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
     DEBUG = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     
-    # Configurações do banco de dados
-    # Caminho atualizado para a pasta instance
     basedir = os.path.abspath(os.path.dirname(__file__))
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
@@ -19,6 +16,7 @@ class Config:
         'pool_pre_ping': True,
         'pool_recycle': 300,
     }
+    SQLALCHEMY_ECHO = os.environ.get('SQLALCHEMY_ECHO', 'False').lower() == 'true'
     
     # Configurações de upload
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'app/uploads'
@@ -54,7 +52,6 @@ class Config:
 class DevelopmentConfig(Config):
     """Configuração para desenvolvimento."""
     DEBUG = True
-    SQLALCHEMY_ECHO = True
 
 class ProductionConfig(Config):
     """Configuração para produção."""

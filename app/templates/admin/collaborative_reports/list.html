@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="collab-reports-wrapper">
-    <!-- Hero Header -->
     <div class="hero-header-2fa">
         <div class="hero-bg-pattern"></div>
         <div class="hero-content">
@@ -134,7 +133,7 @@
                     <thead>
                         <tr>
                             <th scope="col">Data</th>
-                            <th scope="col">Mês/Ano</th>
+                            <th scope="col">Ano/Mês</th>
                             <th scope="col">Gestor</th>
                             <th scope="col">Colaborador</th>
                             <th scope="col">Duração</th>
@@ -148,7 +147,13 @@
                             <td>
                                 <div class="d-flex flex-column">
                                     <span class="fw-bold text-dark">{{ session.completed_at.strftime('%d/%m/%Y') if session.completed_at else 'N/A' }}</span>
-                                    <small class="text-muted">{{ session.completed_at.strftime('%H:%M') if session.completed_at else '' }}</small>
+                                    {% if session.completed_at %}
+                                    <small class="text-muted">
+                                        <span class="session-time" data-ts="{{ (session.completed_at.timestamp() * 1000)|int }}">{{ session.completed_at.strftime('%H:%M') }}</span>
+                                    </small>
+                                    {% else %}
+                                    <small class="text-muted"></small>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td>
@@ -766,4 +771,25 @@
     }
 }
 </style>
+<script>
+// Ajusta horários exibidos subtraindo 3 horas (ex.: UTC -> UTC-3)
+document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.session-time').forEach(function(el){
+        try{
+            var ts = parseInt(el.getAttribute('data-ts'), 10);
+            if (!isNaN(ts)){
+                var d = new Date(ts);
+                d.setHours(d.getHours() - 3);
+                // Formata como HH:MM (24h)
+                var hh = String(d.getHours()).padStart(2, '0');
+                var mm = String(d.getMinutes()).padStart(2, '0');
+                el.textContent = hh + ':' + mm;
+            }
+        }catch(e){
+            // silenciar erros
+            console.error(e);
+        }
+    });
+});
+</script>
 {% endblock %}

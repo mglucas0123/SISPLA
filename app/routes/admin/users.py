@@ -1,7 +1,7 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import current_user, login_required
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from werkzeug.security import generate_password_hash
 from app.models import db, User, Repository, Role, JobPosition
 from app.utils.rbac_permissions import require_permission
@@ -171,15 +171,15 @@ def render_users_list():
     if has_manager_filter:
         from app.models import user_managers
         if has_manager_filter == 'has_manager':
-            subquery = db.session.query(user_managers.c.employee_id).distinct()
+            subquery = select(user_managers.c.employee_id).distinct()
             query = query.filter(User.id.in_(subquery))
         elif has_manager_filter == 'no_manager':
-            subquery = db.session.query(user_managers.c.employee_id).distinct()
+            subquery = select(user_managers.c.employee_id).distinct()
             query = query.filter(~User.id.in_(subquery))
         elif has_manager_filter.startswith('manager_'):
             # Filtro por gestor específico
             manager_id = int(has_manager_filter.replace('manager_', ''))
-            subquery = db.session.query(user_managers.c.employee_id).filter(
+            subquery = select(user_managers.c.employee_id).where(
                 user_managers.c.manager_id == manager_id
             )
             query = query.filter(User.id.in_(subquery))
@@ -205,7 +205,7 @@ def render_users_list():
         
         # Lista de gestores que são responsáveis por algum colaborador
         from app.models import user_managers
-        managers_subquery = db.session.query(user_managers.c.manager_id).distinct().subquery()
+        managers_subquery = select(user_managers.c.manager_id).distinct()
         managers_list = User.query.filter(
             User.id.in_(managers_subquery),
             User.is_active == True

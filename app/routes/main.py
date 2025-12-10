@@ -37,7 +37,6 @@ def mark_notice_seen(notice_id):
 @login_required
 def gestao_hub():
     """Hub central de gestão e administração do sistema"""
-    # Verifica se o usuário tem permissão de admin
     if not current_user.has_permission('admin-total'):
         flash('Você não tem permissão para acessar esta página.', 'danger')
         return redirect(url_for('main.panel'))
