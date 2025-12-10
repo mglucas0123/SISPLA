@@ -340,7 +340,7 @@ def serve_course_image(course_id):
 def download_attachment(attachment_id):
     attachment = QuizAttachment.query.get_or_404(attachment_id)
     
-    upload_folder = current_app.config['UPLOAD_FOLDER']
+    upload_folder = '/app/uploads'
     full_path = os.path.join(upload_folder, attachment.filepath)
     
     if not os.path.exists(full_path):

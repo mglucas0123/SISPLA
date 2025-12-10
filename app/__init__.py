@@ -45,7 +45,7 @@ def create_app():
         'procedures': 'sqlite:///' + os.path.join(instance_path, 'procedures.db')
     })
 
-    app.config.setdefault('UPLOAD_FOLDER', os.path.join(basedir, 'app', 'uploads'))
+    app.config.setdefault('UPLOAD_FOLDER', '/app/uploads')
     app.config.setdefault('MAX_CONTENT_LENGTH', 500 * 1024 * 1024)
     app.config.setdefault('WTF_CSRF_ENABLED', True)
     app.config.setdefault('WTF_CSRF_TIME_LIMIT', 3600)
