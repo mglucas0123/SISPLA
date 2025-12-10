@@ -73,7 +73,9 @@ def create_image_notice():
         flash("Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF, WEBP", "warning")
         return redirect(url_for("admin.notices.manage_notices"))
     
-    upload_path = os.path.join(current_app.root_path, 'uploads', 'notices')
+    upload_path = '/app/uploads/notices'
+    os.makedirs(upload_path, exist_ok=True)
+    
     if not create_secure_folder(upload_path):
         flash("Erro ao criar diretório de upload.", "danger")
         return redirect(url_for("admin.notices.manage_notices"))
