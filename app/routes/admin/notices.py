@@ -72,7 +72,7 @@ def create_image_notice():
     if not validate_file_extension(filename, allowed_extensions):
         flash("Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF, WEBP", "warning")
         return redirect(url_for("admin.notices.manage_notices"))
-    
+        
     upload_path = '/app/uploads/notices'
     os.makedirs(upload_path, exist_ok=True)
     

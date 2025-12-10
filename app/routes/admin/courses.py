@@ -289,7 +289,7 @@ def create_course():
     scope = request.form.get('scope', '').strip()
 
     course_folder_name = secure_filename(title)
-    course_upload_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    course_upload_path = os.path.join('/app/uploads/courses', course_folder_name)
     os.makedirs(course_upload_path, exist_ok=True)
 
     course_filename = secure_filename(course_file.filename)
@@ -343,8 +343,8 @@ def edit_course(course_id):
 
     old_folder_name = secure_filename(old_title)
     new_folder_name = secure_filename(new_title)
-    old_course_path = os.path.join(current_app.root_path, 'uploads', 'courses', old_folder_name)
-    new_course_path = os.path.join(current_app.root_path, 'uploads', 'courses', new_folder_name)
+    old_course_path = os.path.join('/app/uploads/courses', old_folder_name)
+    new_course_path = os.path.join('/app/uploads/courses', new_folder_name)
 
     if old_title != new_title and os.path.exists(old_course_path):
         try:
@@ -424,7 +424,7 @@ def delete_course(course_id):
     course_title = course_to_delete.title
 
     course_folder_name = secure_filename(course_title)
-    course_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    course_folder_path = os.path.join('/app/uploads/courses', course_folder_name)
 
     if os.path.exists(course_folder_path):
         shutil.rmtree(course_folder_path)
@@ -677,7 +677,7 @@ def serve_course_video(course_id):
             return redirect(url_for('admin.courses.manage_courses'))
 
         course_folder_name = secure_filename(course.title)
-        content_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+        content_path = os.path.join('/app/uploads/courses', course_folder_name)
         file_path = os.path.join(content_path, course.video_filename)
 
         if not os.path.exists(file_path):
@@ -744,7 +744,7 @@ def serve_course_image(course_id):
             return redirect(url_for('static', filename='images/default_course.png'))
 
         course_folder_name = secure_filename(course.title)
-        image_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+        image_path = os.path.join('/app/uploads/courses', course_folder_name)
 
         return send_from_directory(image_path, course.image_filename)
     except Exception as e:

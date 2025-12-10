@@ -311,7 +311,7 @@ def register_supplier():
                 from flask import current_app
 
                 # Diretório: uploads/fornecedores/{supplier_id}
-                upload_folder = os.path.join(current_app.root_path, 'uploads', 'fornecedores', str(new_supplier.id))
+                upload_folder = os.path.join('/app/uploads/fornecedores', str(new_supplier.id))
                 os.makedirs(upload_folder, exist_ok=True)
 
                 for file in uploaded_files:
@@ -591,7 +591,7 @@ def supplier_evaluations(supplier_id):
         import os, json
         from flask import current_app, url_for
 
-        upload_folder = os.path.join(current_app.root_path, 'uploads', 'fornecedores', str(supplier.id))
+        upload_folder = os.path.join('/app/uploads/fornecedores', str(supplier.id))
         meta_path = os.path.join(upload_folder, 'attachments.json')
         if os.path.exists(meta_path):
             with open(meta_path, 'r', encoding='utf-8') as mf:
@@ -630,7 +630,7 @@ def download_supplier_document(supplier_id, filename):
 
     supplier = Supplier.query.get_or_404(supplier_id)
 
-    upload_folder = os.path.join(current_app.root_path, 'uploads', 'fornecedores', str(supplier.id))
+    upload_folder = os.path.join('/app/uploads/fornecedores', str(supplier.id))
     meta_path = os.path.join(upload_folder, 'attachments.json')
 
     attachment = None
@@ -679,7 +679,7 @@ def upload_supplier_document(supplier_id):
     from werkzeug.utils import secure_filename
     from flask import current_app
 
-    upload_folder = os.path.join(current_app.root_path, 'uploads', 'fornecedores', str(supplier.id))
+    upload_folder = os.path.join('/app/uploads/fornecedores', str(supplier.id))
     os.makedirs(upload_folder, exist_ok=True)
 
     attachments = []
@@ -754,7 +754,7 @@ def delete_supplier_document(supplier_id):
     import os, json
     from flask import current_app
 
-    upload_folder = os.path.join(current_app.root_path, 'uploads', 'fornecedores', str(supplier.id))
+    upload_folder = os.path.join('/app/uploads/fornecedores', str(supplier.id))
     meta_path = os.path.join(upload_folder, 'attachments.json')
 
     attachments = []
@@ -996,7 +996,7 @@ def add_issue_action(supplier_id):
         from flask import current_app
         
         # Criar diretório para anexos de fornecedores (caminho absoluto)
-        upload_folder = os.path.join(current_app.root_path, 'uploads', 'supplier_tracking')
+        upload_folder = os.path.join('/app/uploads', 'supplier_tracking')
         os.makedirs(upload_folder, exist_ok=True)
         
         for file in uploaded_files:

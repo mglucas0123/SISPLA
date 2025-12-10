@@ -305,7 +305,9 @@ def serve_video(course_id):
         return redirect(request.referrer or url_for('main.panel'))
 
     course_folder_name = secure_filename(course.title)
-    content_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+    content_folder_path = os.path.join('/app/uploads/courses', course_folder_name)
+    os.makedirs(content_folder_path, exist_ok=True)
+
     content_file_path = os.path.join(content_folder_path, course.video_filename)
 
     if not os.path.exists(content_folder_path) or not os.path.exists(content_file_path):
@@ -322,7 +324,10 @@ def serve_course_image(course_id):
         return redirect(url_for('static', filename='course_images/default_course.png'))
 
     course_folder_name = secure_filename(course.title)
-    course_folder_path = os.path.join(current_app.root_path, 'uploads', 'courses', course_folder_name)
+
+    course_folder_path = os.path.join('/app/uploads/courses', course_folder_name)
+    os.makedirs(course_folder_path, exist_ok=True)
+    
     image_file_path = os.path.join(course_folder_path, course.image_filename)
     
     if not os.path.exists(course_folder_path) or not os.path.exists(image_file_path):
